@@ -57,7 +57,6 @@ import pandas as pd
 import requests
 from datasets import (
     DatasetDict,
-    DownloadConfig,
     IterableDataset,
     IterableDatasetDict,
     get_dataset_split_names,
@@ -75,7 +74,7 @@ from .operators import Set
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
-from .utils import LRUCache, recursive_copy
+from .utils import LRUCache, recursive_copy, retry_connection_with_exponential_backoff
 
 logger = get_logger()
 settings = get_settings()
@@ -84,6 +83,7 @@ class UnitxtUnverifiedCodeError(UnitxtError):
     def __init__(self, path):
         super().__init__(f"Loader cannot load and run remote code from {path} in huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE.", Documentation.SETTINGS)
 
+@retry_connection_with_exponential_backoff(backoff_factor=2)
 def hf_load_dataset(path: str, *args, **kwargs):
     if settings.hf_offline_datasets_path is not None:
         path = os.path.join(settings.hf_offline_datasets_path, path)
@@ -91,9 +91,6 @@ def hf_load_dataset(path: str, *args, **kwargs):
         return _hf_load_dataset(
             path,
             *args, **kwargs,
-                download_config=DownloadConfig(
-                    max_retries=settings.loaders_max_retries,
-                ),
                 verification_mode="no_checks",
                 trust_remote_code=settings.allow_unverified_code,
                 download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
@@ -101,6 +98,24 @@ def hf_load_dataset(path: str, *args, **kwargs):
     except ValueError as e:
         if "trust_remote_code" in str(e):
             raise UnitxtUnverifiedCodeError(path) from e
+        raise e # Re raise
+
+
+@retry_connection_with_exponential_backoff(backoff_factor=2)
+def hf_get_dataset_splits(path: str, name: str):
+    try:
+        return get_dataset_split_names(
+            path=path,
+            config_name=name,
+            trust_remote_code=settings.allow_unverified_code,
+        )
+    except Exception as e:
+        if "trust_remote_code" in str(e):
+            raise UnitxtUnverifiedCodeError(path) from e
+
+        if "Couldn't find cache" in str(e):
+            raise FileNotFoundError(f"Dataset cache path={path}, name={name} was not found.") from e
+        raise e # Re raise
 
 class Loader(SourceOperator):
     """A base class for all loaders.
@@ -287,6 +302,9 @@ class LoadHF(LazyLoader):
             return settings.stream_hf_datasets_by_default
         return self.streaming
 
+    def is_in_cache(self, split):
+        dataset_id = str(self) + "_" + str(split)
+        return dataset_id in self.__class__._loader_cache
     # returns Dict when split names are not known in advance, and just the the single split dataset - if known
     def load_dataset(
         self, split: str, streaming=None, disable_memory_caching=False
@@ -307,9 +325,15 @@ class LoadHF(LazyLoader):
                 split=split,
                 num_proc=self.num_proc,
             )
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
+
+            if dataset is None:
+                raise NotImplementedError() from None
+
             if not disable_memory_caching:
+                self.__class__._loader_cache.max_size = settings.loader_cache_size
                 self.__class__._loader_cache[dataset_id] = dataset
+        self._already_logged_limited_loading = True
+
         return dataset
 
     def _maybe_set_classification_policy(self):
@@ -323,23 +347,17 @@ class LoadHF(LazyLoader):
                 None,  # No warning when loading from public hub
             )
 
+    @retry_connection_with_exponential_backoff(max_retries=3, backoff_factor=2)
     def get_splits(self):
         if self.splits is not None:
             return self.splits
         try:
-            return get_dataset_split_names(
+            return hf_get_dataset_splits(
                 path=self.path,
-                config_name=self.name,
-                trust_remote_code=settings.allow_unverified_code,
-                download_config=DownloadConfig(
-                    max_retries=settings.loaders_max_retries,
-                    extract_on_the_fly=True,
-                ),
+                name=self.name,
                 data_files=self.data_files,
             )
-        except Exception as e:
-            if "trust_remote_code" in str(e):
-                raise UnitxtUnverifiedCodeError(self.path) from e
+        except Exception:
             UnitxtWarning(
                 f'LoadHF(path="{self.path}", name="{self.name}") could not retrieve split names without loading the dataset. Consider defining "splits" in the LoadHF definition to improve loading time.'
             )
@@ -351,11 +369,16 @@ class LoadHF(LazyLoader):
                 NotImplementedError
             ):  # streaming is not supported for zipped files so we load without streaming
                 dataset = self.load_dataset(split=None, streaming=False)
+
+            if dataset is None:
+                raise FileNotFoundError(f"Dataset path={self.path}, name={self.name} was not found.") from None
+
             return list(dataset.keys())
 
     def split_generator(self, split: str) -> Generator:
         if self.get_limit() is not None:
-            self.log_limited_loading()
+            if not self.is_in_cache(split):
+                self.log_limited_loading()
         try:
             dataset = self.load_dataset(split=split)
         except (

@@ -49,6 +49,7 @@ from .operator import PackageRequirementsMixin
 from .operators import ArtifactFetcherMixin
 from .settings_utils import get_constants, get_settings
 from .type_utils import isoftype
+from .utils import retry_connection_with_exponential_backoff
 
 constants = get_constants()
 settings = get_settings()
@@ -184,7 +185,7 @@ class InferenceEngine(Artifact):
             self.prepare_engine()
             if self.use_cache:
                 from diskcache import Cache
-                self._cache = Cache(get_settings().inference_engine_cache_path + self.__class__.__name__)
+                self._cache = Cache(settings.inference_engine_cache_path + self.__class__.__name__)
 
     def __call__(
         self,
@@ -200,6 +201,7 @@ class InferenceEngine(Artifact):
     def _get_cache_key(self, instance: Dict[str, Any]) -> str:
         """Generate a unique cache key for each input."""
         record = self.get_instance_cache_key(instance)
+        record["version"] = constants.version
         record.update(self.to_dict())
         instance_str = json.dumps(record, sort_keys=True)
         return hashlib.md5(instance_str.encode()).hexdigest()
@@ -876,6 +878,7 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
             self.peft_config.base_model_name_or_path
         )
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def _init_model(self):
         from peft import AutoPeftModelForCausalLM, AutoPeftModelForSeq2SeqLM
         from transformers import AutoConfig
@@ -990,6 +993,7 @@ class HFPipelineBasedInferenceEngine(
 
         return args
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def _create_pipeline(self, model_args: Dict[str, Any]):
         from transformers import AutoTokenizer, pipeline
 
@@ -3349,6 +3353,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, self.label)
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare_engine(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 

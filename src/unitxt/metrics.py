@@ -29,7 +29,6 @@ import numpy
 import numpy as np
 import pandas as pd
 import requests
-from datasets import DownloadConfig
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -65,14 +64,14 @@ from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
-from .utils import deep_copy, recursive_copy
+from .utils import deep_copy, recursive_copy, retry_connection_with_exponential_backoff
 
 logger = get_logger()
 settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
-
+@retry_connection_with_exponential_backoff(backoff_factor=2)
 def hf_evaluate_load(path: str, *args, **kwargs):
     if settings.hf_offline_metrics_path is not None:
         path = os.path.join(settings.hf_offline_metrics_path, path)
@@ -81,9 +80,6 @@ def hf_evaluate_load(path: str, *args, **kwargs):
         *args,
         **kwargs,
         experiment_id=str(uuid.uuid4()),
-        download_config=DownloadConfig(
-            max_retries=settings.loaders_max_retries,
-        ),
         verification_mode="no_checks",
         trust_remote_code=settings.allow_unverified_code,
         download_mode=(
@@ -126,6 +122,7 @@ def nan_max(x):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
         return np.nanmax(x)
+
 
 def nan_std(x):
     with warnings.catch_warnings():
@@ -398,11 +395,13 @@ class Statistic:
         result = np.array([scores[m] for m in self.score_names])
         self._history.append(result)
         return result
+
     def mean(self, idx):
         return nan_mean([result[idx] for result in self._history])
 
     def std(self, idx):
         return nan_std([result[idx] for result in self._history])
+
 
 class ConfidenceIntervalMixin(Artifact):
     n_resamples: int = 1000
@@ -413,18 +412,16 @@ class ConfidenceIntervalMixin(Artifact):
     def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
         pass
 
-
     def bootstrap(self, data: List[Any], score_names: List[str]):
         if self.ci_score_names is not None:
             score_names = self.ci_score_names
 
-
         statistic = Statistic(data, score_names, self._sample_to_scores)
         with warnings.catch_warnings():
-            warnings.filterwarnings( # Ignore error the arises when all sample scores are identical
+            warnings.filterwarnings(  # Ignore error the arises when all sample scores are identical
                 "ignore",
                 message="invalid value encountered in divide",
-                category=RuntimeWarning
+                category=RuntimeWarning,
             )
 
             intervals = bootstrap(
@@ -438,14 +435,17 @@ class ConfidenceIntervalMixin(Artifact):
                 method="BCa",
             ).confidence_interval
 
-
         result = {}
         for i, metric in enumerate(score_names):
             high = intervals.high[i]
             low = intervals.low[i]
             if np.isnan(high) and np.isnan(low):
-                if statistic.std(i) == 0: # When sample scores are identical "BCa" will fail (due to division by std 0)
-                    high = low = statistic.mean(i) # In this case we will use the mean (as there is no variance)
+                if (
+                    statistic.std(i) == 0
+                ):  # When sample scores are identical "BCa" will fail (due to division by std 0)
+                    high = low = statistic.mean(
+                        i
+                    )  # In this case we will use the mean (as there is no variance)
             result[f"{metric}_ci_low"] = float(low)
             result[f"{metric}_ci_high"] = float(high)
 
@@ -2807,7 +2807,7 @@ class FinQAEval(InstanceMetric):
         remote_url = "https://raw.githubusercontent.com/czyssrs/FinQA/dfc5b72c01ee17c442d28d5201b82a1f4e95d5af/code/evaluate/evaluate.py"
         local_filepath = "/tmp/finqa_eval_script.py"
         module_name = "finqa_eval"
-        hash_of_script = "42430b8613082bb4b85d49210284135d" # pragma: allowlist secret
+        hash_of_script = "42430b8613082bb4b85d49210284135d"  # pragma: allowlist secret
 
         download_finqa_eval_script_file(remote_url, local_filepath, hash_of_script)
         self.finqa_module = load_finqa_eval_module_from_file(
@@ -3415,10 +3415,11 @@ class CustomF1(GlobalMetric):
 
 class KeyValueExtraction(GlobalMetric):
 
-    prediction_type = Dict[str,str]
-    metric : Metric
+    prediction_type = Dict[str, str]
+    metric: Metric
     single_reference_per_prediction = True
     main_score = ""
+
     def prepare(self):
         super().prepare()
         self.main_score = f"{self.metric.main_score}_micro"
@@ -3436,18 +3437,25 @@ class KeyValueExtraction(GlobalMetric):
         for reference in references:
             all_reference_keys.update(list(reference.keys()))
         for key in all_reference_keys:
-            key_statistics[key]= []
+            key_statistics[key] = []
 
-        num_prediction_keys=0
-        illegal_prediction_keys=0
+        num_prediction_keys = 0
+        illegal_prediction_keys = 0
         for reference, prediction in zip(references, predictions):
             for key in all_reference_keys:
-                if (key not in reference and key not in prediction):
+                if key not in reference and key not in prediction:
                     continue
-                if (key in reference and key in prediction):
-                    multi_stream = MultiStream.from_iterables({"test": [{"prediction" : prediction[key],
-                                                                        "references" : [reference[key]]}
-                                                                                                                                                                                                          ]})
+                if key in reference and key in prediction:
+                    multi_stream = MultiStream.from_iterables(
+                        {
+                            "test": [
+                                {
+                                    "prediction": prediction[key],
+                                    "references": [reference[key]],
+                                }
+                            ]
+                        }
+                    )
                     output_multi_stream = self.metric(multi_stream)
                     output_stream = output_multi_stream["test"]
                     score = next(iter(output_stream))["score"]["global"]["score"]
@@ -3460,7 +3468,7 @@ class KeyValueExtraction(GlobalMetric):
                 if key not in all_reference_keys:
                     illegal_prediction_keys += 1
 
-        result={}
+        result = {}
 
         average = 0
         total = 0
@@ -3476,12 +3484,15 @@ class KeyValueExtraction(GlobalMetric):
 
         result[f"{self.metric.main_score}_micro"] = weighted_average / total
         result[f"{self.metric.main_score}_macro"] = average / len(key_statistics)
-        if (num_prediction_keys !=0):
-            result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 1 - 1.0 * illegal_prediction_keys /  num_prediction_keys
+        if num_prediction_keys != 0:
+            result[f"{self.metric.main_score}_legal_keys_in_predictions"] = (
+                1 - 1.0 * illegal_prediction_keys / num_prediction_keys
+            )
         else:
             result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 0
 
         return result
+
 
 class NER(CustomF1):
     """F1 Metrics that receives as input a list of (Entity,EntityType) pairs."""
@@ -3713,6 +3724,7 @@ class Detector(BulkInstanceMetric):
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         import torch
@@ -3753,6 +3765,7 @@ class RegardMetric(GlobalMetric):
 
     _requirements_list: List[str] = ["transformers", "torch", "tqdm"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -3942,6 +3955,7 @@ class SafetyMetric(MapReduceMetric[str, Tuple[float, str]], TorchDeviceMixin):
 
         return result
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import pipeline
@@ -4121,6 +4135,7 @@ class Perplexity(BulkInstanceMetric):
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def compute(
         self,
         references: List[List[Any]],
@@ -4394,6 +4409,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         import torch
@@ -6051,6 +6067,7 @@ class GraniteGuardianBase(InstanceMetric):
 
     _requirements_list: List[str] = ["torch", "transformers"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         from transformers import AutoTokenizer
 
@@ -6116,9 +6133,18 @@ class GraniteGuardianBase(InstanceMetric):
         )
         messages = self.process_input_fields(task_data)
         prompt = self.get_prompt(messages)
-        data_classification_policy = task_data.get("metadata", {}).get("data_classification_policy")
+        data_classification_policy = task_data.get("metadata", {}).get(
+            "data_classification_policy"
+        )
 
-        result = self.inference_engine.infer_log_probs([{"source": prompt, "data_classification_policy": data_classification_policy}])
+        result = self.inference_engine.infer_log_probs(
+            [
+                {
+                    "source": prompt,
+                    "data_classification_policy": data_classification_policy,
+                }
+            ]
+        )
 
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
@@ -6371,13 +6397,20 @@ class SQLExecutionAccuracy(InstanceMetric):
         df1.fillna(0, inplace=True)
         df2.fillna(0, inplace=True)
 
+        # Compare row counts first for a quick check
         if df1.shape != df2.shape:
             return False
 
-        df1_rows_sorted = [sorted(map(str, row)) for row in df1.to_numpy()]
-        df2_rows_sorted = [sorted(map(str, row)) for row in df2.to_numpy()]
+        # Convert DataFrames to numpy arrays of strings to handle mixed types
+        df1_array = df1.values.astype(str)
+        df2_array = df2.values.astype(str)
 
-        return df1_rows_sorted == df2_rows_sorted
+        # Sort each row's elements (column order independence)
+        df1_sorted_rows = np.array([np.sort(row) for row in df1_array])
+        df2_sorted_rows = np.array([np.sort(row) for row in df2_array])
+
+        # Compare the sorted rows in order
+        return np.array_equal(df1_sorted_rows, df2_sorted_rows)
 
     @staticmethod
     def compare_dfs_ignore_colnames_unordered_rows(df1, df2):
@@ -6391,46 +6424,85 @@ class SQLExecutionAccuracy(InstanceMetric):
             True if the DataFrames have the same content (ignoring column names and row order),
             False otherwise.
         """
-        return set(map(tuple, df1.to_numpy())) == set(map(tuple, df2.to_numpy()))
-
-    @staticmethod
-    def is_subset_ignore_colnames(df1, df2):
-        """Checks if df1 is a subset of df2 based on row content, ignoring column names.
-
-        Args:
-            df1: Pandas DataFrame 1 to compare.
-            df2: Pandas DataFrame 2 to compare.
-
-        Returns:
-            True if df1 is a subset of df2 based on column values,
-            False otherwise.
-        """
-        if df1.empty or df2.empty or df1.shape[1] > df2.shape[1]:
+        # Compare shapes early on
+        if df1.shape != df2.shape:
             return False
 
-        def make_hashable(value):
-            if isinstance(value, dict):
-                return json.dumps(value, sort_keys=True)
-            if isinstance(value, list):
-                return tuple(value)
-            return value
+        # Convert DataFrames to numpy arrays of strings (to handle mixed data types)
+        df1_array = df1.values.astype(str)
+        df2_array = df2.values.astype(str)
 
-        df1_cols = [
-            tuple(make_hashable(value) for value in df1.iloc[:, i])
-            for i in range(df1.shape[1])
-        ]
-        df2_cols = [
-            tuple(make_hashable(value) for value in df2.iloc[:, j])
-            for j in range(df2.shape[1])
-        ]
-        df2_cols_count = Counter(df2_cols)
-        for col in df1_cols:
-            if df2_cols_count[col] > 0:
-                df2_cols_count[col] -= 1
-            else:
-                return False
+        # Sort columns first, then sort rows
+        df1_sorted = np.sort(np.sort(df1_array, axis=1), axis=0)
+        df2_sorted = np.sort(np.sort(df2_array, axis=1), axis=0)
 
-        return True
+        # Compare the sorted arrays
+        return np.array_equal(df1_sorted, df2_sorted)
+
+    @staticmethod
+    def compare_dfs_ignore_colnames_subset(df1, df2, ignore_row_order=True):
+        """Checks if the values of either DataFrame are a subset of the values in the other DataFrame.
+
+        Comparison is column order independent, and could optionally be row order independent.
+        We interpret "subset" as follows:
+        - For each row in df1, there must be a matching (or superset) row in df2, i.e. the set of values
+          in the df1 row is a subset of the set of values in that df2 row. Then do the same check in reverse.
+        - If either condition (df1 is subset of df2 OR df2 is subset of df1) is satisfied, return True.
+
+        We treat an empty dataframe as a subset of nothing, while in theory is a subset of any dataframe.
+
+        Args:
+            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
+            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
+            ignore_row_order (bool): If True, row order doesn't matter; if False, row order is respected.
+
+        Returns:
+            bool: True if df1 is a subset of df2 or vice versa, based on the specified row-order condition.
+        """
+        df1_array = df1.values.astype(str)
+        df2_array = df2.values.astype(str)
+
+        df1_sorted_rows = [np.sort(row) for row in df1_array]
+        df2_sorted_rows = [np.sort(row) for row in df2_array]
+
+        def row_is_subset(r_small, r_big):
+            """Check if all elements of r_small are in r_big."""
+            return set(r_small).issubset(set(r_big))
+
+        def df_is_subset_of_another(rows_small, rows_big, respect_order):
+            """Check if the rows_small is subset of rows_big under the given order condition."""
+            if not rows_small:
+                return False  # DataFrame needs to be non-empty
+
+            # If row order matters:
+            if respect_order:
+                i, j = 0, 0
+                while i < len(rows_small) and j < len(rows_big):
+                    if row_is_subset(rows_small[i], rows_big[j]):
+                        i += 1
+                    j += 1
+                return i == len(rows_small)
+            # Row order doesn't matter:
+            matched_indices = set()
+            for r_small in rows_small:
+                found_match = False
+                for idx, r_big in enumerate(rows_big):
+                    if idx not in matched_indices and row_is_subset(r_small, r_big):
+                        found_match = True
+                        matched_indices.add(idx)
+                        break
+                if not found_match:
+                    return False
+            return True
+
+        df1_sub_df2 = df_is_subset_of_another(
+            df1_sorted_rows, df2_sorted_rows, not ignore_row_order
+        )
+        df2_sub_df1 = df_is_subset_of_another(
+            df2_sorted_rows, df1_sorted_rows, not ignore_row_order
+        )
+
+        return df1_sub_df2 or df2_sub_df1
 
     def get_sql_execution_results(
         self, predicted_sql: str, gold_sql: str, connector
@@ -6446,7 +6518,7 @@ class SQLExecutionAccuracy(InstanceMetric):
         a 12-tuple of
         1. execution_result: if df responses match
         2. non_empty_execution_result: if dfs are non-empty and match
-        3. subset_non_empty_execution_result: if non-empty dfs and gt df subset of predicted df
+        3. subset_non_empty_execution_result: if non-empty dfs and one is a subset of the other
         4. non_empty_gold_df: if gt df is non-empty
         5. gold_sql_runtime: ground truth query runtime
         6. predicted_sql_runtime: predicted query runtime
@@ -6569,12 +6641,21 @@ class SQLExecutionAccuracy(InstanceMetric):
             pred_res = pred_res["results"]
         predicted_df = pd.DataFrame(pred_res)
 
+        subset_non_empty_execution_result = 0
+        non_empty_execution_result = 0
         if "ORDER BY" in gold_sql.upper():
             execution_result = (
                 1
                 if self.compare_dfs_ignore_colnames_ordered_rows(predicted_df, gold_df)
                 else 0
             )
+            if non_empty_gold_df:
+                if execution_result == 1:
+                    non_empty_execution_result = 1
+                if self.compare_dfs_ignore_colnames_subset(
+                    gold_df, predicted_df, ignore_row_order=False
+                ):
+                    subset_non_empty_execution_result = 1
         else:
             execution_result = (
                 1
@@ -6583,14 +6664,13 @@ class SQLExecutionAccuracy(InstanceMetric):
                 )
                 else 0
             )
-
-        subset_non_empty_execution_result = 0
-        non_empty_execution_result = 0
-        if non_empty_gold_df:
-            if execution_result == 1:
-                non_empty_execution_result = 1
-            if self.is_subset_ignore_colnames(gold_df, predicted_df):
-                subset_non_empty_execution_result = 1
+            if non_empty_gold_df:
+                if execution_result == 1:
+                    non_empty_execution_result = 1
+                if self.compare_dfs_ignore_colnames_subset(
+                    gold_df, predicted_df, ignore_row_order=True
+                ):
+                    subset_non_empty_execution_result = 1
 
         return (
             execution_result,
@@ -6672,6 +6752,7 @@ class SQLNonExecutionAccuracy(InstanceMetric):
             "sqlglot_optimized_equivalence",
             "sqlparse_equivalence",
             "sql_exact_match",
+            "sql_syntactic_equivalence",
         ]
     }
     main_score = "sqlglot_equivalence"
@@ -6682,6 +6763,7 @@ class SQLNonExecutionAccuracy(InstanceMetric):
         "sqlglot_optimized_equivalence",
         "sqlparse_equivalence",
         "sql_exact_match",
+        "sql_syntactic_equivalence",
     ]
 
     prediction_type = "Any"  # string representation is compared
@@ -6729,6 +6811,17 @@ class SQLNonExecutionAccuracy(InstanceMetric):
             ),
             "sql_exact_match": float(sql_exact_match(predicted_sql, gold_sql)),
         }
+        result["sql_syntactic_equivalence"] = float(
+            any(
+                result[key]
+                for key in [
+                    "sqlglot_equivalence",
+                    "sqlglot_optimized_equivalence",
+                    "sqlparse_equivalence",
+                    "sql_exact_match",
+                ]
+            )
+        )
         logger.debug(f"SQL Non Execution Accuracy Result: {result}")
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score

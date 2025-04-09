@@ -6,6 +6,11 @@
         "name": "wnli",
         "data_classification_policy": [
             "public"
+        ],
+        "splits": [
+            "train",
+            "validation",
+            "test"
         ]
     },
     "preprocess_steps": [

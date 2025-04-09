@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from unitxt import add_to_catalog
 from unitxt.blocks import TaskCard
 from unitxt.loaders import LoadCSV, LoadHF
-from unitxt.operators import Copy, ListFieldValues, Set
+from unitxt.operators import Copy, ListFieldValues
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
@@ -81,11 +81,6 @@ card = TaskCard(
         ListFieldValues(
             fields=["text"],
             to_field="passages",
-        ),
-        Set(
-            fields={
-                "metadata_field": {},
-            }
         ),
     ],
     task="tasks.rag.corpora",
