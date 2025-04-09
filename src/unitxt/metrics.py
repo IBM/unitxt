@@ -792,6 +792,7 @@ class MetricWithConfidenceInterval(Metric):
     n_resamples: int = None
     confidence_level: float = 0.95
     ci_scores: List[str] = None
+    ci_method: str = "BCa"
 
     @staticmethod
     def new_random_generator():
@@ -907,6 +908,7 @@ class MetricWithConfidenceInterval(Metric):
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
                 random_state=self.new_random_generator(),
+                method=self.ci_method
             ).confidence_interval
             full_score_name = ci_score_prefix + score_name
             result[f"{full_score_name}_ci_low"] = ci.low
@@ -1007,6 +1009,7 @@ class MetricWithConfidenceInterval(Metric):
                     n_resamples=self.n_resamples,
                     confidence_level=self.confidence_level,
                     random_state=random_gen,
+                    method=self.ci_method
                 ).confidence_interval
             result["score_ci_low"] = float(ci.low)
             result["score_ci_high"] = float(ci.high)
