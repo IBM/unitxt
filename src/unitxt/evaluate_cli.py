@@ -106,7 +106,7 @@ def setup_parser() -> argparse.ArgumentParser:
         "--tasks",  # Changed to plural to better reflect it holds a list
         "-t",
         dest="tasks",  # Explicitly set the attribute name to 'tasks'
-        type=partial(str.split, sep="|"),  # Use the custom function for type conversion
+        type=partial(str.split, sep="+"),  # Use the custom function for type conversion
         required=True,
         help="Semicolon-separated list of Unitxt task/dataset identifier strings.\n"
         "Each task format: 'card=<card_ref>,template=<template_ref>,...'\n"
