@@ -351,6 +351,10 @@ class LoadHF(LazyLoader):
     def get_splits(self):
         if self.splits is not None:
             return self.splits
+        if self.data_files is not None:
+            if isinstance(self.data_files, dict):
+                return list(self.data_files.keys())
+            return ["train"]
         try:
             return hf_get_dataset_splits(
                 path=self.path,
