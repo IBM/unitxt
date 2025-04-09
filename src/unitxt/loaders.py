@@ -258,7 +258,7 @@ class LoadHF(LazyLoader):
         split:
             Optional specification of which split to load.
         data_files:
-            Optional specification of particular data files to load.
+            Optional specification of particular data files to load. When you provide a list of data_files to Hugging Face's load_dataset function without explicitly specifying the split argument, these files are automatically placed into the train split.
         revision:
             Optional. The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
         streaming (bool):
