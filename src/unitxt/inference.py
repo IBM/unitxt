@@ -187,10 +187,7 @@ class InferenceEngine(Artifact):
             self.prepare_engine()
             if self.use_cache:
                 from diskcache import Cache
-
-                self._cache = Cache(
-                    get_settings().inference_engine_cache_path + self.__class__.__name__
-                )
+                self._cache = Cache(settings.inference_engine_cache_path + self.__class__.__name__)
 
     def __call__(
         self,
@@ -206,6 +203,7 @@ class InferenceEngine(Artifact):
     def _get_cache_key(self, instance: Dict[str, Any]) -> str:
         """Generate a unique cache key for each input."""
         record = self.get_instance_cache_key(instance)
+        record["version"] = constants.version
         record.update(self.to_dict())
         instance_str = json.dumps(record, sort_keys=True)
         return hashlib.md5(instance_str.encode()).hexdigest()

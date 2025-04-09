@@ -6,10 +6,15 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
+    cancel-in-progress: true
+
 jobs:
   preparation:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       OS: ubuntu-latest
       UNITXT_DEFAULT_VERBOSITY: error
