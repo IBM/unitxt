@@ -1,3 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;700&display=swap');
+
+body{
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
 nav {
     background-color: #cfd0ff !important;
 }
@@ -210,4 +216,4 @@ div.document div.documentwrapper {
 #unitxtImports {
   /* Display nothing for the element */
   display: none;
-}         
+}
