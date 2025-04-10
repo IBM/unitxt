@@ -424,7 +424,7 @@ class GlobalScores(dict):
         )
 
 
-class SubsetsScores(dict[str, GlobalScores]):
+class SubsetsScores(dict):
     def __repr__(self):
         return to_pretty_string(self, float_format=".2g")
 
