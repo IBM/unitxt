@@ -780,6 +780,7 @@ def process_and_save_results(
         for instance in instances_results:
             if instance["subset"][0] not in subset_instances:
                 subset_instances[instance["subset"][0]] = []
+            del instance["postprocessors"]
             subset_instances[instance["subset"][0]].append(instance)
 
         logger.info(f"\n{subsets_scores.summary}")
