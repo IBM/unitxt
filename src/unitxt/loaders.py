@@ -359,7 +359,6 @@ class LoadHF(LazyLoader):
             return hf_get_dataset_splits(
                 path=self.path,
                 name=self.name,
-                data_files=self.data_files,
             )
         except Exception:
             UnitxtWarning(

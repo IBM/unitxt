@@ -34,7 +34,7 @@ card = TaskCard(
         reference_fields={},
         prediction_type=str,
         metrics=[
-            "metrics.llm_as_judge.safety.llamaguard",
+            "metrics.granite_guardian.assistant_risk.harm[prediction_type=str,user_message_field=prompt,assistant_message_field=prediction]",
         ],
     ),
     templates=TemplatesDict({"default": InputOutputTemplate(input_format="{prompt}\n", output_format="")}),
