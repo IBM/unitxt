@@ -258,7 +258,7 @@ class LoadHF(LazyLoader):
         split:
             Optional specification of which split to load.
         data_files:
-            Optional specification of particular data files to load.
+            Optional specification of particular data files to load. When you provide a list of data_files to Hugging Face's load_dataset function without explicitly specifying the split argument, these files are automatically placed into the train split.
         revision:
             Optional. The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
         streaming (bool):
@@ -351,6 +351,10 @@ class LoadHF(LazyLoader):
     def get_splits(self):
         if self.splits is not None:
             return self.splits
+        if self.data_files is not None:
+            if isinstance(self.data_files, dict):
+                return list(self.data_files.keys())
+            return ["train"]
         try:
             return hf_get_dataset_splits(
                 path=self.path,

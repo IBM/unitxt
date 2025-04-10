@@ -885,10 +885,10 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
 
         model_class = (
             AutoPeftModelForSeq2SeqLM
-            if AutoConfig.from_pretrained(self.model_name).is_encoder_decoder
+            if AutoConfig.from_pretrained(self.peft_config.base_model_name_or_path).is_encoder_decoder
             else AutoPeftModelForCausalLM
         )
-        path = self.peft_config.base_model_name_or_path
+        path = self.model_name
         if settings.hf_offline_models_path is not None:
             path = os.path.join(settings.hf_offline_models_path, path)
 
@@ -899,6 +899,7 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
             low_cpu_mem_usage=self.low_cpu_mem_usage,
             torch_dtype=self._get_torch_dtype(),
         )
+        self.model = self.model.to(dtype=self._get_torch_dtype()) # Make sure that base model and adapter use same dtype
         if self.device_map is None:
             self.model.to(self.device)
 
@@ -3242,12 +3243,14 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-1-405b-instruct": "vertex_ai/meta/llama-3.1-405b-instruct-maas",
         },
         "replicate": {
-            "granite-20b-code-instruct-8k": "replicate/ibm-granite/granite-20b-code-instruct-8k",
-            "granite-3-2b-instruct": "replicate/ibm-granite/granite-3.0-2b-instruct",
-            "granite-3-8b-instruct": "replicate/ibm-granite/granite-3.0-8b-instruct",
-            "granite-3-1-2b-instruct": "replicate/ibm-granite/granite-3.1-2b-instruct",
+            "granite-3-2-8b-instruct": "replicate/ibm-granite/granite-3.2-8b-instruct",
+            "granite-vision-3-2-2b": "replicate/ibm-granite/granite-vision-3.2-2b",
             "granite-3-1-8b-instruct": "replicate/ibm-granite/granite-3.1-8b-instruct",
+            "granite-3-1-2b-instruct": "replicate/ibm-granite/granite-3.1-2b-instruct",
+            "granite-3-8b-instruct": "replicate/ibm-granite/granite-3.0-8b-instruct",
+            "granite-3-2b-instruct": "replicate/ibm-granite/granite-3.0-2b-instruct",
             "granite-8b-code-instruct-128k": "replicate/ibm-granite/granite-8b-code-instruct-128k",
+            "granite-20b-code-instruct-8k": "replicate/ibm-granite/granite-20b-code-instruct-8k",
             "llama-2-13b": "replicate/meta/llama-2-13b",
             "llama-2-13b-chat": "replicate/meta/llama-2-13b-chat",
             "llama-2-70b": "replicate/meta/llama-2-70b",
