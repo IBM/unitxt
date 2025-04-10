@@ -9,6 +9,7 @@ from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 from datasets.exceptions import DatasetGenerationError
 
 from .artifact import fetch_artifact
+from .benchmark import Benchmark
 from .card import TaskCard
 from .dataset_utils import get_dataset_artifact
 from .error_utils import UnitxtError
@@ -78,7 +79,7 @@ def _verify_dataset_args(dataset_query: Optional[str] = None, dataset_args=None)
 
 
 def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> DatasetRecipe:
-    if isinstance(dataset_query, DatasetRecipe):
+    if isinstance(dataset_query, (DatasetRecipe, Benchmark)):
         return dataset_query
 
     _verify_dataset_args(dataset_query, kwargs)

@@ -17,6 +17,7 @@ concurrency:
 jobs:
   inference:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       OS: ubuntu-latest
       UNITXT_DEFAULT_VERBOSITY: error

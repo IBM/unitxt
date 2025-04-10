@@ -101,7 +101,6 @@ tests = [
     "bs4",
     "tenacity==8.3.0",
     "accelerate",
-    "spacy",
     "func_timeout==4.3.5",
     "Wikipedia-API",
     "sqlglot",
@@ -111,6 +110,11 @@ tests = [
 ui = [
     "gradio",
     "transformers"
+]
+text2sql = [
+    "sqlglot",
+    "func_timeout==4.3.5",
+    "sqlparse"
 ]
 watsonx = [
     "ibm-watsonx-ai==1.2.10"
@@ -127,6 +131,18 @@ assistant = [
     "watchdog",
     "litellm"
 ]
+remote_inference = [
+    "litellm>=1.52.9",
+    "tenacity",
+    "diskcache"
+]
+local_inference = [
+    "transformers",
+    "torch",
+    "accelerate"
+]
+
+
 
 # Combine all extras by referencing other groups
 all = [
@@ -138,13 +154,15 @@ all = [
     "unitxt[tests]",
     "unitxt[ui]",
     "unitxt[watsonx]",
-    "unitxt[assistant]"
+    "unitxt[assistant]",
+    "unitxt[text2sql]"
 ]
 
 [project.scripts]
 unitxt-explore = "unitxt.ui:launch"
 unitxt-assistant = "unitxt.assistant:launch"
 unitxt-metrics-service = "unitxt.service.metrics.main:start_metrics_http_service"
+unitxt-evaluate = "unitxt.evaluate_cli:main"
 
 [tool.ruff]
 exclude = [
@@ -198,6 +216,7 @@ keep-runtime-typing = true
 "src/unitxt/metric_utils.py" = ["C901"]
 "src/unitxt/dataclass.py" = ["C901"]
 "src/unitxt/operators.py" = ["C901"]
+"src/unitxt/utils.py" = ["C901"]
 "docs/conf.py" = ["E402"]
 "prepare/cards/attaq_500.py" = ["RUF001"]
 "prepare/instructions/models/llama.py" = ["RUF001"]
@@ -207,6 +226,7 @@ keep-runtime-typing = true
 "performance/*.py" = ["T201"]
 "src/unitxt/llm_as_judge.py" = ["F401", "C901"]
 "examples/*.py" = ["T201"]
+"tests/library/test_retry.py" = ["B904", "N818"]
 
 [tool.ruff.lint]
 extend-select = [

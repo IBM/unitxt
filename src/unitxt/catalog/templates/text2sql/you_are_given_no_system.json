@@ -1,0 +1,10 @@
+{
+    "__type__": "input_output_template",
+    "input_format": "You are given the following SQL schema\n\n```sql\n{db}\n```\n\n{utterance}\n",
+    "instruction": "",
+    "target_prefix": "",
+    "output_format": "{query}",
+    "postprocessors": [
+        "processors.text2sql.get_sql"
+    ]
+}

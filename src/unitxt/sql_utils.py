@@ -275,8 +275,15 @@ class Cache:
 
         logger.info(f"Cache miss for key: {key}. Computing value...")
         result = compute_fn()
-        self.cache[key] = result
-        logger.info(f"Stored result in cache for key: {key}")
+
+        if result and not (
+            isinstance(result, tuple) and len(result) == 2 and result[0] is None
+        ):
+            self.cache[key] = result
+            logger.info(f"Stored result in cache for key: {key}")
+        else:
+            logger.info(f"None result. Bypassing caching for key: {key}")
+
         return result
 
     async def async_get_or_set(self, key, compute_fn, no_cache=False, refresh=False):
@@ -494,7 +501,7 @@ class RemoteDatabaseConnector(DatabaseConnector):
 
         schema_text = ""
         for table in schema["tables"]:
-            schema_text += f"Table: {table['table_name']} has columns: {[col['column_name'] for col in table['columns']]}\n"
+            schema_text += f"Table: {table['name'] if 'name' in table else table['table_name']} has columns: {[col['name'] if 'name' in col else col['column_name'] for col in table['columns']]}\n"
 
         return schema_text
 

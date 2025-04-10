@@ -2,8 +2,13 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "glue",
-        "name": "stsb"
+        "path": "nyu-mll/glue",
+        "name": "stsb",
+        "splits": [
+            "train",
+            "validation",
+            "test"
+        ]
     },
     "preprocess_steps": [
         {

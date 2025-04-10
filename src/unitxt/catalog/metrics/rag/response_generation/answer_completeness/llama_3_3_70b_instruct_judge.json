@@ -3,7 +3,8 @@
     "inference_engine": {
         "__type__": "cross_provider_inference_engine",
         "model": "llama-3-3-70b-instruct",
-        "max_tokens": 1024
+        "max_tokens": 1024,
+        "temperature": 0
     },
     "criteria": {
         "__type__": "criteria_with_options",

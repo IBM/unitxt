@@ -9,6 +9,7 @@ from typing import (
 
 from .operators import FieldOperator, InstanceOperator
 from .settings_utils import get_settings
+from .utils import retry_connection_with_exponential_backoff
 
 settings = get_settings()
 
@@ -50,6 +51,7 @@ class TokensSlice(FieldOperator):
 
     _requirements_list = ["transformers"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer
