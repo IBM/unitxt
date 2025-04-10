@@ -1,13 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "AmazonScience/massive",
         "name": "fa-IR"
     },
     "preprocess_steps": [
         {
-            "__type__": "map_instance_values",
+            "__type__": "unitxt.operators.MapInstanceValues",
             "mappers": {
                 "intent": {
                     "0": "datetime_query",
@@ -74,14 +74,14 @@
             }
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "utt": "text",
                 "intent": "label"
             }
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "classes": [
                     "datetime_query",

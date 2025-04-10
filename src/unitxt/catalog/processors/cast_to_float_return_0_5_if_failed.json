@@ -1,9 +1,9 @@
 {
-    "__type__": "post_process",
+    "__type__": "unitxt.processors.PostProcess",
     "process_references": true,
     "process_prediction": true,
     "operator": {
-        "__type__": "cast",
+        "__type__": "unitxt.operators.Cast",
         "to": "float",
         "failure_default": 0.5
     }

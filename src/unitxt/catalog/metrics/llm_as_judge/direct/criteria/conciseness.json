@@ -1,15 +1,15 @@
 {
-    "__type__": "criteria_with_options",
+    "__type__": "unitxt.llm_as_judge_constants.CriteriaWithOptions",
     "name": "conciseness",
     "description": "Is the response concise and to the point?",
     "options": [
         {
-            "__type__": "criteria_option",
+            "__type__": "unitxt.llm_as_judge_constants.CriteriaOption",
             "name": "Yes",
             "description": "The response is short, succinct and directly addresses the point at hand."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": "unitxt.llm_as_judge_constants.CriteriaOption",
             "name": "No",
             "description": "The response lacks brevity and clarity, failing to directly address the point at hand."
         }

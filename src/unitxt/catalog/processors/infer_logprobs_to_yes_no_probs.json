@@ -1,8 +1,8 @@
 {
-    "__type__": "sequential_operator",
+    "__type__": "unitxt.operator.SequentialOperator",
     "steps": [
         {
-            "__type__": "infer_dicts_to_binary_logprobs",
+            "__type__": "unitxt.processors.InferDictsToBinaryLogprobs",
             "neg_class_name": "No",
             "pos_class_name": "Yes",
             "num_logprobs_to_take": 3,

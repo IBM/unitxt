@@ -1,5 +1,5 @@
 {
-    "__type__": "split_random_mix",
+    "__type__": "unitxt.splitters.SplitRandomMix",
     "mix": {
         "train": "train[99%]",
         "validation": "train[1%]",

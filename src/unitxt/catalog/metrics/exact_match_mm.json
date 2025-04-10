@@ -1,4 +1,4 @@
 {
-    "__type__": "exact_match_mm",
+    "__type__": "unitxt.metrics.ExactMatchMM",
     "n_resamples": null
 }

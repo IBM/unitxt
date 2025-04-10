@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.inference import (
     GenericInferenceEngine,
     IbmGenAiInferenceEngine,
-    IbmGenAiInferenceEngineParams,
+    IbmGenAiInferenceEngineParamsMixin,
 )
 from unitxt.llm_as_judge import LLMAsJudge
 
@@ -13,7 +13,7 @@ inference_models = {
         "model_name": "llama370binstruct",
         "inference_model": IbmGenAiInferenceEngine(
             model_name="meta-llama/llama-3-70b-instruct",
-            parameters=IbmGenAiInferenceEngineParams(max_new_tokens=256),
+            parameters=IbmGenAiInferenceEngineParamsMixin(max_new_tokens=256),
         ),
     },
     "generic_inference_engine": {

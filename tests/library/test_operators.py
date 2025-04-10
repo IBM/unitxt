@@ -258,17 +258,19 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
+    class ExpandJustForCoverage(FieldOperator):
+        def process_value(self, value: Any) -> Any:
+            super().process_value(value)
+            pass
+    class ExpandJustForCoverage2(FieldOperator):
+        def process_value(self, value: Any) -> Any:
+            return str(value).upper()
+
+
     def test_field_operator(self):
-        class ExpandJustForCoverage(FieldOperator):
-            def process_value(self, value: Any) -> Any:
-                super().process_value(value)
-                pass
 
-        ExpandJustForCoverage(field_to_field={"from": "to"}).process_value(2)
+        TestOperators.ExpandJustForCoverage(field_to_field={"from": "to"}).process_value(2)
 
-        class ExpandJustForCoverage2(FieldOperator):
-            def process_value(self, value: Any) -> Any:
-                return str(value).upper()
 
         inputs = [
             {"a": "imagine", "b": ["there's", "no", "heaven"]},
@@ -289,7 +291,7 @@ class TestOperators(UnitxtTestCase):
         ]
 
         check_operator(
-            operator=ExpandJustForCoverage2(
+            operator=TestOperators.ExpandJustForCoverage2(
                 field_to_field=[["b", "B"]], process_every_value=True
             ),
             inputs=inputs,

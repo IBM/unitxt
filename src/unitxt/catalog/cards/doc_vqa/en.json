@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "cmarkea/doc-vqa",
         "data_classification_policy": [
             "public"
@@ -9,36 +9,36 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "shuffle"
+            "__type__": "unitxt.operators.Shuffle"
         },
         "splitters.small_no_dev",
         {
-            "__type__": "explode",
+            "__type__": "unitxt.collections_operators.Explode",
             "field": "qa/en",
             "to_field": "pair"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "pair/question",
             "to_field": "question"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "pair/answer",
             "to_field": "answers"
         },
         {
-            "__type__": "wrap",
+            "__type__": "unitxt.collections_operators.Wrap",
             "field": "answers",
             "inside": "list"
         },
         {
-            "__type__": "to_image",
+            "__type__": "unitxt.image_operators.ToImage",
             "field": "image",
             "to_field": "context"
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "context_type": "image"
             }
