@@ -55,12 +55,12 @@ To manipulate a single field, inherit from :class:`FieldOperator <operator.Field
 
 .. code-block:: python
 
-    from unitxt.operator import FieldOperator
+    from unitxt.operators import FieldOperator
 
     class AddNumber(FieldOperator):
         number: float
 
-        def process(self, value):
+        def process_value(self, value):
             return value + self.number
 
 **Explanation**: This class adds a specified number to the input value. It inherits from `FieldOperator` which is designed to operate on a single field.
