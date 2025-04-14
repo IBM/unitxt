@@ -15,6 +15,7 @@ from datasets import Dataset as HFDataset
 
 from . import evaluate, get_logger, load_dataset
 from .artifact import UnitxtArtifactNotFoundError
+from .benchmark import Benchmark
 
 # Use HFAutoModelInferenceEngine for local models
 from .inference import (
@@ -24,6 +25,7 @@ from .inference import (
 )
 from .metric_utils import EvaluationResults
 from .settings_utils import settings
+from .standard import DatasetRecipe
 
 # Define logger early so it can be used in initial error handling
 # Basic config for initial messages, will be reconfigured in main()
@@ -90,7 +92,6 @@ def try_parse_json(value: str) -> Union[str, dict, None]:
         return value  # Return as string if not JSON-like
     except Exception as e:
         logger.error(f"Error parsing argument '{value}': {e}")
-        # Fixed B904: Added 'from e'
         raise argparse.ArgumentTypeError(f"Could not parse argument: '{value}'") from e
 
 
@@ -108,9 +109,9 @@ def setup_parser() -> argparse.ArgumentParser:
         dest="tasks",  # Explicitly set the attribute name to 'tasks'
         type=partial(str.split, sep="+"),  # Use the custom function for type conversion
         required=True,
-        help="Semicolon-separated list of Unitxt task/dataset identifier strings.\n"
+        help="Plus-separated (+) list of Unitxt task/dataset identifier strings.\n"
         "Each task format: 'card=<card_ref>,template=<template_ref>,...'\n"
-        "Example: 'card=cards.mmlu,t=t.mmlu.all;card=cards.hellaswag,t=t.hellaswag.no'",
+        "Example: 'card=cards.mmlu,t=t.mmlu.all+card=cards.hellaswag,t=t.hellaswag.no'",
     )
 
     parser.add_argument(
@@ -303,7 +304,7 @@ def configure_unitxt_settings(args: argparse.Namespace):
     return settings.context(**unitxt_settings_dict)
 
 
-def load_data(args: argparse.Namespace) -> HFDataset:
+def cli_load_dataset(args: argparse.Namespace) -> HFDataset:
     """Loads the dataset based on command line arguments.
 
     Args:
@@ -326,11 +327,7 @@ def load_data(args: argparse.Namespace) -> HFDataset:
     for task_str in args.tasks:
         dataset_args = task_str_to_dataset_args(task_str, args)
 
-        from .standard import DatasetRecipe
-
         benchmark_subsets[task_str] = DatasetRecipe(**dataset_args)
-
-    from .benchmark import Benchmark
 
     benchmark = Benchmark(subsets=benchmark_subsets)
 
@@ -400,7 +397,7 @@ def prepare_kwargs(kwargs: dict) -> Dict[str, Any]:
             f"Could not parse kwargs '{kwargs}' as JSON or key-value pairs. Treating as empty."
         )
 
-    logger.info(f"Using kwags: {kwargs_dict}")
+    logger.info(f"Using kwargs: {kwargs_dict}")
     return kwargs_dict
 
 
@@ -527,7 +524,7 @@ def run_evaluation(predictions: List[Any], dataset: HFDataset) -> EvaluationResu
         dataset (HFDataset): The dataset containing references and other data.
 
     Returns:
-        List[Dict[str, Any]]: The evaluated dataset (list of instances with scores).
+        EvaluationResults: The evaluated dataset (list of instances with scores).
 
     Raises:
         RuntimeError: If evaluation returns no results or an unexpected type.
@@ -545,7 +542,7 @@ def run_evaluation(predictions: List[Any], dataset: HFDataset) -> EvaluationResu
             logger.error("Evaluation returned no results (empty list/None).")
             # Raise an error as this indicates a problem in the evaluation process
             raise RuntimeError("Evaluation returned no results.")
-        if not isinstance(evaluation_results, list):
+        if not isinstance(evaluation_results, EvaluationResults):
             logger.error(
                 f"Evaluation returned unexpected type: {type(evaluation_results)}. Expected list."
             )
@@ -662,7 +659,7 @@ def prepend_timestamp_to_path(original_path, timestamp):
 def _save_results_to_disk(
     args: argparse.Namespace,
     global_scores: Dict[str, Any],
-    all_samples_data: List[Dict[str, Any]],
+    all_samples_data: Dict[str, List[Dict[str, Any]]],
     results_path: str,
     samples_path: str,
 ) -> None:
@@ -671,7 +668,7 @@ def _save_results_to_disk(
     Args:
         args (argparse.Namespace): Parsed command-line arguments.
         global_scores (Dict[str, Any]): Dictionary of global scores.
-        all_samples_data (List[Dict[str, Any]]): List of processed sample data.
+        all_samples_data (Dict[str, List[Dict[str, Any]]]): List of processed sample data.
         results_path (str): Path to save the summary results JSON file.
         samples_path (str): Path to save the detailed samples JSON file.
     """
@@ -728,7 +725,6 @@ def _save_results_to_disk(
             json.dump(results_summary, f, indent=4, ensure_ascii=False)
     except OSError as e:
         logger.error(f"Failed to write results summary file {results_path}: {e}")
-        # Decide if this is fatal or not. For now, just log.
     except TypeError as e:
         logger.error(
             f"Failed to serialize results summary to JSON: {e}. Check data types."
@@ -821,7 +817,7 @@ def main():
 
         # Apply unitxt settings within a context manager
         with configure_unitxt_settings(args):
-            test_dataset = load_data(args)
+            test_dataset = cli_load_dataset(args)
             model_args_dict = prepare_kwargs(args.model_args)
             gen_kwargs_dict = prepare_kwargs(args.gen_kwargs)
             chat_kwargs_dict = prepare_kwargs(args.chat_template_kwargs)
