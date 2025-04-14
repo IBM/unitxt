@@ -1,19 +1,16 @@
 # test_evaluate_cli.py
 import argparse
+import json
 import os
 import unittest
 from unittest.mock import (
     MagicMock,
+    Mock,
     call,
     patch,
 )
 
-# Assuming evaluate_cli is in the same directory or package
-# If evaluate_cli.py is in the parent directory:
-# import sys
-# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-# from unitxt import evaluate_cli as cli
-# If evaluate_cli is part of an installed package:
+from datasets import Dataset as HFDataset
 from unitxt import evaluate_cli as cli
 
 
@@ -217,199 +214,329 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
             del os.environ["HF_DATASETS_CACHE"]
 
     # --- Data Loading Tests ---
-    @patch.object(cli, "load_dataset")
-    def test_load_data(self, mock_load_dataset):
-        """Test data loading function with limit."""
-        mock_dataset = MagicMock(spec=MockHFDataset)  # Use spec for better mocking
-        mock_load_dataset.return_value = mock_dataset
+    # load_dataset is still patched in evaluate_cli as it's imported there at module level.
+    @patch("unitxt.evaluate_cli.load_dataset")
+    @patch("unitxt.benchmark.Benchmark")
+    @patch("unitxt.standard.DatasetRecipe")
+    @patch.object(cli, "logger")
+    def test_load_data(
+        self, mock_logger, mock_datasetdecipe, mock_benchmark, mock_load_dataset
+    ):
+        """Test data loading argument parsing and internal calls."""
+        # --- Arrange ---
+        # (Mock setup remains the same)
+        mock_recipe_instance = MagicMock(name="MockRecipeInstance")
+        mock_benchmark_instance = MagicMock(name="MockBenchmarkInstance")
+        mock_final_dataset = MagicMock(spec=HFDataset, name="MockFinalDataset")
+
+        mock_datasetdecipe.return_value = mock_recipe_instance
+        mock_benchmark.return_value = mock_benchmark_instance
+        mock_load_dataset.return_value = mock_final_dataset
 
         args = argparse.Namespace(
             tasks=["card=c,template=t"],
             split="validation",
             limit=5,
-            num_fewshots=None,  # Explicitly None
+            num_fewshots=None,
             apply_chat_template=True,
         )
-        with patch.object(cli, "logger"):  # Mock logger
-            dataset = cli.load_data(args)
 
-        self.assertEqual(dataset, mock_dataset, "Should return the loaded dataset.")
+        expected_dataset_args = {
+            "card": "c",
+            "template": "t",
+            "max_validation_instances": 5,
+            "format": "formats.chat_api",
+        }
+
+        expected_benchmark_subsets = {"card=c,template=t": mock_recipe_instance}
+
+        # --- Act ---
+        # (Function call remains the same)
+        returned_dataset = cli.cli_load_dataset(args)
+
+        # --- Assert ---
+        # (Assertions remain the same - they check the *logic* after import)
+        mock_datasetdecipe.assert_called_once_with(**expected_dataset_args)
+        mock_benchmark.assert_called_once_with(subsets=expected_benchmark_subsets)
         mock_load_dataset.assert_called_once_with(
-            card="c",
-            template="t",
-            max_validation_instances=5,
-            format="formats.chat_api",
-            split="validation",
+            mock_benchmark_instance, split="validation"
+        )
+        self.assertEqual(
+            returned_dataset,
+            mock_final_dataset,
+            "Should return the dataset from load_dataset.",
         )
 
-    # --- NEW TEST: Test num_fewshots argument ---
-    @patch.object(cli, "load_dataset")
-    def test_load_data_with_num_fewshots(self, mock_load_dataset):
-        """Test data loading function with num_fewshots argument."""
-        mock_dataset = MagicMock(spec=MockHFDataset)
-        mock_load_dataset.return_value = mock_dataset
+    # --- Test: num_fewshots and limit arguments together ---
+    @patch("unitxt.evaluate_cli.load_dataset")
+    @patch("unitxt.benchmark.Benchmark")
+    @patch("unitxt.standard.DatasetRecipe")
+    @patch.object(cli, "logger")  # Keep logger mock
+    def test_load_data_with_num_fewshots_and_limit(
+        self, mock_logger, mock_datasetdecipe, mock_benchmark, mock_load_dataset
+    ):
+        """Test data loading with num_fewshots and limit arguments."""
+        # --- Arrange ---
+        mock_recipe_instance = MagicMock(name="MockRecipeInstance")
+        mock_benchmark_instance = MagicMock(name="MockBenchmarkInstance")
+        # Use spec=HFDataset if needed, ensure MockHFDataset is defined or use HFDataset
+        mock_final_dataset = MagicMock(spec=HFDataset, name="MockFinalDataset")
 
-        args = argparse.Namespace(
-            tasks=["card=c,template=t"],
-            split="test",
-            limit=None,  # No limit
-            num_fewshots=3,  # Set num_fewshots
-            apply_chat_template=True,
-        )
-        with patch.object(cli, "logger"):  # Mock logger
-            dataset = cli.load_data(args)
-
-        self.assertEqual(dataset, mock_dataset, "Should return the loaded dataset.")
-        # Check that num_demos is appended correctly
-        mock_load_dataset.assert_called_once_with(
-            card="c",
-            template="t",
-            num_demos=3,
-            demos_taken_from="train",
-            demos_pool_size=-1,
-            demos_removed_from_data=True,
-            format="formats.chat_api",
-            split="test",
-        )
-
-    # --- NEW TEST: Test num_fewshots and limit arguments together ---
-    @patch.object(cli, "load_dataset")
-    def test_load_data_with_num_fewshots_and_limit(self, mock_load_dataset):
-        """Test data loading function with both num_fewshots and limit arguments."""
-        mock_dataset = MagicMock(spec=MockHFDataset)
-        mock_load_dataset.return_value = mock_dataset
+        mock_datasetdecipe.return_value = mock_recipe_instance
+        mock_benchmark.return_value = mock_benchmark_instance
+        mock_load_dataset.return_value = mock_final_dataset
 
         args = argparse.Namespace(
             tasks=["card=c,template=t"],
             split="train",
             limit=10,  # Set limit
-            num_fewshots=5,  # Set num_fewshots,
-            apply_chat_template=True,
+            num_fewshots=5,  # Set num_fewshots
+            apply_chat_template=True,  # Assume True based on previous test
+            # Add other necessary args if task_str_to_dataset_args uses them
         )
-        with patch.object(cli, "logger"):  # Mock logger
-            dataset = cli.load_data(args)
 
-        self.assertEqual(dataset, mock_dataset, "Should return the loaded dataset.")
-        # Check that both loader_limit and num_demos are appended correctly
+        # Calculate expected arguments for DatasetRecipe
+        # based on task_str_to_dataset_args logic
+        expected_dataset_args = {
+            "card": "c",
+            "template": "t",
+            "max_train_instances": 10,  # From --limit and --split
+            "num_demos": 5,  # From --num_fewshots
+            "demos_taken_from": "train",  # Added when num_demos is set
+            "demos_pool_size": -1,  # Added when num_demos is set
+            "demos_removed_from_data": True,  # Added when num_demos is set
+            "format": "formats.chat_api",  # From --apply_chat_template
+        }
+
+        expected_benchmark_subsets = {"card=c,template=t": mock_recipe_instance}
+
+        # --- Act ---
+        returned_dataset = cli.cli_load_dataset(args)
+
+        # --- Assert ---
+        # 1. Check DatasetRecipe call
+        mock_datasetdecipe.assert_called_once_with(**expected_dataset_args)
+
+        # 2. Check Benchmark call
+        mock_benchmark.assert_called_once_with(subsets=expected_benchmark_subsets)
+
+        # 3. Check load_dataset call
         mock_load_dataset.assert_called_once_with(
-            card="c",
-            template="t",
-            max_train_instances=10,
-            num_demos=5,
-            demos_taken_from="train",
-            demos_pool_size=-1,
-            demos_removed_from_data=True,
-            format="formats.chat_api",
-            split="train",
+            mock_benchmark_instance,
+            split="train",  # Use the split from args
         )
 
-    # --- Model Arg Prep ---
-    def test_prepare_model_args(self):
-        """Test model argument preparation."""
-        args_dict = argparse.Namespace(model_args={"key": "value", "num": 1})
-        with patch.object(cli, "logger"):  # Mock logger
-            res = cli.prepare_model_args(args_dict)
-        self.assertEqual(res, {"key": "value", "num": 1}, "Should handle dict input.")
-
-        # Test with parsed key-value string
-        args_kv_parsed = argparse.Namespace(
-            model_args=cli.try_parse_json("key=value,num=1")
-        )
-        with patch.object(cli, "logger"):
-            res_parsed = cli.prepare_model_args(args_kv_parsed)
+        # 4. Check final return value
         self.assertEqual(
-            res_parsed, {"key": "value", "num": 1}, "Should handle parsed k=v."
+            returned_dataset,
+            mock_final_dataset,
+            "Should return the dataset from load_dataset.",
         )
 
-        args_empty = argparse.Namespace(model_args={})
-        with patch.object(cli, "logger"):
-            res_empty = cli.prepare_model_args(args_empty)
+    # --- Test: prepare_kwargs function ---
+    def test_prepare_kwargs(self):  # Renamed test function for clarity
+        """Test model/gen/chat argument preparation (prepare_kwargs)."""
+        # Test with dictionary input
+        model_args_dict = {"key": "value", "num": 1}
+        with patch.object(cli, "logger") as mock_logger_dict:
+            # Pass the dictionary directly, as prepare_kwargs expects
+            res = cli.prepare_kwargs(model_args_dict)
+        self.assertEqual(
+            res, {"key": "value", "num": 1}, "Should handle dict input directly."
+        )
+        # Check logger info call (optional, but good practice)
+        mock_logger_dict.info.assert_called_with(f"Using kwargs: {model_args_dict}")
+
+        # Test with parsed key-value string result (which is a dict)
+        kv_parsed_dict = cli.try_parse_json("key=value,num=1,flag=true")
+        with patch.object(cli, "logger") as mock_logger_kv:
+            # Pass the resulting dictionary
+            res_parsed = cli.prepare_kwargs(kv_parsed_dict)
+        self.assertEqual(
+            res_parsed,
+            {"key": "value", "num": 1, "flag": True},
+            "Should handle parsed k=v dict.",
+        )
+        mock_logger_kv.info.assert_called_with(f"Using kwargs: {kv_parsed_dict}")
+
+        # Test with empty dict input
+        empty_args_dict = {}
+        with patch.object(cli, "logger") as mock_logger_empty:
+            res_empty = cli.prepare_kwargs(empty_args_dict)
         self.assertEqual(res_empty, {}, "Should handle empty dict.")
+        mock_logger_empty.info.assert_called_with("Using kwargs: {}")
 
-        # Test with unparsable string (should log warning and return empty dict)
-        args_unparsable = argparse.Namespace(model_args="this is not json or kv")
-        with patch.object(cli, "logger") as mock_logger:
-            res_unparsable = cli.prepare_model_args(args_unparsable)
+        # Test with input that is not a dict (e.g., a string that try_parse_json didn't convert)
+        # Note: try_parse_json handles kv strings, so this simulates passing a non-dict value directly
+        unparsable_string = "this is not json or kv"
+        with patch.object(cli, "logger") as mock_logger_unparsable:
+            res_unparsable = cli.prepare_kwargs(unparsable_string)
+
+        # According to prepare_kwargs logic, it should log a warning and return {}
         self.assertEqual(
-            res_unparsable, {}, "Should return empty dict for unparsable string."
+            res_unparsable, {}, "Should return empty dict for non-dict input."
         )
-        mock_logger.warning.assert_called_once()
+        # Check the warning log
+        mock_logger_unparsable.warning.assert_called_once()
         self.assertIn(
-            "Could not parse --model_args", mock_logger.warning.call_args[0][0]
+            f"Could not parse kwargs '{unparsable_string}' as JSON or key-value pairs. Treating as empty.",
+            mock_logger_unparsable.warning.call_args[0][0],
         )
+        # Check the info log (it should log the empty dict it's returning)
+        mock_logger_unparsable.info.assert_called_with("Using kwargs: {}")
+
+        # Test with None input
+        with patch.object(cli, "logger") as mock_logger_none:
+            res_none = cli.prepare_kwargs(None)
+        self.assertEqual(res_none, {}, "Should return empty dict for None input.")
+        # No warning expected for None
+        mock_logger_none.warning.assert_not_called()
+        mock_logger_none.info.assert_called_with("Using kwargs: {}")
 
     # --- Inference Engine Initialization Tests ---
 
-    @patch.object(cli, "HFAutoModelInferenceEngine")
-    def test_initialize_inference_engine_hf_success(self, mock_hf_engine):
+    # Patch HFAutoModelInferenceEngine where it's looked up (evaluate_cli module)
+    @patch("unitxt.evaluate_cli.HFAutoModelInferenceEngine")
+    @patch.object(cli, "logger")  # Keep logger mock separate
+    def test_initialize_inference_engine_hf_success(
+        self, mock_logger, mock_hf_engine
+    ):  # Correct order of args
         """Test initializing HF engine successfully."""
-        args = argparse.Namespace(model="hf")
-        # Use copy() to avoid modification by the function
+        # --- Arrange ---
+        # Add batch_size to the args Namespace, mimicking argparse default
+        args = argparse.Namespace(model="hf", batch_size=1)
+
+        # Use copy() to avoid modification by the function if needed, good practice
         model_args_dict = {
             "pretrained": "model_id",
             "device": "cuda:0",
             "torch_dtype": "bfloat16",
         }
-        with patch.object(cli, "logger"):
-            engine = cli.initialize_inference_engine(args, model_args_dict.copy())
+        # Define expected arguments passed to the engine constructor
+        expected_engine_args = {
+            "model_name": "model_id",
+            "device": "cuda:0",
+            "torch_dtype": "bfloat16",
+            "batch_size": 1,  # <--- Expect batch_size to be added
+            "chat_kwargs_dict": None,  # Expect chat_kwargs_dict from the call
+        }
 
+        # --- Act ---
+        # Pass None or an empty dict for chat_kwargs_dict as in the original call
+        engine = cli.initialize_inference_engine(
+            args, model_args_dict.copy(), chat_kwargs_dict=None
+        )
+
+        # --- Assert ---
+        # Check the engine type (optional, but confirms mock worked)
         self.assertIsInstance(
-            engine, MagicMock, "Should return a mock engine instance."
-        )
-        # Check that 'pretrained' was removed and passed correctly, others passed as kwargs
-        mock_hf_engine.assert_called_once_with(
-            model_name="model_id", device="cuda:0", torch_dtype="bfloat16"
+            engine, MagicMock, "Should return the mock engine instance."
         )
 
-    @patch.object(cli, "HFAutoModelInferenceEngine")
-    def test_initialize_inference_engine_hf_missing_pretrained(self, mock_hf_engine):
+        # Check that HFAutoModelInferenceEngine was called correctly
+        mock_hf_engine.assert_called_once_with(**expected_engine_args)
+
+        # (Optional) Check specific logger calls if important
+        # mock_logger.info.assert_any_call("Initializing HFAutoModelInferenceEngine for model: model_id")
+        # mock_logger.info.assert_any_call(f"HFAutoModelInferenceEngine args: {expected_engine_args}")
+
+    @patch("unitxt.evaluate_cli.HFAutoModelInferenceEngine")  # Patch where imported
+    @patch.object(cli, "logger")  # Keep logger mock separate
+    def test_initialize_inference_engine_hf_missing_pretrained(
+        self, mock_logger, mock_hf_engine
+    ):  # Args order corrected
         """Test initializing HF engine fails if 'pretrained' is missing."""
-        args = argparse.Namespace(model="hf")
+        # --- Arrange ---
+        # Add batch_size for completeness, though not strictly needed before the expected error
+        args = argparse.Namespace(model="hf", batch_size=1)
         model_args_dict = {"device": "cpu"}  # Missing 'pretrained'
+
+        # --- Act & Assert ---
         with self.assertRaisesRegex(
             ValueError,
-            "'pretrained' is required",
-            msg="Should raise ValueError if pretrained is missing.",
+            "'pretrained' is required",  # Check if message matches exactly
+            # Optional msg if assertion fails:
+            # msg="Should raise ValueError if pretrained is missing.",
         ):
-            with patch.object(cli, "logger"):
-                cli.initialize_inference_engine(args, model_args_dict.copy())
-        mock_hf_engine.assert_not_called()
+            # Provide the missing chat_kwargs_dict argument
+            cli.initialize_inference_engine(
+                args, model_args_dict.copy(), chat_kwargs_dict=None
+            )
 
-    @patch.object(cli, "CrossProviderInferenceEngine")
-    def test_initialize_inference_engine_cross_provider_success(self, mock_cp_engine):
+        # Assert the engine was not called because the error should happen first
+        mock_hf_engine.assert_not_called()
+        # (Optional) Assert logger error call
+        # mock_logger.error.assert_called_once_with(...)
+
+    # Correct patch target and added chat_kwargs_dict to call
+    @patch("unitxt.evaluate_cli.CrossProviderInferenceEngine")  # Patch where imported
+    @patch.object(cli, "logger")  # Keep logger mock separate
+    def test_initialize_inference_engine_cross_provider_success(
+        self, mock_logger, mock_cp_engine
+    ):  # Args order corrected
         """Test initializing CrossProvider engine successfully."""
-        args = argparse.Namespace(model="cross_provider")
+        # --- Arrange ---
+        args = argparse.Namespace(model="cross_provider")  # batch_size not needed here
         model_args_dict = {
             "model_name": "provider/model",
             "max_tokens": 512,
             "temperature": 0.8,
         }
-        with patch.object(cli, "logger"):
-            engine = cli.initialize_inference_engine(args, model_args_dict.copy())
+        # Define expected arguments for the engine constructor
+        expected_engine_args = {
+            "model": "provider/model",  # Note: passed as 'model', not 'model_name'
+            "max_tokens": 512,
+            "temperature": 0.8,
+        }
 
+        # --- Act ---
+        # Provide the missing chat_kwargs_dict argument
+        engine = cli.initialize_inference_engine(
+            args,
+            model_args_dict.copy(),
+            chat_kwargs_dict=None,  # Added chat_kwargs_dict
+        )
+
+        # --- Assert ---
         self.assertIsInstance(
             engine, MagicMock, "Should return a mock engine instance."
         )
-        # Check 'model_name' was removed and passed as 'model', others as kwargs
-        mock_cp_engine.assert_called_once_with(
-            model="provider/model", max_tokens=512, temperature=0.8
-        )
+        # Check the engine constructor call
+        mock_cp_engine.assert_called_once_with(**expected_engine_args)
+        # (Optional) Check logger calls
+        # mock_logger.info.assert_any_call(...)
 
-    @patch.object(cli, "CrossProviderInferenceEngine")
+    # Correct patch target and added chat_kwargs_dict to call
+    @patch("unitxt.evaluate_cli.CrossProviderInferenceEngine")  # Patch where imported
+    @patch.object(cli, "logger")  # Keep logger mock separate
     def test_initialize_inference_engine_cross_provider_missing_model_name(
-        self, mock_cp_engine
+        self,
+        mock_logger,
+        mock_cp_engine,  # Args order corrected
     ):
         """Test initializing CrossProvider engine fails if 'model_name' is missing."""
-        args = argparse.Namespace(model="cross_provider")
+        # --- Arrange ---
+        args = argparse.Namespace(model="cross_provider")  # batch_size not needed
         model_args_dict = {"max_tokens": 100}  # Missing 'model_name'
+
+        # --- Act & Assert ---
         with self.assertRaisesRegex(
             ValueError,
-            "'model_name' is required",
-            msg="Should raise ValueError if model_name is missing.",
+            "'model_name' is required",  # Check if message matches exactly
+            # Optional msg if assertion fails:
+            # msg="Should raise ValueError if model_name is missing.",
         ):
-            with patch.object(cli, "logger"):
-                cli.initialize_inference_engine(args, model_args_dict.copy())
+            # Provide the missing chat_kwargs_dict argument
+            cli.initialize_inference_engine(
+                args,
+                model_args_dict.copy(),
+                chat_kwargs_dict=None,  # Added chat_kwargs_dict
+            )
+
+        # Assert the engine was not called
         mock_cp_engine.assert_not_called()
+        # (Optional) Assert logger error call
+        # mock_logger.error.assert_called_once_with(...)
 
     # --- Inference Execution ---
     # Patch the base class method if engines inherit from it, or mock the instance directly
@@ -551,248 +678,321 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
 
     # --- Result Processing/Saving Tests ---
 
+    @patch("unitxt.evaluate_cli._save_results_to_disk")
     @patch.object(cli, "logger")
-    def test_extract_scores_and_samples_success(self, mock_logger):
-        """Test extracting scores and samples from evaluated data."""
-        evaluated_data = [
+    def test_process_and_save_results_success(self, mock_logger, mock_save_results):
+        """Test process_and_save_results with typical valid input."""
+        # --- Arrange ---
+        # Mock args (only need attributes used by _save_results_to_disk if any, e.g. log_samples)
+        mock_args = argparse.Namespace(log_samples=True)  # Assume log_samples is used
+
+        # Mock EvaluationResults object
+        mock_eval_results = Mock(name="MockEvaluationResults")
+
+        # Mock subset scores (needs a .summary attribute for logging)
+        mock_subset_scores = Mock(name="MockSubsetScores")
+        mock_subset_scores.summary = "Overall Score Summary"
+        mock_eval_results.subsets_scores = mock_subset_scores
+
+        # Mock instance scores
+        mock_eval_results.instance_scores = [
             {
-                "source": "s1",
-                "prediction": "p1",
-                "processed_prediction": "p1",
-                "references": ["r1"],
-                "processed_references": ["r1"],
-                "score": {"global": {"acc": 1.0, "f1": 0.9}, "instance": {"acc": 1.0}},
-                "task_data": {"id": 1},
-                "other_key": "value",  # Should be ignored in sample output unless added
+                "subset": ["task1"],
+                "score": 1.0,
+                "postprocessors": ["pp1"],
+                "other_data": "a",
             },
             {
-                "source": "s2",
-                "prediction": "p2",
-                "processed_prediction": "p2",
-                "references": ["r2a", "r2b"],
-                "processed_references": ["r2a", "r2b"],
-                "score": {"global": {"acc": 1.0, "f1": 0.9}, "instance": {"acc": 0.0}},
-                "task_data": {"id": 2},
+                "subset": ["task1"],
+                "score": 0.5,
+                "postprocessors": ["pp1"],
+                "other_data": "b",
+            },
+            {
+                "subset": ["task2"],
+                "score": 0.8,
+                "postprocessors": ["pp2"],
+                "other_data": "c",
             },
         ]
-        global_scores, samples = cli._extract_scores_and_samples(evaluated_data)
 
-        self.assertEqual(
-            global_scores, {"acc": 1.0, "f1": 0.9}, "Should extract global scores."
-        )
-        self.assertEqual(len(samples), 2, "Should extract correct number of samples.")
-        # Check structure of the first sample
-        expected_sample_0 = {
-            "index": 0,
-            "source": "s1",
-            "prediction": "p1",
-            "processed_prediction": "p1",
-            "references": ["r1"],
-            "processed_references": ["r1"],
-            "metrics": {"acc": 1.0},
-            "task_data": {"id": 1},
+        # Expected structure passed to _save_results_to_disk
+        expected_subset_instances = {
+            "task1": [
+                {
+                    "subset": ["task1"],
+                    "score": 1.0,
+                    "other_data": "a",
+                },  # 'postprocessors' removed
+                {
+                    "subset": ["task1"],
+                    "score": 0.5,
+                    "other_data": "b",
+                },  # 'postprocessors' removed
+            ],
+            "task2": [
+                {
+                    "subset": ["task2"],
+                    "score": 0.8,
+                    "other_data": "c",
+                },  # 'postprocessors' removed
+            ],
         }
-        self.assertEqual(
-            samples[0], expected_sample_0, "First sample structure mismatch."
+
+        results_path = "/fake/path/results.json"
+        samples_path = "/fake/path/samples.json"
+
+        # --- Act ---
+        cli.process_and_save_results(
+            mock_args, mock_eval_results, results_path, samples_path
         )
-        # Check structure of the second sample
-        expected_sample_1 = {
-            "index": 1,
-            "source": "s2",
-            "prediction": "p2",
-            "processed_prediction": "p2",
-            "references": ["r2a", "r2b"],
-            "processed_references": ["r2a", "r2b"],
-            "metrics": {"acc": 0.0},
-            "task_data": {"id": 2},
+
+        # --- Assert ---
+        # 1. Check summary logging
+        # Note: The code prepends a newline: logger.info(f"\n{subsets_scores.summary}")
+        mock_logger.info.assert_called_once_with("\nOverall Score Summary")
+
+        # 2. Check call to _save_results_to_disk
+        mock_save_results.assert_called_once_with(
+            mock_args,  # Pass args through
+            mock_subset_scores,  # Pass subsets_scores through
+            expected_subset_instances,  # Check the processed instance data
+            results_path,  # Pass path through
+            samples_path,  # Pass path through
+        )
+
+    @patch("unitxt.evaluate_cli._save_results_to_disk")
+    @patch.object(cli, "logger")
+    def test_process_and_save_results_empty_instances(
+        self, mock_logger, mock_save_results
+    ):
+        """Test process_and_save_results when instance_scores list is empty."""
+        # --- Arrange ---
+        mock_args = argparse.Namespace(log_samples=False)
+        mock_eval_results = Mock(name="MockEvaluationResults")
+        mock_subset_scores = Mock(name="MockSubsetScores")
+        mock_subset_scores.summary = "Summary With No Instances"
+        mock_eval_results.subsets_scores = mock_subset_scores
+        mock_eval_results.instance_scores = []  # Empty list
+
+        results_path = "/fake/path/results2.json"
+        samples_path = "/fake/path/samples2.json"
+
+        # Expected structure passed to _save_results_to_disk
+        expected_subset_instances = {}  # Should be an empty dict
+
+        # --- Act ---
+        cli.process_and_save_results(
+            mock_args, mock_eval_results, results_path, samples_path
+        )
+
+        # --- Assert ---
+        # 1. Check summary logging
+        mock_logger.info.assert_called_once_with("\nSummary With No Instances")
+
+        # 2. Check call to _save_results_to_disk
+        mock_save_results.assert_called_once_with(
+            mock_args,
+            mock_subset_scores,
+            expected_subset_instances,  # Expect empty dict here
+            results_path,
+            samples_path,
+        )
+
+    @patch("unitxt.evaluate_cli._save_results_to_disk")
+    @patch.object(cli, "logger")
+    def test_process_and_save_results_removes_postprocessors(
+        self, mock_logger, mock_save_results
+    ):
+        """Test that 'postprocessors' key is removed from instances."""
+        # --- Arrange ---
+        mock_args = argparse.Namespace(log_samples=True)
+        mock_eval_results = Mock(name="MockEvaluationResults")
+        mock_subset_scores = Mock(name="MockSubsetScores")
+        mock_subset_scores.summary = "Summary For Postprocessor Check"
+        mock_eval_results.subsets_scores = mock_subset_scores
+        # Instance score explicitly includes 'postprocessors'
+        mock_eval_results.instance_scores = [
+            {
+                "subset": ["taskA"],
+                "score": 1.0,
+                "postprocessors": ["some_processor"],
+                "data": "x",
+            }
+        ]
+
+        results_path = "/fake/path/results3.json"
+        samples_path = "/fake/path/samples3.json"
+
+        # Expected structure passed to _save_results_to_disk (no 'postprocessors')
+        expected_subset_instances = {
+            "taskA": [{"subset": ["taskA"], "score": 1.0, "data": "x"}]
         }
-        self.assertEqual(
-            samples[1], expected_sample_1, "Second sample structure mismatch."
+
+        # --- Act ---
+        cli.process_and_save_results(
+            mock_args, mock_eval_results, results_path, samples_path
         )
 
-        mock_logger.warning.assert_not_called()  # No warnings expected
+        # --- Assert ---
+        # 1. Check summary logging
+        mock_logger.info.assert_called_once_with("\nSummary For Postprocessor Check")
 
-    @patch.object(cli, "logger")
-    def test_extract_scores_and_samples_no_global(self, mock_logger):
-        """Test extraction when global scores key is missing."""
-        evaluated_data = [{"score": {"instance": {"acc": 1.0}}}]  # No 'global' key
-        global_scores, samples = cli._extract_scores_and_samples(evaluated_data)
-
-        self.assertEqual(global_scores, {}, "Global scores should be empty.")
-        self.assertEqual(len(samples), 1, "Should still extract samples.")
-        self.assertEqual(samples[0]["metrics"], {"acc": 1.0})
-        mock_logger.warning.assert_called_once()
-        self.assertIn(
-            "Could not automatically locate global scores",
-            mock_logger.warning.call_args[0][0],
-            "Should log warning about missing global scores.",
+        # 2. Check call to _save_results_to_disk, specifically the instance data
+        mock_save_results.assert_called_once_with(
+            mock_args,
+            mock_subset_scores,
+            expected_subset_instances,  # Verify the structure here
+            results_path,
+            samples_path,
+        )
+        # Optional: More detailed check on the structure passed if needed
+        call_args, call_kwargs = mock_save_results.call_args
+        passed_instances = call_args[2]  # Get the subset_instances dict
+        self.assertIn("taskA", passed_instances)
+        self.assertEqual(len(passed_instances["taskA"]), 1)
+        self.assertNotIn(
+            "postprocessors",
+            passed_instances["taskA"][0],
+            "'postprocessors' key should have been removed",
         )
 
-    @patch.object(cli, "logger")
-    def test_extract_scores_and_samples_empty_global(self, mock_logger):
-        """Test extraction when global scores dict is present but empty."""
-        evaluated_data = [
-            {"score": {"global": {}, "instance": {"acc": 1.0}}}
-        ]  # Empty global
-        global_scores, samples = cli._extract_scores_and_samples(evaluated_data)
+    # In TestUnitxtEvaluateCLI class:
+    # (Imports: datetime, json, sys, platform assumed present)
 
-        self.assertEqual(global_scores, {}, "Global scores should be empty.")
-        self.assertEqual(len(samples), 1, "Should still extract samples.")
-        mock_logger.warning.assert_called_once()
-        self.assertIn(
-            "Found 'score.global' key in first instance, but it was empty",
-            mock_logger.warning.call_args[0][0],
-            "Should log warning about empty global scores dict.",
-        )
-
-    @patch.object(cli, "logger")
-    def test_extract_scores_and_samples_empty_input(self, mock_logger):
-        """Test extraction with empty evaluated dataset."""
-        evaluated_data = []
-        global_scores, samples = cli._extract_scores_and_samples(evaluated_data)
-        self.assertEqual(global_scores, {})
-        self.assertEqual(samples, [])
-        mock_logger.warning.assert_called_once_with(
-            "Evaluated dataset is empty. No scores or samples to extract."
-        )
-
-    # Use unittest.mock.mock_open for file operations
     @patch("builtins.open", new_callable=unittest.mock.mock_open)
-    @patch.object(cli, "_get_unitxt_version", return_value="0.1.0")
-    @patch.object(cli, "_get_unitxt_commit_hash", return_value="bla")
-    @patch.object(cli, "_get_installed_packages", return_value={"pkg1": "1.0"})
-    @patch.object(cli, "json")  # Mock json module
+    @patch("unitxt.evaluate_cli.datetime")  # Patch datetime where it's used
+    @patch("unitxt.evaluate_cli._get_unitxt_version", return_value="0.1.0")
+    @patch("unitxt.evaluate_cli._get_unitxt_commit_hash", return_value="dummy_hash")
+    @patch("unitxt.evaluate_cli._get_installed_packages", return_value={"pkg1": "1.0"})
     @patch.object(cli, "logger")
     def test_save_results_to_disk_summary_only(
         self,
         mock_logger,
-        mock_json,
         mock_get_pkgs,
         mock_get_hash,
         mock_get_ver,
-        mock_open,
+        mock_datetime,
+        mock_open,  # Corresponds to @patch("builtins.open"...)
     ):
-        """Test saving only the summary results file."""
-        args = MagicMock(
-            spec=argparse.Namespace, log_samples=False
-        )  # log_samples is False
-        # Set specific attributes needed for saving config
-        args.tasks = "card=x"
-        args.model = "hf"
-        args.model_args = {"pretrained": "model"}
-        args.output_path = "/out"
-        # ... add other relevant args if they are saved
+        """Test saving only the summary results file (log_samples=False)."""
+        # --- Arrange ---
+        # (Arrange section remains the same as previous version)
+        mock_timestamp = "2025-04-14T10:00:00"
+        mock_now = MagicMock()
+        mock_now.strftime.return_value = mock_timestamp
+        mock_datetime.now.return_value = mock_now
+        mock_utcnow = MagicMock()
+        mock_utcnow.isoformat.return_value = "2025-04-14T08:00:00"
+        mock_datetime.utcnow.return_value = mock_utcnow
 
+        args = argparse.Namespace(
+            log_samples=False,
+            tasks=["card=x"],
+            model="hf",
+            model_args={"pretrained": "model"},
+            output_path="/out",
+            output_file_prefix="results_prefix",
+            verbosity="INFO",
+            split="test",
+            limit=None,
+            num_fewshots=None,
+            batch_size=1,
+            gen_kwargs=None,
+            chat_template_kwargs=None,
+            apply_chat_template=False,
+            trust_remote_code=False,
+            disable_hf_cache=False,
+            cache_dir=None,
+        )
         global_scores = {"accuracy": 0.8}
-        all_samples_data = [
-            {"index": 0, "metrics": {}}
-        ]  # Sample data is still processed
-        results_path = "/out/results.json"
-        samples_path = "/out/samples.json"
+        subset_instances_data = {
+            "task1": [{"metrics": {"acc": 1.0}, "other": "data1"}],
+            "task2": [{"metrics": {"acc": 0.6}, "other": "data2"}],
+        }
+        base_results_path = "/out/results_prefix.json"
+        base_samples_path = "/out/results_prefix_samples.json"
+        expected_timestamped_results_path = f"/out/{mock_timestamp}_results_prefix.json"
 
+        # --- Act ---
         cli._save_results_to_disk(
-            args, global_scores, all_samples_data, results_path, samples_path
+            args,
+            global_scores,
+            subset_instances_data,
+            base_results_path,
+            base_samples_path,
         )
 
-        # Assert summary file was opened and written to
-        # mock_open.assert_called_once_with(results_path, "w", encoding="utf-8")
-        # Check the structure passed to json.dump for the summary file
-        self.assertEqual(mock_json.dump.call_count, 1)
-        dump_args, dump_kwargs = mock_json.dump.call_args
-        saved_data = dump_args[0]  # The object being dumped
-        file_handle = dump_args[1]  # The file handle
+        # --- Assert ---
+        # 1. Assert summary file was opened with the timestamped name
+        mock_open.assert_called_once_with(
+            expected_timestamped_results_path, "w", encoding="utf-8"
+        )
 
-        self.assertEqual(file_handle, mock_open())  # Check it's the correct handle
+        # 2. Get the mock file handle instance *returned by mock_open()*
+        mock_file_handle = mock_open()
+
+        # 3. Reconstruct the full string written from ALL calls to write
+        # Check if write was called at all (it should be if dump was called)
+        self.assertTrue(
+            mock_file_handle.write.called,
+            "Expected file handle's write method to be called.",
+        )
+        # Get all arguments passed to write calls
+        all_write_calls = mock_file_handle.write.call_args_list
+        # Join the first argument (the string) from each call
+        full_written_string = "".join(call[0][0] for call in all_write_calls)
+
+        # 4. Parse the reconstructed JSON data
+        try:
+            saved_data = json.loads(full_written_string)
+        except json.JSONDecodeError as e:
+            self.fail(
+                f"Failed to parse reconstructed JSON written to mock file: {e}\nData:\n{full_written_string}"
+            )
+
+        # 5. Check structure of the saved summary data (same checks as before)
         self.assertIn("environment_info", saved_data)
-        self.assertIn("global_scores", saved_data)
-        self.assertEqual(saved_data["global_scores"], global_scores)
-        self.assertIn("parsed_arguments", saved_data["environment_info"])
-        self.assertEqual(
-            saved_data["environment_info"]["parsed_arguments"]["tasks"], "card=x"
-        )
-        self.assertEqual(saved_data["environment_info"]["unitxt_version"], "0.1.0")
-        self.assertEqual(saved_data["environment_info"]["unitxt_commit_hash"], "bla")
-        self.assertEqual(
-            saved_data["environment_info"]["installed_packages"], {"pkg1": "1.0"}
-        )
+        self.assertIn("results", saved_data)
+        self.assertEqual(saved_data["results"], global_scores)
 
-        # Assert logger calls
-        # mock_logger.info.assert_any_call(
-        #     f"Saving global results summary to: {results_path}"
-        # )
-        # Ensure samples file logging did NOT happen
+        env_info = saved_data["environment_info"]
+        self.assertIn("parsed_arguments", env_info)
+        self.assertEqual(env_info["parsed_arguments"]["tasks"], ["card=x"])
+        self.assertEqual(env_info["unitxt_version"], "0.1.0")
+        self.assertEqual(env_info["unitxt_commit_hash"], "dummy_hash")
+        self.assertEqual(env_info["installed_packages"], {"pkg1": "1.0"})
+        self.assertEqual(env_info["timestamp_utc"], "2025-04-14T08:00:00Z")
+        self.assertIn("python_version", env_info)
+        self.assertIn("system", env_info)
+
+        # 6. Assert logger calls (same checks as before)
+        mock_logger.info.assert_any_call(
+            f"Saving global results summary to: {expected_timestamped_results_path}"
+        )
         log_calls = [call[0][0] for call in mock_logger.info.call_args_list]
-        self.assertNotIn(f"Saving detailed samples to: {samples_path}", log_calls)
-
-    @patch.object(cli, "print_dict")
-    @patch.object(cli, "_extract_scores_and_samples")
-    @patch.object(cli, "_save_results_to_disk")
-    @patch.object(cli, "logger")
-    def test_process_and_save_results(
-        self, mock_logger, mock_save, mock_extract, mock_print_dict
-    ):
-        """Test the main result processing and saving function."""
-        # Arrange
-        args = MagicMock(spec=argparse.Namespace, log_samples=True)
-        evaluated_dataset = [{"score": {"global": {"acc": 1.0}, "instance": {}}}]
-        results_path, samples_path = "res.json", "samp.json"
-        mock_global_scores = {"acc": 1.0}
-        mock_samples_data = [
-            {
-                "index": 0,
-                "source": "s",
-                "prediction": "p",
-                "references": ["r"],
-                "metrics": {},
-            }
-        ]
-        mock_extract.return_value = (mock_global_scores, mock_samples_data)
-
-        # Act
-        cli.process_and_save_results(
-            args, evaluated_dataset, results_path, samples_path
+        expected_timestamped_samples_path = (
+            f"/out/{mock_timestamp}_results_prefix_samples.json"
         )
-
-        # Assert
-        mock_extract.assert_called_once_with(evaluated_dataset)
-        # Check print_dict calls
-        self.assertEqual(mock_print_dict.call_count, 2)
-        mock_print_dict.assert_has_calls(
-            [
-                call(mock_global_scores),  # Print global scores
-                call(
-                    mock_samples_data[0],
-                    keys_to_print=["source", "prediction", "references", "metrics"],
-                ),  # Print first sample
-            ]
-        )
-        # Check save call
-        mock_save.assert_called_once_with(
-            args, mock_global_scores, mock_samples_data, results_path, samples_path
-        )
-        # Check logging info messages
-        mock_logger.info.assert_has_calls(
-            [
-                call("\n--- Global Scores ---"),
-                call("\n--- Example Instance (Index 0) ---"),
-            ]
+        self.assertNotIn(
+            f"Saving detailed samples to: {expected_timestamped_samples_path}",
+            log_calls,
         )
 
     # --- Tests for main ---
 
-    @patch.object(cli, "setup_parser")
-    @patch.object(cli, "setup_logging")
-    @patch.object(cli, "prepare_output_paths")
-    @patch.object(cli, "configure_unitxt_settings")
-    @patch.object(cli, "load_data")
-    @patch.object(cli, "prepare_model_args")
-    @patch.object(cli, "prepare_gen_kwargs")
-    @patch.object(cli, "initialize_inference_engine")
-    @patch.object(cli, "run_inference")
-    @patch.object(cli, "run_evaluation")
-    @patch.object(cli, "process_and_save_results")
-    @patch("sys.exit")  # Keep patching sys.exit
-    @patch.object(cli, "logger")  # Patch logger within cli module
+    @patch("unitxt.evaluate_cli.setup_parser")
+    @patch("unitxt.evaluate_cli.setup_logging")
+    @patch("unitxt.evaluate_cli.prepare_output_paths")
+    @patch("unitxt.evaluate_cli.configure_unitxt_settings")
+    @patch("unitxt.evaluate_cli.cli_load_dataset")  # Patched correct function
+    @patch("unitxt.evaluate_cli.prepare_kwargs")  # Patched correct function
+    @patch("unitxt.evaluate_cli.initialize_inference_engine")
+    @patch("unitxt.evaluate_cli.run_inference")
+    @patch("unitxt.evaluate_cli.run_evaluation")
+    @patch("unitxt.evaluate_cli.process_and_save_results")
+    @patch("sys.exit")
+    @patch.object(cli, "logger")  # Patch logger last
     def test_main_success_flow(
         self,
         mock_logger,  # Corresponds to @patch.object(cli, "logger")
@@ -801,9 +1001,8 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         mock_run_eval,  # Corresponds to @patch.object(cli, "run_evaluation")
         mock_run_infer,  # Corresponds to @patch.object(cli, "run_inference")
         mock_init_engine,  # Corresponds to @patch.object(cli, "initialize_inference_engine")
-        mock_prep_gen_kwargs,  # <<< Added mock argument
-        mock_prep_model_args,  # Corresponds to @patch.object(cli, "prepare_model_args")
-        mock_load_data,  # Corresponds to @patch.object(cli, "load_data")
+        mock_prepare_kwargs,  # Corresponds to @patch('unitxt.evaluate_cli.prepare_kwargs')
+        mock_cli_load_dataset,  # Corresponds to @patch('unitxt.evaluate_cli.cli_load_dataset')
         mock_configure_settings,  # Corresponds to @patch.object(cli, "configure_unitxt_settings")
         mock_prep_paths,  # Corresponds to @patch.object(cli, "prepare_output_paths")
         mock_setup_logging,  # Corresponds to @patch.object(cli, "setup_logging")
@@ -812,260 +1011,199 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         """Test the main function success path."""
         # --- Arrange Mocks ---
 
-        # 1. Mock parser setup and argument parsing
+        # 1. Mock parser and args
         mock_parser = MagicMock(spec=argparse.ArgumentParser)
-        # Define mock arguments that represent a valid success scenario
+        # Provide a full Namespace reflecting a typical run
         mock_args = argparse.Namespace(
             verbosity="INFO",
-            output_path="mock_output",  # Use a distinct name
+            output_path="mock_output",
             output_file_prefix="mock_results",
-            tasks="card=dummy_card,template=dummy_template",  # Example tasks string
+            tasks=[
+                "card=dummy,template=dummy"
+            ],  # Note: tasks is list now due to type=partial(...)
             split="test",
             limit=None,
             num_fewshots=None,
-            model="hf",  # Using 'hf' model type
-            # Provide required 'pretrained' key for 'hf' model
-            model_args={"pretrained": "mock-hf-model", "device": "cpu"},
-            gen_kwargs=None,  # Set explicitly for clarity
-            tokenizer_kwargs=None,
-            log_samples=True,  # Test saving samples path
+            batch_size=1,
+            model="hf",
+            model_args={
+                "pretrained": "mock-hf-model",
+                "device": "cpu",
+            },  # Dict from try_parse_json
+            gen_kwargs={"temperature": 0.0},  # Dict from try_parse_json
+            chat_template_kwargs=None,  # Example None
+            log_samples=True,
             trust_remote_code=False,
             disable_hf_cache=False,
             cache_dir=None,
-            apply_chat_template=False,  # Include all defined args
-            chat_template_kwargs=None,
+            apply_chat_template=False,
         )
         mock_parser.parse_args.return_value = mock_args
         mock_setup_parser.return_value = mock_parser
 
-        # 2. Mock path preparation
+        # 2. Mock path prep
         mock_results_path = "./mock_output/mock_results.json"
         mock_samples_path = "./mock_output/mock_results_samples.json"
         mock_prep_paths.return_value = (mock_results_path, mock_samples_path)
 
-        # 3. Mock unitxt settings context manager
+        # 3. Mock settings context manager
         mock_context_manager = MagicMock()
         mock_context_manager.__enter__.return_value = None
-        mock_context_manager.__exit__.return_value = None
+        mock_context_manager.__exit__.return_value = None  # Indicate no error on exit
         mock_configure_settings.return_value = mock_context_manager
 
-        # 4. Mock data loading
-        # Create a mock dataset with some structure if needed by later steps
-        mock_dataset_instance = MockHFDataset([{"source": "q1", "references": ["a1"]}])
-        mock_load_data.return_value = mock_dataset_instance
+        # 4. Mock dataset loading (cli_load_dataset)
+        mock_dataset_instance = Mock(spec=HFDataset)
+        mock_dataset_instance.__len__ = MagicMock(return_value=1)
+        mock_cli_load_dataset.return_value = mock_dataset_instance
 
-        # 5. Mock model and generation argument preparation
-        # prepare_model_args returns the dict *passed* to the engine constructor
-        # (after potentially popping keys like 'pretrained', 'device')
-        mock_model_args_prepared = {"device": "cpu"}  # Example remaining args
-        mock_prep_model_args.return_value = mock_model_args_prepared
+        # 5. Mock prepare_kwargs (it's called 3 times)
+        # We'll have it return the dict passed in args, or {} for None
+        def prepare_kwargs_side_effect(kwargs_input):
+            if isinstance(kwargs_input, dict):
+                return kwargs_input
+            if kwargs_input is None:
+                return {}
+            # Should not happen with valid args setup
+            return {}
 
-        # Mock prepare_gen_kwargs (returns {} if args.gen_kwargs is None)
-        mock_gen_kwargs_prepared = {}
-        mock_prep_gen_kwargs.return_value = (
-            mock_gen_kwargs_prepared  # <<< Set return value
-        )
+        mock_prepare_kwargs.side_effect = prepare_kwargs_side_effect
+        # Expected results from prepare_kwargs calls in main
+        expected_model_args_prep = {"pretrained": "mock-hf-model", "device": "cpu"}
+        expected_gen_kwargs_prep = {"temperature": 0.0}
+        expected_chat_kwargs_prep = {}
 
-        # Calculate the final dict passed to initialize_inference_engine
-        # This reflects the model_args_dict.update(gen_kwargs_dict) step in main
-        combined_engine_args = mock_model_args_prepared.copy()
-        combined_engine_args.update(
-            mock_gen_kwargs_prepared
-        )  # Still {"device": "cpu"} here
-
-        # 6. Mock inference engine initialization
-        mock_engine_instance = MockInferenceEngine()  # Use a simple mock engine
+        # 6. Mock engine initialization
+        mock_engine_instance = MagicMock(
+            spec=cli.InferenceEngine
+        )  # Use spec if possible
         mock_init_engine.return_value = mock_engine_instance
+        # Expected combined dict for engine init (model_args + gen_kwargs)
+        expected_engine_model_args = expected_model_args_prep.copy()
+        expected_engine_model_args.update(expected_gen_kwargs_prep)
 
-        # 7. Mock inference execution
-        mock_predictions = ["pred1"]  # Example predictions
+        # 7. Mock inference
+        mock_predictions = ["pred1"]
         mock_run_infer.return_value = mock_predictions
 
-        # 8. Mock evaluation execution
-        # Provide a realistic structure for evaluated data
-        mock_eval_results = [
-            {
-                "source": "q1",
-                "references": ["a1"],
-                "processed_references": ["a1"],
-                "prediction": "pred1",
-                "processed_prediction": "pred1",
-                "score": {
-                    "global": {"accuracy": 1.0, "rougeL": 0.8},
-                    "instance": {"accuracy": 1.0, "rougeL": 0.8},
-                },
-                "task_data": {},  # Include if expected
-            }
-        ]
-        mock_run_eval.return_value = mock_eval_results
+        # 8. Mock evaluation (returns EvaluationResults object)
+        mock_eval_results_obj = Mock(spec=cli.EvaluationResults)
+        # Set attributes needed by process_and_save_results
+        mock_eval_results_obj.subsets_scores = Mock(summary="Mock Summary")
+        mock_eval_results_obj.instance_scores = [
+            {"subset": ["task"], "postprocessors": []}
+        ]  # Example structure
+        mock_run_eval.return_value = mock_eval_results_obj
 
         # --- Act ---
-        cli.main()  # Execute the main function
+        cli.main()
 
         # --- Assert ---
-        # Verify each mocked function was called correctly
-
         mock_setup_parser.assert_called_once()
-        mock_parser.parse_args.assert_called_once()  # Verify args parsed
+        mock_parser.parse_args.assert_called_once()
         mock_setup_logging.assert_called_once_with("INFO")
         mock_prep_paths.assert_called_once_with("mock_output", "mock_results")
         mock_configure_settings.assert_called_once_with(mock_args)
-        mock_context_manager.__enter__.assert_called_once()  # Check context entered
-        mock_load_data.assert_called_once_with(mock_args)
-        mock_prep_model_args.assert_called_once_with(mock_args)
-        mock_prep_gen_kwargs.assert_called_once_with(mock_args)  # <<< Assert call
+        mock_context_manager.__enter__.assert_called_once()
 
-        # Assert initialize_inference_engine was called with the correct args
-        # The second argument should be the combined dictionary
+        # Assert cli_load_dataset called
+        mock_cli_load_dataset.assert_called_once_with(mock_args)
+
+        # Assert prepare_kwargs called 3 times correctly
+        self.assertEqual(mock_prepare_kwargs.call_count, 3)
+        mock_prepare_kwargs.assert_has_calls(
+            [
+                call(mock_args.model_args),
+                call(mock_args.gen_kwargs),
+                call(mock_args.chat_template_kwargs),
+            ],
+            any_order=False,
+        )  # Order matters here
+
+        # Assert initialize_inference_engine called correctly
         mock_init_engine.assert_called_once_with(
-            mock_args, combined_engine_args
-        )  # <<< Key assertion
+            mock_args,  # Pass args through
+            expected_engine_model_args,  # Pass combined model+gen args
+            expected_chat_kwargs_prep,  # Pass prepared chat args
+        )
 
         mock_run_infer.assert_called_once_with(
             mock_engine_instance, mock_dataset_instance
         )
         mock_run_eval.assert_called_once_with(mock_predictions, mock_dataset_instance)
-        # Assert process_and_save_results called with correct paths
+
+        # Assert process_and_save_results called correctly
         mock_process_save.assert_called_once_with(
-            mock_args, mock_eval_results, mock_results_path, mock_samples_path
-        )
-        mock_context_manager.__exit__.assert_called_once()  # Check context exited
-        mock_exit.assert_not_called()  # Should not exit on success
-
-        # Check specific log messages
-        mock_logger.info.assert_has_calls(
-            [
-                call("Starting Unitxt Evaluation CLI"),
-                call("Unitxt Evaluation CLI finished successfully."),
-            ],
-            any_order=False,  # Set to True if order doesn't strictly matter
+            mock_args,
+            mock_eval_results_obj,  # Pass the EvaluationResults object
+            mock_results_path,
+            mock_samples_path,
         )
 
-    @patch.object(cli, "setup_parser")
-    @patch.object(cli, "setup_logging")
-    @patch.object(cli, "prepare_output_paths")
-    @patch.object(cli, "configure_unitxt_settings")
-    @patch.object(
-        cli, "load_data", side_effect=FileNotFoundError("Test Not Found")
-    )  # Simulate error
-    @patch.object(cli, "process_and_save_results")  # Won't be called
-    @patch("sys.exit")
-    @patch.object(cli, "logger")
-    def test_main_load_data_error(
-        self,
-        mock_logger,
-        mock_exit,
-        mock_process_save,
-        mock_load_data,
-        mock_configure_settings,
-        mock_prep_paths,
-        mock_setup_logging,
-        mock_setup_parser,
-    ):
-        """Test main function exits correctly on FileNotFoundError during load."""
-        # Arrange Mocks (similar to success case, but load_data will raise error)
-        mock_parser = MagicMock()
-        mock_args = argparse.Namespace(
-            verbosity="INFO",
-            output_path=".",
-            output_file_prefix="pref",
-            tokenizer_kwargs=None,
-            tasks="card=dummy",
-            split="test",
-            limit=None,
-            num_fewshots=None,
-            model="hf",
-            model_args={},
-            log_samples=False,
-            trust_remote_code=False,
-            disable_hf_cache=False,
-            cache_dir=None,
-            chat_template_kwargs=None,
-        )
-        mock_parser.parse_args.return_value = mock_args
-        mock_setup_parser.return_value = mock_parser
-        mock_prep_paths.return_value = ("./pref.json", "./pref_samples.json")
-        mock_context_manager = MagicMock()
-        mock_context_manager.__enter__.return_value = None
-        mock_context_manager.__exit__.return_value = (
-            None  # Important: __exit__ should still be called in finally
-        )
-        mock_configure_settings.return_value = mock_context_manager
-
-        # Act
-        cli.main()
-
-        # Assertions
-        mock_load_data.assert_called_once_with(mock_args)
-        mock_process_save.assert_not_called()  # Should not reach saving
-        # Check that the specific exception was logged
-        mock_logger.exception.assert_called_once()
-        self.assertIn(
-            "Error loading artifact or file: Test Not Found",
-            mock_logger.exception.call_args[0][0],
-        )
-        # Check that sys.exit(1) was called
-        mock_exit.assert_called_once_with(1)
-        # Check context manager exit was still called (due to try...except...finally structure implicitly)
         mock_context_manager.__exit__.assert_called_once()
+        mock_exit.assert_not_called()  # No exit on success
 
-    @patch.object(cli, "setup_parser")
-    @patch.object(cli, "setup_logging")
-    @patch.object(cli, "prepare_output_paths")
-    @patch.object(cli, "configure_unitxt_settings")
-    @patch.object(cli, "load_data")
-    @patch.object(cli, "prepare_model_args")
-    @patch.object(cli, "prepare_gen_kwargs")  # Mock this
-    @patch.object(cli, "initialize_inference_engine")
-    @patch.object(cli, "run_inference")
-    @patch.object(cli, "run_evaluation")
-    @patch.object(cli, "process_and_save_results")
+        mock_logger.info.assert_any_call("Starting Unitxt Evaluation CLI")
+        mock_logger.info.assert_any_call("Unitxt Evaluation CLI finished successfully.")
+
+    @patch("unitxt.evaluate_cli.setup_parser")
+    @patch("unitxt.evaluate_cli.setup_logging")
+    @patch("unitxt.evaluate_cli.prepare_output_paths")
+    @patch("unitxt.evaluate_cli.configure_unitxt_settings")
+    @patch("unitxt.evaluate_cli.cli_load_dataset")
+    @patch("unitxt.evaluate_cli.prepare_kwargs")
+    @patch("unitxt.evaluate_cli.initialize_inference_engine")
+    @patch("unitxt.evaluate_cli.run_inference")
+    @patch("unitxt.evaluate_cli.run_evaluation")
+    @patch("unitxt.evaluate_cli.process_and_save_results")
     @patch("sys.exit")
-    @patch.object(cli, "logger")
+    @patch.object(cli, "logger")  # Patch logger last
     def test_main_bird_remote_scenario(
         self,
-        mock_logger,
-        mock_exit,
-        mock_process_save,
-        mock_run_eval,
-        mock_run_infer,
-        mock_init_engine,
-        mock_prep_gen_kwargs,  # <<< Added argument
-        mock_prep_model_args,
-        mock_load_data,
-        mock_configure_settings,
-        mock_prep_paths,
-        mock_setup_logging,
-        mock_setup_parser,
+        mock_logger,  # logger
+        mock_exit,  # sys.exit
+        mock_process_save,  # process_and_save_results
+        mock_run_eval,  # run_evaluation
+        mock_run_infer,  # run_inference
+        mock_init_engine,  # initialize_inference_engine
+        mock_prepare_kwargs,  # prepare_kwargs
+        mock_cli_load_dataset,  # cli_load_dataset
+        mock_configure_settings,  # configure_unitxt_settings
+        mock_prep_paths,  # prepare_output_paths
+        mock_setup_logging,  # setup_logging
+        mock_setup_parser,  # setup_parser
     ):
         """Test the main function simulating the BIRD remote debug config."""
         # --- Arrange Mocks ---
 
-        # 1. Mock parser setup and args
+        # 1. Mock parser setup and args for BIRD scenario
         mock_parser = MagicMock(spec=argparse.ArgumentParser)
-        # Simulate parsing of the model_args string (as if try_parse_json worked)
+        # model_args as would be returned by try_parse_json
         parsed_model_args_input = {
             "model_name": "llama-3-3-70b-instruct",
             "max_tokens": 256,
         }
         mock_args = argparse.Namespace(
-            tasks="card=cards.text2sql.bird,template=templates.text2sql.you_are_given_with_hint_with_sql_prefix",
-            model="cross_provider",  # Use remote model type
-            model_args=parsed_model_args_input,  # Args as parsed dict
+            # tasks is now a list based on parser setup
+            tasks=[
+                "card=cards.text2sql.bird,template=templates.text2sql.you_are_given_with_hint_with_sql_prefix"
+            ],
+            model="cross_provider",
+            model_args=parsed_model_args_input,  # Already a dict
             split="validation",
             limit=100,
             num_fewshots=None,
-            gen_kwargs=None,  # Explicitly None
-            tokenizer_kwargs=None,
+            batch_size=1,  # Add batch_size, even if not used by cross_provider path
+            gen_kwargs=None,
+            chat_template_kwargs=None,
             output_path="./debug_output/bird_remote",
             output_file_prefix="evaluation_results",
             log_samples=True,
             verbosity="INFO",
-            trust_remote_code=True,  # Specific to this scenario
+            trust_remote_code=True,
             disable_hf_cache=False,
             cache_dir=None,
             apply_chat_template=False,
-            chat_template_kwargs=None,
         )
         mock_parser.parse_args.return_value = mock_args
         mock_setup_parser.return_value = mock_parser
@@ -1077,57 +1215,66 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         )
         mock_prep_paths.return_value = (expected_results_path, expected_samples_path)
 
-        # 3. Mock context manager
+        # 3. Mock settings context manager
         mock_context_manager = MagicMock()
         mock_context_manager.__enter__.return_value = None
         mock_context_manager.__exit__.return_value = None
         mock_configure_settings.return_value = mock_context_manager
 
-        # 4. Mock data loading
-        mock_dataset_instance = MockHFDataset(
-            [{"source": f"q{i}"} for i in range(2)]
-        )  # 2 samples
-        self.assertEqual(len(mock_dataset_instance), 2)  # Verify length
-        mock_load_data.return_value = mock_dataset_instance
+        # 4. Mock data loading (cli_load_dataset)
+        mock_dataset_instance = Mock(spec=HFDataset)
+        # Correctly mock __len__
+        mock_dataset_instance.__len__ = MagicMock(return_value=2)
+        mock_cli_load_dataset.return_value = mock_dataset_instance
 
-        # 5. Mock argument preparation
-        # prepare_model_args should just return the already parsed dict in this case
-        mock_prep_model_args.return_value = parsed_model_args_input
+        # 5. Mock prepare_kwargs calls
+        def prepare_kwargs_side_effect(kwargs_input):
+            if kwargs_input == parsed_model_args_input:
+                return parsed_model_args_input  # Return the dict itself
+            if kwargs_input is None:
+                return {}  # Return empty dict for None inputs
+            return {}
 
-        # Mock prepare_gen_kwargs (returns {} if args.gen_kwargs is None)
-        mock_gen_kwargs_prepared = {}
-        mock_prep_gen_kwargs.return_value = (
-            mock_gen_kwargs_prepared  # <<< Set return value
-        )
+        mock_prepare_kwargs.side_effect = prepare_kwargs_side_effect
+        # Expected results from prepare_kwargs calls
+        expected_model_args_prep = parsed_model_args_input
+        expected_gen_kwargs_prep = {}
+        expected_chat_kwargs_prep = {}
 
-        # Calculate the combined dict passed to initialize_inference_engine
-        combined_engine_args = parsed_model_args_input.copy()
-        combined_engine_args.update(
-            mock_gen_kwargs_prepared
-        )  # Still parsed_model_args_input
-
-        # 6. Mock engine initialization (using CrossProvider mock)
-        mock_remote_engine_instance = MockCrossProviderInferenceEngine()
+        # 6. Mock engine initialization
+        mock_remote_engine_instance = MagicMock(spec=cli.InferenceEngine)
         mock_init_engine.return_value = mock_remote_engine_instance
+        # Expected combined dict for engine init (model_args + gen_kwargs)
+        expected_engine_model_args = expected_model_args_prep.copy()
+        expected_engine_model_args.update(
+            expected_gen_kwargs_prep
+        )  # No change here as gen_kwargs is {}
 
         # 7. Mock inference
-        mock_predictions = ["sql pred 1", "sql pred 2"]  # Match dataset length
+        mock_predictions = ["sql pred 1", "sql pred 2"]
         mock_run_infer.return_value = mock_predictions
 
-        # 8. Mock evaluation
-        mock_eval_results = [
+        # 8. Mock evaluation (returns EvaluationResults object)
+        mock_eval_results_obj = Mock(spec=cli.EvaluationResults)
+        mock_eval_results_obj.subsets_scores = Mock(summary="BIRD Summary")
+        # Provide instance scores matching the expected format
+        mock_eval_results_obj.instance_scores = [
             {
+                "subset": ["task_bird"],
+                "score": 0.0,
+                "postprocessors": [],
                 "source": "q0",
                 "prediction": "sql pred 1",
-                "score": {"global": {"accuracy": 0.5}, "instance": {"accuracy": 0.0}},
             },
             {
+                "subset": ["task_bird"],
+                "score": 1.0,
+                "postprocessors": [],
                 "source": "q1",
                 "prediction": "sql pred 2",
-                "score": {"global": {"accuracy": 0.5}, "instance": {"accuracy": 1.0}},
             },
-        ]  # Example results matching dataset length
-        mock_run_eval.return_value = mock_eval_results
+        ]
+        mock_run_eval.return_value = mock_eval_results_obj
 
         # --- Act ---
         cli.main()
@@ -1140,46 +1287,240 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
             "./debug_output/bird_remote", "evaluation_results"
         )
         mock_configure_settings.assert_called_once_with(mock_args)
-        # Check specific args passed to configure_settings if needed
-        self.assertTrue(mock_configure_settings.call_args[0][0].trust_remote_code)
+        self.assertTrue(
+            mock_configure_settings.call_args[0][0].trust_remote_code
+        )  # Check specific arg
         mock_context_manager.__enter__.assert_called_once()
-        mock_load_data.assert_called_once_with(mock_args)
-        # Check args passed to load_data (limit applied) - access via call_args
-        # call_args is a tuple: (positional_args, keyword_args)
-        # positional_args is a tuple, so access the first element (mock_args)
-        # then access the attribute 'limit'
-        # self.assertEqual(mock_load_data.call_args[0][0].limit, 100) # This checks the Namespace passed
-        # self.assertIsNone(mock_load_data.call_args[0][0].num_fewshots) # This checks the Namespace passed
 
-        mock_prep_model_args.assert_called_once_with(mock_args)
-        mock_prep_gen_kwargs.assert_called_once_with(mock_args)  # <<< Assert call
+        # Check cli_load_dataset call
+        mock_cli_load_dataset.assert_called_once_with(mock_args)
+        # You could add more specific checks here if needed, e.g., that limit=100 was passed
+        # self.assertEqual(mock_cli_load_dataset.call_args[0][0].limit, 100)
 
-        # Assert initialize_inference_engine with the combined dict
+        # Check prepare_kwargs calls
+        self.assertEqual(mock_prepare_kwargs.call_count, 3)
+        mock_prepare_kwargs.assert_has_calls(
+            [
+                call(mock_args.model_args),
+                call(mock_args.gen_kwargs),
+                call(mock_args.chat_template_kwargs),
+            ],
+            any_order=False,
+        )
+
+        # Check initialize_inference_engine call
         mock_init_engine.assert_called_once_with(
-            mock_args, combined_engine_args
-        )  # <<< Corrected assertion
-
-        # Check specific args passed to init_engine if needed
+            mock_args,  # The Namespace object
+            expected_engine_model_args,  # model_args dict merged with gen_kwargs dict
+            expected_chat_kwargs_prep,  # chat_kwargs dict
+        )
+        # Check specific args passed if needed
         self.assertEqual(mock_init_engine.call_args[0][0].model, "cross_provider")
+
         mock_run_infer.assert_called_once_with(
             mock_remote_engine_instance, mock_dataset_instance
         )
         mock_run_eval.assert_called_once_with(mock_predictions, mock_dataset_instance)
+
+        # Check process_and_save_results call
         mock_process_save.assert_called_once_with(
-            mock_args, mock_eval_results, expected_results_path, expected_samples_path
+            mock_args,
+            mock_eval_results_obj,  # Pass the EvaluationResults object
+            expected_results_path,
+            expected_samples_path,
         )
-        # Check specific args passed to process_save if needed
-        self.assertTrue(mock_process_save.call_args[0][0].log_samples)
+        self.assertTrue(
+            mock_process_save.call_args[0][0].log_samples
+        )  # Check specific arg
+
         mock_context_manager.__exit__.assert_called_once()
-        mock_exit.assert_not_called()
-        mock_logger.info.assert_has_calls(
-            [
-                call("Starting Unitxt Evaluation CLI"),
-                # Add more specific log calls if needed for this scenario
-                call("Unitxt Evaluation CLI finished successfully."),
-            ],
-            any_order=False,  # Usually check order unless irrelevant
+        mock_exit.assert_not_called()  # No exit on success
+        mock_logger.info.assert_any_call("Starting Unitxt Evaluation CLI")
+        mock_logger.info.assert_any_call("Unitxt Evaluation CLI finished successfully.")
+
+    # --- Test for main function: Local HF Model Scenario ---
+    @patch("unitxt.evaluate_cli.setup_parser")
+    @patch("unitxt.evaluate_cli.setup_logging")
+    @patch("unitxt.evaluate_cli.prepare_output_paths")
+    @patch("unitxt.evaluate_cli.configure_unitxt_settings")
+    @patch("unitxt.evaluate_cli.cli_load_dataset")
+    @patch("unitxt.evaluate_cli.prepare_kwargs")
+    @patch("unitxt.evaluate_cli.initialize_inference_engine")
+    @patch("unitxt.evaluate_cli.run_inference")
+    @patch("unitxt.evaluate_cli.run_evaluation")
+    @patch("unitxt.evaluate_cli.process_and_save_results")
+    @patch("sys.exit")
+    @patch.object(cli, "logger")  # Patch logger last
+    def test_main_local_hf_scenario(
+        self,
+        mock_logger,  # logger
+        mock_exit,  # sys.exit
+        mock_process_save,  # process_and_save_results
+        mock_run_eval,  # run_evaluation
+        mock_run_infer,  # run_inference
+        mock_init_engine,  # initialize_inference_engine
+        mock_prepare_kwargs,  # prepare_kwargs
+        mock_cli_load_dataset,  # cli_load_dataset
+        mock_configure_settings,  # configure_unitxt_settings
+        mock_prep_paths,  # prepare_output_paths
+        mock_setup_logging,  # setup_logging
+        mock_setup_parser,  # setup_parser
+    ):
+        """Test the main function success path simulating a local HF model."""
+        # --- Arrange Mocks ---
+
+        # 1. Mock parser setup and args for local HF scenario
+        mock_parser = MagicMock(spec=argparse.ArgumentParser)
+        # model_args dict as if parsed from JSON/kv string
+        parsed_model_args_input = {
+            "pretrained": "gpt2",  # Required for model='hf'
+            "device": "cpu",
+            "torch_dtype": "float32",  # Example args
+        }
+        # gen_kwargs dict as if parsed
+        parsed_gen_kwargs_input = {"max_length": 50}
+        # chat_kwargs dict as if parsed
+        parsed_chat_kwargs_input = {"add_generation_prompt": True}
+
+        mock_args = argparse.Namespace(
+            tasks=[
+                "card=cards.sst2,template=templates.classification.multi_choice.standard"
+            ],  # Example task
+            model="hf",  # Local model type
+            model_args=parsed_model_args_input,
+            split="test",
+            limit=50,
+            num_fewshots=None,
+            batch_size=4,  # Example batch size for HF
+            gen_kwargs=parsed_gen_kwargs_input,  # Include some gen kwargs
+            chat_template_kwargs=parsed_chat_kwargs_input,  # Include some chat kwargs
+            output_path="./output/local_hf",
+            output_file_prefix="hf_sst2_results",
+            log_samples=False,  # Example: disable sample logging
+            verbosity="DEBUG",  # Example: use different verbosity
+            trust_remote_code=False,
+            disable_hf_cache=False,
+            cache_dir=None,
+            apply_chat_template=False,
         )
+        mock_parser.parse_args.return_value = mock_args
+        mock_setup_parser.return_value = mock_parser
+
+        # 2. Mock path preparation
+        expected_results_path = "./output/local_hf/hf_sst2_results.json"
+        expected_samples_path = "./output/local_hf/hf_sst2_results_samples.json"
+        mock_prep_paths.return_value = (expected_results_path, expected_samples_path)
+
+        # 3. Mock settings context manager
+        mock_context_manager = MagicMock()
+        mock_context_manager.__enter__.return_value = None
+        mock_context_manager.__exit__.return_value = None
+        mock_configure_settings.return_value = mock_context_manager
+
+        # 4. Mock data loading (cli_load_dataset)
+        mock_dataset_instance = Mock(spec=HFDataset)
+        mock_dataset_instance.__len__ = MagicMock(return_value=50)  # Match limit
+        mock_cli_load_dataset.return_value = mock_dataset_instance
+
+        # 5. Mock prepare_kwargs calls
+        def prepare_kwargs_side_effect(kwargs_input):
+            # Return the dict directly if it's the input, otherwise {} for None
+            if kwargs_input == parsed_model_args_input:
+                return parsed_model_args_input
+            if kwargs_input == parsed_gen_kwargs_input:
+                return parsed_gen_kwargs_input
+            if kwargs_input == parsed_chat_kwargs_input:
+                return parsed_chat_kwargs_input
+            if kwargs_input is None:
+                return {}
+            return {}  # Default fallback
+
+        mock_prepare_kwargs.side_effect = prepare_kwargs_side_effect
+        # Expected results from prepare_kwargs calls
+        expected_model_args_prep = parsed_model_args_input
+        expected_gen_kwargs_prep = parsed_gen_kwargs_input
+        expected_chat_kwargs_prep = parsed_chat_kwargs_input
+
+        # 6. Mock engine initialization
+        mock_local_engine_instance = MagicMock(spec=cli.InferenceEngine)
+        mock_init_engine.return_value = mock_local_engine_instance
+        # Expected combined dict for engine init (model_args + gen_kwargs)
+        expected_engine_model_args = expected_model_args_prep.copy()
+        expected_engine_model_args.update(expected_gen_kwargs_prep)
+
+        # 7. Mock inference
+        mock_predictions = [f"pred_{i}" for i in range(50)]  # Match dataset length
+        mock_run_infer.return_value = mock_predictions
+
+        # 8. Mock evaluation (returns EvaluationResults object)
+        mock_eval_results_obj = Mock(spec=cli.EvaluationResults)
+        mock_eval_results_obj.subsets_scores = Mock(summary="Local HF Summary")
+        mock_eval_results_obj.instance_scores = [  # Example structure
+            {
+                "subset": ["sst2"],
+                "score": 1.0,
+                "postprocessors": [],
+                "prediction": f"pred_{i}",
+            }
+            for i in range(50)
+        ]
+        mock_run_eval.return_value = mock_eval_results_obj
+
+        # --- Act ---
+        cli.main()
+
+        # --- Assert ---
+        mock_setup_parser.assert_called_once()
+        mock_parser.parse_args.assert_called_once()
+        mock_setup_logging.assert_called_once_with(
+            "DEBUG"
+        )  # Check correct verbosity used
+        mock_prep_paths.assert_called_once_with("./output/local_hf", "hf_sst2_results")
+        mock_configure_settings.assert_called_once_with(mock_args)
+        mock_context_manager.__enter__.assert_called_once()
+        mock_cli_load_dataset.assert_called_once_with(mock_args)
+        # self.assertEqual(mock_cli_load_dataset.call_args[0][0].limit, 50) # Optional check
+
+        # Check prepare_kwargs calls
+        self.assertEqual(mock_prepare_kwargs.call_count, 3)
+        mock_prepare_kwargs.assert_has_calls(
+            [
+                call(mock_args.model_args),
+                call(mock_args.gen_kwargs),
+                call(mock_args.chat_template_kwargs),
+            ],
+            any_order=False,
+        )
+
+        # Check initialize_inference_engine call
+        mock_init_engine.assert_called_once_with(
+            mock_args,  # The Namespace object
+            expected_engine_model_args,  # model_args dict merged with gen_kwargs dict
+            expected_chat_kwargs_prep,  # chat_kwargs dict
+        )
+        # Check specific args passed if needed
+        self.assertEqual(mock_init_engine.call_args[0][0].model, "hf")
+        self.assertEqual(mock_init_engine.call_args[0][1]["pretrained"], "gpt2")
+
+        mock_run_infer.assert_called_once_with(
+            mock_local_engine_instance, mock_dataset_instance
+        )
+        mock_run_eval.assert_called_once_with(mock_predictions, mock_dataset_instance)
+        mock_process_save.assert_called_once_with(
+            mock_args,
+            mock_eval_results_obj,  # Pass the EvaluationResults object
+            expected_results_path,
+            expected_samples_path,
+        )
+        # Check specific args passed if needed
+        self.assertFalse(
+            mock_process_save.call_args[0][0].log_samples
+        )  # Check log_samples
+
+        mock_context_manager.__exit__.assert_called_once()
+        mock_exit.assert_not_called()  # No exit on success
+        mock_logger.info.assert_any_call("Starting Unitxt Evaluation CLI")
+        mock_logger.info.assert_any_call("Unitxt Evaluation CLI finished successfully.")
 
 
 if __name__ == "__main__":
