@@ -114,7 +114,8 @@ ui = [
 text2sql = [
     "sqlglot",
     "func_timeout==4.3.5",
-    "sqlparse"
+    "sqlparse",
+    "tabulate"
 ]
 watsonx = [
     "ibm-watsonx-ai==1.2.10"
