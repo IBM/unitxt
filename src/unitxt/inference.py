@@ -3012,7 +3012,6 @@ class LiteLLMInferenceEngine(
         self.inference_type = "litellm"
         from litellm import acompletion
 
-
         self._completion = acompletion
         # Initialize a semaphore to limit concurrency
         self._semaphore = asyncio.Semaphore(round(self.max_requests_per_second))
@@ -3033,7 +3032,6 @@ class LiteLLMInferenceEngine(
                 response = await self._completion(
                     messages=messages,
                     max_retries=self.max_retries,
-                    caching=True,
                     drop_params=False,
                     **self.credentials,
                     **kwargs,
