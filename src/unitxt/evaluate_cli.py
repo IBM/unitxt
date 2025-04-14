@@ -303,7 +303,7 @@ def configure_unitxt_settings(args: argparse.Namespace):
     return settings.context(**unitxt_settings_dict)
 
 
-def load_data(args: argparse.Namespace) -> HFDataset:
+def cli_load_dataset(args: argparse.Namespace) -> HFDataset:
     """Loads the dataset based on command line arguments.
 
     Args:
@@ -400,7 +400,7 @@ def prepare_kwargs(kwargs: dict) -> Dict[str, Any]:
             f"Could not parse kwargs '{kwargs}' as JSON or key-value pairs. Treating as empty."
         )
 
-    logger.info(f"Using kwags: {kwargs_dict}")
+    logger.info(f"Using kwargs: {kwargs_dict}")
     return kwargs_dict
 
 
@@ -821,7 +821,7 @@ def main():
 
         # Apply unitxt settings within a context manager
         with configure_unitxt_settings(args):
-            test_dataset = load_data(args)
+            test_dataset = cli_load_dataset(args)
             model_args_dict = prepare_kwargs(args.model_args)
             gen_kwargs_dict = prepare_kwargs(args.gen_kwargs)
             chat_kwargs_dict = prepare_kwargs(args.chat_template_kwargs)
