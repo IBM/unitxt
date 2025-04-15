@@ -24,45 +24,13 @@ from .inference import (
     InferenceEngine,
 )
 from .metric_utils import EvaluationResults
+from .parsing_utils import parse_key_equals_value_string_to_dict
 from .settings_utils import settings
 from .standard import DatasetRecipe
 
 # Define logger early so it can be used in initial error handling
 # Basic config for initial messages, will be reconfigured in main()
 logger = get_logger()
-
-
-def _parse_key_value_string(value: str) -> Optional[Dict[str, Any]]:
-    """Parses a key=value comma-separated string into a dict."""
-    parsed_dict = {}
-    for item in value.split(","):
-        item = item.strip()
-        if not item:
-            continue
-        parts = item.split("=", 1)
-        if len(parts) == 2:
-            key, val_str = parts
-            key = key.strip()  # Strip whitespace from key
-            # Attempt to convert value to int, float, or bool
-            val: Any
-            try:
-                val = int(val_str)
-            except ValueError:
-                try:
-                    val = float(val_str)
-                except ValueError:
-                    if val_str.lower() == "true":
-                        val = True
-                    elif val_str.lower() == "false":
-                        val = False
-                    else:
-                        val = val_str  # Keep as string
-            parsed_dict[key] = val
-        else:
-            logger.warning(
-                f"Could not parse argument part: '{item}'. Expected format 'key=value'."
-            )
-    return parsed_dict if parsed_dict else None
 
 
 def try_parse_json(value: str) -> Union[str, dict, None]:
@@ -77,7 +45,7 @@ def try_parse_json(value: str) -> Union[str, dict, None]:
     try:
         # Handle simple key-value pairs like "key=value,key2=value2"
         if "=" in value and "{" not in value:
-            parsed_dict = _parse_key_value_string(value)
+            parsed_dict = parse_key_equals_value_string_to_dict(value)
             if parsed_dict:
                 return parsed_dict
 
@@ -339,7 +307,7 @@ def cli_load_dataset(args: argparse.Namespace) -> HFDataset:
 
 
 def task_str_to_dataset_args(task_str, args):
-    dataset_args = _parse_key_value_string(task_str)
+    dataset_args = parse_key_equals_value_string_to_dict(task_str)
 
     if args.limit is not None:
         assert f"max_{args.split}_instances" not in dataset_args, (
