@@ -6454,6 +6454,7 @@ class SQLExecutionAccuracy(InstanceMetric):
 
         Comparison is column order independent, and could optionally be row order independent.
         We interpret "subset" as follows:
+
         - For each row in df1, there must be a matching (or superset) row in df2, i.e. the set of values
           in the df1 row is a subset of the set of values in that df2 row. Then do the same check in reverse.
         - If either condition (df1 is subset of df2 OR df2 is subset of df1) is satisfied, return True.
@@ -6467,6 +6468,7 @@ class SQLExecutionAccuracy(InstanceMetric):
 
         Returns:
             bool: True if df1 is a subset of df2 or vice versa, based on the specified row-order condition.
+
         """
         df1_array = df1.values.astype(str)
         df2_array = df2.values.astype(str)
