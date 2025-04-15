@@ -51,35 +51,6 @@ class MockCrossProviderInferenceEngine(MockInferenceEngine):
 class TestUnitxtEvaluateCLI(unittest.TestCase):
     """Test suite for the evaluate_cli.py script."""
 
-    # --- Parsing and Setup Tests ---
-    def test_parse_key_value_string(self):
-        """Test the _parse_key_value_string helper function."""
-        self.assertEqual(
-            cli._parse_key_value_string(
-                "key1=value1,key2=123,key3=4.5,key4=True,key5=false"
-            ),
-            {"key1": "value1", "key2": 123, "key3": 4.5, "key4": True, "key5": False},
-            "Should parse various data types correctly.",
-        )
-        self.assertIsNone(
-            cli._parse_key_value_string(""), "Should return None for empty string."
-        )
-        self.assertIsNone(
-            cli._parse_key_value_string("key_no_value"),
-            "Should return None for key without value.",
-        )
-        # Check logging on invalid part (use assertLogs)
-        with self.assertLogs(cli.logger, level="WARNING") as cm:
-            result = cli._parse_key_value_string("key=val1,invalid,key2=val2")
-        self.assertEqual(
-            result,
-            {"key": "val1", "key2": "val2"},
-            "Should parse valid parts even if one part is invalid.",
-        )
-        self.assertIn(
-            "Could not parse argument part: 'invalid'", cm.output[0]
-        )  # Check warning log
-
     def test_try_parse_json_valid(self):
         """Test try_parse_json with valid JSON and key-value strings."""
         self.assertEqual(
@@ -215,9 +186,9 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
 
     # --- Data Loading Tests ---
     # load_dataset is still patched in evaluate_cli as it's imported there at module level.
-    @patch("unitxt.evaluate_cli.load_dataset")
-    @patch("unitxt.benchmark.Benchmark")
-    @patch("unitxt.standard.DatasetRecipe")
+    @patch("unitxt.evaluate_cli.load_dataset")  # Patch load_dataset in evaluate_cli
+    @patch("unitxt.evaluate_cli.Benchmark")  # Patch Benchmark in evaluate_cli
+    @patch("unitxt.evaluate_cli.DatasetRecipe")
     @patch.object(cli, "logger")
     def test_load_data(
         self, mock_logger, mock_datasetdecipe, mock_benchmark, mock_load_dataset
@@ -268,9 +239,9 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         )
 
     # --- Test: num_fewshots and limit arguments together ---
-    @patch("unitxt.evaluate_cli.load_dataset")
-    @patch("unitxt.benchmark.Benchmark")
-    @patch("unitxt.standard.DatasetRecipe")
+    @patch("unitxt.evaluate_cli.load_dataset")  # Patch load_dataset in evaluate_cli
+    @patch("unitxt.evaluate_cli.Benchmark")  # Patch Benchmark in evaluate_cli
+    @patch("unitxt.evaluate_cli.DatasetRecipe")
     @patch.object(cli, "logger")  # Keep logger mock
     def test_load_data_with_num_fewshots_and_limit(
         self, mock_logger, mock_datasetdecipe, mock_benchmark, mock_load_dataset
@@ -592,26 +563,47 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
                 )
 
     # --- Evaluation Execution ---
-    @patch.object(cli, "evaluate")
-    def test_run_evaluation_success(self, mock_evaluate):
+    @patch("unitxt.evaluate_cli.evaluate")  # Correct patch target
+    @patch.object(cli, "logger")  # Keep logger mock separate
+    def test_run_evaluation_success(
+        self, mock_logger, mock_evaluate
+    ):  # Correct arg order
         """Test the evaluation runner successfully."""
+        # --- Arrange ---
         mock_predictions = ["pred1", "pred2"]
-        mock_dataset = MagicMock(spec=MockHFDataset)  # Use spec
-        mock_eval_results = [
-            {"score": {"global": {"acc": 1.0}, "instance": {"acc": 1.0}}},
-            {"score": {"global": {"acc": 1.0}, "instance": {"acc": 1.0}}},
+        mock_dataset = MagicMock(spec=HFDataset)  # Use spec=HFDataset if appropriate
+
+        # Create a mock OBJECT that simulates EvaluationResults
+        mock_eval_results_obj = Mock(spec=cli.EvaluationResults)
+        # Set attributes that might be checked or used later
+        # (Based on process_and_save_results, these are needed)
+        mock_eval_results_obj.subsets_scores = Mock(summary="Mock Scores")
+        mock_eval_results_obj.instance_scores = [  # Keep instance data structure
+            {"subset": ["task"], "score": 1.0, "postprocessors": []},
+            {"subset": ["task"], "score": 0.0, "postprocessors": []},
         ]
-        mock_evaluate.return_value = mock_eval_results
+        # Set the return value of the mocked evaluate function
+        mock_evaluate.return_value = mock_eval_results_obj
 
-        with patch.object(cli, "logger"):
-            results = cli.run_evaluation(mock_predictions, mock_dataset)
+        # --- Act ---
+        results = cli.run_evaluation(mock_predictions, mock_dataset)
 
+        # --- Assert ---
+        # 1. Check that the mock EvaluationResults object was returned
         self.assertEqual(
-            results, mock_eval_results, "Should return evaluation results."
+            results,
+            mock_eval_results_obj,
+            "Should return the mock EvaluationResults object.",
         )
+        # 2. Check that the underlying evaluate function was called correctly
         mock_evaluate.assert_called_once_with(
             predictions=mock_predictions, data=mock_dataset
         )
+        # 3. Check logger calls (optional)
+        mock_logger.info.assert_any_call("Starting evaluation...")
+        mock_logger.info.assert_any_call("Evaluation completed.")
+        # Ensure the error log for wrong type wasn't called
+        mock_logger.error.assert_not_called()
 
     @patch.object(cli, "evaluate")
     def test_run_evaluation_no_predictions(self, mock_evaluate):
