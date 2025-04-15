@@ -46,9 +46,7 @@
    </div>
    <br>
    <br>
-   <style>
-        body {
-
+    <style>
         .container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -57,6 +55,7 @@
             margin: 0 auto;
         }
 
+        /* This is your custom button class - kept exactly as you had it */
         .button {
             width: 100%;
             height: 80px;
@@ -73,6 +72,18 @@
             user-select: none;
             text-align: center;
             word-wrap: break-word;
+        }
+
+        /* This makes the anchor tag work like your custom button */
+        .button-link {
+            text-decoration: none; /* Remove default underline */
+            color: inherit; /* Inherit text color */
+            display: block; /* Make it fill the entire button area */
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         /* Responsive styles for mobile devices */
@@ -95,14 +106,25 @@
         .button:nth-child(5) { background-color: #cfd0ff; }
         .button:nth-child(6) { background-color: #cfd0ff; }
     </style>
-
     <div class="container">
-        <div class="button">Evaluate models on existing tasks and data</div>
-        <div class="button">Evaluate standard tasks with my data</div>
-        <div class="button">Create a Benchmark from Existing Datasets</div>
-        <div class="button">Evaluate with special processing or metrics</div>
-        <div class="button">Craft and use LLMs as a Judges</div>
-        <div class="button">Evaluate different modalities and data types</div>
+        <div class="button">
+            <a href="use_cases/existing_data.html" class="button-link">Evaluate models on existing tasks and data</a>
+        </div>
+        <div class="button">
+            <a href="use_cases/user_data.html" class="button-link">Evaluate standard tasks with my data</a>
+        </div>
+        <div class="button">
+            <a href="use_cases/assemble_benchmark.html" class="button-link">Create a Benchmark from Existing Datasets</a>
+        </div>
+        <div class="button">
+            <a href="use_cases/special_tools.html" class="button-link">Evaluate with special processing or metrics</a>
+        </div>
+        <div class="button">
+            <a href="use_cases/llm_as_judges.html" class="button-link">Craft and use LLMs as a Judges</a>
+        </div>
+        <div class="button">
+            <a href="use_cases/multi_modality.html" class="button-link">Evaluate different modalities and data types</a>
+        </div>
     </div>
 
     <script>
@@ -124,6 +146,7 @@
                 setTimeout(() => {
                     button.style.transform = 'translateY(-5px) scale(1.05)';
                 }, 100);
+                // No need to manually redirect - the <a> tag will handle this
             });
         });
     </script>
@@ -142,7 +165,7 @@
    <div class="feed-box-container">
    <div class="feed-box" background-color=rgb(229, 216, 255)>
    <div style="text-align: center; margin: 2em 0;">
-   <br><br><br><br>
+
       <div class="large-text">
          Why Unitxt?
       </div>
@@ -171,6 +194,7 @@
                letter-spacing: -0.5px;
                margin: 0;
                padding: 0;
+               color: black;
          }
 
          .research-text {
@@ -179,6 +203,7 @@
                margin: 0;
                padding: 0;
                margin-left: 0.5rem;
+               color: black;
          }
       </style>
       <div class="ibm-logo">
@@ -194,9 +219,6 @@
 
 .. raw:: html
 
-   <br>
-   <br>
-   <br>
    <br>
    <br>
    <br>
@@ -363,123 +385,195 @@
    <br>
    <br>
    <br>
-   <br>
-   <br>
-   <br>
+
 
 
 
 .. raw:: html
 
+   <style>
+
+        .code-container {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: left !important; /* Force left alignment */
+        }
+
+        .editor-top-bar {
+            background-color: #1e1e1e;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .file-tab {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            padding: 5px 15px;
+            border-radius: 5px 5px 0 0;
+            font-size: 13px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .editor-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background-color: #ff5f56; }
+        .dot-yellow { background-color: #ffbd2e; }
+        .dot-green { background-color: #27c93f; }
+
+        .code-snippet {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px 20px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: scroll;
+            overflow-y: scroll;
+            white-space: pre;
+            height: 500px;
+
+            /* Force scrollbar appearance */
+            scrollbar-width: thin;
+            scrollbar-color: #555 #1e1e1e;
+        }
+
+        /* WebKit browsers (Chrome, Safari) scrollbar styling */
+        .code-snippet::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .code-snippet::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+
+        .code-snippet::-webkit-scrollbar-thumb {
+            background-color: #555;
+            border-radius: 4px;
+        }
+
+        .code-snippet::-webkit-scrollbar-thumb:hover {
+            background-color: #777;
+        }
+
+        .line-numbers {
+            color: #858585;
+            text-align: right;
+            padding-right: 10px;
+            user-select: none;
+            display: inline-block;
+            width: 30px;
+        }
+
+        /* Syntax highlighting colors */
+        .keyword { color: #569cd6; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+        .variable { color: #9cdcfe; }
+        .operator { color: #d4d4d4; }
+        .library { color: #4ec9b0; }
+        .class { color: #4ec9b0; }
+        .number { color: #b5cea8; }
+        .constant { color: #4fc1ff; }
+        .property { color: #9cdcfe; }
+        .punctuation { color: #d4d4d4; }
+        .method { color: #dcdcaa; }
+        .parameter { color: #9cdcfe; }
+        .decorator { color: #c586c0; }
+        .bracket { color: #ffd700; }
+   </style>
    <br>
    <br>
    <br>
    <br>
-   <br>
-   <br>
-   <br>
-   <br>
-   <br>
-   <br>
-   <br>
-   <br>
+
+
+
    <div class="feed-box-container">
    <div class="feed-box" background-color=rgb(229, 216, 255)>
       <div class="feed-box-text">
          <h1>End to End evaluation made simple</h1>
       </div>
-      <div class="feed-code-box"  data-box="1" text-align="left">
-         <div class="code-window">
-            <div class="code-window-buttons">
-               <span class="code-window-button close-button"></span>
-               <span class="code-window-button minimize-button"></span>
-               <span class="code-window-button expand-button"></span>
-            </div>
-            <div class="code-snippet" style="display: block;">
-               <span><span style="color: #f321e2;">from</span> unitxt <span style="color: #f321e2;">import</span> evaluate, create_dataset</span>
-               <br>
-               <span><span style="color: #f321e2;">from</span> unitxt.blocks <span style="color: #f321e2;">import</span> Task, InputOutputTemplate</span>
-               <br>
-               <span><span style="color: #f321e2;">from</span> unitxt.inference <span style="color: #f321e2;">import</span> HFAutoModelInferenceEngine</span>
-               <br>
-               <span><span style="color: #868bff;"># Question-answer dataset</span></span>
-               <br>
-               <span>data <span style="color: #868bff;">=</span> [</span>
-               <br>
-               <span>    {"question": "What is the capital of Texas?", "answer": "Austin"},</span>
-               <br>
-               <span>    {"question": "What is the color of the sky?", "answer": "Blue"},</span>
-               <br>
-               <span>]</span>
-               <br>
-               <span><span style="color: #868bff;"># Define the task and evaluation metric</span></span>
-               <br>
-               <span>task <span style="color: #868bff;">=</span> Task(</span>
-               <br>
-               <span>    input_fields={"question": str},</span>
-               <br>
-               <span>    reference_fields={"answer": str},</span>
-               <br>
-               <span>    prediction_type=str,</span>
-               <br>
-               <span>    metrics=["metrics.accuracy"],</span>
-               <br>
-               <span>)</span>
-               <br>
-               <span><span style="color: #868bff;"># Create a template to format inputs and outputs</span></span>
-               <br>
-               <span>template <span style="color: #868bff;">=</span> InputOutputTemplate(</span>
-               <br>
-               <span>    instruction="Answer the following question.",</span>
-               <br>
-               <span>    input_format="{question}",</span>
-               <br>
-               <span>    output_format="{answer}",</span>
-               <br>
-               <span>    postprocessors=["processors.lower_case"],</span>
-               <br>
-               <span>)</span>
-               <br>
-               <span><span style="color: #868bff;"># Prepare the dataset</span></span>
-               <br>
-               <span>dataset <span style="color: #868bff;">=</span> create_dataset(</span>
-               <br>
-               <span>    task=task,</span>
-               <br>
-               <span>    template=template,</span>
-               <br>
-               <span>    format="formats.chat_api",</span>
-               <br>
-               <span>    test_set=data,</span>
-               <br>
-               <span>    split="test",</span>
-               <br>
-               <span>)</span>
-               <br>
-               <span><span style="color: #868bff;"># Set up the model (supports Hugging Face, WatsonX, OpenAI, etc.)</span></span>
-               <br>
-               <span>model <span style="color: #868bff;">=</span> HFAutoModelInferenceEngine(</span>
-               <br>
-               <span>    model_name="Qwen/Qwen1.5-0.5B-Chat", max_new_tokens=32</span>
-               <br>
-               <span>)</span>
-               <br>
-               <span><span style="color: #868bff;"># Generate predictions and evaluate</span></span>
-               <br>
-               <span>predictions <span style="color: #868bff;">=</span> model(dataset)</span>
-               <br>
-               <span>results <span style="color: #868bff;">=</span> evaluate(predictions=predictions, data=dataset)</span>
-               <br>
-               <span><span style="color: #868bff;"># Print results</span></span>
-               <br>
-               <span>print("Global Results:\n", results.global_scores.summary)</span>
-               <br>
-               <span>print("Instance Results:\n", results.instance_scores.summary)</span>
-            </div>
-         </div>
          <br>
+   <br>
+      <div class="code-container">
+        <!-- Editor top bar with tabs and controls -->
+        <div class="editor-top-bar">
+            <div class="file-tab">unitxt_example.py</div>
+            <div class="editor-controls">
+                <div class="control-dot dot-red"></div>
+                <div class="control-dot dot-yellow"></div>
+                <div class="control-dot dot-green"></div>
+            </div>
+        </div>
 
-      </div>
+        <!-- Code with syntax highlighting and line numbers -->
+        <div class="code-snippet">
+   <span class="line-numbers">1</span> <span class="keyword">from</span> <span class="library">unitxt</span> <span class="keyword">import</span> <span class="function">evaluate</span>, <span class="function">create_dataset</span>
+   <span class="line-numbers">2</span> <span class="keyword">from</span> <span class="library">unitxt.blocks</span> <span class="keyword">import</span> <span class="class">Task</span>, <span class="class">InputOutputTemplate</span>
+   <span class="line-numbers">3</span> <span class="keyword">from</span> <span class="library">unitxt.inference</span> <span class="keyword">import</span> <span class="class">HFAutoModelInferenceEngine</span>
+   <span class="line-numbers">4</span>
+   <span class="line-numbers">5</span> <span class="comment"># Question-answer dataset</span>
+   <span class="line-numbers">6</span> <span class="variable">data</span> <span class="operator">=</span> [
+   <span class="line-numbers">7</span>     {<span class="string">"question"</span>: <span class="string">"What is the capital of Texas?"</span>, <span class="string">"answer"</span>: <span class="string">"Austin"</span>},
+   <span class="line-numbers">8</span>     {<span class="string">"question"</span>: <span class="string">"What is the color of the sky?"</span>, <span class="string">"answer"</span>: <span class="string">"Blue"</span>},
+   <span class="line-numbers">9</span> ]
+   <span class="line-numbers">10</span>
+   <span class="line-numbers">11</span> <span class="comment"># Define the task and evaluation metric</span>
+   <span class="line-numbers">12</span> <span class="variable">task</span> <span class="operator">=</span> <span class="class">Task</span>(
+   <span class="line-numbers">13</span>     <span class="parameter">input_fields</span><span class="operator">=</span>{<span class="string">"question"</span>: <span class="constant">str</span>},
+   <span class="line-numbers">14</span>     <span class="parameter">reference_fields</span><span class="operator">=</span>{<span class="string">"answer"</span>: <span class="constant">str</span>},
+   <span class="line-numbers">15</span>     <span class="parameter">prediction_type</span><span class="operator">=</span><span class="constant">str</span>,
+   <span class="line-numbers">16</span>     <span class="parameter">metrics</span><span class="operator">=</span>[<span class="string">"metrics.accuracy"</span>],
+   <span class="line-numbers">17</span> )
+   <span class="line-numbers">18</span>
+   <span class="line-numbers">19</span> <span class="comment"># Create a template to format inputs and outputs</span>
+   <span class="line-numbers">20</span> <span class="variable">template</span> <span class="operator">=</span> <span class="class">InputOutputTemplate</span>(
+   <span class="line-numbers">21</span>     <span class="parameter">instruction</span><span class="operator">=</span><span class="string">"Answer the following question."</span>,
+   <span class="line-numbers">22</span>     <span class="parameter">input_format</span><span class="operator">=</span><span class="string">"{question}"</span>,
+   <span class="line-numbers">23</span>     <span class="parameter">output_format</span><span class="operator">=</span><span class="string">"{answer}"</span>,
+   <span class="line-numbers">24</span>     <span class="parameter">postprocessors</span><span class="operator">=</span>[<span class="string">"processors.lower_case"</span>],
+   <span class="line-numbers">25</span> )
+   <span class="line-numbers">26</span>
+   <span class="line-numbers">27</span> <span class="comment"># Prepare the dataset</span>
+   <span class="line-numbers">28</span> <span class="variable">dataset</span> <span class="operator">=</span> <span class="function">create_dataset</span>(
+   <span class="line-numbers">29</span>     <span class="parameter">task</span><span class="operator">=</span><span class="variable">task</span>,
+   <span class="line-numbers">30</span>     <span class="parameter">template</span><span class="operator">=</span><span class="variable">template</span>,
+   <span class="line-numbers">31</span>     <span class="parameter">format</span><span class="operator">=</span><span class="string">"formats.chat_api"</span>,
+   <span class="line-numbers">32</span>     <span class="parameter">test_set</span><span class="operator">=</span><span class="variable">data</span>,
+   <span class="line-numbers">33</span>     <span class="parameter">split</span><span class="operator">=</span><span class="string">"test"</span>,
+   <span class="line-numbers">34</span> )
+   <span class="line-numbers">35</span>
+   <span class="line-numbers">36</span> <span class="comment"># Set up the model (supports Hugging Face, WatsonX, OpenAI, etc.)</span>
+   <span class="line-numbers">37</span> <span class="variable">model</span> <span class="operator">=</span> <span class="class">HFAutoModelInferenceEngine</span>(
+   <span class="line-numbers">38</span>     <span class="parameter">model_name</span><span class="operator">=</span><span class="string">"Qwen/Qwen1.5-0.5B-Chat"</span>, <span class="parameter">max_new_tokens</span><span class="operator">=</span><span class="number">32</span>
+   <span class="line-numbers">39</span> )
+   <span class="line-numbers">40</span>
+   <span class="line-numbers">41</span> <span class="comment"># Generate predictions and evaluate</span>
+   <span class="line-numbers">42</span> <span class="variable">predictions</span> <span class="operator">=</span> <span class="variable">model</span>(<span class="variable">dataset</span>)
+   <span class="line-numbers">43</span> <span class="variable">results</span> <span class="operator">=</span> <span class="function">evaluate</span>(<span class="parameter">predictions</span><span class="operator">=</span><span class="variable">predictions</span>, <span class="parameter">data</span><span class="operator">=</span><span class="variable">dataset</span>)
+   <span class="line-numbers">44</span>
+   <span class="line-numbers">45</span> <span class="comment"># Print results</span>
+   <span class="line-numbers">46</span> <span class="function">print</span>(<span class="string">"Global Results:\n"</span>, <span class="variable">results</span>.<span class="property">global_scores</span>.<span class="property">summary</span>)
+   <span class="line-numbers">47</span> <span class="function">print</span>(<span class="string">"Instance Results:\n"</span>, <span class="variable">results</span>.<span class="property">instance_scores</span>.<span class="property">summary</span>)
+         </div>
+    </div>
    </div>
    </div>
 
@@ -493,10 +587,10 @@ Welcome!
    :hidden:
 
    docs/introduction
-   docs/demo
    docs/installation
    docs/loading_datasets
    docs/evaluating_datasets
+   use_cases/use_cases
    docs/tutorials
    docs/examples
    blog/index
