@@ -6387,7 +6387,7 @@ class SQLExecutionAccuracy(InstanceMetric):
     ]
 
     prediction_type = "Any"  # string representation is compared
-    sql_timeout = 5.0
+    sql_timeout = 30.0
 
     _requirements_list = ["sqlglot", "func_timeout"]
 
