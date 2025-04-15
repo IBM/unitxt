@@ -3151,7 +3151,6 @@ class LiteLLMInferenceEngine(
                 response = await self._completion(
                     messages=messages,
                     max_retries=self.max_retries,
-                    caching=True,
                     drop_params=False,
                     **self.credentials,
                     **kwargs,
