@@ -46,110 +46,123 @@
    </div>
    <br>
    <br>
-    <style>
+   <style>
         .container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-gap: 20px;
             width: 100%;
             margin: 0 auto;
+            max-width: 1200px;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        /* This is your custom button class - kept exactly as you had it */
         .button {
             width: 100%;
-            height: 80px;
-            background-color: #4a87ff;
+            min-height: 120px; /* Fixed minimum height */
+            background-color: #cfd0ff;
             color: black;
             display: flex;
             justify-content: center;
             align-items: center;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 1.2em;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             user-select: none;
             text-align: center;
+            padding: 15px;
+            font-size: 1rem;
+            line-height: 1.4;
             word-wrap: break-word;
+            box-sizing: border-box; /* Important to include padding in the size calculation */
+            position: relative; /* For proper stacking context */
         }
 
         /* This makes the anchor tag work like your custom button */
         .button-link {
-            text-decoration: none; /* Remove default underline */
-            color: inherit; /* Inherit text color */
-            display: block; /* Make it fill the entire button area */
-            width: 100%;
-            height: 100%;
+            text-decoration: none;
+            color: inherit;
             display: flex;
             justify-content: center;
             align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 10px;
+            box-sizing: border-box;
         }
 
-        /* Responsive styles for mobile devices */
+        /* Responsive styles for different screen sizes */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         @media (max-width: 768px) {
             .container {
-                width: 100%;
                 grid-template-columns: 1fr;
+                grid-gap: 15px;
+            }
+            .button {
+                min-height: 100px;
             }
         }
 
         .button:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            z-index: 1; /* Ensures the hovering button stays on top */
         }
+   </style>
+   <div class="container">
+      <div class="button">
+         <a href="use_cases/existing_data.html" class="button-link">Evaluate models on existing tasks and data</a>
+      </div>
+      <div class="button">
+         <a href="use_cases/user_data.html" class="button-link">Evaluate standard tasks with my data</a>
+      </div>
+      <div class="button">
+         <a href="use_cases/assemble_benchmark.html" class="button-link">Create a Benchmark from Existing Datasets</a>
+      </div>
+      <div class="button">
+         <a href="use_cases/special_tools.html" class="button-link">Evaluate with special processing or metrics</a>
+      </div>
+      <div class="button">
+         <a href="use_cases/llm_as_judges.html" class="button-link">Craft and use LLMs as a Judges</a>
+      </div>
+      <div class="button">
+         <a href="use_cases/multi_modality.html" class="button-link">Evaluate different modalities and data types</a>
+      </div>
+   </div>
 
-        .button:nth-child(1) { background-color: #cfd0ff; }
-        .button:nth-child(2) { background-color: #cfd0ff; }
-        .button:nth-child(3) { background-color: #cfd0ff; }
-        .button:nth-child(4) { background-color: #cfd0ff; }
-        .button:nth-child(5) { background-color: #cfd0ff; }
-        .button:nth-child(6) { background-color: #cfd0ff; }
-    </style>
-    <div class="container">
-        <div class="button">
-            <a href="use_cases/existing_data.html" class="button-link">Evaluate models on existing tasks and data</a>
-        </div>
-        <div class="button">
-            <a href="use_cases/user_data.html" class="button-link">Evaluate standard tasks with my data</a>
-        </div>
-        <div class="button">
-            <a href="use_cases/assemble_benchmark.html" class="button-link">Create a Benchmark from Existing Datasets</a>
-        </div>
-        <div class="button">
-            <a href="use_cases/special_tools.html" class="button-link">Evaluate with special processing or metrics</a>
-        </div>
-        <div class="button">
-            <a href="use_cases/llm_as_judges.html" class="button-link">Craft and use LLMs as a Judges</a>
-        </div>
-        <div class="button">
-            <a href="use_cases/multi_modality.html" class="button-link">Evaluate different modalities and data types</a>
-        </div>
-    </div>
+   <script>
+      // Modified interaction to prevent overlap issues
+      const buttons = document.querySelectorAll('.button');
 
-    <script>
-        // Add a little extra interaction
-        const buttons = document.querySelectorAll('.button');
+      buttons.forEach(button => {
+         button.addEventListener('mouseenter', () => {
+               button.style.transform = 'translateY(-5px)';
+               button.style.zIndex = '2'; // Ensure hovered element is on top
+         });
 
-        buttons.forEach(button => {
-            button.addEventListener('mouseenter', () => {
-                button.style.transform = 'translateY(-5px) scale(1.05)';
-            });
+         button.addEventListener('mouseleave', () => {
+               button.style.transform = 'translateY(0)';
+               setTimeout(() => {
+                  button.style.zIndex = '1';
+               }, 300); // Reset z-index after transition completes
+         });
 
-            button.addEventListener('mouseleave', () => {
-                button.style.transform = 'translateY(0) scale(1)';
-            });
-
-            button.addEventListener('click', () => {
-                // Add a quick scale effect on click
-                button.style.transform = 'translateY(-5px) scale(0.95)';
-                setTimeout(() => {
-                    button.style.transform = 'translateY(-5px) scale(1.05)';
-                }, 100);
-                // No need to manually redirect - the <a> tag will handle this
-            });
-        });
-    </script>
+         button.addEventListener('click', () => {
+               // Simpler click effect
+               button.style.transform = 'translateY(-2px)';
+               setTimeout(() => {
+                  button.style.transform = 'translateY(-5px)';
+               }, 100);
+         });
+      });
+   </script>
 
 .. raw:: html
 
