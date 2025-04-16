@@ -21,6 +21,17 @@
         width: 100%;
         margin: 0 auto;
     }
+
+    .large-text-black {
+        font-size: 2em;
+        line-height: 1.4;
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-weight: normal;
+        width: 100%;
+        margin: 0 auto;
+        color: black;
+    }
+
    </style>
 
    <div style="text-align: center; margin: 2em 0;">
@@ -179,12 +190,12 @@
    <div class="feed-box" background-color=rgb(229, 216, 255)>
    <div style="text-align: center; margin: 2em 0;">
 
-      <div class="large-text">
+      <div class="large-text-black">
          Why Unitxt?
       </div>
       <br>
       <br>
-      <div class="large-text">
+      <div class="large-text-black">
          Unitxt was built by IBM Research to host a maintainable large collection of evaluation assets. If you care about robust evaluation that last, then Unitxt is for you.
       </div>
       <br>
@@ -521,7 +532,7 @@
    <div class="feed-box-container">
    <div class="feed-box" background-color=rgb(229, 216, 255)>
       <div class="feed-box-text">
-         <h1>End to End evaluation made simple</h1>
+         <div class="large-text-black">End to End evaluation made simple</div>
       </div>
          <br>
    <br>
