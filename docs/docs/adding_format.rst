@@ -5,7 +5,7 @@
    To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
 =====================================
-Formats ✨
+Formats 
 =====================================
 
 Formats define the overall textual layout of the example, including system prompt,
