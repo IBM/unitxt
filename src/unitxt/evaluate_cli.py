@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from datasets import Dataset as HFDataset
 
-from . import evaluate, get_logger, load_dataset
+from .api import evaluate, get_logger, load_dataset
 from .artifact import UnitxtArtifactNotFoundError
 from .benchmark import Benchmark
 
