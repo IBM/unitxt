@@ -240,7 +240,7 @@ class LLMJudgeDirect(LLMJudge):
     main_score = "llm_as_judge"
     """The primary score name used in the results. By default, it will take the value of the criteria name (if only one criteria is being used for evaluation) or "llm_as_judge" otherwise."""
     reduction_map = {"mean": ["llm_as_judge"]}
-    """A mapping used for score aggregation. By default, it will take the value of `{'mean': [<default_main_score_name>]}`."""
+    """A mapping used for score aggregation. By default, it will take the value of ``{'mean': [<default_main_score_name>]}`` ."""
 
     def prepare(self):
         super().prepare()
@@ -420,7 +420,7 @@ class LLMJudgeDirect(LLMJudge):
         This method evaluates the quality of of the predictions by calculating scores for each instance based on a criterion.
 
         Returns:
-        -------
+        --------
         List[Dict]
             A list of dictionaries containing the evaluation results for each instance. The results include the computed scores for each prediction. Each result will have the `score_name` as a prefix, which may be the criterion name if only one used, or "llm_as_judge" if several criteria were used.
 
@@ -647,7 +647,7 @@ class LLMJudgePairwise(LLMJudge):
     main_score = "1_winrate"
     """The main score metric for pairwise evaluation. By default, its value is `1_winrate`, and will take the value of the winrate of the first system."""
     reduction_map = {"mean": ["score"]}
-    """A mapping specifying how scores should be reduced. By default, it will be `{'main': ['score']}`"""
+    """A mapping specifying how scores should be reduced. By default, it will be ``{'main': ['score']}`` ."""
 
     def prepare(self):
         """Prepares the pairwise comparison by initializing the necessary templates and tasks. These tasks will be used to assess, summarize, and select options from candidate responses."""
@@ -937,7 +937,7 @@ class LLMJudgePairwise(LLMJudge):
             task_data (List[Dict[str, str]]): Task data to be used for evaluation.
 
         Returns:
-        -------
+        --------
         List[Dict[str,Dict]]
             The results of the evaluation, including winrate, ranking, and other metrics.
 
