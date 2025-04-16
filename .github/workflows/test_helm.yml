@@ -28,7 +28,6 @@ jobs:
       - run: uv pip install --upgrade --system "diskcache"
       - run: uv pip install --upgrade --system "crfm-helm[unitxt]>=0.5.3"
       - run: uv pip install --system "scikit-learn==1.5.2"
-      - run: rm -rf /home/runner/.cache/huggingface
 
       - name: Test Helm
         run: utils/run_helm.sh
