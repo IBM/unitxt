@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_csv",
         "files": {
-            "train": "./data/text2sql/bird/orig/train.jsonl"
+            "train": "./data/text2sql/bird/orig/train.jsonl",
+            "test": "./data/text2sql/bird/orig/test.jsonl"
         },
         "file_type": "json",
         "lines": true
