@@ -1,8 +1,8 @@
-.. _unitxt_evaluate_cli:
+.. _cli:
 
-######################
-Unitxt Evaluate CLI
-######################
+############
+Evaluate CLI
+############
 
 This document describes the command-line interface (CLI) provided by the ``evaluate_cli.py`` script for running language model evaluations using the ``unitxt`` library.
 
@@ -114,8 +114,10 @@ Model Arguments
     * **Format (Key-Value):** ``key1=value1,key2=value2,...`` (Values automatically typed as int, float, bool, or string). Example: ``torch_dtype=bfloat16,device=cuda,trust_remote_code=true``
     * **Format (JSON):** ``'{"key1": "value1", "key2": 123, "key3": true}'`` (Use double quotes for JSON keys and string values).
     * **Required Keys:**
-        * For ``--model hf``: Must include ``pretrained=<model_id_or_path>``.
-        * For ``--model cross_provider``: Must include ``model_name=<provider/model_id>``.
+
+      * For ``--model hf``: Must include ``pretrained=<model_id_or_path>``.
+      * For ``--model cross_provider``: Must include ``model_name=<provider/model_id>``.
+    
     * **Engine-Specific Args:** Refer to the documentation for ``HFAutoModelInferenceEngine`` and ``CrossProviderInferenceEngine`` (and potentially ``litellm`` for ``cross_provider``) for available arguments (e.g., ``torch_dtype``, ``device``, ``quantization_config`` for ``hf``; ``api_base``, ``api_key``, ``max_tokens``, ``temperature`` for ``cross_provider``). Note: Sensitive keys like ``api_key`` are often better handled via environment variables.
     * **Merging with ``--gen_kwargs``:** Arguments from ``--gen_kwargs`` are merged into this dictionary *before* initializing the inference engine. See ``--gen_kwargs`` description.
     * **Default:** ``{}``
