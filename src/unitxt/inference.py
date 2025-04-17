@@ -2147,7 +2147,7 @@ class WMLChatParamsMixin(Artifact):
 
 
 CredentialsWML = Dict[
-    Literal["url", "username", "password", "api_key", "project_id", "space_id"], str
+    Literal["url", "username", "password", "api_key", "project_id", "space_id", "instance_id"], str
 ]
 
 
@@ -2163,10 +2163,10 @@ class WMLInferenceEngineBase(
         credentials (Dict[str, str], optional):
             By default, it is created by a class
             instance which tries to retrieve proper environment variables
-            ("WML_URL", "WML_PROJECT_ID", "WML_SPACE_ID", "WML_APIKEY", "WML_USERNAME", "WML_PASSWORD").
+            ("WML_URL", "WML_PROJECT_ID", "WML_SPACE_ID", "WML_APIKEY", "WML_USERNAME", "WML_PASSWORD",
+            "WML_INSTANCE_ID").
             However, a dictionary with the following keys: "url", "apikey", "project_id", "space_id",
-            "username", "password".
-            can be directly provided instead.
+            "username", "password", "instance_id" can be directly provided instead.
         model_name (str, optional):
             ID of a model to be used for inference. Mutually
             exclusive with 'deployment_id'.
@@ -2289,6 +2289,10 @@ class WMLInferenceEngineBase(
                 "Please set either 'WML_APIKEY' or both 'WML_USERNAME' and "
                 "'WML_PASSWORD' env variables."
             )
+
+        instance_id = os.environ.get("WML_INSTANCE_ID")
+        if instance_id:
+            credentials["instance_id"] = instance_id
 
         return credentials
 
