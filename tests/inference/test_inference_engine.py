@@ -185,6 +185,26 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertListEqual(predictions,  ["7", "2"])
 
+    def test_rits_byom_inference(self):
+        import os
+
+        if os.environ.get("RITS_API_KEY") is None:
+            logger.warning(
+                "Skipping test_rits_inference because RITS_API_KEY not defined"
+            )
+            return
+
+        model = RITSInferenceEngine(
+            model_name="byom-gb-fca-full/ibm-granite/granite-3.1-2b-instruct",
+            max_tokens=128,
+        )
+
+        dataset = get_text_dataset()
+
+        predictions = model(dataset)
+
+        self.assertListEqual(predictions,  ["7", "2"])
+
     def test_option_selecting_by_log_prob_inference_engines(self):
         dataset = [
             {

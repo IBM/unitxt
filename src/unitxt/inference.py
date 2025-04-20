@@ -1831,6 +1831,12 @@ class OpenAiInferenceEngine(
         import openai
 
         messages = self.to_messages(instance)
+        if self.label == "rits" and self.model_name.startswith("byom-"):
+            # Remove "byom-xyz/" initial part of model name, since that's part of the
+            # endpoint.
+            self.model_name = "/".join(self.model_name.split("/")[1:]) # This is wrong. since in next iteration
+                                                                        # model_name will not include "byom-".
+            logger.info(f"_get_chat_completion: using rits model_name: {self.model_name}")
         try:
             response = self.client.chat.completions.create(
                 messages=messages,
@@ -1959,14 +1965,20 @@ class RITSInferenceEngine(
         base_url_template = (
             "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}"
         )
-        return base_url_template.format(
+        r = base_url_template.format(
             RITSInferenceEngine._get_model_name_for_endpoint(model_name)
         )
+        logger.info(f"Created RITS URL: {r}")
+        return r
 
     @classmethod
     def _get_model_name_for_endpoint(cls, model_name: str):
         if model_name in cls.model_names_dict:
             return cls.model_names_dict[model_name]
+        b = model_name.split("/")[0]
+        if b.startswith("byom"):
+            logger.info(f"Using BYOM model: {b}")
+            return b
         return (
             model_name.split("/")[-1]
             .lower()
