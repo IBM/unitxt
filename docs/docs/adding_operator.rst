@@ -5,15 +5,15 @@
    To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
 =====================================
-Operators ✨
+Operators 
 =====================================
 
 Operators are specialized functions designed to process data.
 
 They are used in the TaskCard for preparing data for specific tasks and by Post Processors
-to process the textual output of the model to the expect input of the metrics. 
+to process the textual output of the model to the expect input of the metrics.
 
-There are several types of operators. 
+There are several types of operators.
 
 1. Field Operators - Operators that modify individual fields of the instances in the input streams.  Example of such operators are operators that
 cast field values, uppercase string fields, or translate text between languages.
@@ -35,7 +35,7 @@ Built in operators have some benefits:
 3. **Performance**: Built-in Operators are designed to maintain high performance standards, particularly suitable for stream processing.
 4. **Security** : Built-in Operators do not require running of arbitrary user code, and hence can be run in secured environments that prohibit running user code.
 
-It is recommended to use existing operators when possible. 
+It is recommended to use existing operators when possible.
 
 However, if a highly specific or uncommon operation is needed that existing operators do not cover, and it is unlikely to be reused, you can use :class:`ExecuteExpression <unitxt.operators.ExecuteExpression>` or :class:`FilterByExpression <unitxt.operators.FilterByExpression>` operators:
 
@@ -55,12 +55,12 @@ To manipulate a single field, inherit from :class:`FieldOperator <operator.Field
 
 .. code-block:: python
 
-    from unitxt.operator import FieldOperator
+    from unitxt.operators import FieldOperator
 
     class AddNumber(FieldOperator):
         number: float
 
-        def process(self, value):
+        def process_value(self, value):
             return value + self.number
 
 **Explanation**: This class adds a specified number to the input value. It inherits from `FieldOperator` which is designed to operate on a single field.
@@ -167,8 +167,8 @@ MultiStream operators handle operations across multiple data streams concurrentl
                 }
             )
 
-**Explanation**: The `MergeAllStreams` class extends `MultiStreamOperator` and provides functionality to merge several streams into a single stream. 
-The `merge` method iterates over each provided stream, yielding instances from each one consecutively. The `process` method then utilizes this merging logic to create a new `MultiStream` that consolidates all input streams into a single output stream named "merged". 
+**Explanation**: The `MergeAllStreams` class extends `MultiStreamOperator` and provides functionality to merge several streams into a single stream.
+The `merge` method iterates over each provided stream, yielding instances from each one consecutively. The `process` method then utilizes this merging logic to create a new `MultiStream` that consolidates all input streams into a single output stream named "merged".
 This operator is particularly useful in scenarios where data from different sources needs to be combined into a single dataset for analysis or further processing.
 
 Unit Testing Operators

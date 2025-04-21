@@ -40,10 +40,10 @@ print(results.subsets_scores.summary)
 Using LLAMA-VISION-11B
 | subset   |    score | score_name      |   num_of_instances |
 |:---------|---------:|:----------------|-------------------:|
-| ALL      | 0.384752 | subsets_mean    |                150 |
-| doc_vqa  | 0.717027 | anls            |                 30 |
-| info_vqa | 0.485069 | anls            |                 30 |
+| ALL      | 0.432395 | subsets_mean    |                150 |
+| doc_vqa  | 0.802078 | anls            |                 30 |
+| info_vqa | 0.506233 | anls            |                 30 |
 | chart_qa | 0.266667 | relaxed_overall |                 30 |
 | ai2d     | 0.1      | exact_match_mm  |                 30 |
-| websrc   | 0.355    | websrc_squad_f1 |                 30 |
+| websrc   | 0.487    | websrc_squad_f1 |                 30 |
 """

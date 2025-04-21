@@ -4,6 +4,6 @@
     "input_format": "[Question]\n{question}\n\n[Assistant's Answer]\n{answer}\n",
     "output_format": "[[{rating}]]",
     "postprocessors": [
-        "processors.extract_mt_bench_rating_judgment"
+        "processors.extract_harm_rating_judgment"
     ]
 }

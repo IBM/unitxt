@@ -21,12 +21,6 @@
                 "text"
             ],
             "to_field": "passages"
-        },
-        {
-            "__type__": "set",
-            "fields": {
-                "metadata_field": {}
-            }
         }
     ],
     "task": "tasks.rag.corpora",

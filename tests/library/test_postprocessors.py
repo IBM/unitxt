@@ -1,7 +1,8 @@
+import unittest
 from typing import Any, List
 
 from unitxt.artifact import fetch_artifact
-from unitxt.processors import MatchClosestOption, Substring
+from unitxt.processors import GetSQL, MatchClosestOption, Substring
 from unitxt.test_utils.operators import check_operator
 
 from tests.utils import UnitxtTestCase
@@ -512,3 +513,149 @@ class TestPostProcessors(UnitxtTestCase):
             ),
             tester=self,
         )
+
+
+class TestGetSQL(unittest.TestCase):
+    """Test suite for the GetSQL operator."""
+
+    def setUp(self):
+        """Set up the test instance."""
+        self.extractor = GetSQL()
+
+    # --- Tests inherited from v2 (Outputs potentially changed by new logic) ---
+
+    def test_simple_select(self):
+        text = "SELECT column1 FROM table1;"
+        expected = "SELECT column1 FROM table1"  # Truncates at semicolon
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_select_with_leading_text(self):
+        text = "Here is the query: SELECT id, name FROM users WHERE id = 1;"
+        expected = "SELECT id, name FROM users WHERE id = 1"  # Truncates at semicolon
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_select_with_trailing_text_no_semicolon(self):
+        # Fallback logic finds last SELECT. No semicolon means no truncation.
+        text = "The query is SELECT * FROM products this is still included"
+        expected = "SELECT * FROM products this is still included"  # Limitation: No semicolon means trailing text remains
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_select_with_trailing_text_with_semicolon(self):
+        # Fallback finds last SELECT, cleanup truncates at the first semicolon found.
+        text = "The query is SELECT * FROM products; this should BE excluded now"
+        expected = "SELECT * FROM products"  # Truncates correctly
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_markdown_sql_block(self):
+        text = "Some text before\n```sql\nSELECT name FROM customers WHERE country = 'DE';\n```\nSome text after"
+        expected = "SELECT name FROM customers WHERE country = 'DE'"  # Extracts block, truncates at semicolon
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_markdown_generic_block_sql(self):
+        text = "Explanation...\n```\nSELECT COUNT(*) FROM orders;\n```"
+        expected = (
+            "SELECT COUNT(*) FROM orders"  # Extracts block, truncates at semicolon
+        )
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_markdown_generic_block_non_sql(self):
+        text = "Explanation...\n```\nThis is not SQL.\n```\nBut here is the query: SELECT 1;"
+        expected = "SELECT 1"  # Falls back, finds SELECT 1, truncates at semicolon
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_multiple_markdown_blocks(self):
+        text = "First attempt:\n```sql\nSELECT id FROM tmp;\n```\nSecond, better attempt:\n```sql\nSELECT final_col FROM final_table WHERE id > 10;\n```"
+        expected = "SELECT final_col FROM final_table WHERE id > 10"  # Takes last block, truncates semicolon
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_mixed_markdown_blocks(self):
+        text = "Generic block:\n```\nSELECT id FROM tmp;\n```\nSpecific SQL block:\n```sql\nSELECT final_col FROM final_table;\n```"
+        expected = "SELECT final_col FROM final_table"  # Prefers ```sql block, truncates semicolon
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_multiple_selects_no_blocks(self):
+        text = "Maybe SELECT 1; or perhaps SELECT * FROM test_table WHERE condition = TRUE;"
+        expected = "SELECT * FROM test_table WHERE condition = TRUE"  # Takes last SELECT, truncates semicolon
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_select_with_cte(self):
+        text = "```sql\nWITH RegionalSales AS (\n    SELECT region, SUM(amount) AS total_sales\n    FROM sales\n    GROUP BY region\n) SELECT region, total_sales FROM RegionalSales;\n```"
+        expected = "WITH RegionalSales AS (\n    SELECT region, SUM(amount) AS total_sales\n    FROM sales\n    GROUP BY region\n) SELECT region, total_sales FROM RegionalSales"  # Extracts block, truncates semicolon
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_case_insensitivity(self):
+        text = "here is the query\n```SQL\nselect column1 from table1;\n```"
+        expected = "select column1 from table1"  # Extracts block, truncates semicolon
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_no_query_found(self):
+        text = "This text does not contain any SQL query."
+        expected = "No query found in generation"
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_empty_string(self):
+        text = ""
+        expected = "No query found in generation"
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_only_markdown_delimiters(self):
+        text = "```sql\n```"
+        expected = "No query found in generation"
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_only_markdown_delimiters_generic(self):
+        text = "```\n```"
+        expected = "No query found in generation"  # Empty generic block doesn't start with SQL keyword
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_select_with_comments_in_block(self):
+        text = "```sql\n-- This is a comment\nSELECT /* another comment */ col\nFROM my_table; -- trailing comment after semicolon\n```"
+        # Extracts block content, finds first ';', truncates *after* my_table
+        expected = (
+            "-- This is a comment\nSELECT /* another comment */ col\nFROM my_table"
+        )
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_non_string_input(self):
+        text = 123
+        expected = "Input must be a string"
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_none_input(self):
+        text = None
+        expected = "Input must be a string"
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    # --- New/Modified Tests for v3 ---
+
+    def test_block_with_trailing_text_inside_after_semicolon(self):
+        text = "```sql\nSELECT id FROM users WHERE id=1; This text is inside the block.\n```"
+        expected = "SELECT id FROM users WHERE id=1"  # Truncates at the semicolon
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_block_with_trailing_text_inside_no_semicolon(self):
+        text = "```sql\nSELECT id FROM users WHERE id=1 This text is inside the block.\n```"
+        expected = "SELECT id FROM users WHERE id=1 This text is inside the block."  # No semicolon, no truncation
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_fallback_starts_with_insert(self):
+        text = "INSERT INTO mytable (col1) VALUES (1); Ignore this."
+        expected = (
+            "INSERT INTO mytable (col1) VALUES (1)"  # Finds INSERT, extracts, truncates
+        )
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_query_with_semicolon_in_string_literal(self):
+        # Limitation: This heuristic approach will incorrectly truncate here.
+        # A full parser would be needed to handle this robustly.
+        text = "SELECT name FROM people WHERE comment = 'Ended; started again'; And more text."
+        expected = (
+            "SELECT name FROM people WHERE comment = 'Ended"  # Incorrectly truncates
+        )
+        self.assertEqual(self.extractor.process_value(text), expected)
+
+    def test_query_with_semicolon_in_comment(self):
+        # Limitation: This heuristic approach will incorrectly truncate here.
+        text = "SELECT name -- a; b; c\nFROM people; And more text."
+        expected = "SELECT name -- a"  # Incorrectly truncates
+        self.assertEqual(self.extractor.process_value(text), expected)
