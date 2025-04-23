@@ -16,7 +16,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.fin_qa.concat.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.fin_qa.concat.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "csv": Benchmark(
                     subsets={
@@ -26,7 +26,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.fin_qa.csv.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.fin_qa.csv.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "df": Benchmark(
                     subsets={
@@ -36,7 +36,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.fin_qa.df.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.fin_qa.df.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "html": Benchmark(
                     subsets={
@@ -46,7 +46,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.fin_qa.html.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.fin_qa.html.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "indexed_row_major": Benchmark(
                     subsets={
@@ -56,7 +56,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.fin_qa.indexed_row_major.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.fin_qa.indexed_row_major.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "json": Benchmark(
                     subsets={
@@ -66,7 +66,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.fin_qa.json.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.fin_qa.json.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "markdown": Benchmark(
                     subsets={
@@ -76,7 +76,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.fin_qa.markdown.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.fin_qa.markdown.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
             },
         ),
@@ -90,7 +90,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.concat.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.numeric_nlg.concat.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "csv": Benchmark(
                     subsets={
@@ -100,7 +100,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.csv.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.numeric_nlg.csv.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "df": Benchmark(
                     subsets={
@@ -110,7 +110,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.df.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.numeric_nlg.df.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "html": Benchmark(
                     subsets={
@@ -120,7 +120,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.html.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.numeric_nlg.html.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "indexed_row_major": Benchmark(
                     subsets={
@@ -130,7 +130,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.indexed_row_major.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.numeric_nlg.indexed_row_major.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "json": Benchmark(
                     subsets={
@@ -140,7 +140,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.json.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.numeric_nlg.json.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "markdown": Benchmark(
                     subsets={
@@ -150,7 +150,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.markdown.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.numeric_nlg.markdown.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
             },
         ),
@@ -164,7 +164,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.qtsumm.concat.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.qtsumm.concat.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "csv": Benchmark(
                     subsets={
@@ -174,7 +174,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.qtsumm.csv.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.qtsumm.csv.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "df": Benchmark(
                     subsets={
@@ -184,7 +184,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.qtsumm.df.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.qtsumm.df.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "html": Benchmark(
                     subsets={
@@ -194,7 +194,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.qtsumm.html.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.qtsumm.html.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "indexed_row_major": Benchmark(
                     subsets={
@@ -204,7 +204,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.qtsumm.indexed_row_major.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.qtsumm.indexed_row_major.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "json": Benchmark(
                     subsets={
@@ -214,7 +214,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.qtsumm.json.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.qtsumm.json.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "markdown": Benchmark(
                     subsets={
@@ -224,7 +224,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.qtsumm.markdown.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.qtsumm.markdown.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
             },
         ),
@@ -238,7 +238,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.scigen.concat.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.scigen.concat.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "csv": Benchmark(
                     subsets={
@@ -248,7 +248,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.scigen.csv.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.scigen.csv.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "df": Benchmark(
                     subsets={
@@ -258,7 +258,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.scigen.df.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.scigen.df.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "html": Benchmark(
                     subsets={
@@ -268,7 +268,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.scigen.html.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.scigen.html.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "indexed_row_major": Benchmark(
                     subsets={
@@ -278,7 +278,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.scigen.indexed_row_major.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.scigen.indexed_row_major.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "json": Benchmark(
                     subsets={
@@ -288,7 +288,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.scigen.json.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.scigen.json.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "markdown": Benchmark(
                     subsets={
@@ -298,7 +298,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.scigen.markdown.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.scigen.markdown.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
             },
         ),
@@ -312,7 +312,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tab_fact.concat.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tab_fact.concat.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "csv": Benchmark(
                     subsets={
@@ -322,7 +322,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tab_fact.csv.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tab_fact.csv.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "df": Benchmark(
                     subsets={
@@ -332,7 +332,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tab_fact.df.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tab_fact.df.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "html": Benchmark(
                     subsets={
@@ -342,7 +342,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tab_fact.html.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tab_fact.html.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "indexed_row_major": Benchmark(
                     subsets={
@@ -352,7 +352,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tab_fact.indexed_row_major.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tab_fact.indexed_row_major.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "json": Benchmark(
                     subsets={
@@ -362,7 +362,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tab_fact.json.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tab_fact.json.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "markdown": Benchmark(
                     subsets={
@@ -372,7 +372,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tab_fact.markdown.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tab_fact.markdown.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
             },
         ),
@@ -386,7 +386,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.concat.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.concat.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "csv": Benchmark(
                     subsets={
@@ -396,7 +396,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.csv.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.csv.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "df": Benchmark(
                     subsets={
@@ -406,7 +406,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.df.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.df.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "html": Benchmark(
                     subsets={
@@ -416,7 +416,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.html.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.html.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "indexed_row_major": Benchmark(
                     subsets={
@@ -426,7 +426,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.indexed_row_major.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.indexed_row_major.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "json": Benchmark(
                     subsets={
@@ -436,7 +436,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.json.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.json.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "markdown": Benchmark(
                     subsets={
@@ -446,7 +446,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.markdown.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.markdown.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
             },
         ),
@@ -460,7 +460,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.concat.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.concat.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "csv": Benchmark(
                     subsets={
@@ -470,7 +470,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.csv.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.csv.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "df": Benchmark(
                     subsets={
@@ -480,7 +480,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.df.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.df.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "html": Benchmark(
                     subsets={
@@ -490,7 +490,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.html.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.html.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "indexed_row_major": Benchmark(
                     subsets={
@@ -500,7 +500,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.indexed_row_major.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.indexed_row_major.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "json": Benchmark(
                     subsets={
@@ -510,7 +510,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.json.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.json.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "markdown": Benchmark(
                     subsets={
@@ -520,7 +520,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.markdown.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.markdown.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
             },
         ),
@@ -534,7 +534,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.concat.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.concat.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "csv": Benchmark(
                     subsets={
@@ -544,7 +544,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.csv.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.csv.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "df": Benchmark(
                     subsets={
@@ -554,7 +554,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.df.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.df.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "html": Benchmark(
                     subsets={
@@ -564,7 +564,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.html.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.html.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "indexed_row_major": Benchmark(
                     subsets={
@@ -574,7 +574,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.indexed_row_major.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.indexed_row_major.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "json": Benchmark(
                     subsets={
@@ -584,7 +584,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.json.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.json.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "markdown": Benchmark(
                     subsets={
@@ -594,7 +594,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.markdown.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.markdown.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
             },
         ),
@@ -608,7 +608,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.turl_col_type.concat.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.turl_col_type.concat.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "csv": Benchmark(
                     subsets={
@@ -618,7 +618,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.turl_col_type.csv.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.turl_col_type.csv.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "df": Benchmark(
                     subsets={
@@ -628,7 +628,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.turl_col_type.df.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.turl_col_type.df.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "html": Benchmark(
                     subsets={
@@ -638,7 +638,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.turl_col_type.html.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.turl_col_type.html.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "indexed_row_major": Benchmark(
                     subsets={
@@ -648,7 +648,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.turl_col_type.indexed_row_major.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.turl_col_type.indexed_row_major.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "json": Benchmark(
                     subsets={
@@ -658,7 +658,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.turl_col_type.json.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.turl_col_type.json.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "markdown": Benchmark(
                     subsets={
@@ -668,7 +668,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_5_demos": "recipes.torr.turl_col_type.markdown.shuffle_rows_augmentation_5_demos",
                         "transpose_augmentation_5_demos": "recipes.torr.turl_col_type.markdown.transpose_augmentation_5_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
             },
         ),
@@ -682,7 +682,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_1_demos": "recipes.torr.wikitq.concat.shuffle_rows_augmentation_1_demos",
                         "transpose_augmentation_1_demos": "recipes.torr.wikitq.concat.transpose_augmentation_1_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "csv": Benchmark(
                     subsets={
@@ -692,7 +692,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_1_demos": "recipes.torr.wikitq.csv.shuffle_rows_augmentation_1_demos",
                         "transpose_augmentation_1_demos": "recipes.torr.wikitq.csv.transpose_augmentation_1_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "df": Benchmark(
                     subsets={
@@ -702,7 +702,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_1_demos": "recipes.torr.wikitq.df.shuffle_rows_augmentation_1_demos",
                         "transpose_augmentation_1_demos": "recipes.torr.wikitq.df.transpose_augmentation_1_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "html": Benchmark(
                     subsets={
@@ -712,7 +712,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_1_demos": "recipes.torr.wikitq.html.shuffle_rows_augmentation_1_demos",
                         "transpose_augmentation_1_demos": "recipes.torr.wikitq.html.transpose_augmentation_1_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "indexed_row_major": Benchmark(
                     subsets={
@@ -722,7 +722,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_1_demos": "recipes.torr.wikitq.indexed_row_major.shuffle_rows_augmentation_1_demos",
                         "transpose_augmentation_1_demos": "recipes.torr.wikitq.indexed_row_major.transpose_augmentation_1_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "json": Benchmark(
                     subsets={
@@ -732,7 +732,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_1_demos": "recipes.torr.wikitq.json.shuffle_rows_augmentation_1_demos",
                         "transpose_augmentation_1_demos": "recipes.torr.wikitq.json.transpose_augmentation_1_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
                 "markdown": Benchmark(
                     subsets={
@@ -742,7 +742,7 @@ benchmark = Benchmark(
                         "shuffle_rows_augmentation_1_demos": "recipes.torr.wikitq.markdown.shuffle_rows_augmentation_1_demos",
                         "transpose_augmentation_1_demos": "recipes.torr.wikitq.markdown.transpose_augmentation_1_demos",
                     },
-                    max_samples_per_subset=5,
+                    max_samples_per_subset=100,
                 ),
             },
         ),
@@ -751,7 +751,6 @@ benchmark = Benchmark(
 
 with settings.context(
     allow_unverified_code=True,
-    mock_inference_mode=True,
 ):
     test_dataset = load_dataset(
         benchmark,
@@ -761,7 +760,7 @@ with settings.context(
     # Infer
     model = CrossProviderInferenceEngine(
         model="llama-3-8b-instruct",
-        max_tokens=30,
+        max_tokens=512,
     )
     """
     We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
