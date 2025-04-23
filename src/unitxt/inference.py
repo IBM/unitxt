@@ -1826,6 +1826,9 @@ class OpenAiInferenceEngine(
             infer_func=self._get_logprobs,
         )
 
+    def get_client_model_name(self):
+        return self.model_name
+
     @run_with_imap
     def _get_chat_completion(self, instance, return_meta_data):
         import openai
@@ -1834,7 +1837,7 @@ class OpenAiInferenceEngine(
         try:
             response = self.client.chat.completions.create(
                 messages=messages,
-                model=self.model_name,
+                model=self.get_client_model_name(),
                 **self._get_completion_kwargs(),
             )
             prediction = response.choices[0].message.content
@@ -1954,6 +1957,12 @@ class RITSInferenceEngine(
         logger.info(f"Created RITS inference engine with base url: {self.base_url}")
         super().prepare_engine()
 
+    def get_client_model_name(self):
+        if self.model_name.startswith("byom-"):
+            # Remove "byom-xyz/" initial part of model name, since that's part of the endpoint.
+            return "/".join(self.model_name.split("/")[1:])  # This is wrong. since in next iteration
+        return self.model_name
+
     @staticmethod
     def get_base_url_from_model_name(model_name: str):
         base_url_template = (
@@ -1967,6 +1976,13 @@ class RITSInferenceEngine(
     def _get_model_name_for_endpoint(cls, model_name: str):
         if model_name in cls.model_names_dict:
             return cls.model_names_dict[model_name]
+        if model_name.startswith("byom-"):
+            model_name_for_endpoint = model_name.split("/")[0]
+            logger.info(f"Using BYOM model: {model_name_for_endpoint}") # For RITS BYOM the model name has the following convention:
+                                                  # <byom endpoint>/<actual model name>. e.g.
+                                                  # byom-gb-iqk-lora/ibm-granite/granite-3.1-8b-instruct
+                                                  # at this case we should use https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/byom-gb-iqk-lora/v1/chat/completions
+            return model_name_for_endpoint
         return (
             model_name.split("/")[-1]
             .lower()
