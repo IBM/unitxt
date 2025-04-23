@@ -102,12 +102,13 @@ def hf_load_dataset(path: str, *args, **kwargs):
 
 
 @retry_connection_with_exponential_backoff(backoff_factor=2)
-def hf_get_dataset_splits(path: str, name: str):
+def hf_get_dataset_splits(path: str, name: str, revision=None):
     try:
         return get_dataset_split_names(
             path=path,
             config_name=name,
             trust_remote_code=settings.allow_unverified_code,
+            revision=revision,
         )
     except Exception as e:
         if "trust_remote_code" in str(e):
@@ -359,6 +360,7 @@ class LoadHF(LazyLoader):
             return hf_get_dataset_splits(
                 path=self.path,
                 name=self.name,
+                revision=self.revision,
             )
         except Exception:
             UnitxtWarning(
