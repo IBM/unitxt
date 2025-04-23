@@ -185,6 +185,28 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertListEqual(predictions,  ["7", "2"])
 
+    def test_rits_byom_inference(self):
+        import os
+
+        if os.environ.get("RITS_BYOM_IS_UP") is None:
+            logger.warning(
+                "Skipping RITS_BYOM_IS_UP not defined. "
+                "In order to start RITS BYOM model please use 'gb build init model_to_rits --from-template ModelToRITS'"
+                "and start gb."
+            )
+            return
+
+        model = RITSInferenceEngine(
+            model_name="byom-gb-iqk-lora/ibm-granite/granite-3.1-8b-instruct",
+            max_tokens=128,
+        )
+
+        dataset = get_text_dataset()
+
+        predictions = model(dataset)
+
+        self.assertListEqual(predictions,  ["7", "2"])
+
     def test_option_selecting_by_log_prob_inference_engines(self):
         dataset = [
             {
