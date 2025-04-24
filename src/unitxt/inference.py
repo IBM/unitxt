@@ -1826,6 +1826,9 @@ class OpenAiInferenceEngine(
             infer_func=self._get_logprobs,
         )
 
+    def get_client_model_name(self):
+        return self.model_name
+
     @run_with_imap
     def _get_chat_completion(self, instance, return_meta_data):
         import openai
@@ -1834,7 +1837,7 @@ class OpenAiInferenceEngine(
         try:
             response = self.client.chat.completions.create(
                 messages=messages,
-                model=self.model_name,
+                model=self.get_client_model_name(),
                 **self._get_completion_kwargs(),
             )
             prediction = response.choices[0].message.content
@@ -1954,6 +1957,12 @@ class RITSInferenceEngine(
         logger.info(f"Created RITS inference engine with base url: {self.base_url}")
         super().prepare_engine()
 
+    def get_client_model_name(self):
+        if self.model_name.startswith("byom-"):
+            # Remove "byom-xyz/" initial part of model name, since that's part of the endpoint.
+            return "/".join(self.model_name.split("/")[1:])  # This is wrong. since in next iteration
+        return self.model_name
+
     @staticmethod
     def get_base_url_from_model_name(model_name: str):
         base_url_template = (
@@ -1967,6 +1976,13 @@ class RITSInferenceEngine(
     def _get_model_name_for_endpoint(cls, model_name: str):
         if model_name in cls.model_names_dict:
             return cls.model_names_dict[model_name]
+        if model_name.startswith("byom-"):
+            model_name_for_endpoint = model_name.split("/")[0]
+            logger.info(f"Using BYOM model: {model_name_for_endpoint}") # For RITS BYOM the model name has the following convention:
+                                                  # <byom endpoint>/<actual model name>. e.g.
+                                                  # byom-gb-iqk-lora/ibm-granite/granite-3.1-8b-instruct
+                                                  # at this case we should use https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/byom-gb-iqk-lora/v1/chat/completions
+            return model_name_for_endpoint
         return (
             model_name.split("/")[-1]
             .lower()
@@ -2147,7 +2163,7 @@ class WMLChatParamsMixin(Artifact):
 
 
 CredentialsWML = Dict[
-    Literal["url", "username", "password", "api_key", "project_id", "space_id"], str
+    Literal["url", "username", "password", "api_key", "project_id", "space_id", "instance_id"], str
 ]
 
 
@@ -2163,10 +2179,10 @@ class WMLInferenceEngineBase(
         credentials (Dict[str, str], optional):
             By default, it is created by a class
             instance which tries to retrieve proper environment variables
-            ("WML_URL", "WML_PROJECT_ID", "WML_SPACE_ID", "WML_APIKEY", "WML_USERNAME", "WML_PASSWORD").
+            ("WML_URL", "WML_PROJECT_ID", "WML_SPACE_ID", "WML_APIKEY", "WML_USERNAME", "WML_PASSWORD",
+            "WML_INSTANCE_ID").
             However, a dictionary with the following keys: "url", "apikey", "project_id", "space_id",
-            "username", "password".
-            can be directly provided instead.
+            "username", "password", "instance_id" can be directly provided instead.
         model_name (str, optional):
             ID of a model to be used for inference. Mutually
             exclusive with 'deployment_id'.
@@ -2289,6 +2305,10 @@ class WMLInferenceEngineBase(
                 "Please set either 'WML_APIKEY' or both 'WML_USERNAME' and "
                 "'WML_PASSWORD' env variables."
             )
+
+        instance_id = os.environ.get("WML_INSTANCE_ID")
+        if instance_id:
+            credentials["instance_id"] = instance_id
 
         return credentials
 
@@ -3296,6 +3316,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "rits": {
             "granite-3-8b-instruct": "ibm-granite/granite-3.0-8b-instruct",
             "granite-3-2-8b-instruct": "ibm-granite/granite-3.2-8b-instruct",
+            "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
             "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
             "llama-3-1-405b-instruct": "meta-llama/llama-3-1-405b-instruct-fp8",
@@ -3305,6 +3326,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
+            "deepseek-v3": "deepseek-ai/DeepSeek-V3",
+            "granite-guardian-3-2-3b-a800m": "ibm-granite/granite-guardian-3.2-3b-a800m",
+            "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
         },
         "open-ai": {
             "o1-mini": "o1-mini",

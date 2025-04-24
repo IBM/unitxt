@@ -25,7 +25,7 @@ Some operators are specialized in specific data or specific operations such as:
 - :class:`collections_operators<unitxt.collections_operators>` for handling collections such as lists and dictionaries.
 - :class:`dialog_operators<unitxt.dialog_operators>` for handling dialogs.
 - :class:`string_operators<unitxt.string_operators>` for handling strings.
-- :class:`span_labeling_operators<unitxt.span_labeling_operators>` for handling strings.
+- :class:`span_labeling_operators<unitxt.span_lableing_operators>` for handling strings.
 - :class:`fusion<unitxt.fusion>` for fusing and mixing datasets.
 
 Other specialized operators are used by unitxt internally:
