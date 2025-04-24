@@ -4,7 +4,7 @@ from unitxt.blocks import (
     Task,
     TaskCard,
 )
-from unitxt.operators import Rename, Set
+from unitxt.operators import Set
 from unitxt.splitters import RenameSplits
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
@@ -15,18 +15,17 @@ card = TaskCard(
     ),
     preprocess_steps=[
         RenameSplits({"train": "test"}),
-        Rename(field_to_field={"prompt": "question"}),
-        Set({"answer": ""}),
+        Set({"response": ""}),
     ],
     task=Task(
-        input_fields={"question": str, "id": int, "type": str, "label": str},
-        reference_fields={"label": str, "answer": str},
+        input_fields={"prompt": str, "id": int, "type": str, "label": str},
+        reference_fields={"response": str},
         prediction_type=str,
         metrics=[
-            "metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.assistant_message_compliance, context_fields=[question,answer]]"
+            "metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.assistant_message_compliance, context_fields=[prompt,response]]"
         ],
     ),
-    templates={"default": InputOutputTemplate(input_format="{question}", output_format="{answer}")},
+    templates={"default": InputOutputTemplate(input_format="{prompt}", output_format="{response}")},
     __description__="Test suite designed to identify exaggerated safety / false refusal in Large Language Models (LLMs).",
     __tags__={
         "languages": ["english"],
