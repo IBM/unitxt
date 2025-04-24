@@ -12,11 +12,12 @@ tables_benchmark_dir = os.path.join(
     "recipes",
     "torr",
 )
-
+MAX_PREDICTIONS = 100
 
 # Recursive function to build nested benchmarks
 def build_nested_benchmark(dir_path, prefix="recipes.torr"):
     nested_scenarios = OrderedDict()
+    max_samples_per_subset = None
 
     for entry in sorted(os.listdir(dir_path)):
         entry_path = os.path.join(dir_path, entry)
@@ -33,9 +34,10 @@ def build_nested_benchmark(dir_path, prefix="recipes.torr"):
                 else entry_name
             )
             nested_scenarios[scenario_name] = f"{prefix}.{scenario_name}"
+            max_samples_per_subset = MAX_PREDICTIONS
 
     # Create a Benchmark object for the current folder
-    return Benchmark(nested_scenarios)
+    return Benchmark(nested_scenarios, max_samples_per_subset=max_samples_per_subset)
 
 
 # Build the top-level benchmark
