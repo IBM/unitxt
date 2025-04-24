@@ -7,7 +7,7 @@ with settings.context(
     allow_unverified_code=True,
 ):
     test_dataset = load_dataset(
-        "benchmarks.torr[loader_limit=10000,max_samples_per_subset=100]",
+        "benchmarks.torr",
         split="test",
         use_cache=True,
     )
