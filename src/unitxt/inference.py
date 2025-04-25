@@ -1908,17 +1908,17 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
             f"Please set the env variable: '{api_key_var_name}'"
         )
 
-        azure_openapi_host = self.credentials.get(
-            "azure_openapi_host", os.environ.get(f"{self.label.upper()}_HOST", None)
+        azure_openai_host = self.credentials.get(
+            "azure_openai_host", os.environ.get(f"{self.label.upper()}_HOST", None)
         )
 
         api_version = self.credentials.get(
             "api_version", os.environ.get("OPENAI_API_VERSION", None)
         )
-        assert api_version and azure_openapi_host, (
+        assert api_version and azure_openai_host, (
             "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
         )
-        api_url = f"{azure_openapi_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
+        api_url = f"{azure_openai_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
 
         return {"api_key": api_key, "api_url": api_url, "api_version": api_version}
 
@@ -3316,6 +3316,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "rits": {
             "granite-3-8b-instruct": "ibm-granite/granite-3.0-8b-instruct",
             "granite-3-2-8b-instruct": "ibm-granite/granite-3.2-8b-instruct",
+            "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
             "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
             "llama-3-1-405b-instruct": "meta-llama/llama-3-1-405b-instruct-fp8",
@@ -3325,6 +3326,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
+            "deepseek-v3": "deepseek-ai/DeepSeek-V3",
+            "granite-guardian-3-2-3b-a800m": "ibm-granite/granite-guardian-3.2-3b-a800m",
+            "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
         },
         "open-ai": {
             "o1-mini": "o1-mini",
