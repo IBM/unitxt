@@ -3480,7 +3480,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
 
     def get_engine_id(self):
         api = self.get_provider_name()
-        return get_model_and_label_id(self.provider_model_map[api][self.model], api)
+        if self.model in self.provider_model_map[api]:
+            return get_model_and_label_id(self.provider_model_map[api][self.model], api)
+        return get_model_and_label_id(self.model, api)
 
 
 class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
