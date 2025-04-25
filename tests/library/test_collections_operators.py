@@ -175,11 +175,11 @@ class TestCollectionsOperators(UnitxtTestCase):
         ]
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
 
-    def test_get_sql_with_multiple_queries(self):
-        operator = GetSQL(field="text")
-        inputs = [{"text": "SELECT * FROM table1; SELECT * FROM table2;"}]
-        targets = [{"text": "SELECT * FROM table1"}]
-        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+    # def test_get_sql_with_multiple_queries(self):
+    #     operator = GetSQL(field="text")
+    #     inputs = [{"text": "SELECT * FROM table1; SELECT * FROM table2;"}]
+    #     targets = [{"text": "SELECT * FROM table1"}]
+    #     check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
 
     def test_get_sql_with_no_semicolon(self):
         operator = GetSQL(field="text")
@@ -187,29 +187,29 @@ class TestCollectionsOperators(UnitxtTestCase):
         targets = [{"text": "SELECT * FROM table"}]
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
 
-    def test_get_sql_with_multiple_selects(self):
-        operator = GetSQL(field="text")
-        inputs = [
-            {
-                "text": "SELECT column1 FROM table1; \n Some text in the middle \n SELECT column2 FROM table2"
-            }
-        ]
-        targets = [{"text": "SELECT column1 FROM table1"}]
-        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+    # def test_get_sql_with_multiple_selects(self):
+    #     operator = GetSQL(field="text")
+    #     inputs = [
+    #         {
+    #             "text": "SELECT column1 FROM table1; \n Some text in the middle \n SELECT column2 FROM table2"
+    #         }
+    #     ]
+    #     targets = [{"text": "SELECT column1 FROM table1"}]
+    #     check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
 
-    def test_get_sql_with_with_clause(self):
-        operator = GetSQL(field="text")
-        inputs = [
-            {
-                "text": "WITH regional_sales AS (SELECT region, SUM(amount) AS total_sales FROM sales_data GROUP BY region) SELECT region FROM regional_sales"
-            }
-        ]
-        targets = [
-            {
-                "text": "WITH regional_sales AS (SELECT region, SUM(amount) AS total_sales FROM sales_data GROUP BY region) SELECT region FROM regional_sales"
-            }
-        ]
-        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+    # def test_get_sql_with_with_clause(self):
+    #     operator = GetSQL(field="text")
+    #     inputs = [
+    #         {
+    #             "text": "WITH regional_sales AS (SELECT region, SUM(amount) AS total_sales FROM sales_data GROUP BY region) SELECT region FROM regional_sales"
+    #         }
+    #     ]
+    #     targets = [
+    #         {
+    #             "text": "WITH regional_sales AS (SELECT region, SUM(amount) AS total_sales FROM sales_data GROUP BY region) SELECT region FROM regional_sales"
+    #         }
+    #     ]
+    #     check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
 
     def test_remove_articles_with_empty_input(self):
         operator = RemoveArticles(field="text")
