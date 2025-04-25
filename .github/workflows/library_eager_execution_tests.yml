@@ -40,7 +40,8 @@ jobs:
     - run: uv pip install --system -c constraints.txt -e ".[tests]"
     - run: |
         pip install --only-binary :all: spacy
-
+        pip install networkx==3.2.1
+        
     - run: pip install coverage[toml]
 
     - name: Run Tests
