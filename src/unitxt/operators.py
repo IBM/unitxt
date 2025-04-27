@@ -930,7 +930,7 @@ class Cast(FieldOperator):
     failure_default: Optional[Any] = "__UNDEFINED__"
 
     def prepare(self):
-        self.types = {"int": int, "float": float, "str": str, "bool": bool, "tuple": tuple}
+        self.types = {"int": int, "float": float, "str": str, "bool": bool}
 
     def process_value(self, value):
         try:

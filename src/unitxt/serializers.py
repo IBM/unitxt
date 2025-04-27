@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Union
 from .dataclass import AbstractField, Field
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
-from .tool_calling import convert_to_chat_api_format
 from .type_utils import isoftype, to_type_string
 from .types import (
     Dialog,
@@ -17,8 +16,6 @@ from .types import (
     Number,
     SQLDatabase,
     Table,
-    Tool,
-    ToolCall,
     Video,
 )
 
@@ -164,43 +161,15 @@ class MultiDocumentSerializer(DocumentSerializer):
         return "\n\n".join(documents)
 
 
-
-class ToolsSerializer(SingleTypeSerializer):
-
-    serialized_type = List[Tool]
-    _requirements_list: List[str] = ["pydantic"]
-
-    def serialize(self, value: List[Tool], instance: Dict[str, Any]) -> str:
-        if "__tools__" not in instance:
-            instance["__tools__"] = []
-        tool = []
-        for tool in value:
-            chat_api_tool = convert_to_chat_api_format(tool=tool)
-            instance["__tools__"].append(
-                chat_api_tool
-            )
-            tool["parameters"] = chat_api_tool["function"]["parameters"]
-        return json.dumps(instance["__tools__"], indent=4)
-
-class ToolCallSerializer(SingleTypeSerializer):
-
-    serialized_type = ToolCall
-    _requirements_list: List[str] = ["pydantic"]
-
-    def serialize(self, value: ToolCall, instance: Dict[str, Any]) -> str:
-        return json.dumps(value)
-
 class MultiTypeSerializer(Serializer):
     serializers: List[SingleTypeSerializer] = Field(
         default_factory=lambda: [
             DocumentSerializer(),
-            ToolCallSerializer(),
             DialogSerializer(),
             MultiDocumentSerializer(),
             ImageSerializer(),
             VideoSerializer(),
             TableSerializer(),
-            ToolsSerializer(),
             DialogSerializer(),
         ]
     )
