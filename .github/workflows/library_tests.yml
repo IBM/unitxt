@@ -40,6 +40,7 @@ jobs:
     - run: |
         pip install --only-binary :all: spacy
         pip install networkx==3.2.1
+        pip install protobuf
 
     - run: pip install coverage[toml]
 
