@@ -5,7 +5,6 @@ from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Wrap
 from unitxt.loaders import LoadHF
 from unitxt.operators import Copy
-from unitxt.splitters import RenameSplits
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
@@ -74,7 +73,6 @@ card = TaskCard(
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
-        RenameSplits({"test": "train"}),
         Copy(field="doc_id", to_field="document_id"),
         Wrap(field="document", inside="list", to_field="passages"),
     ],
