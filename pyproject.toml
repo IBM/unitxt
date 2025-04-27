@@ -64,8 +64,7 @@ docs = [
     "scikit-learn",
     "jiwer",
     "editdistance",
-    "fuzzywuzzy",
-    "pydantic"
+    "fuzzywuzzy"
 ]
 helm = [
     "crfm-helm[unitxt]>=0.5.3"
@@ -106,8 +105,7 @@ tests = [
     "Wikipedia-API",
     "sqlglot",
     "sqlparse",
-    "diskcache",
-    "pydantic"
+    "diskcache"
 ]
 ui = [
     "gradio",
