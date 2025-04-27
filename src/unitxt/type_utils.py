@@ -54,6 +54,7 @@ _generics = [
     Optional[Any],
     Any,
     Literal,
+    typing.Type,
 ]
 
 _generics_types = [type(t) for t in _generics]
@@ -486,6 +487,9 @@ def isoftype(object, typing_type):
     """
     if not is_type(typing_type):
         raise UnsupportedTypeError(typing_type)
+
+    if typing_type is typing.Type:
+        return is_type(object)
 
     if is_new_type(typing_type):
         typing_type = typing_type.__supertype__

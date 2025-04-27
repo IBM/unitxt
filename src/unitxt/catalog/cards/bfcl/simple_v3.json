@@ -1,0 +1,81 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_csv",
+        "files": {
+            "questions": "https://raw.githubusercontent.com/ShishirPatil/gorilla/70b6a4a2144597b1f99d1f4d3185d35d7ee532a4/berkeley-function-call-leaderboard/data/BFCL_v3_simple.json",
+            "answers": "https://raw.githubusercontent.com/ShishirPatil/gorilla/70b6a4a2144597b1f99d1f4d3185d35d7ee532a4/berkeley-function-call-leaderboard/data/possible_answer/BFCL_v3_simple.json"
+        },
+        "file_type": "json",
+        "lines": true,
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "join_streams",
+            "left_stream": "questions",
+            "right_stream": "answers",
+            "how": "inner",
+            "on": "id",
+            "new_stream_name": "test"
+        },
+        {
+            "__type__": "copy",
+            "field": "question/0/0/content",
+            "to_field": "query"
+        },
+        {
+            "__type__": "to_tool",
+            "field": "function/0",
+            "to_field": "tool"
+        },
+        {
+            "__type__": "wrap",
+            "field": "tool",
+            "inside": "list",
+            "to_field": "tools"
+        },
+        {
+            "__type__": "dict_to_tuples_list",
+            "field": "ground_truth/0",
+            "to_field": "call_tuples"
+        },
+        {
+            "__type__": "copy",
+            "field": "call_tuples/0/0",
+            "to_field": "call/name"
+        },
+        {
+            "__type__": "copy",
+            "field": "call_tuples/0/1",
+            "to_field": "call/arguments"
+        }
+    ],
+    "task": "tasks.tool_calling.supervised",
+    "templates": [
+        "templates.tool_calling.base"
+    ],
+    "__description__": "gg",
+    "__tags__": {
+        "annotations_creators": "expert-generated",
+        "language": [
+            "en"
+        ],
+        "license": "cc-by-4.0",
+        "size_categories": [
+            "10K<n<100K"
+        ],
+        "task_categories": [
+            "question-answering",
+            "multiple-choice",
+            "reading-comprehension"
+        ],
+        "multilinguality": "monolingual",
+        "task_ids": [
+            "extractive-qa",
+            "reading-comprehension"
+        ]
+    }
+}
