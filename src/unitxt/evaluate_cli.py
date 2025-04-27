@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from datasets import Dataset as HFDataset
 
-from . import evaluate, get_logger, load_dataset
+from .api import evaluate, load_dataset
 from .artifact import UnitxtArtifactNotFoundError
 from .benchmark import Benchmark
 
@@ -23,6 +23,7 @@ from .inference import (
     HFAutoModelInferenceEngine,
     InferenceEngine,
 )
+from .logging_utils import get_logger
 from .metric_utils import EvaluationResults
 from .parsing_utils import parse_key_equals_value_string_to_dict
 from .settings_utils import settings
