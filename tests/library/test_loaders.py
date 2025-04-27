@@ -10,6 +10,7 @@ from unitxt.loaders import (
     LoadFromDictionary,
     LoadFromHFSpace,
     LoadFromIBMCloud,
+    LoadFromSklearn,
     LoadHF,
     MultipleSourceLoader,
 )
@@ -88,6 +89,16 @@ class TestLoaders(UnitxtTestCase):
             with self.assertRaises(FileNotFoundError):
                 list(LoadCSV(files={"test": "not_exist.csv"})()["test"])
 
+
+    def test_load_csv_with_json_files(self):
+        DummyBucket().download_file(item_name=None, local_file="local_file.jsonl", Callback=None)
+        loader = LoadCSV(files={"train":"local_file.jsonl"}, lines=2, file_type="json", loader_limit=2)
+        loaded_dataset = loader.load_data()
+        self.assertListEqual(CONTENT, list(loaded_dataset["train"]))
+
+        loader=LoadFromSklearn(dataset_name="20newsgroups", streaming=False)
+        loaded_dataset = loader.load_data()
+        self.assertEqual(11314, len(list(loaded_dataset["train"])))
 
     def test_load_csv_with_pandas_args(self):
         # Using a context for the temporary directory

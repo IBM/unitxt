@@ -88,7 +88,7 @@ class UnitxtUnverifiedCodeError(UnitxtError):
 @retry_connection_with_exponential_backoff(backoff_factor=2)
 def hf_load_dataset(path: str, *args, **kwargs):
 
-    if settings.hf_load_from_offline is None and settings.hf_save_to_offline is None:
+    if not settings.hf_load_from_offline and not settings.hf_save_to_offline:
         # for backward compatibility
 
         if settings.hf_offline_datasets_path is not None:
@@ -101,18 +101,20 @@ def hf_load_dataset(path: str, *args, **kwargs):
                     trust_remote_code=settings.allow_unverified_code,
                     download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
                 )
-        except ValueError as e:
+        except Exception as e:
             if "trust_remote_code" in str(e):
                 raise UnitxtUnverifiedCodeError(path) from e
             raise e # Re raise
 
     # either settings.hf_load_from_offline is not None or settings.hf_save_to_offline is not None:
+    assert settings.hf_offline_datasets_path, "File System directory for offline saving/loading must be specified when either flag for offline saving/loading is set."
+    assert os.path.exists(settings.hf_offline_datasets_path), f"File-system directory {settings.hf_offline_datasets_path}, where offline datasets are to reside must exist when either hf_load_from_offline or hf_save_to_offline are set."
     download_config=DownloadConfig(
         cache_dir=settings.hf_offline_datasets_path if settings.hf_save_to_offline else None,
     )
     local_kwargs = {
         "download_config": download_config,
-        "cache_dir" : settings.hf_offline_datasets_path if settings.hf_load_from_offline else None,
+        "cache_dir" : settings.hf_offline_datasets_path,
         "verification_mode" : "no_checks",
         "trust_remote_code" :settings.allow_unverified_code,
         "download_mode" : "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
@@ -121,7 +123,7 @@ def hf_load_dataset(path: str, *args, **kwargs):
         return _hf_load_dataset(
             path,
             *args, **{**local_kwargs, **kwargs})
-    except ValueError as e:
+    except Exception as e:
         if "trust_remote_code" in str(e):
             raise UnitxtUnverifiedCodeError(path) from e
         raise e # Re raise
@@ -479,19 +481,38 @@ class LoadCSV(LazyLoader):
         raise ValueError()
 
     def get_path_to_local(self, path_to_hub:str)->str:
-        return hashlib.md5(path_to_hub.encode()).hexdigest()
+        assert settings.hf_offline_datasets_path, "Path to local file system directory, hf_offline_datasets_path, where offline datasets reside must be specified when either hf_load_from_offline or hf_save_to_offline are set."
+        assert os.path.exists(settings.hf_offline_datasets_path), f"File-system directory {settings.hf_offline_datasets_path}, where offline datasets reside must exist when either hf_load_from_offline or hf_save_to_offline are set."
+        return os.path.join(settings.hf_offline_datasets_path, hashlib.md5(path_to_hub.encode()).hexdigest())
 
-    def get_args(self):
+    def get_read_args(self):
         args = {}
         if self.file_type == "csv":
             args["sep"] = self.sep
             args["low_memory"] = self.streaming
+            args["header"] = 0
+            args["index_col"] = False
         if self.compression is not None:
             args["compression"] = self.compression
         if self.lines is not None:
             args["lines"] = self.lines
         if self.get_limit() is not None:
             args["nrows"] = self.get_limit()
+        return args
+
+
+    def get_write_args(self):
+        args = {}
+        if self.file_type == "csv":
+            args["sep"] = self.sep
+            args["index"] = False
+        if self.file_type == "json":
+            args["orient"] = "records"
+        if self.compression is not None:
+            args["compression"] = self.compression
+        if self.lines is not None:
+            args["lines"] = self.lines
+
         return args
 
     def get_splits(self) -> List[str]:
@@ -506,16 +527,18 @@ class LoadCSV(LazyLoader):
             reader = self.get_reader()
             file_path = self.files[split]
             if settings.hf_load_from_offline:
+                assert settings.hf_offline_datasets_path, "path to offline directory, being hf_offline_datasets_path, must be set when hf_load_from_offline is set"
+                assert os.path.exists(settings.hf_offline_datasets_path), f"file-system directory to load offline from, {settings.hf_offline_datasets_path} must exist"
                 file_path = self.get_path_to_local(file_path)
             for attempt in range(settings.loaders_max_retries):
                 try:
                     try:
-                        df = reader(file_path, **self.get_args())
+                        df = reader(file_path, **self.get_read_args())
                         break
                     except ValueError:
                         import fsspec
                         with fsspec.open(file_path, mode="rt") as f:
-                            df = reader(f, **self.get_args())
+                            df = reader(f, **self.get_read_args())
                         break
                 except Exception as e:
                     logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
@@ -524,9 +547,12 @@ class LoadCSV(LazyLoader):
                     else:
                         raise e
             if settings.hf_save_to_offline:
+                assert settings.hf_offline_datasets_path, "path to offline directory, being hf_offline_datasets_path, must be set when hf_save_to_offline is set"
+                assert os.path.exists(settings.hf_offline_datasets_path), f"file-system directory to save datasets to, {settings.hf_offline_datasets_path} must exist"
+
                 file_path = self.get_path_to_local(self.files[split])
                 writer = self.get_writer(df)
-                writer (file_path, index=False)
+                writer (file_path, **self.get_write_args())
 
             dataset = df.to_dict("records")
 
