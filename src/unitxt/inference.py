@@ -342,6 +342,14 @@ class InferenceEngine(Artifact):
             }
         ]
 
+    def to_tools(self, instance):
+        task_data = instance.get("task_data")
+        if isinstance(task_data, str):
+            task_data = json.loads(task_data)
+        if "__tools__" in task_data:
+            return task_data["__tools__"]
+        return None
+
 
 class LogProbInferenceEngine(abc.ABC, Artifact):
     """Abstract base class for inference with log probs."""
@@ -3164,12 +3172,14 @@ class LiteLLMInferenceEngine(
             # Introduce a slight delay to prevent burstiness
             await asyncio.sleep(0.01)
             messages = self.to_messages(instance)
+            tools = self.to_tools(instance)
             kwargs = self.to_dict([StandardAPIParamsMixin])
             kwargs = {k: v for k, v in kwargs.items() if v is not None}
             del kwargs["credentials"]
             try:
                 response = await self._completion(
                     messages=messages,
+                    tools=tools,
                     max_retries=self.max_retries,
                     drop_params=False,
                     **self.credentials,
@@ -3181,8 +3191,17 @@ class LiteLLMInferenceEngine(
                 ) from e
 
             usage = response.get("usage", {})
+
+            if tools is None:
+                prediction = response["choices"][0]["message"]["content"]
+            else:
+                try:
+                    func_call = response["choices"][0]["message"]["tool_calls"][0]["function"]
+                    prediction = f'{{"name": "{func_call.name}", "arguments": {func_call.arguments}}}'
+                except:
+                    prediction = response["choices"][0]["message"]["content"] or ""
             return TextGenerationInferenceOutput(
-                prediction=response["choices"][0]["message"]["content"],
+                prediction=prediction,
                 input_tokens=usage.get("prompt_tokens"),
                 output_tokens=usage.get("completion_tokens"),
                 model_name=response.get("model", self.model),
