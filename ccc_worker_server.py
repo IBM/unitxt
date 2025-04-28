@@ -2,6 +2,7 @@
 import logging
 import os
 import random
+import socket
 import sys
 import threading
 import time
@@ -121,3 +122,9 @@ def status():
 if __name__ == "__main__":
     PORT = sys.argv[1]
     app.run(host="0.0.0.0", port=PORT, debug=True)
+
+    hostname = socket.gethostname()
+    ip_address = socket.gethostbyname(hostname)
+    logging.INFO(f"Server hostname: {hostname}")
+    logging.INFO(f"Server IP address (may be 127.0.0.1 if accessed locally): {ip_address}")
+
