@@ -3590,12 +3590,13 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
         return predictions
 
 
-class MultiServersInferenceEngine(OpenAiInferenceEngine,
-                         HFGenerationParamsMixin):
+ParamDataClass = TypeVar("ParamDataClass")
+class MultiServersInferenceEngine(OpenAiInferenceEngine, ParamDataClass):
 
     workers_url: List[str]
 
-    def post_server(self, server_url, endpoint, data):
+    @staticmethod
+    def post_server(server_url: str, endpoint:str , data: Dict) -> str:
         headers = {"Content-Type": "application/json"}
         response = requests.post(url=f"{server_url}/{endpoint}", json=data, headers=headers)
         response.raise_for_status()
@@ -3606,24 +3607,29 @@ class MultiServersInferenceEngine(OpenAiInferenceEngine,
         self.lock = threading.Lock()
         self.workers_state = {}
         credentials = self._prepare_credentials()
+        assert len(self.workers_url) > 0, "No workers_url are set."
         for url in self.workers_url:
-            init_result = self.post_server(endpoint="init_server",server_url=url,
-                             data={**self.to_dict([HFGenerationParamsMixin]), **{"model_name": self.model_name}})
+            init_result = self.post_server(endpoint="init_server",
+                                           server_url=url,
+                                           data={**self.to_dict([ParamDataClass]),
+                                                 **{"model_name": self.model_name}})
             if init_result == "Accepted":
                 self.add_worker(url, client=OpenAI(
                     api_key=credentials["api_key"],
                     base_url= f"{url}/{self.model_name}" + "/v1",
                     default_headers=self.get_default_headers(),
                 ))
+            else:
+                raise RuntimeError(f"worker_url ({url}/{self.model_name}) initialization failed: {init_result}")
 
     #def init_server_and_add_to_workers_list
 
 
-    def add_worker(self, url, client):
+    def add_worker(self, url: str, client) -> None:
         with self.lock:
             self.workers_state[url] = {"status": "ready", "client": client}
 
-    def release_worker(self, url):
+    def release_worker(self, url: str):
         with self.lock:
             self.workers_state[url]["status"] = "ready"
 
