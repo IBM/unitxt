@@ -3591,7 +3591,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 
 
 ParamDataClass = TypeVar("ParamDataClass")
-class MultiServersInferenceEngine(OpenAiInferenceEngine, ParamDataClass):
+class MultiServersInferenceEngine(OpenAiInferenceEngine):
 
     workers_url: List[str]
 
@@ -3732,12 +3732,14 @@ class CCCInferenceEngine(MultiServersInferenceEngine):
         self.start_ccc_servers()
         self.prepare_engine()
 
+
     def start_ccc_servers(self):
         import paramiko
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(self.ccc_host, username=self.ccc_user)
         ssh.exec_command(f"mkdir -p {self.ccc_path}")
+
         self.ccc_jobs = {}
         for i in range(self.num_of_workers):
             command = f"bash -l -c 'jbsub -queue x86_6h -cores 4+1 -require v100 -mem 24G -out ~/server{i}.log {self.ccc_python} /dccstor/fuse/unitxt/ccc_worker_server.py {self.server_port}'"
