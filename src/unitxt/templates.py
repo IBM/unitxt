@@ -19,6 +19,8 @@ from .serializers import (
     Serializer,
     SQLDatabaseAsSchemaSerializer,
     TableSerializer,
+    ToolCallSerializer,
+    ToolsSerializer,
     VideoSerializer,
 )
 from .settings_utils import get_constants
@@ -63,6 +65,8 @@ class Template(InstanceOperator):
                 ImageSerializer(),
                 VideoSerializer(),
                 TableSerializer(),
+                ToolCallSerializer(),
+                ToolsSerializer(),
                 DialogSerializer(),
                 ListSerializer(),
                 SQLDatabaseAsSchemaSerializer(),
