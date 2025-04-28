@@ -25,6 +25,10 @@ class Server:
         self.shutdown_flag = False
         self.monitor_thread.start()
 
+        hostname = socket.gethostname()
+        ip_address = socket.gethostbyname(hostname)
+        app.logger.info(f"*** Server IP address: '{ip_address}/{PORT}' ****")
+
     def update_last_request_time(self):
         self.last_request_time = time.time()
 
@@ -40,10 +44,7 @@ class Server:
             else:
                 app.logger.info(
                     f"{int(self.inactivity_timeout - (time.time() - self.last_request_time))} till shutdown...")
-                hostname = socket.gethostname()
-                ip_address = socket.gethostbyname(hostname)
-                app.logger.info(f"Server hostname: {hostname}")
-                app.logger.info(f"Server IP address (may be 127.0.0.1 if accessed locally): {ip_address}")
+
 
     def shutdown_server(self):
         self.shutdown_flag = True
