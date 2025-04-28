@@ -3286,6 +3286,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "watsonx-sdk": {  # checked from ibm_watsonx_ai.APIClient().foundation_models.ChatModels
             "granite-20b-code-instruct": "ibm/granite-20b-code-instruct",
             "granite-3-2-8b-instruct": "ibm/granite-3-2-8b-instruct",
+            "granite-3-3-8b-instruct": "ibm/granite-3-3-8b-instruct",
             "granite-3-2b-instruct": "ibm/granite-3-2b-instruct",
             "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",
             "granite-34b-code-instruct": "ibm/granite-34b-code-instruct",

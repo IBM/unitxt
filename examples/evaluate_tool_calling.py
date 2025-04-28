@@ -13,7 +13,7 @@ dataset = load_dataset(
     format="formats.chat_api",
 )
 
-model = CrossProviderInferenceEngine(model="llama-3-3-70b-instruct", provider="watsonx")
+model = CrossProviderInferenceEngine(model="granite-3-3-8b-instruct", provider="watsonx")
 
 
 predictions = model(dataset)
