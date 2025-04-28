@@ -10,12 +10,6 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_splits",
-            "mapper": {
-                "test": "train"
-            }
-        },
-        {
             "__type__": "copy",
             "field": "doc_id",
             "to_field": "document_id"
