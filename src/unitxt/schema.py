@@ -141,6 +141,9 @@ class FinalizeDataset(InstanceOperatorValidator):
         }
         if use_reference_fields:
             task_data = {**task_data, **instance["reference_fields"]}
+
+        if "__tools__" in instance:
+            task_data["__tools__"] = instance["__tools__"]
         return task_data
 
     def serialize_instance_fields(self, instance, task_data):

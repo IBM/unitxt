@@ -62,6 +62,7 @@ from .system_prompts import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
 from .text_utils import __file__ as _
+from .tool_calling import __file__ as _
 from .type_utils import __file__ as _
 from .types import __file__ as _
 from .utils import is_package_installed

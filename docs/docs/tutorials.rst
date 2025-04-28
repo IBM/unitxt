@@ -19,6 +19,7 @@ Guides ✨
    ../modules
    rag_support
    multimodality
+   tool_calling
    operators
    saving_and_loading_from_catalog
    inference

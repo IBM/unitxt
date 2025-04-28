@@ -69,6 +69,8 @@ def is_typed_dict(object):
 
 def is_type(object):
     """Checks if the provided object is a type, including generics, Literal, TypedDict, and NewType."""
+    if object is typing.Type:
+        return True
     return (
         isinstance(object, (type, *_generics_types))
         or is_new_type(object)
@@ -486,6 +488,9 @@ def isoftype(object, typing_type):
     """
     if not is_type(typing_type):
         raise UnsupportedTypeError(typing_type)
+
+    if typing_type is typing.Type:
+        return is_type(object)
 
     if is_new_type(typing_type):
         typing_type = typing_type.__supertype__
