@@ -54,7 +54,6 @@ _generics = [
     Optional[Any],
     Any,
     Literal,
-    typing.Type,
 ]
 
 _generics_types = [type(t) for t in _generics]
@@ -70,6 +69,8 @@ def is_typed_dict(object):
 
 def is_type(object):
     """Checks if the provided object is a type, including generics, Literal, TypedDict, and NewType."""
+    if object is typing.Type:
+        return True
     return (
         isinstance(object, (type, *_generics_types))
         or is_new_type(object)
