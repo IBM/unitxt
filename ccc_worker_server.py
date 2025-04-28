@@ -125,6 +125,6 @@ if __name__ == "__main__":
 
     hostname = socket.gethostname()
     ip_address = socket.gethostbyname(hostname)
-    logging.CRITICAL(f"Server hostname: {hostname}")
-    logging.CRITICAL(f"Server IP address (may be 127.0.0.1 if accessed locally): {ip_address}")
+    app.logger(f"Server hostname: {hostname}")
+    app.logger(f"Server IP address (may be 127.0.0.1 if accessed locally): {ip_address}")
 
