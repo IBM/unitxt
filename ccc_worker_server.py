@@ -40,6 +40,10 @@ class Server:
             else:
                 app.logger.info(
                     f"{int(self.inactivity_timeout - (time.time() - self.last_request_time))} till shutdown...")
+                hostname = socket.gethostname()
+                ip_address = socket.gethostbyname(hostname)
+                app.logger.info(f"Server hostname: {hostname}")
+                app.logger.info(f"Server IP address (may be 127.0.0.1 if accessed locally): {ip_address}")
 
     def shutdown_server(self):
         self.shutdown_flag = True
@@ -123,8 +127,5 @@ if __name__ == "__main__":
     PORT = sys.argv[1]
     app.run(host="0.0.0.0", port=PORT, debug=True)
 
-    hostname = socket.gethostname()
-    ip_address = socket.gethostbyname(hostname)
-    app.logger(f"Server hostname: {hostname}")
-    app.logger(f"Server IP address (may be 127.0.0.1 if accessed locally): {ip_address}")
+
 
