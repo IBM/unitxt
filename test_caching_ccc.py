@@ -49,10 +49,10 @@ if __name__ == "__main__":
         use_cache=True,
         cache_batch_size=5,
         ccc_host="cccxl013.pok.ibm.com",
-        ccc_user="eladv",
-        ccc_path="",
-        ccc_python="/dccstor/fuse/eladv_envs/unitxt/bin/python",
+        ccc_user="ofirarviv",
+        ccc_python="/dccstor/fme/users/ofir.arviv/miniforge3/envs/fme/bin/python",
         num_of_workers=3,
+        ccc_queue = "nonstandard"
     )
 
     start_time = time.time()
