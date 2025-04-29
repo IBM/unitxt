@@ -17,8 +17,8 @@ from unitxt.test_utils.card import test_card
 # https://paperswithcode.com/dataset/arena-hard points at git repository  https://github.com/lmarena/arena-hard-auto
 # from which the dataset is now fetched:
 
-question_git_repo_file_path = "https://raw.githubusercontent.com/lmarena/arena-hard-auto/main/data/arena-hard-v0.1/question.jsonl"
-model_answer_git_repo_file_path = "https://raw.githubusercontent.com/lmarena/arena-hard-auto/main/data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl"
+question_git_repo_file_path = "https://raw.githubusercontent.com/lmarena/arena-hard-auto/57451f35d2be7fef9f05d5567f36e4c959bb6630/data/arena-hard-v0.1/question.jsonl"
+model_answer_git_repo_file_path = "https://raw.githubusercontent.com/lmarena/arena-hard-auto/57451f35d2be7fef9f05d5567f36e4c959bb6630/data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl"
 
 card = TaskCard(
     loader=LoadCSV(
