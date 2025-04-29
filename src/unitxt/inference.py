@@ -3898,10 +3898,15 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
         return f"{default_dir}/{job_id}.stdout", f"{default_dir}/{job_id}.stderr"
 
     def cleanup(self):
+        transport = self.ssh.get_transport() if self.ssh else None
+        if transport is None or not transport.is_active():
+            # re-open connection
+            self._connect()
         logger.info(f"Killing job {self.ccc_jobs.keys()}")
         command = f"bash -l -c 'jbadmin -kill {' '.join(self.ccc_jobs.keys())}'"
         logger.info(command)
         self.ssh.exec_command(command)
 
-    # TODO: Error with the cleanup in ssh when all the inputs are in cache
+    # TODO: Error with the cleanup in ssh when all the inputs are in cache.
+    #  It has to do with the ssh not managing to finish its operation or something like this before cleanup
 
