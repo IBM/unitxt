@@ -3592,7 +3592,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 
 
 ParamDataClass = TypeVar("ParamDataClass")
-class MultiServersInferenceEngine(OpenAiInferenceEngine):
+class MultiServersInferenceEngine(OpenAiInferenceEngine, HFGenerationParamsMixin):
 
     workers_url: List[str] = []
     num_of_workers: int
@@ -3622,7 +3622,7 @@ class MultiServersInferenceEngine(OpenAiInferenceEngine):
         credentials = self._prepare_credentials()
         init_result = self.post_server(endpoint="init_server",
                                        server_url=url,
-                                       data={**self.to_dict([ParamDataClass]),
+                                       data={**self.to_dict([HFGenerationParamsMixin]),
                                              **{"model_name": self.model_name}})
         if init_result == "Accepted":
             client= OpenAI(

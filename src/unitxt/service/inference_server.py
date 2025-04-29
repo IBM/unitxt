@@ -25,6 +25,10 @@ class Server:
         self.shutdown_flag = False
         self.monitor_thread.start()
 
+        hostname = socket.gethostname()
+        ip_address = socket.gethostbyname(hostname)
+        logging.info(f"server_ip={ip_address} server_port={PORT}")
+
     def update_last_request_time(self):
         self.last_request_time = time.time()
 
@@ -124,11 +128,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="unitxt inference worker server")
     parser.add_argument("--port", type=int, help="Port to run the server on", default=8080, required=False)
     args = parser.parse_args()
-    PORT = args.port
-
-    hostname = socket.gethostname()
-    ip_address = socket.gethostbyname(hostname)
-    logging.info(f"server_ip={ip_address} server_port={PORT}")
     app.run(host="0.0.0.0", port=args.port, debug=True)
 
 
