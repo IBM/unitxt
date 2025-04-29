@@ -124,7 +124,7 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, help="Port to run the server on", default=8080, required=False)
     args = parser.parse_args()
     server = Server(args.port)
-    srv = make_server("0.0.0.0", args.port, app)
+    srv = make_server("0.0.0.0", args.port, app, threaded=True)
     # only here after bind succeeded
     hostname = socket.gethostname()
     ip_address = socket.gethostbyname(hostname)
