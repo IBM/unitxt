@@ -39,6 +39,7 @@ from datasets import Dataset, DatasetDict, Image
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
+from . import dataclass
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
@@ -3641,6 +3642,10 @@ class MultiServersInferenceEngine(OpenAiInferenceEngine, HFGenerationParamsMixin
         with self.lock:
             self.workers_state[url]["status"] = "ready"
 
+    def remove_worker(self, url: str):
+        with self.lock:
+            del self.workers_state[url]
+
     def assign_worker(self):
         while True:
             with self.lock:
@@ -3754,6 +3759,10 @@ class MultiServersInferenceEngine(OpenAiInferenceEngine, HFGenerationParamsMixin
         # 3) Uncaught exceptions
         sys.excepthook = self._exception_handler
 
+@dataclass
+class CCCServerWorkerInfo:
+    status: Literal["AVAIL", "RUN", "EXIT", "ERROR"] = "AVAIL"
+    server_url: Optional[str] = None
 
 class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, HFGenerationParamsMixin):
     ccc_host: str
@@ -3767,9 +3776,9 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
     ccc_mem: str = "120g"
     ccc_num_gpus: int = 1
 
-    server_port: str = "8080"
+    server_port: str = "5000"
 
-    ccc_jobs: Dict[str, Literal["AVAIL", "RUN", "EXIT", "ERROR"]] = {}
+    ccc_jobs: Dict[str, CCCServerWorkerInfo] = {}
 
     _requirements_list = {
         "paramiko": "Install paramiko package using 'pip install --upgrade paramiko",
@@ -3807,7 +3816,7 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
             if match:
                 job_id = match.group(1)
                 logger.info(f"Start job ID: {job_id}")
-                self.ccc_jobs[job_id] = "AVAIL"
+                self.ccc_jobs[job_id] = CCCServerWorkerInfo()
             else:
                 raise RuntimeError(
                     f"Failed to run jbsub on host {self.ccc_host}.\nstdout: {job_output}.\nstderr: {job_error}")
@@ -3826,9 +3835,9 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
                     match = re.search(rf"^{job_id}\s+\S+\s+(\w+)", output, re.MULTILINE)
                     if match:
                         status = match.group(1)
-                        if status != self.ccc_jobs[job_id]:
+                        if status != self.ccc_jobs[job_id].status:
                             logger.info(f"status has been changed: {job_id} -> {status}")
-                            self.ccc_jobs[job_id]= status
+                            self.ccc_jobs[job_id].status = status
                             if status == "RUN":
                                 self._add_server_to_list(job_id)
                             elif status == "EXIT":
@@ -3836,8 +3845,9 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
                                 stdout, stderr = self._fetch_job_logs(job_id)
                                 logger.error(stdout)
                                 logger.error(stderr)
+                                self.remove_worker(self.ccc_jobs[job_id].server_url)
                             elif status == "DONE":
-                                pass  # remove server from server list. Consider fetching the server log.
+                                self.remove_worker(self.ccc_jobs[job_id].server_url)
                 time.sleep(60)
         except Exception as e:
             logger.exception(f"Fatal error in monitor thread, shutting down entire process. {e!s}")
