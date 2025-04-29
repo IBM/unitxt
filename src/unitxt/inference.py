@@ -39,7 +39,6 @@ from datasets import Dataset, DatasetDict, Image
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
-from . import dataclass
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
@@ -3759,8 +3758,7 @@ class MultiServersInferenceEngine(OpenAiInferenceEngine, HFGenerationParamsMixin
         # 3) Uncaught exceptions
         sys.excepthook = self._exception_handler
 
-@dataclass
-class CCCServerWorkerInfo:
+class CCCServerWorkerInfo(Artifact):
     status: Literal["AVAIL", "RUN", "EXIT", "ERROR"] = "AVAIL"
     server_url: Optional[str] = None
 
