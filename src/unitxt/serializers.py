@@ -10,6 +10,7 @@ from .settings_utils import get_constants
 from .tool_calling import convert_to_chat_api_format
 from .type_utils import isoftype, to_type_string
 from .types import (
+    Audio,
     Dialog,
     Document,
     Image,
@@ -135,6 +136,20 @@ class ImageSerializer(SingleTypeSerializer):
         value["image"] = f"media/images/{idx}"
         return f'<{constants.image_tag} src="media/images/{idx}">'
 
+class AudioSerializer(SingleTypeSerializer):
+    serialized_type = Audio
+
+    def serialize(self, value: Audio, instance: Dict[str, Any]) -> str:
+        if "media" not in instance:
+            instance["media"] = {}
+        if "audios" not in instance["media"]:
+            instance["media"]["audios"] = []
+        idx = len(instance["media"]["audios"])
+        instance["media"]["audios"].append(
+            {"audio": value["audio"]}
+        )
+        value["audio"] = f"media/audios/{idx}"
+        return f'<{constants.audio_tag} src="media/audios/{idx}">'
 
 class VideoSerializer(ImageSerializer):
     serialized_type = Video
