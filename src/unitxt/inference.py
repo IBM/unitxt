@@ -3797,7 +3797,7 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
                        f"-cores 4+{self.ccc_num_gpus} "
                        f"-require {self.ccc_gpu} "
                        f"-mem {self.ccc_mem} "
-                       f"{self.ccc_python} -m unitxt.service.inference_server {self.server_port}'")
+                       f"{self.ccc_python} -m unitxt.service.inference_server --port {self.server_port}'")
 
             stdin, stdout, stderr = self.ssh.exec_command(command)
             job_output = stdout.read().decode().strip()
