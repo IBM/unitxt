@@ -3630,6 +3630,7 @@ class MultiServersInferenceEngine(OpenAiInferenceEngine):
                 base_url=f"{url}/{self.model_name}" + "/v1",
                 default_headers=self.get_default_headers(),
             )
+            logger.info(f"Adding server {url}")
         else:
             raise RuntimeError(f"worker_url ({url}/{self.model_name}) initialization failed: {init_result}")
 
@@ -3766,7 +3767,7 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
     ccc_mem: str = "120g"
     ccc_num_gpus: int = 1
 
-    server_port: str = "5000"
+    server_port: str = "8080"
 
     ccc_jobs: Dict[str, Literal["AVAIL", "RUN", "EXIT", "ERROR"]] = {}
 
@@ -3850,20 +3851,24 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
         while try_fetch_server_url_tries > 0:
             stdout, stderr = self._fetch_job_logs(job_id)
 
-            ip_match = re.search(r"server_ip=([0-9.]+)", stdout)
-            port_match = re.search(r"server_port=(\d+)", stdout)
+            ip_match = re.search(r"server_ip=([0-9.]+)", stderr)
+            port_match = re.search(
+                r"server_port=(\d+)", stderr)
 
             if ip_match and port_match:
                 ip_address = ip_match.group(1)
                 port = port_match.group(1)
                 self.add_worker(f"http://{ip_address}:{port}")
             else:
-                time.sleep(30)
-                try_fetch_server_url_tries =- 1
+                try_fetch_server_url_tries -= 1
+                logger.warning(f"Did not manage to get server url. Trying {try_fetch_server_url_tries} more times...")
                 if try_fetch_server_url_tries == 0:
-                    raise RuntimeError(f"Error building server on job {job_id}."
-                                       f"stdout: {stdout}."
-                                       f"stderr:{stderr}")
+                    logger.exception(f"Error building server on job {job_id}.\n"
+                                     f"stdout: {stdout}.\n"
+                                     f"stderr:{stderr}")
+                    os.kill(os.getpid(), signal.SIGTERM)
+                time.sleep(30)
+
 
     def _fetch_job_logs(self, job_id: str) -> Tuple[str, str]:
         stdout_path, stderr_path = self._get_job_log_files_paths(job_id)
