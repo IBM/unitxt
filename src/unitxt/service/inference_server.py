@@ -1,15 +1,15 @@
-
+import argparse
 import logging
 import os
 import random
 import socket
-import sys
 import threading
 import time
 
 import requests
 from flask import Flask, jsonify, request
-from unitxt.inference import HFPipelineBasedInferenceEngine
+
+from ..inference import HFPipelineBasedInferenceEngine
 
 logging.basicConfig(level=logging.INFO)
 
@@ -27,7 +27,7 @@ class Server:
 
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
-        app.logger.info(f"*** Server IP address: '{ip_address}/{PORT}' ****")
+        app.logger.info(f"server_ip={ip_address} server_port={PORT}")
 
     def update_last_request_time(self):
         self.last_request_time = time.time()
@@ -125,8 +125,10 @@ def status():
 
 
 if __name__ == "__main__":
-    PORT = sys.argv[1]
-    app.run(host="0.0.0.0", port=PORT, debug=True)
+    parser = argparse.ArgumentParser(prog="unitxt inference worker server")
+    parser.add_argument("port", type=int, help="Port to run the server on", default=8080)
+    args = parser.parse_args()
+    app.run(host="0.0.0.0", port=args.port, debug=True)
 
 
 
