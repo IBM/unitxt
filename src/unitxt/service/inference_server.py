@@ -14,20 +14,20 @@ from ..inference import HFPipelineBasedInferenceEngine
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
-PORT = None
 
 class Server:
-    def __init__(self):
+    def __init__(self, port: int):
         self.inference_engine = None
         self.inactivity_timeout = 600
         self.monitor_thread = threading.Thread(target=self.monitor_activity, daemon=True)
         self.last_request_time = time.time()
         self.shutdown_flag = False
         self.monitor_thread.start()
+        self.port = port
 
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
-        logging.info(f"server_ip={ip_address} server_port={PORT}")
+        logging.info(f"server_ip={ip_address} server_port={self.port}")
 
     def update_last_request_time(self):
         self.last_request_time = time.time()
@@ -38,7 +38,7 @@ class Server:
             if time.time() - self.last_request_time > self.inactivity_timeout:
                 app.logger.info(f"No requests for {self.inactivity_timeout} seconds. Shutting down server...")
                 try:
-                    requests.post(f"http://localhost:{PORT}/shutdown", timeout=5)
+                    requests.post(f"http://localhost:{self.port}/shutdown", timeout=5)
                 except Exception:
                     pass
             else:
@@ -64,8 +64,6 @@ class Server:
         inputs = []
         return self.inference_engine(inputs)
 
-
-server = Server()
 
 @app.before_request
 def update_activity():
@@ -128,6 +126,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="unitxt inference worker server")
     parser.add_argument("--port", type=int, help="Port to run the server on", default=8080, required=False)
     args = parser.parse_args()
+    server = Server(args.port)
     app.run(host="0.0.0.0", port=args.port, debug=True)
 
 
