@@ -128,6 +128,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="unitxt inference worker server")
     parser.add_argument("port", type=int, help="Port to run the server on", default=8080)
     args = parser.parse_args()
+    PORT = args.port
     app.run(host="0.0.0.0", port=args.port, debug=True)
 
 
