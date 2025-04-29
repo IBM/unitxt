@@ -8,6 +8,7 @@ import time
 
 import requests
 from flask import Flask, jsonify, request
+from werkzeug.serving import make_server
 
 from ..inference import HFPipelineBasedInferenceEngine
 
@@ -127,7 +128,13 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, help="Port to run the server on", default=8080, required=False)
     args = parser.parse_args()
     server = Server(args.port)
-    app.run(host="0.0.0.0", port=args.port, debug=True)
+    srv = make_server("0.0.0.0", args.port, app)
+    # only here after bind succeeded
+    hostname = socket.gethostname()
+    ip_address = socket.gethostbyname(hostname)
+    logging.info(f"server_ip={ip_address} server_port={args.port}")
 
+    # this actually starts the Werkzeug loop (blocking)
+    srv.serve_forever()
 
 
