@@ -1,5 +1,6 @@
 import abc
 import asyncio
+import atexit
 import base64
 import dataclasses
 import hashlib
@@ -7,8 +8,8 @@ import io
 import json
 import logging
 import os
-import random
 import re
+import signal
 import sys
 import threading
 import time
@@ -3593,7 +3594,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 ParamDataClass = TypeVar("ParamDataClass")
 class MultiServersInferenceEngine(OpenAiInferenceEngine):
 
-    workers_url: List[str]
+    workers_url: List[str] = []
 
     @staticmethod
     def post_server(server_url: str, endpoint:str , data: Dict) -> str:
@@ -3603,29 +3604,31 @@ class MultiServersInferenceEngine(OpenAiInferenceEngine):
         return response.json()
 
     def prepare_engine(self):
-        from openai import OpenAI
+        self._register_cleanup_handlers()
         self.lock = threading.Lock()
         self.workers_state = {}
-        credentials = self._prepare_credentials()
-        assert len(self.workers_url) > 0, "No workers_url are set."
+
         for url in self.workers_url:
-            init_result = self.post_server(endpoint="init_server",
-                                           server_url=url,
-                                           data={**self.to_dict([ParamDataClass]),
-                                                 **{"model_name": self.model_name}})
-            if init_result == "Accepted":
-                self.add_worker(url, client=OpenAI(
-                    api_key=credentials["api_key"],
-                    base_url= f"{url}/{self.model_name}" + "/v1",
-                    default_headers=self.get_default_headers(),
-                ))
-            else:
-                raise RuntimeError(f"worker_url ({url}/{self.model_name}) initialization failed: {init_result}")
+            self.add_worker(url)
 
     #def init_server_and_add_to_workers_list
 
+    def add_worker(self, url: str) -> None:
+        from openai import OpenAI
+        credentials = self._prepare_credentials()
+        init_result = self.post_server(endpoint="init_server",
+                                       server_url=url,
+                                       data={**self.to_dict([ParamDataClass]),
+                                             **{"model_name": self.model_name}})
+        if init_result == "Accepted":
+            client= OpenAI(
+                api_key=credentials["api_key"],
+                base_url=f"{url}/{self.model_name}" + "/v1",
+                default_headers=self.get_default_headers(),
+            )
+        else:
+            raise RuntimeError(f"worker_url ({url}/{self.model_name}) initialization failed: {init_result}")
 
-    def add_worker(self, url: str, client) -> None:
         with self.lock:
             self.workers_state[url] = {"status": "ready", "client": client}
 
@@ -3634,14 +3637,16 @@ class MultiServersInferenceEngine(OpenAiInferenceEngine):
             self.workers_state[url]["status"] = "ready"
 
     def assign_worker(self):
-        with self.lock:
-            while True:
+        while True:
+            with self.lock:
              #   print("trying to assign worker...")
                 for url, rec in self.workers_state.items():
                     if rec["status"] == "ready":
                         rec["status"] ="assigned"
                         return url, rec["client"]
-                time.sleep(random.uniform(0, 1))
+            if len(self.workers_state) == 0:
+                logger.warning("Not servers available for inference. Waiting for servers to be added... ")
+            time.sleep(10)
 
     def _prepare_credentials(self) -> CredentialsOpenAi:
         return {"api" + "_" + "key": "no-api-key",}
@@ -3717,68 +3722,164 @@ class MultiServersInferenceEngine(OpenAiInferenceEngine):
         else:
             self._cache[cache_key] = prediction
 
+    def cleanup(self):
+        pass
 
-class CCCInferenceEngine(MultiServersInferenceEngine):
+    def _signal_handler(self, signum, frame):
+        logger.info(f"Received signal {signum}, cleaning up and exiting")
+        self.cleanup()
+        sys.exit(0)
+
+    def _exception_handler(self, exc_type, exc_value, exc_traceback):
+        # Don't double-handle KeyboardInterrupt
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+
+        logger.error("Uncaught exception, cleaning up before exit",
+                     exc_info=(exc_type, exc_value, exc_traceback))
+        self.cleanup()
+        # Print the exception as usual
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        sys.exit(1)
+
+    def _register_cleanup_handlers(self):
+        # 1) Normal exit
+        atexit.register(self.cleanup)
+
+        # 2) OS signals
+        signal.signal(signal.SIGINT,  self._signal_handler)   # Ctrl+C
+        signal.signal(signal.SIGTERM, self._signal_handler)   # kill <pid>
+
+        # 3) Uncaught exceptions
+        sys.excepthook = self._exception_handler
+
+
+class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin):
     ccc_host: str
     ccc_user: str
-    ccc_path: str
+    ccc_temp_dir = "$XDG_CACHE_HOME"
     ccc_python: str
-    server_port: str = "5000"
+
     num_of_workers: int = 5
-    workers_url: List[str] = []
+    ccc_queue: Literal["x86_24h", "nonstandard"] = "x86_24h"
+    ccc_gpu: Literal["v100", "a100", "a100_80gb"] = "a100_80gb"
+    ccc_mem: str = "120g"
+    ccc_num_gpus: int = 1
+
+    server_port: str = "5000"
+
+    ccc_jobs: Dict[str, Literal["AVAIL", "RUN", "EXIT", "ERROR"]] = {}
+
+    _requirements_list = {
+        "paramiko": "Install paramiko package using 'pip install --upgrade paramiko",
+    }
 
     def prepare_engine(self):
         assert not self.workers_url, "CCCInferenceEngine doesn't support explicit setting of workers_url"
-        self.start_ccc_servers()
+        # the super class prepare_engine() must be executed first, as the following logic relies on its work.
         self.prepare_engine()
+        self._connect()
+        self._submit_jobs()
+        self._start_monitoring_jobs()
 
 
-    def start_ccc_servers(self):
+    def _connect(self):
         import paramiko
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(self.ccc_host, username=self.ccc_user)
-        ssh.exec_command(f"mkdir -p {self.ccc_path}")
+        self.ssh = paramiko.SSHClient()
+        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.ssh.connect(self.ccc_host, username=self.ccc_user)
 
-        self.ccc_jobs = {}
-        for i in range(self.num_of_workers):
-            command = f"bash -l -c 'jbsub -queue x86_6h -cores 4+1 -require v100 -mem 24G -out ~/server{i}.log {self.ccc_python} /dccstor/fuse/unitxt/ccc_worker_server.py {self.server_port}'"
-            stdin, stdout, stderr = ssh.exec_command(command)
+    def _submit_jobs(self) -> None:
+        for _ in range(self.num_of_workers):
+            # TODO: We might need to use accelerate in the command for multi-gpu. See FmEval
+            command = (f"bash -l -c 'jbsub "
+                       f"-queue {self.ccc_queue} "
+                       f"-cores 4+{self.ccc_num_gpus} "
+                       f"-require {self.ccc_gpu} "
+                       f"-mem {self.ccc_mem} "
+                       f"{self.ccc_python} unitxt-inference-server {self.server_port}'")
+
+            stdin, stdout, stderr = self.ssh.exec_command(command)
             job_output = stdout.read().decode().strip()
             job_error = stderr.read().decode().strip()
             match = re.search(r"Job <(\d+)> is submitted", job_output)
             if match:
                 job_id = match.group(1)
                 logger.info(f"Start job ID: {job_id}")
-                self.ccc_jobs[job_id] ={"status": "AVAIL", "log_id": i}
+                self.ccc_jobs[job_id] = "AVAIL"
             else:
-                raise RuntimeError(f"Failed to run jbsub on host {self.ccc_host}.\nstdout: {job_output}.\nstderr: {job_error}")
+                raise RuntimeError(
+                    f"Failed to run jbsub on host {self.ccc_host}.\nstdout: {job_output}.\nstderr: {job_error}")
 
-        def run_monitor_ccc_jobs(ssh, sample_every):
-            while True:
-                command = "bash -l -c 'jbinfo'"
-                stdin, stdout, stderr = ssh.exec_command(command)
-                output = stdout.read().decode().strip()
-                #error = stderr.read().decode().strip()
-                for job_id in self.ccc_jobs.keys():
-                    match = re.search(rf"^{job_id}\s+\S+\s+(\w+)", output, re.MULTILINE)
-                    if match:
-                        status = match.group(1)
-                        if status != self.ccc_jobs[job_id]["status"]:
-                            if self.ccc_jobs[job_id]["status"] == "RUN":
-                                pass # add server to server list
-                            elif status == "RUN":
-                                pass # remove server from server list. Consider fetching the server log.
-                            self.ccc_jobs[job_id]["status"] = status
-                            logger.info(f"status has been changed: {job_id} - {status}")
+    def _start_monitoring_jobs(self):
+        self.monitor_thread = threading.Thread(target=self._monitor_jobs, daemon=True)
+        self.monitor_thread.start()
+
+    def _monitor_jobs(self):
+        while True:
+            command = "bash -l -c 'jbinfo'"
+            stdin, stdout, stderr = self.ssh.exec_command(command)
+            output = stdout.read().decode()
+            for job_id in self.ccc_jobs.keys():
+                match = re.search(rf"^{job_id}\s+\S+\s+(\w+)", output, re.MULTILINE)
+                if match:
+                    status = match.group(1)
+                    if status != self.ccc_jobs["status"]:
+                        logger.info(f"status has been changed: {job_id} -> {status}")
+                        self.ccc_jobs[job_id]= status
+                        if status == "RUN":
+                            self._add_server_to_list(job_id)
+                        elif status == "EXIT":
+                            pass  # remove server from server list. Consider fetching the server log. Maybe rerun it? What happens when the 24h are up?
+                        elif status == "DONE":
+                            pass  # remove server from server list. Consider fetching the server log.
+            time.sleep(60)
 
 
-                time.sleep(sample_every)
+    def _add_server_to_list(self, job_id):
+        assert self.ccc_jobs[job_id] == "RUN"
+        try_fetch_server_url_tries = 2
 
-        thread = threading.Thread(target=run_monitor_ccc_jobs, args=(ssh, 10))
-        thread.daemon = True  #
-        thread.start()
+        while try_fetch_server_url_tries > 0:
+            stdout, stderr = self._fetch_job_logs(job_id)
 
+            ip_match = re.search(r"server_ip=([0-9.]+)", stdout)
+            port_match = re.search(r"server_port=(\d+)", stdout)
 
-        time.sleep(200)  # This keeps the main thread alive so the background thread can continue
+            if ip_match and port_match:
+                ip_address = ip_match.group(1)
+                port = port_match.group(1)
+                self.add_worker(f"http://{ip_address}:{port}")
+            else:
+                time.sleep(30)
+                try_fetch_server_url_tries =- 1
+                if try_fetch_server_url_tries == 0:
+                    raise RuntimeError(f"Error building server on job {job_id}."
+                                       f"stdout: {stdout}."
+                                       f"stderr:{stderr}")
+
+    def _fetch_job_logs(self, job_id: str) -> Tuple[str, str]:
+        stdout_fpath, stderr_fpath = self._get_job_log_files_paths(job_id)
+        sftp = self.ssh.open_sftp()
+        try:
+            with sftp.open(stdout_fpath, "r") as f:
+                stdout = f.read().decode().strip()
+            with sftp.open(stderr_fpath, "r") as f:
+                stderr = f.read().decode().strip()
+        finally:
+            sftp.close()
+
+        return stdout, stderr
+
+    @staticmethod
+    def _get_job_log_files_paths(job_id: str) -> Tuple[str, str]:
+        default_dir = "~/.lsf/dcc/"
+        return f"{default_dir}/{job_id}.stdout", f"{default_dir}/{job_id}.stderr"
+
+    def cleanup(self):
+        for job_id in self.ccc_jobs.keys():
+            logger.info(f"Killing job {job_id}")
+            command = f"bash -l -c 'jbadmin -kill {job_id}'"
+            self.ssh.exec_command(command)
 
