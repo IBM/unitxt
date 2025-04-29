@@ -368,7 +368,7 @@ class LLMJudgeDirect(LLMJudge):
                 "summary": summarization_outputs[i]
                 if self.generate_summaries
                 else None,
-                "positional_bias_summary": summarization_outputs[i]
+                "positional_bias_summary": summarization_outputs[i + evaluations_count]
                 if self.generate_summaries and self.check_positional_bias
                 else None,
                 "prompts": {
@@ -545,8 +545,6 @@ class LLMJudgeDirect(LLMJudge):
             display_options_instruction_list,
         ) = zip(*parsed_criterias)
 
-        assessment_for_summaries_slice = slice(0, evaluations_count)
-
         assessment_instances = [
             {
                 "context_variables": context,
@@ -576,9 +574,7 @@ class LLMJudgeDirect(LLMJudge):
                     "assessment": assessment_output,
                     "data_classification_policy": ["public"],
                 }
-                for assessment_output in assessment_outputs[
-                    assessment_for_summaries_slice
-                ]
+                for assessment_output in assessment_outputs
             ]
             (
                 summarization_prompts,
