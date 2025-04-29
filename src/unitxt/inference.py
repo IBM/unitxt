@@ -3853,7 +3853,7 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
 
 
     def _add_server_to_list(self, job_id):
-        assert self.ccc_jobs[job_id] == "RUN"
+        assert self.ccc_jobs[job_id].status == "RUN"
         try_fetch_server_url_tries = 2
 
         while try_fetch_server_url_tries > 0:
@@ -3902,4 +3902,6 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
         command = f"bash -l -c 'jbadmin -kill {' '.join(self.ccc_jobs.keys())}'"
         logger.info(command)
         self.ssh.exec_command(command)
+
+    # TODO: Error with the cleanup in ssh when all the inputs are in cache
 
