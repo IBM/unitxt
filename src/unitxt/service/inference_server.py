@@ -26,10 +26,6 @@ class Server:
         self.monitor_thread.start()
         self.port = port
 
-        hostname = socket.gethostname()
-        ip_address = socket.gethostbyname(hostname)
-        logging.info(f"server_ip={ip_address} server_port={self.port}")
-
     def update_last_request_time(self):
         self.last_request_time = time.time()
 
