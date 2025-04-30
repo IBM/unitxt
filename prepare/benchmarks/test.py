@@ -39,5 +39,8 @@ with settings.context(
     if not os.path.exists(out_path):
         os.makedirs(out_path)
 
-    with open(os.path.join(out_path, out_file_name), "wb") as f:
+    with open(os.path.join(out_path, out_file_name, ",file=predict"), "wb") as f:
+        pickle.dump(predictions, f)
+
+    with open(os.path.join(out_path, out_file_name, ",file=eval"), "wb") as f:
         pickle.dump(results, f)
