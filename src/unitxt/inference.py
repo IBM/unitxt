@@ -3851,6 +3851,7 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
                 time.sleep(60)
         except Exception as e:
             logger.exception(f"Fatal error in monitor thread, shutting down entire process. {e!s}")
+            # is there a better way to do it?
             os.kill(os.getpid(), signal.SIGTERM)
 
 
