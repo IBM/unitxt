@@ -760,7 +760,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             desc=f"Running inference in batches of {self.batch_size}",
         ):
             # Get the current batch
-            batch_data = dataset[i : i + self.batch_size]
+            batch_data = list(dataset)[i : i + self.batch_size]
             batch_sources = [instance["source"] for instance in batch_data]
 
             # --- Process the current batch ---
