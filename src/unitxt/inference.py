@@ -3777,6 +3777,7 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
     server_port: str = "5000"
 
     ccc_jobs: Dict[str, CCCServerWorkerInfo] = {}
+    _monitor_jobs: bool = False
 
     _requirements_list = {
         "paramiko": "Install paramiko package using 'pip install --upgrade paramiko",
@@ -3821,11 +3822,12 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
 
     def _start_monitoring_jobs(self):
         self.monitor_thread = threading.Thread(target=self._monitor_jobs, daemon=True)
+        self._monitor_jobs = True
         self.monitor_thread.start()
 
     def _monitor_jobs(self):
         try:
-            while True:
+            while self._monitor_jobs:
                 command = "bash -l -c 'jbinfo'"
                 stdin, stdout, stderr = self.ssh.exec_command(command)
                 output = stdout.read().decode()
@@ -3898,6 +3900,12 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
         return f"{default_dir}/{job_id}.stdout", f"{default_dir}/{job_id}.stderr"
 
     def cleanup(self):
+        self._monitor_jobs = False
+        """
+        TODO: Error with the cleanup in ssh when all the inputs are in cache.
+        It has to do with the ssh not managing to finish its operation or something like this before cleanup
+        The real solution is to do the cleanup after them main infer()
+        """
         transport = self.ssh.get_transport() if self.ssh else None
         if transport is None or not transport.is_active():
             # re-open connection
@@ -3906,7 +3914,7 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
         command = f"bash -l -c 'jbadmin -kill {' '.join(self.ccc_jobs.keys())}'"
         logger.info(command)
         self.ssh.exec_command(command)
+        self.ssh.close()
 
-    # TODO: Error with the cleanup in ssh when all the inputs are in cache.
-    #  It has to do with the ssh not managing to finish its operation or something like this before cleanup
+
 
