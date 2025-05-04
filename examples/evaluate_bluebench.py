@@ -8,7 +8,7 @@ with settings.context(
     mock_inference_mode=True,
 ):
     test_dataset = load_dataset(
-        "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30]",
+        "benchmarks.bluebench[loader_limit=30]",
         split="test",
         use_cache=True,
     )
@@ -28,6 +28,8 @@ with settings.context(
     predictions = model(test_dataset)
     results = evaluate(predictions=predictions, data=test_dataset)
 
+    print("results")
+    print(results)
     print("Global scores:")
     print(results.global_scores.summary)
     print("Subsets scores:")
