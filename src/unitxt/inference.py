@@ -3772,12 +3772,12 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
     ccc_queue: Literal["x86_24h", "nonstandard"] = "x86_24h"
     ccc_gpu: Literal["v100", "a100", "a100_80gb"] = "a100_80gb"
     ccc_mem: str = "120g"
-    ccc_num_gpus: int = 1
+    ccc_num_gpus: int = 2
 
     server_port: str = "5000"
 
     ccc_jobs: Dict[str, CCCServerWorkerInfo] = {}
-    _monitor_jobs: bool = False
+    _start_monitor_jobs: bool = False
 
     _requirements_list = {
         "paramiko": "Install paramiko package using 'pip install --upgrade paramiko",
@@ -3798,6 +3798,21 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(self.ccc_host, username=self.ccc_user)
 
+    def _send_cmd_via_ssh(self, command: str):
+        """Error with the cleanup in ssh when all the inputs are in cache.
+
+        It has to do with the ssh not managing to finish its operation or something like this before cleanup.
+        The real solution is to do the cleanup after them main infer().
+        """
+        transport = self.ssh.get_transport() if self.ssh else None
+        if transport is None or not transport.is_active():
+            # re-open connection
+            self._connect()
+
+        stdin, stdout, stderr = self.ssh.exec_command(command)
+        return stdin, stdout, stderr
+
+
     def _submit_jobs(self) -> None:
         for _ in range(self.num_of_workers):
             # TODO: We might need to use accelerate in the command for multi-gpu. See FmEval
@@ -3808,7 +3823,7 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
                        f"-mem {self.ccc_mem} "
                        f"{self.ccc_python} -m unitxt.service.inference_server --port {self.server_port}'")
 
-            stdin, stdout, stderr = self.ssh.exec_command(command)
+            stdin, stdout, stderr = self._send_cmd_via_ssh(command)
             job_output = stdout.read().decode().strip()
             job_error = stderr.read().decode().strip()
             match = re.search(r"Job <(\d+)> is submitted", job_output)
@@ -3822,14 +3837,14 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
 
     def _start_monitoring_jobs(self):
         self.monitor_thread = threading.Thread(target=self._monitor_jobs, daemon=True)
-        self._monitor_jobs = True
+        self._start_monitor_jobs = True
         self.monitor_thread.start()
 
     def _monitor_jobs(self):
         try:
-            while self._monitor_jobs:
+            while self._start_monitor_jobs:
                 command = "bash -l -c 'jbinfo'"
-                stdin, stdout, stderr = self.ssh.exec_command(command)
+                stdin, stdout, stderr = self._send_cmd_via_ssh(command)
                 output = stdout.read().decode()
                 for job_id in self.ccc_jobs.keys():
                     match = re.search(rf"^{job_id}\s+\S+\s+(\w+)", output, re.MULTILINE)
@@ -3895,13 +3910,13 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
         return stdout, stderr
 
     def _get_job_log_files_paths(self, job_id: str) -> Tuple[str, str]:
-        stdin, stdout, stderr = self.ssh.exec_command("echo $HOME")
+        stdin, stdout, stderr = self._send_cmd_via_ssh("echo $HOME")
         remote_home = stdout.read().decode().strip()
         default_dir = f"{remote_home}/.lsf/cccCluster"
         return f"{default_dir}/{job_id}.stdout", f"{default_dir}/{job_id}.stderr"
 
     def cleanup(self):
-        self._monitor_jobs = False
+        self._start_monitor_jobs = False
         """
         TODO: Error with the cleanup in ssh when all the inputs are in cache.
         It has to do with the ssh not managing to finish its operation or something like this before cleanup
@@ -3914,8 +3929,11 @@ class CCCInferenceEngine(MultiServersInferenceEngine, PackageRequirementsMixin, 
         logger.info(f"Killing job {self.ccc_jobs.keys()}")
         command = f"bash -l -c 'jbadmin -kill {' '.join(self.ccc_jobs.keys())}'"
         logger.info(command)
-        self.ssh.exec_command(command)
+        self._send_cmd_via_ssh(command)
         self.ssh.close()
 
+
+# TODO: Add check that both unitxt version / commit are the same
+# TODO: Add more info logging
 
 
