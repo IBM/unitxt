@@ -1,5 +1,5 @@
 import typing
-from typing import Literal, NewType, TypedDict
+from typing import Literal, NewType, Type, TypedDict
 
 from unitxt.type_utils import (
     UnsupportedTypeError,
@@ -428,6 +428,7 @@ Task description: This is my task.""",
         self.assertTrue(is_type(int))
         self.assertTrue(is_type(list))
         self.assertTrue(is_type(dict))
+        self.assertTrue(is_type(Type))
         self.assertTrue(is_type(Literal[1, 2, 3]))
         self.assertFalse(is_type([1, 2]))
         self.assertFalse(is_type(print))

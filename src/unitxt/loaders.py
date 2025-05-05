@@ -102,12 +102,13 @@ def hf_load_dataset(path: str, *args, **kwargs):
 
 
 @retry_connection_with_exponential_backoff(backoff_factor=2)
-def hf_get_dataset_splits(path: str, name: str):
+def hf_get_dataset_splits(path: str, name: str, revision=None):
     try:
         return get_dataset_split_names(
             path=path,
             config_name=name,
             trust_remote_code=settings.allow_unverified_code,
+            revision=revision,
         )
     except Exception as e:
         if "trust_remote_code" in str(e):
@@ -258,7 +259,7 @@ class LoadHF(LazyLoader):
         split:
             Optional specification of which split to load.
         data_files:
-            Optional specification of particular data files to load.
+            Optional specification of particular data files to load. When you provide a list of data_files to Hugging Face's load_dataset function without explicitly specifying the split argument, these files are automatically placed into the train split.
         revision:
             Optional. The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
         streaming (bool):
@@ -351,10 +352,15 @@ class LoadHF(LazyLoader):
     def get_splits(self):
         if self.splits is not None:
             return self.splits
+        if self.data_files is not None:
+            if isinstance(self.data_files, dict):
+                return list(self.data_files.keys())
+            return ["train"]
         try:
             return hf_get_dataset_splits(
                 path=self.path,
                 name=self.name,
+                revision=self.revision,
             )
         except Exception:
             UnitxtWarning(

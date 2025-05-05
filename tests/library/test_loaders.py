@@ -255,6 +255,128 @@ class TestLoaders(UnitxtTestCase):
         )  # that HF dataset only has the 'test' split
         self.assertEqual(instance["language"], "eng")
 
+    def test_load_from_hf_with_data_files_dict(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dummy_dir = os.path.join(temp_dir, "dummy")
+            os.makedirs(dummy_dir, exist_ok=True)
+
+            dummy_test_file_path = os.path.join(dummy_dir, "dummy_test_file.jsonl")
+            dummy_random_file_path = os.path.join(dummy_dir, "dummy_random_file.jsonl")
+
+            sample_data = [
+                {"id": 1, "text": "Sample text 1", "label": "A"},
+            ]
+
+            with open(dummy_test_file_path, "w") as f:
+                for item in sample_data:
+                    f.write(json.dumps(item) + "\n")
+
+            with open(dummy_random_file_path, "w") as f:
+                for item in sample_data:
+                    f.write(json.dumps(item) + "\n")
+
+            loader = LoadHF(
+                path=dummy_dir,
+                data_files={
+                    "test": "dummy_test_file.jsonl",
+                    "random":  "dummy_random_file.jsonl",
+                }
+            )
+
+            dataset = loader.process()
+
+            self.assertIn("test", dataset)
+            self.assertIn("random", dataset)
+
+            test = list(dataset["test"])
+
+            self.assertEqual(len(test), 1)
+
+            random = list(dataset["random"])
+            self.assertEqual(len(random), 1)
+
+            self.assertIn("text", random[0])
+            self.assertIn("label", random[0])
+            self.assertIn("text", test[0])
+            self.assertIn("label", test[0])
+
+    def test_load_from_hf_with_data_files_list(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dummy_dir = os.path.join(temp_dir, "dummy")
+            os.makedirs(dummy_dir, exist_ok=True)
+
+            dummy_test_file_path = os.path.join(dummy_dir, "dummy_test_file.jsonl")
+            dummy_random_file_path = os.path.join(dummy_dir, "dummy_random_file.jsonl")
+
+            sample_data = [
+                {"id": 1, "text": "Sample text 1", "label": "A"},
+            ]
+
+            with open(dummy_test_file_path, "w") as f:
+                for item in sample_data:
+                    f.write(json.dumps(item) + "\n")
+
+            with open(dummy_random_file_path, "w") as f:
+                for item in sample_data:
+                    f.write(json.dumps(item) + "\n")
+
+            loader = LoadHF(
+                path=dummy_dir,
+                data_files=[
+                    "dummy_test_file.jsonl",
+                    "dummy_random_file.jsonl",
+                ]
+            )
+
+            dataset = loader.process()
+
+            self.assertIn("train", dataset)
+
+            train = list(dataset["train"])
+
+            self.assertEqual(len(train), 2)
+
+
+            self.assertIn("text", train[0])
+            self.assertIn("label", train[0])
+            self.assertIn("text", train[1])
+            self.assertIn("label", train[1 ])
+
+    def test_load_from_hf_with_data_files_str(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dummy_dir = os.path.join(temp_dir, "dummy")
+            os.makedirs(dummy_dir, exist_ok=True)
+
+            dummy_test_file_path = os.path.join(dummy_dir, "dummy_test_file.jsonl")
+
+            sample_data = [
+                {"id": 1, "text": "Sample text 1", "label": "A"},
+            ]
+
+            with open(dummy_test_file_path, "w") as f:
+                for item in sample_data:
+                    f.write(json.dumps(item) + "\n")
+
+
+            loader = LoadHF(
+                path=dummy_dir,
+                data_files="dummy_test_file.jsonl",
+            )
+
+            # Load the dataset
+            dataset = loader.process()
+
+            self.assertIn("train", dataset)
+
+            train = list(dataset["train"])
+
+            self.assertEqual(len(train), 1)
+
+
+            self.assertIn("text", train[0])
+            self.assertIn("label", train[0])
+
+
     def test_multiple_source_loader(self):
         # Using a context for the temporary directory
         with tempfile.TemporaryDirectory() as tmp_dir:

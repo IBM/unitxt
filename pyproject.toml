@@ -64,7 +64,8 @@ docs = [
     "scikit-learn",
     "jiwer",
     "editdistance",
-    "fuzzywuzzy"
+    "fuzzywuzzy",
+    "pydantic"
 ]
 helm = [
     "crfm-helm[unitxt]>=0.5.3"
@@ -105,11 +106,18 @@ tests = [
     "Wikipedia-API",
     "sqlglot",
     "sqlparse",
-    "diskcache"
+    "diskcache",
+    "pydantic"
 ]
 ui = [
     "gradio",
     "transformers"
+]
+text2sql = [
+    "sqlglot",
+    "func_timeout==4.3.5",
+    "sqlparse",
+    "tabulate"
 ]
 watsonx = [
     "ibm-watsonx-ai==1.2.10"
@@ -126,6 +134,18 @@ assistant = [
     "watchdog",
     "litellm"
 ]
+remote_inference = [
+    "litellm>=1.52.9",
+    "tenacity",
+    "diskcache"
+]
+local_inference = [
+    "transformers",
+    "torch",
+    "accelerate"
+]
+
+
 
 # Combine all extras by referencing other groups
 all = [
@@ -137,13 +157,15 @@ all = [
     "unitxt[tests]",
     "unitxt[ui]",
     "unitxt[watsonx]",
-    "unitxt[assistant]"
+    "unitxt[assistant]",
+    "unitxt[text2sql]"
 ]
 
 [project.scripts]
 unitxt-explore = "unitxt.ui:launch"
 unitxt-assistant = "unitxt.assistant:launch"
 unitxt-metrics-service = "unitxt.service.metrics.main:start_metrics_http_service"
+unitxt-evaluate = "unitxt.evaluate_cli:main"
 
 [tool.ruff]
 exclude = [

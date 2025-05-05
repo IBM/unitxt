@@ -65,6 +65,7 @@ from unitxt.metrics import (
     StringContainment,
     StringContainmentRatio,
     TokenOverlap,
+    ToolCallingMetric,
     UnsortedListExactMatch,
     WebsrcSquadF1,
 )
@@ -1341,6 +1342,146 @@ class TestMetrics(UnitxtTestCase):
         )
         target = 1.0
         self.assertEqual(outputs[0]["score"]["global"]["score"], target)
+
+    def test_tool_calling_metric(self):
+        tools_data = {
+            "__tools__": [{
+                "type": "function",
+                "function": {
+                    "name": "test_tool",
+                    "parameters": {
+                        "properties": {
+                            "param1": {"type": "string"},
+                            "param2": {"type": "integer"}
+                        }
+                    }
+                }
+            }]
+        }
+
+        # Test case 1: Exact match
+        prediction = {"name": "test_tool", "arguments": {"param1": "value1"}}
+        reference = {"name": "test_tool", "arguments": {"param1": "value1"}}
+
+        outputs = apply_metric(
+            metric=ToolCallingMetric(),
+            predictions=[prediction],
+            references=[[reference]],
+            task_data=[tools_data]
+        )
+
+        # Exact match should be 1.0 when prediction and reference are identical
+        self.assertEqual(outputs[0]["score"]["global"]["exact_match"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["tool_choice"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["parameter_choice"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["parameter_values"], 1.0)
+
+        # Test case 2: Different tool name
+        prediction = {"name": "different_tool", "arguments": {"param1": "value1"}}
+        reference = {"name": "test_tool", "arguments": {"param1": "value1"}}
+
+        outputs = apply_metric(
+            metric=ToolCallingMetric(),
+            predictions=[prediction],
+            references=[[reference]],
+            task_data=[tools_data]
+        )
+
+        # Exact match and tool choice should be 0.0, but parameter choice can still match
+        self.assertEqual(outputs[0]["score"]["global"]["exact_match"], 0.0)
+        self.assertEqual(outputs[0]["score"]["global"]["tool_choice"], 0.0)
+        self.assertEqual(outputs[0]["score"]["global"]["parameter_choice"], 1.0)
+
+        # Test case 3: Different parameter names
+        prediction = {"name": "test_tool", "arguments": {"param1": "value1", "wrongParam": "value2"}}
+        reference = {"name": "test_tool", "arguments": {"param1": "value1", "param2": 42}}
+
+        outputs = apply_metric(
+            metric=ToolCallingMetric(),
+            predictions=[prediction],
+            references=[[reference]],
+            task_data=[tools_data]
+        )
+
+        # Exact match should be 0.0, tool choice 1.0, parameter choice 0.5 (half match)
+        self.assertEqual(outputs[0]["score"]["global"]["exact_match"], 0.0)
+        self.assertEqual(outputs[0]["score"]["global"]["tool_choice"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["parameter_choice"], 0.5)
+
+        # Test case 4: Different parameter values
+        prediction = {"name": "test_tool", "arguments": {"param1": "different", "param2": 42}}
+        reference = {"name": "test_tool", "arguments": {"param1": "value1", "param2": 123}}
+
+        outputs = apply_metric(
+            metric=ToolCallingMetric(),
+            predictions=[prediction],
+            references=[[reference]],
+            task_data=[tools_data]
+        )
+
+        # Parameter choice should be 1.0 (all names match), but parameter values 0.5 (one match)
+        self.assertEqual(outputs[0]["score"]["global"]["tool_choice"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["parameter_choice"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["parameter_values"], 0.0)
+
+        # Test case 5: Empty arguments
+        prediction = {"name": "test_tool", "arguments": {}}
+        reference = {"name": "test_tool", "arguments": {"param1": "value1"}}
+
+        outputs = apply_metric(
+            metric=ToolCallingMetric(),
+            predictions=[prediction],
+            references=[[reference]],
+            task_data=[tools_data]
+        )
+
+        # Parameter choice should be 1.0 for empty arguments
+        self.assertEqual(outputs[0]["score"]["global"]["parameter_choice"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["parameter_values"], 1.0)
+
+        # Test case 6: Multiple references with one match
+        prediction = {"name": "test_tool", "arguments": {"param1": "value1"}}
+        references = [
+            {"name": "wrong_tool", "arguments": {"param1": "value1"}},
+            {"name": "test_tool", "arguments": {"param1": "value1"}}
+        ]
+
+        outputs = apply_metric(
+            metric=ToolCallingMetric(),
+            predictions=[prediction],
+            references=[references],
+            task_data=[tools_data]
+        )
+
+        # Should match the exact reference
+        self.assertEqual(outputs[0]["score"]["global"]["exact_match"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["tool_choice"], 1.0)
+
+        # Test case 7: Parameter types
+        prediction = {"name": "test_tool", "arguments": {"param1": "string", "param2": 42}}
+
+        outputs = apply_metric(
+            metric=ToolCallingMetric(),
+            predictions=[prediction],
+            references=[[]],  # Empty references
+            task_data=[tools_data]
+        )
+
+        # Parameters should have correct types
+        self.assertEqual(outputs[0]["score"]["global"]["parameters_types"], 1.0)
+
+        # Test case 8: Wrong parameter types
+        prediction = {"name": "test_tool", "arguments": {"param1": "string", "param2": "not_an_integer"}}
+
+        outputs = apply_metric(
+            metric=ToolCallingMetric(),
+            predictions=[prediction],
+            references=[[]],
+            task_data=[tools_data]
+        )
+
+        # Only half of parameters have correct types
+        self.assertEqual(outputs[0]["score"]["global"]["parameters_types"], 0.5)
 
     def test_perplexity(self):
         prediction = ["who are we?"]

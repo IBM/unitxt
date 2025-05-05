@@ -61,6 +61,8 @@ document.addEventListener("DOMContentLoaded", () => {
 function setActiveCodeSnippets(type) {
     const allSnippets = document.querySelectorAll(".code-snippet");
     allSnippets.forEach(snippet => {
+      snippet.style.overflowX = 'scroll';
+      snippet.style.overflowY = 'scroll';
       snippet.style.display = snippet.getAttribute("data-code") === type ? 'block' : 'none';
     });
 }
