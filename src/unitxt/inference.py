@@ -342,6 +342,14 @@ class InferenceEngine(Artifact):
             }
         ]
 
+    def to_tools(self, instance):
+        task_data = instance.get("task_data")
+        if isinstance(task_data, str):
+            task_data = json.loads(task_data)
+        if "__tools__" in task_data:
+            return task_data["__tools__"]
+        return None
+
 
 class LogProbInferenceEngine(abc.ABC, Artifact):
     """Abstract base class for inference with log probs."""
@@ -1826,6 +1834,9 @@ class OpenAiInferenceEngine(
             infer_func=self._get_logprobs,
         )
 
+    def get_client_model_name(self):
+        return self.model_name
+
     @run_with_imap
     def _get_chat_completion(self, instance, return_meta_data):
         import openai
@@ -1834,7 +1845,7 @@ class OpenAiInferenceEngine(
         try:
             response = self.client.chat.completions.create(
                 messages=messages,
-                model=self.model_name,
+                model=self.get_client_model_name(),
                 **self._get_completion_kwargs(),
             )
             prediction = response.choices[0].message.content
@@ -1905,17 +1916,17 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
             f"Please set the env variable: '{api_key_var_name}'"
         )
 
-        azure_openapi_host = self.credentials.get(
-            "azure_openapi_host", os.environ.get(f"{self.label.upper()}_HOST", None)
+        azure_openai_host = self.credentials.get(
+            "azure_openai_host", os.environ.get(f"{self.label.upper()}_HOST", None)
         )
 
         api_version = self.credentials.get(
             "api_version", os.environ.get("OPENAI_API_VERSION", None)
         )
-        assert api_version and azure_openapi_host, (
+        assert api_version and azure_openai_host, (
             "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
         )
-        api_url = f"{azure_openapi_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
+        api_url = f"{azure_openai_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
 
         return {"api_key": api_key, "api_url": api_url, "api_version": api_version}
 
@@ -1954,6 +1965,12 @@ class RITSInferenceEngine(
         logger.info(f"Created RITS inference engine with base url: {self.base_url}")
         super().prepare_engine()
 
+    def get_client_model_name(self):
+        if self.model_name.startswith("byom-"):
+            # Remove "byom-xyz/" initial part of model name, since that's part of the endpoint.
+            return "/".join(self.model_name.split("/")[1:])  # This is wrong. since in next iteration
+        return self.model_name
+
     @staticmethod
     def get_base_url_from_model_name(model_name: str):
         base_url_template = (
@@ -1967,6 +1984,13 @@ class RITSInferenceEngine(
     def _get_model_name_for_endpoint(cls, model_name: str):
         if model_name in cls.model_names_dict:
             return cls.model_names_dict[model_name]
+        if model_name.startswith("byom-"):
+            model_name_for_endpoint = model_name.split("/")[0]
+            logger.info(f"Using BYOM model: {model_name_for_endpoint}") # For RITS BYOM the model name has the following convention:
+                                                  # <byom endpoint>/<actual model name>. e.g.
+                                                  # byom-gb-iqk-lora/ibm-granite/granite-3.1-8b-instruct
+                                                  # at this case we should use https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/byom-gb-iqk-lora/v1/chat/completions
+            return model_name_for_endpoint
         return (
             model_name.split("/")[-1]
             .lower()
@@ -3148,12 +3172,14 @@ class LiteLLMInferenceEngine(
             # Introduce a slight delay to prevent burstiness
             await asyncio.sleep(0.01)
             messages = self.to_messages(instance)
+            tools = self.to_tools(instance)
             kwargs = self.to_dict([StandardAPIParamsMixin])
             kwargs = {k: v for k, v in kwargs.items() if v is not None}
             del kwargs["credentials"]
             try:
                 response = await self._completion(
                     messages=messages,
+                    tools=tools,
                     max_retries=self.max_retries,
                     drop_params=False,
                     **self.credentials,
@@ -3165,8 +3191,17 @@ class LiteLLMInferenceEngine(
                 ) from e
 
             usage = response.get("usage", {})
+
+            if tools is None:
+                prediction = response["choices"][0]["message"]["content"]
+            else:
+                try:
+                    func_call = response["choices"][0]["message"]["tool_calls"][0]["function"]
+                    prediction = f'{{"name": "{func_call.name}", "arguments": {func_call.arguments}}}'
+                except:
+                    prediction = response["choices"][0]["message"]["content"] or ""
             return TextGenerationInferenceOutput(
-                prediction=response["choices"][0]["message"]["content"],
+                prediction=prediction,
                 input_tokens=usage.get("prompt_tokens"),
                 output_tokens=usage.get("completion_tokens"),
                 model_name=response.get("model", self.model),
@@ -3251,6 +3286,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "watsonx-sdk": {  # checked from ibm_watsonx_ai.APIClient().foundation_models.ChatModels
             "granite-20b-code-instruct": "ibm/granite-20b-code-instruct",
             "granite-3-2-8b-instruct": "ibm/granite-3-2-8b-instruct",
+            "granite-3-3-8b-instruct": "ibm/granite-3-3-8b-instruct",
             "granite-3-2b-instruct": "ibm/granite-3-2b-instruct",
             "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",
             "granite-34b-code-instruct": "ibm/granite-34b-code-instruct",
@@ -3300,6 +3336,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "rits": {
             "granite-3-8b-instruct": "ibm-granite/granite-3.0-8b-instruct",
             "granite-3-2-8b-instruct": "ibm-granite/granite-3.2-8b-instruct",
+            "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
             "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
             "llama-3-1-405b-instruct": "meta-llama/llama-3-1-405b-instruct-fp8",
@@ -3309,6 +3346,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
+            "deepseek-v3": "deepseek-ai/DeepSeek-V3",
+            "granite-guardian-3-2-3b-a800m": "ibm-granite/granite-guardian-3.2-3b-a800m",
+            "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
         },
         "open-ai": {
             "o1-mini": "o1-mini",
@@ -3460,7 +3500,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
 
     def get_engine_id(self):
         api = self.get_provider_name()
-        return get_model_and_label_id(self.provider_model_map[api][self.model], api)
+        if self.model in self.provider_model_map[api]:
+            return get_model_and_label_id(self.provider_model_map[api][self.model], api)
+        return get_model_and_label_id(self.model, api)
 
 
 class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
