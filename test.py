@@ -39,12 +39,12 @@ total_pred_count = len(pipeline_engine_predictions)
 
 # logging.info(f"{same_pred_count}/ {total_pred_count}")
 # logging.info(f"{rits_auto_same_pred_count}/ {total_pred_count}")
-logging.info(rits_pipeline_same_pred_count)
+logging.critical(rits_pipeline_same_pred_count)
 # auto_engine_res = evaluate(auto_engine_predictions, dataset)
 pipeline_engine_res = evaluate(pipeline_engine_predictions, dataset)
 
 # logging.info(auto_engine_res.global_scores.score)
-logging.info(pipeline_engine_res.global_scores.score)
+logging.critical(pipeline_engine_res.global_scores.score)
 """
 assert all(auto_engine_pred == pipeline_engine_pred for auto_engine_pred, pipeline_engine_pred
            in zip(auto_engine_predictions, pipeline_engine_predictions))
