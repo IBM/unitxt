@@ -730,9 +730,9 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         return self.processor(
             data,
             return_tensors="pt",
-            padding=self.padding,
-            truncation=self.truncation,
-            padding_side=self.padding_side,
+            # padding=self.padding,
+            # truncation=self.truncation,
+            # padding_side=self.padding_side,
         ).to(self.device or self.device_map)
 
     def _infer_fn(
