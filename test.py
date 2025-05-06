@@ -39,7 +39,7 @@ total_pred_count = len(pipeline_engine_predictions)
 
 # logging.info(f"{same_pred_count}/ {total_pred_count}")
 # logging.info(f"{rits_auto_same_pred_count}/ {total_pred_count}")
-logging.log(rits_pipeline_same_pred_count)
+logging.info(rits_pipeline_same_pred_count)
 # auto_engine_res = evaluate(auto_engine_predictions, dataset)
 pipeline_engine_res = evaluate(pipeline_engine_predictions, dataset)
 
