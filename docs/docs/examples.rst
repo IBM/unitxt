@@ -87,7 +87,7 @@ Evaluate API Call
 +++++++++++++++++++++++++++++++++++++++++
 
 This example demonstrates how to evaluate a text to API call task.  It receives as input an OpenAPI specification,
-a set of user texttual requests and corresponding reference answers formatted as CURL API calls.
+a set of user textual requests and corresponding reference answers formatted as CURL API calls.
 The model is expected to generate CURL API calls, and these are compared to the references.
 The model output is post processed and split into components (e.g. url, parameters) which are each compared to the references via F1 metrics
 using  the standard key_value_extraction metric.  
@@ -96,6 +96,15 @@ using  the standard key_value_extraction metric.
 
 Related documentation: :ref:`Key Value Extraction metric in catalog <catalog.metrics.key_value_extraction>`,:ref:`Templates tutorial <adding_template>`,
 
+Evaluate using Unitxt metrics on existing predictions
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+This example demonstrates how to evaluate existing model predictions and references using Unitxt metrics.
+This is in the case, Unitxt is only used for metric calculation.  It is not used for creating model inputs or inference.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_metric_standalone.py>`__
+
+Related documentation:  :ref:`Add new metric tutorial <adding_metric>` 
 
 Evaluation usecases
 -----------------------
