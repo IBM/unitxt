@@ -65,6 +65,7 @@ import requests
 
 from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
+from .debug_utils import insert_breakpoint
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .error_utils import UnitxtError
@@ -488,8 +489,11 @@ class InstanceFieldOperator(InstanceOperator):
         return instance
 
 
+
 class FieldOperator(InstanceFieldOperator):
     def process_instance_value(self, value: Any, instance: Dict[str, Any]):
+        if self.breakpoint:
+            return insert_breakpoint(self.process_value)(self, value)
         return self.process_value(value)
 
     @abstractmethod
@@ -502,7 +506,6 @@ class MapValues(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         return self.mapping[str(value)]
-
 
 class Rename(FieldOperator):
     """Renames fields.
