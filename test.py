@@ -16,7 +16,7 @@ dataset = load_dataset(card="cards.pop_qa",
 model_name="meta-llama/Llama-3.1-8B-Instruct" # "meta-llama/Llama-3.2-1B-Instruct"
 max_new_tokens=120
 example_count = 8
-pipeline_engine = HFPipelineBasedInferenceEngine(model_name=model_name, max_new_tokens=max_new_tokens, use_cache=False, device="cpu")
+pipeline_engine = HFPipelineBasedInferenceEngine(model_name=model_name, max_new_tokens=max_new_tokens, use_cache=False)
 pipeline_engine_predictions = pipeline_engine.infer(dataset.select(range(example_count)))
 # auto_engine = HFAutoModelInferenceEngine(model_name=model_name, max_new_tokens=max_new_tokens, use_cache=False, device="cpu")
 # auto_engine_predictions = auto_engine.infer(dataset.select(range(example_count)))
