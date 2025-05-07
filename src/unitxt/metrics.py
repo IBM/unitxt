@@ -795,9 +795,9 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
 
     exact_match - % of predictions exactly as one of of the references
     tool_choice - % of predictions with correct tool calls (does not check arguments)
-    parameter_choice - % of argument names in prediction that are the same as the reference argument names (does not check argument values)
+    parameter_choice- % of argument names in prediction that are the same as the reference argument names (does not check argument values)
     parameter_values - % of argument values that are the same as in the references
-    parameters_types - % of argument types that are the same as in the tool definition
+    parameter_types - % of argument types that are the same as in the tool definition
 
     If the tool has nested parameters, all checks and comparisons are done at the top level of the parameters (e.g object/dictionaries parameters are compared as whole ).
     """
@@ -852,22 +852,22 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             tool_params_types = {}
             for param in tool["parameters"]:
                 tool_params_types[param["name"]] = param["type"]
-            correct_parameters_types = 0
+            correct_parameter_types = 0
             for key, value in prediction["arguments"].items():
                 typing_type = tool_params_types.get(key, Any)
                 if isoftype(value, typing_type):
-                    correct_parameters_types += 1
+                    correct_parameter_types += 1
             if len(prediction["arguments"]) > 0:
-                parameters_types = correct_parameters_types / len(prediction["arguments"])
+                parameter_types = correct_parameter_types / len(prediction["arguments"])
             else:
-                parameters_types = 1.0
+                parameter_types = 1.0
 
 
         return {
             self.main_score: exact_match,
             "tool_choice": tool_choice,
             "parameter_choice": parameter_choice,
-            "parameters_types": parameters_types,
+            "parameter_types": parameter_types,
             "parameter_values": parameter_values
         }
 
@@ -3594,8 +3594,9 @@ class  ToolCallKeyValueExtraction(KeyValueExtraction):
         flat_dict = {}
         for k, v in nested_dict.items():
             new_key = f"{parent_key}{sep}{k}" if parent_key else k
-            if isoftype(v, List[Dict[str,Any]]):
+            if isinstance(v, list):
                 for e in v:
+                    if isinstance(e,dict):
                         flat_dict.update(self.flatten_dict(e, new_key, sep=sep))
             elif isinstance(v, dict):
                 flat_dict.update(self.flatten_dict(v, new_key, sep=sep))
