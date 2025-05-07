@@ -791,10 +791,12 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "exact_match"
     reduction = MeanReduction()
     prediction_type = ToolCall
+    _requirements_list = ["jsonschema"]
 
     def map(
         self, prediction: ToolCall, references: List[ToolCall], task_data: Dict[str, Any]
     ) -> Dict[str, float]:
+        from jsonschema import validate
 
 
         exact_match = float(
@@ -834,27 +836,23 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             if score > parameter_values:
                 parameter_values = score
 
-        # for tool in task_data["__tools__"]:
-        #     tool = convert_chat_api_format_to_tool(tool)
-        #     tool_params_types = {}
-        #     for param in tool["parameters"]:
-        #         tool_params_types[param["name"]] = param["type"]
-        #     correct_parameters_types = 0
-        #     for key, value in prediction["arguments"].items():
-        #         typing_type = tool_params_types.get(key, Any)
-        #         if isoftype(value, typing_type):
-        #             correct_parameters_types += 1
-        #     if len(prediction["arguments"]) > 0:
-        #         parameters_types = correct_parameters_types / len(prediction["arguments"])
-        #     else:
-        #         parameters_types = 1.0
+
+        parameters = None
+        for tool in task_data["__tools__"]:
+            if tool["function"]["name"] == prediction["name"]:
+                parameters = tool["function"]["parameters"]
+        try:
+            validate(prediction["arguments"], parameters)
+            parameters_schema_validation = 1.0
+        except:
+            parameters_schema_validation = 0.0
 
 
         return {
             self.main_score: exact_match,
             "tool_choice": tool_choice,
             "parameter_choice": parameter_choice,
-            # "parameters_types": parameters_types,
+            "parameters_schema_validation": parameters_schema_validation,
             "parameter_values": parameter_values
         }
 
