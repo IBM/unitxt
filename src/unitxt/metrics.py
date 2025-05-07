@@ -63,7 +63,6 @@ from .operators import ArtifactFetcherMixin, Copy, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
-from .tool_calling import convert_chat_api_format_to_tool
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .types import ToolCall
 from .utils import deep_copy, recursive_copy, retry_connection_with_exponential_backoff
@@ -835,27 +834,27 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             if score > parameter_values:
                 parameter_values = score
 
-        for tool in task_data["__tools__"]:
-            tool = convert_chat_api_format_to_tool(tool)
-            tool_params_types = {}
-            for param in tool["parameters"]:
-                tool_params_types[param["name"]] = param["type"]
-            correct_parameters_types = 0
-            for key, value in prediction["arguments"].items():
-                typing_type = tool_params_types.get(key, Any)
-                if isoftype(value, typing_type):
-                    correct_parameters_types += 1
-            if len(prediction["arguments"]) > 0:
-                parameters_types = correct_parameters_types / len(prediction["arguments"])
-            else:
-                parameters_types = 1.0
+        # for tool in task_data["__tools__"]:
+        #     tool = convert_chat_api_format_to_tool(tool)
+        #     tool_params_types = {}
+        #     for param in tool["parameters"]:
+        #         tool_params_types[param["name"]] = param["type"]
+        #     correct_parameters_types = 0
+        #     for key, value in prediction["arguments"].items():
+        #         typing_type = tool_params_types.get(key, Any)
+        #         if isoftype(value, typing_type):
+        #             correct_parameters_types += 1
+        #     if len(prediction["arguments"]) > 0:
+        #         parameters_types = correct_parameters_types / len(prediction["arguments"])
+        #     else:
+        #         parameters_types = 1.0
 
 
         return {
             self.main_score: exact_match,
             "tool_choice": tool_choice,
             "parameter_choice": parameter_choice,
-            "parameters_types": parameters_types,
+            # "parameters_types": parameters_types,
             "parameter_values": parameter_values
         }
 

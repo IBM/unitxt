@@ -283,6 +283,53 @@ class Set(InstanceOperator):
             dict_set(instance, key, value)
         return instance
 
+def recursive_key_value_replace(data, target_key, value_map, value_remove=None):
+    """Recursively traverses a data structure (dicts and lists), replaces values of target_key using value_map, and removes values listed in value_remove.
+
+    Args:
+        data: The data structure (dict or list) to traverse.
+        target_key: The specific key whose value needs to be checked and replaced or removed.
+        value_map: A dictionary mapping old values to new values.
+        value_remove: A list of values to completely remove if found as values of target_key.
+
+    Returns:
+        The modified data structure. Modification is done in-place.
+    """
+    if value_remove is None:
+        value_remove = []
+
+    if isinstance(data, dict):
+        keys_to_delete = []
+        for key, value in data.items():
+            if key == target_key:
+                if isinstance(value, list):
+                    data[key] = [
+                        value_map.get(item, item)
+                        for item in value
+                        if not isinstance(item, dict) and item not in value_remove
+                    ]
+                elif isinstance(value, dict):
+                    pass  # Skip or handle dict values if needed
+                elif value in value_remove:
+                    keys_to_delete.append(key)
+                elif value in value_map:
+                    data[key] = value_map[value]
+            else:
+                recursive_key_value_replace(value, target_key, value_map, value_remove)
+        for key in keys_to_delete:
+            del data[key]
+    elif isinstance(data, list):
+        for item in data:
+            recursive_key_value_replace(item, target_key, value_map, value_remove)
+    return data
+
+class RecursiveReplace(InstanceOperator):
+    key: str
+    map_values: dict
+    remove_values: Optional[list] = None
+
+    def process(self, instance: Dict[str, Any], stream_name: str | None = None) -> Dict[str, Any]:
+        return recursive_key_value_replace(instance, self.key, self.map_values, self.remove_values)
 
 @deprecation(version="2.0.0", alternative=Set)
 class AddFields(Set):

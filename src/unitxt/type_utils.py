@@ -27,7 +27,7 @@ _registered_types = {
 def register_type(new_type):
     assert is_new_type(new_type) or is_typed_dict(
         new_type
-    ), "Can register only typing.NewType or typing.TypedDict"
+    ) or hasattr(new_type, "__verify_type__"), "Can register only typing.NewType or typing.TypedDict or object with __verify_type__ class function"
     _registered_types[new_type.__name__] = new_type
 
 
@@ -488,6 +488,9 @@ def isoftype(object, typing_type):
     """
     if not is_type(typing_type):
         raise UnsupportedTypeError(typing_type)
+
+    if hasattr(typing_type, "__verify_type__"):
+        return typing_type.__verify_type__(object)
 
     if typing_type is typing.Type:
         return is_type(object)
@@ -1068,7 +1071,7 @@ def verify_required_schema(
 
         if not isoftype(value, data_type):
             raise ValueError(
-                f"Passed value '{value}' of field '{field_name}' is not "
+                f"Passed value {value} of field '{field_name}' is not "
                 f"of required type: ({to_type_string(data_type)}) in {class_name} ('{id}').\n"
                 f"{class_name} description: {description}"
             )
