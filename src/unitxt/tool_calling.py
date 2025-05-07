@@ -116,7 +116,4 @@ def json_schema_to_python_type(schema: Dict[str, Any]) -> Type:
 class ToTool(FieldOperator):
 
     def process_value(self, value: List) -> List:
-        tools = []
-        for tool in value:
-            tools.append(convert_chat_api_format_to_tool(tool))
-        return tools
+        return convert_chat_api_format_to_tool(value)
