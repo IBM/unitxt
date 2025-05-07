@@ -3,7 +3,7 @@ from difflib import get_close_matches
 from typing import Any, Dict, List, Optional, Union
 
 from .api import infer
-from .artifact import fetch_artifact
+from .artifact import fetch_artifact, json_loads_with_artifacts
 from .dict_utils import dict_get
 from .error_utils import UnitxtError
 from .inference import (
@@ -46,6 +46,16 @@ from .logging_utils import get_logger
 from .metrics import BulkInstanceMetric
 from .task import Task
 from .templates import Template
+
+
+def get_task_data_dict(task_data):
+    # seems like the task data sometimes comes as a string, not a dict
+    # this fixes it
+    return (
+        json_loads_with_artifacts(task_data)
+        if isinstance(task_data, str)
+        else task_data
+    )
 
 logger = get_logger(__name__)
 

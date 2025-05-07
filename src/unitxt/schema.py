@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 from datasets import Audio, Features, Sequence, Value
 from datasets import Image as DatasetImage
 
-from .artifact import Artifact
+from .artifact import Artifact, json_dumps_with_artifacts, json_loads_with_artifacts
 from .dict_utils import dict_get
 from .image_operators import ImageDataString
 from .operator import InstanceOperatorValidator
@@ -28,7 +28,7 @@ UNITXT_DATASET_SCHEMA = Features(
             "audios": Sequence(Audio()),
         },
         "postprocessors": Sequence(Value("string")),
-        "task_data": Value(dtype="string"),
+        "task_data": Value("string"),
         "data_classification_policy": Sequence(Value("string")),
     }
 )
@@ -40,7 +40,7 @@ UNITXT_INFERENCE_SCHEMA = Features(
         "groups": Sequence(Value("string")),
         "subset": Sequence(Value("string")),
         "postprocessors": Sequence(Value("string")),
-        "task_data": Value(dtype="string"),
+        "task_data": Value("string"),
         "data_classification_policy": Sequence(Value("string")),
         "media": {
             "images": Sequence(Image()),
@@ -76,13 +76,13 @@ def loads_batch(batch):
             or batch["source"][0].startswith('[{"content":')
         )
     ):
-        batch["source"] = [load_chat_source(d) for d in batch["source"]]
+        batch["source"] = [json_loads_with_artifacts(d) for d in batch["source"]]
     if (
         not settings.task_data_as_text
         and "task_data" in batch
         and isinstance(batch["task_data"][0], str)
     ):
-        batch["task_data"] = [json.loads(d) for d in batch["task_data"]]
+        batch["task_data"] = [json_loads_with_artifacts(d) for d in batch["task_data"]]
     return batch
 
 def loads_instance(instance):
@@ -148,10 +148,10 @@ class FinalizeDataset(InstanceOperatorValidator):
 
     def serialize_instance_fields(self, instance, task_data):
         if settings.task_data_as_text:
-            instance["task_data"] = json.dumps(task_data)
+            instance["task_data"] = json_dumps_with_artifacts(task_data)
 
         if not isinstance(instance["source"], str):
-            instance["source"] = json.dumps(instance["source"])
+            instance["source"] = json_dumps_with_artifacts(instance["source"])
         return instance
 
     def process(
@@ -166,9 +166,8 @@ class FinalizeDataset(InstanceOperatorValidator):
         task_data["metadata"]["demos_pool_size"] = instance["recipe_metadata"][
             "demos_pool_size"
         ]
-        task_data["metadata"]["template"] = self.artifact_to_jsonable(
-            instance["recipe_metadata"]["template"]
-        )
+        task_data["metadata"]["template"] = instance["recipe_metadata"]["template"]
+
         if "criteria" in task_data and isinstance(task_data["criteria"], Artifact):
             task_data["criteria"] = self.artifact_to_jsonable(task_data["criteria"])
         if constants.demos_field in instance:
@@ -197,7 +196,7 @@ class FinalizeDataset(InstanceOperatorValidator):
                 group_attributes = [group_attributes]
             for attribute in group_attributes:
                 group[attribute] = dict_get(data, attribute)
-            groups.append(json.dumps(group))
+            groups.append(json_dumps_with_artifacts(group))
 
         instance["groups"] = groups
         instance["subset"] = []
@@ -205,11 +204,13 @@ class FinalizeDataset(InstanceOperatorValidator):
         instance = self._prepare_media(instance)
 
         instance["metrics"] = [
-            metric.to_json() if isinstance(metric, Artifact) else metric
+            json_dumps_with_artifacts(metric) if not isinstance(metric, str) else metric
             for metric in instance["metrics"]
         ]
         instance["postprocessors"] = [
-            processor.to_json() if isinstance(processor, Artifact) else processor
+            json_dumps_with_artifacts(processor)
+            if not isinstance(processor, str)
+            else processor
             for processor in instance["postprocessors"]
         ]
 
