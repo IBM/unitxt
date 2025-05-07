@@ -1,13 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "TIGER-Lab/MMLU-Pro",
         "filtering_lambda": "lambda x: x['category'] == 'physics'"
     },
     "preprocess_steps": [
         {
-            "__type__": "deduplicate",
+            "__type__": "unitxt.operators.Deduplicate",
             "by": [
                 "question",
                 "options",
@@ -16,20 +16,20 @@
             ]
         },
         {
-            "__type__": "rename_splits",
+            "__type__": "unitxt.splitters.RenameSplits",
             "mapper": {
                 "validation": "train"
             }
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "options": "choices",
                 "answer_index": "answer"
             }
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "topic": "physics"
             }

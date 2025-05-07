@@ -1497,7 +1497,7 @@ class IbmGenAiInferenceEngine(
         "ibm-generative-ai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
     }
     data_classification_policy = ["public", "proprietary"]
-    parameters: Optional[IbmGenAiInferenceEngineParams] = None
+    parameters: Optional[IbmGenAiInferenceEngineParamsMixin] = None
     rate_limit: int = 10
 
     def get_engine_id(self):
@@ -3442,7 +3442,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "aws": LiteLLMInferenceEngine,
         "ollama": OllamaInferenceEngine,
         "bam": IbmGenAiInferenceEngine,
-        "watsonx-sdk": WMLInferenceEngine,
+        "watsonx-sdk": WMLInferenceEngineGeneration,
         "rits": RITSInferenceEngine,
         "azure": LiteLLMInferenceEngine,
         "vertex-ai": LiteLLMInferenceEngine,

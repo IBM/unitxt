@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_csv",
+        "__type__": "unitxt.loaders.LoadCSV",
         "files": {
             "test": "https://github.com/IBM/mt-rag-benchmark/raw/refs/heads/main/corpora/fiqa.jsonl.zip"
         },
@@ -14,13 +14,13 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "cast",
+            "__type__": "unitxt.operators.Cast",
             "field": "_id",
             "to": "str",
             "to_field": "document_id"
         },
         {
-            "__type__": "wrap",
+            "__type__": "unitxt.collections_operators.Wrap",
             "field": "text",
             "inside": "list",
             "to_field": "passages"
@@ -29,7 +29,7 @@
     "task": "tasks.rag.corpora",
     "templates": {
         "empty": {
-            "__type__": "input_output_template",
+            "__type__": "unitxt.templates.InputOutputTemplate",
             "input_format": "",
             "output_format": ""
         }

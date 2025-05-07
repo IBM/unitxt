@@ -1,13 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "Muennighoff/xwinograd",
         "name": "jp"
     },
     "preprocess_steps": [
         {
-            "__type__": "list_field_values",
+            "__type__": "unitxt.operators.ListFieldValues",
             "fields": [
                 "option1",
                 "option2"
@@ -15,18 +15,18 @@
             "to_field": "choices"
         },
         {
-            "__type__": "cast_fields",
+            "__type__": "unitxt.operators.CastFields",
             "fields": {
                 "answer": "int"
             }
         },
         {
-            "__type__": "add_constant",
+            "__type__": "unitxt.operators.AddConstant",
             "field": "answer",
             "add": -1
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "sentence": "question"
             }

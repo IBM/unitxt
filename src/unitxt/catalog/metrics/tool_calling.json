@@ -1,4 +1,4 @@
 {
-    "__type__": "tool_calling_metric",
+    "__type__": "unitxt.metrics.ToolCallingMetric",
     "__description__": "Metric for tool calling"
 }

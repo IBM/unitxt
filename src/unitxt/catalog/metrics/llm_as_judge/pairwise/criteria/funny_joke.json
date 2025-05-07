@@ -1,5 +1,5 @@
 {
-    "__type__": "criteria",
+    "__type__": "unitxt.llm_as_judge_constants.Criteria",
     "name": "funny_joke",
     "description": "Is the response funny?"
 }
