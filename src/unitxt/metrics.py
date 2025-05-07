@@ -3587,6 +3587,33 @@ class KeyValueExtraction(GlobalMetric):
 
         return result
 
+class  ToolCallKeyValueExtraction(KeyValueExtraction):
+    prediction_type = ToolCall
+
+    def flatten_dict(self,nested_dict, parent_key="", sep="."):
+        flat_dict = {}
+        for k, v in nested_dict.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+            if isinstance(v, list):
+                for e in v:
+                    if isinstance(e,dict):
+                        flat_dict.update(self.flatten_dict(e, new_key, sep=sep))
+            elif isinstance(v, dict):
+                flat_dict.update(self.flatten_dict(v, new_key, sep=sep))
+            else:
+                flat_dict[new_key] = v
+        return flat_dict
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Dict],
+    ) -> dict:
+        return super().compute([[ self.flatten_dict(r) for r in ref ] for ref in references],
+                    [ self.flatten_dict(p) for p in predictions],task_data)
+
+
 
 class NER(CustomF1):
     """F1 Metrics that receives as input a list of (Entity,EntityType) pairs."""
