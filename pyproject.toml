@@ -230,6 +230,7 @@ keep-runtime-typing = true
 "src/unitxt/llm_as_judge.py" = ["F401", "C901"]
 "examples/*.py" = ["T201"]
 "tests/library/test_retry.py" = ["B904", "N818"]
+"src/unitxt/tool_calling.py" = ["C901"]
 
 [tool.ruff.lint]
 extend-select = [

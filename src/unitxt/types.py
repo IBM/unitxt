@@ -53,12 +53,15 @@ class SQLDatabase(TypedDict):
 
 class Parameter(TypedDict):
     name: str
-    type: Optional[Type]  # Using actual Python type objects
+    type: Type
+
+class ParameterWithDescription(Parameter):
+    description: str
 
 class Tool(TypedDict):
     name: str
     description: str
-    parameters: List[Parameter]
+    parameters: List[Union[Parameter, ParameterWithDescription]]
 
 class ToolCall(TypedDict):
     name: str
