@@ -38,19 +38,12 @@
             "to_field": "tools"
         },
         {
-            "__type__": "dict_to_tuples_list",
-            "field": "ground_truth/0",
-            "to_field": "call_tuples"
-        },
-        {
-            "__type__": "copy",
-            "field": "call_tuples/0/0",
-            "to_field": "call/name"
-        },
-        {
-            "__type__": "copy",
-            "field": "call_tuples/0/1",
-            "to_field": "call/arguments"
+            "__type__": "execute_expression",
+            "expression": "[{\"name\": k, \"arguments\": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]",
+            "to_field": "reference_calls",
+            "imports_list": [
+                "itertools"
+            ]
         }
     ],
     "task": "tasks.tool_calling.supervised",

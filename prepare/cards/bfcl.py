@@ -1,10 +1,11 @@
 import unitxt
 from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.collections_operators import DictToTuplesList, Wrap
+from unitxt.collections_operators import Wrap
 from unitxt.loaders import LoadCSV
 from unitxt.operators import (
     Copy,
+    ExecuteExpression,
 )
 from unitxt.stream_operators import JoinStreams
 from unitxt.test_utils.card import test_card
@@ -25,9 +26,8 @@ with unitxt.settings.context(allow_unverified_code=True):
             Copy(field="question/0/0/content", to_field="query"),
             ToTool(field="function/0", to_field="tool"),
             Wrap(field="tool", inside="list", to_field="tools"),
-            DictToTuplesList(field="ground_truth/0", to_field="call_tuples"),
-            Copy(field="call_tuples/0/0", to_field="call/name"),
-            Copy(field="call_tuples/0/1", to_field="call/arguments"),
+            ExecuteExpression(expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]',
+                              to_field="reference_calls", imports_list=["itertools"])
         ],
         task="tasks.tool_calling.supervised",
         templates=["templates.tool_calling.base"],

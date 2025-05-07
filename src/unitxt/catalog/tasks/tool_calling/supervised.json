@@ -6,7 +6,7 @@
         "tools": "List[Tool]"
     },
     "reference_fields": {
-        "call": "ToolCall"
+        "reference_calls": "List[ToolCall]"
     },
     "prediction_type": "ToolCall",
     "metrics": [

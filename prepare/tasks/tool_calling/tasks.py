@@ -8,7 +8,7 @@ add_to_catalog(
     Task(
         __description__="""Task to test tool calling capabilities.""",
         input_fields={"query": str, "tools": List[Tool]},
-        reference_fields={"call": ToolCall},
+        reference_fields={"reference_calls": List[ToolCall]},
         prediction_type=ToolCall,
         metrics=["metrics.tool_calling"],
         default_template="templates.tool_calling.base",
