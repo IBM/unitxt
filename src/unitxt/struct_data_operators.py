@@ -765,6 +765,11 @@ class ToolCallPostProcessor(FieldOperator):
                 return self.failure_value
         else:
             result = json.loads(value, strict=False)
+        if isoftype(result, List[ToolCall]):
+            if len(result > 1):
+                UnitxtWarning(f"More than one tool returned from model: {result}"   )
+                return self.failure_value
+            return result[0]
         if not isoftype(result, ToolCall):
             return self.failure_value
         return result
