@@ -344,6 +344,8 @@ class InferenceEngine(Artifact):
 
     def to_tools(self, instance):
         task_data = instance.get("task_data")
+        if task_data is None:
+            return None
         if isinstance(task_data, str):
             task_data = json.loads(task_data)
         if "__tools__" in task_data:

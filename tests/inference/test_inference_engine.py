@@ -317,6 +317,17 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertListEqual(predictions, ["7", "3"])
 
+    def test_lite_llm_inference_engine_without_task_data_not_failing(self):
+        LiteLLMInferenceEngine(
+            model="watsonx/meta-llama/llama-3-2-1b-instruct",
+            max_tokens=2,
+            temperature = 0,
+            top_p = 1,
+            seed= 42,
+        ).infer([{"source": "say hello."}])
+
+
+
     def test_log_prob_scoring_inference_engine(self):
         engine = HFOptionSelectingInferenceEngine(model_name="gpt2", batch_size=1)
 
