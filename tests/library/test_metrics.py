@@ -1468,7 +1468,7 @@ class TestMetrics(UnitxtTestCase):
         )
 
         # Parameters should have correct types
-        self.assertEqual(outputs[0]["score"]["global"]["parameters_types"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["parameter_types"], 1.0)
 
         # Test case 8: Wrong parameter types
         prediction = {"name": "test_tool", "arguments": {"param1": "string", "param2": "not_an_integer"}}
@@ -1481,7 +1481,7 @@ class TestMetrics(UnitxtTestCase):
         )
 
         # Only half of parameters have correct types
-        self.assertEqual(outputs[0]["score"]["global"]["parameters_types"], 0.5)
+        self.assertEqual(outputs[0]["score"]["global"]["parameter_types"], 0.5)
 
     def test_perplexity(self):
         prediction = ["who are we?"]
