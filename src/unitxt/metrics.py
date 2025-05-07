@@ -3594,9 +3594,8 @@ class  ToolCallKeyValueExtraction(KeyValueExtraction):
         flat_dict = {}
         for k, v in nested_dict.items():
             new_key = f"{parent_key}{sep}{k}" if parent_key else k
-            if isinstance(v, list):
+            if isoftype(v, List[Dict[str,Any]]):
                 for e in v:
-                    if isinstance(e,dict):
                         flat_dict.update(self.flatten_dict(e, new_key, sep=sep))
             elif isinstance(v, dict):
                 flat_dict.update(self.flatten_dict(v, new_key, sep=sep))
