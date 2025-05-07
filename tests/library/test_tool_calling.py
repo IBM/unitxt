@@ -44,7 +44,7 @@ class TestConvertToChatAPIFormat(unittest.TestCase):
                 "parameters": expected_schema_params
             }
         }
-        self.assertEqual(actual_result, expected_result)
+        self.assertDictEqual(actual_result, expected_result)
 
     def test_complex_parameters_with_description(self):
         """Test complex types, including a parameter with a description."""
@@ -82,7 +82,7 @@ class TestConvertToChatAPIFormat(unittest.TestCase):
                 "parameters": expected_schema_params
             }
         }
-        self.assertEqual(actual_result, expected_result)
+        self.assertDictEqual(actual_result, expected_result)
 
 
 class TestConvertChatAPIFormatToTool(unittest.TestCase):
@@ -114,7 +114,7 @@ class TestConvertChatAPIFormatToTool(unittest.TestCase):
             "description": "A test tool from schema with descriptions",
             "parameters": sorted(expected_params_canonical, key=lambda p: p["name"])
         }
-        self.assertEqual(actual_canonical, expected_canonical)
+        self.assertDictEqual(actual_canonical, expected_canonical)
 
     def test_nested_parameters_conversion_with_description(self):
         """Test nested parameters, including descriptions at various levels."""
@@ -197,7 +197,7 @@ class TestConvertChatAPIFormatToTool(unittest.TestCase):
             "parameters": sorted(expected_params_list_revised, key=lambda p: p["name"])
         }
         self.maxDiff = None
-        self.assertEqual(actual_canonical, expected_canonical)
+        self.assertDictEqual(actual_canonical, expected_canonical)
 
 
 class TestJsonSchemaToType(unittest.TestCase):
@@ -206,7 +206,7 @@ class TestJsonSchemaToType(unittest.TestCase):
         if not (isinstance(model_class, type) and issubclass(model_class, BaseModel)):
              self.fail(f"Output is not a Pydantic model, got {type(model_class)} for schema {schema}")
         actual_repr = pydantic_model_to_canonical_repr(model_class)
-        self.assertEqual(actual_repr, expected_repr_dict)
+        self.assertDictEqual(actual_repr, expected_repr_dict)
 
     def test_simple_types(self):
         self.assertEqual(json_schema_to_python_type({"type": "string"}), str)
