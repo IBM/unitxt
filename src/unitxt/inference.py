@@ -713,8 +713,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             tp_plan=None,
             **model_args,
         )
-        if self.device_map is None:
-            self.model.to(self.device)
 
     def prepare_inputs(self, data: Iterable) -> Mapping:
         tokenizer_kargs = {}
