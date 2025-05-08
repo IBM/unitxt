@@ -756,13 +756,14 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         """
         all_final_outputs = []  # List to store results from all batches
 
-        for i in tqdm(
-            range(0, len(dataset), self.batch_size),
+        for batch in tqdm(
+            batched(dataset, self.batch_size),
             desc=f"Running inference in batches of {self.batch_size}",
+            total=len(dataset) // self.batch_size,
         ):
+
             # Get the current batch
-            batch_data = dataset[i : i + self.batch_size]
-            batch_sources = [instance["source"] for instance in batch_data]
+            batch_sources = [instance["source"] for instance in batch]
 
             # --- Process the current batch ---
             # 1. Tokenize inputs for the batch
@@ -801,7 +802,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
                         j
                     ],  # Output for the j-th item in the batch
                     output_tokens=len(string_tokens_batch[j]),
-                    inp=batch_data[j]["source"],  # Original input for the j-th item
+                    inp=batch[j]["source"],  # Original input for the j-th item
                     inp_tokens=len(tokenized_inputs.encodings[j].tokens)
                     if tokenized_inputs.encodings is not None
                     else None,
