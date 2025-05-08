@@ -445,6 +445,8 @@ class HFInferenceEngineBase(
     model: Any = InternalField(default=None, name="Inference object")
     processor: Any = InternalField(default=None, name="Input processor (tokenizer)")
 
+    chat_kwargs_dict: dict = {}
+
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers",
         "torch": "Install torch, go on PyTorch website for mode details.",
@@ -655,8 +657,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
     truncation: bool = True
     padding_side: str = "left"  # for decoder only models
 
-    chat_kwargs_dict: dict = {}
-
     def _init_processor(self):
         from transformers import AutoTokenizer
 
@@ -716,6 +716,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             self.model.to(self.device)
 
     def prepare_inputs(self, data: Iterable) -> Mapping:
+        tokenizer_kargs = {}
         if isinstance(data[0], list):
             data = self.processor.apply_chat_template(
                 data,
@@ -723,6 +724,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
                 add_generation_prompt=True,
                 **self.chat_kwargs_dict,
             )
+            tokenizer_kargs.update({"add_special_tokens": False})
 
         if self.processor.pad_token is None:
             self.processor.pad_token_id = self.model.config.eos_token_id[0]
@@ -733,7 +735,8 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             padding=self.padding,
             truncation=self.truncation,
             padding_side=self.padding_side,
-            add_special_tokens=False
+            **tokenizer_kargs
+
         ).to(self.device or self.device_map)
 
     def _infer_fn(
