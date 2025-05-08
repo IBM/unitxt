@@ -328,7 +328,7 @@ class RecursiveReplace(InstanceOperator):
     map_values: dict
     remove_values: Optional[list] = None
 
-    def process(self, instance: Dict[str, Any], stream_name: str | None = None) -> Dict[str, Any]:
+    def process(self, instance: Dict[str, Any], stream_name: Optional[str] = None) -> Dict[str, Any]:
         return recursive_key_value_replace(instance, self.key, self.map_values, self.remove_values)
 
 @deprecation(version="2.0.0", alternative=Set)
