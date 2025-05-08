@@ -16,7 +16,7 @@ dataset = load_dataset(card="cards.pop_qa",
 # HFPipelineBasedInferenceEngine
 model_name="meta-llama/Llama-3.1-70B-Instruct" # "meta-llama/Llama-3.2-1B-Instruct"
 max_new_tokens=120
-example_range = range(32)
+example_range = range(4)
 
 
 pipeline_engine = HFPipelineBasedInferenceEngine(model_name=model_name, max_new_tokens=max_new_tokens, top_p=1,
