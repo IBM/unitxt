@@ -2,8 +2,7 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "lmarena-ai",
-        "name": "arena-hard-auto",
+        "path": "lmarena-ai/arena-hard-auto",
         "data_files": {
             "questions": "data/arena-hard-v0.1/question.jsonl",
             "model_answer": "data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl"
