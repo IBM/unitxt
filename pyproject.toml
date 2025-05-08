@@ -107,7 +107,8 @@ tests = [
     "sqlglot",
     "sqlparse",
     "diskcache",
-    "pydantic"
+    "pydantic",
+    "jsonschema"
 ]
 ui = [
     "gradio",
