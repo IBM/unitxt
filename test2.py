@@ -30,10 +30,10 @@ pipeline_engine_predictions = pipeline_engine.infer(dataset.select(example_range
 
 
 
-rits_engine = RITSInferenceEngine(model_name=model_name, use_cache=False,max_tokens=120,top_p=1, temperature=0, seed=1)
+rits_engine = RITSInferenceEngine(model_name="meta-llama/llama-3-3-70b-instruct", use_cache=False,max_tokens=120,top_p=1, temperature=0, seed=1)
 rits_engine_predictions = rits_engine.infer(dataset.select(example_range))
 
-rits2_engine = RITSInferenceEngine(model_name=model_name, use_cache=False,max_tokens=120,top_p=1, temperature=0, seed=1)
+rits2_engine = RITSInferenceEngine(model_name="meta-llama/llama-3-3-70b-instruct", use_cache=False,max_tokens=120,top_p=1, temperature=0, seed=1)
 rits2_engine_predictions = rits2_engine.infer(dataset.select(example_range))
 
 
