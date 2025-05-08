@@ -19,13 +19,14 @@ max_new_tokens=120
 example_range = range(32)
 
 
-auto_engine = HFAutoModelInferenceEngine(model_name=model_name, max_new_tokens=max_new_tokens, top_p=1, use_cache=False)
-auto_engine_predictions = auto_engine.infer(dataset.select(example_range))
-
-
 pipeline_engine = HFPipelineBasedInferenceEngine(model_name=model_name, max_new_tokens=max_new_tokens, top_p=1,
                                                 use_cache=False)
 pipeline_engine_predictions = pipeline_engine.infer(dataset.select(example_range))
+
+
+auto_engine = HFAutoModelInferenceEngine(model_name=model_name, max_new_tokens=max_new_tokens, top_p=1, use_cache=False)
+auto_engine_predictions = auto_engine.infer(dataset.select(example_range))
+
 
 
 rits_engine = RITSInferenceEngine(model_name=model_name, use_cache=False,max_tokens=120,top_p=1, temperature=0, seed=1)
