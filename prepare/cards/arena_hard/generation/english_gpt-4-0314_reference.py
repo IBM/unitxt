@@ -15,8 +15,7 @@ from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(
-        path="lmarena-ai",
-        name="arena-hard-auto",
+        path="lmarena-ai/arena-hard-auto",
         # revision="15f3746e21432264ce9b453999bde4f3c946d2e6", #May 2, 2025   # pragma: allowlist secret
         data_files={
             "questions": "data/arena-hard-v0.1/question.jsonl",
