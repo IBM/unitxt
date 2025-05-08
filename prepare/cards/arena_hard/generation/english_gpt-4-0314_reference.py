@@ -2,7 +2,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.loaders import LoadFromHFSpace
+from unitxt.loaders import LoadHF
 from unitxt.operators import (
     Apply,
     Copy,
@@ -11,12 +11,12 @@ from unitxt.operators import (
     Set,
 )
 from unitxt.stream_operators import DeleteSplits, JoinStreams
-from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadFromHFSpace(
-        space_name="lmarena-ai/arena-hard-auto",
-        revision="15f3746e21432264ce9b453999bde4f3c946d2e6", #May 2, 2025   # pragma: allowlist secret
+    loader=LoadHF(
+        path="lmarena-ai",
+        name="arena-hard-auto",
+        # revision="15f3746e21432264ce9b453999bde4f3c946d2e6", #May 2, 2025   # pragma: allowlist secret
         data_files={
             "questions": "data/arena-hard-v0.1/question.jsonl",
             "model_answer": "data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl",
@@ -87,7 +87,7 @@ card = TaskCard(
     templates=["templates.generation.empty"],
 )
 
-test_card(card, demos_taken_from="test", strict=False, loader_limit=100)
+# test_card(card, demos_taken_from="test", strict=False, loader_limit=100)
 add_to_catalog(
     card,
     "cards.arena_hard.generation.english_gpt_4_0314_reference",

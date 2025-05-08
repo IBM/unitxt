@@ -1,13 +1,13 @@
 {
     "__type__": "task_card",
     "loader": {
-        "__type__": "load_csv",
-        "files": {
-            "questions": "https://raw.githubusercontent.com/lmarena/arena-hard-auto/57451f35d2be7fef9f05d5567f36e4c959bb6630/data/arena-hard-v0.1/question.jsonl",
-            "model_answer": "https://raw.githubusercontent.com/lmarena/arena-hard-auto/57451f35d2be7fef9f05d5567f36e4c959bb6630/data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl"
+        "__type__": "load_hf",
+        "path": "lmarena-ai",
+        "name": "arena-hard-auto",
+        "data_files": {
+            "questions": "data/arena-hard-v0.1/question.jsonl",
+            "model_answer": "data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl"
         },
-        "file_type": "json",
-        "lines": true,
         "data_classification_policy": [
             "public"
         ]
@@ -25,7 +25,7 @@
         {
             "__type__": "copy",
             "field_to_field": {
-                "prompt": "model_input"
+                "turns/0/content": "model_input"
             },
             "apply_to_streams": [
                 "questions"
@@ -43,7 +43,8 @@
         {
             "__type__": "copy",
             "field_to_field": {
-                "messages/1/content/answer": "reference_model_output"
+                "choices/0/turns/0/content": "reference_model_output",
+                "choices/0/turns/0/token_len": "reference_model_output_token_len"
             },
             "apply_to_streams": [
                 "model_answer"
@@ -52,7 +53,7 @@
         {
             "__type__": "rename",
             "field_to_field": {
-                "model": "reference_model"
+                "model_id": "reference_model"
             },
             "apply_to_streams": [
                 "model_answer"
@@ -75,7 +76,7 @@
             "right_stream": "model_answer",
             "how": "inner",
             "on": [
-                "uid",
+                "question_id",
                 "reference_model"
             ],
             "new_stream_name": "test"
@@ -90,7 +91,7 @@
         {
             "__type__": "select_fields",
             "fields": [
-                "uid",
+                "question_id",
                 "category",
                 "model_input",
                 "reference_model",
@@ -100,7 +101,6 @@
         {
             "__type__": "rename",
             "field_to_field": {
-                "uid": "question_id",
                 "model_input": "input",
                 "category": "group",
                 "reference_model_output": "output"
