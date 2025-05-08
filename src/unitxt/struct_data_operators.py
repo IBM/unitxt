@@ -758,6 +758,8 @@ class ToolCallPostProcessor(FieldOperator):
     failure_value: Any = None
     allow_failure: bool = False
     def process_value(self, value: str) -> ToolCall:
+        if ">" in value:
+            pass
         if self.allow_failure:
             try:
                 result = json.loads(value)
@@ -766,7 +768,7 @@ class ToolCallPostProcessor(FieldOperator):
         else:
             result = json.loads(value, strict=False)
         if isoftype(result, List[ToolCall]):
-            if len(result > 1):
+            if len(result) > 1:
                 UnitxtWarning(f"More than one tool returned from model: {result}"   )
                 return self.failure_value
             return result[0]
