@@ -57,12 +57,9 @@ class JsonSchema:
     def __verify_type__(cls, object):
         if not isinstance(object, dict):
             return False
-        from jsonschema import Draft202012Validator, exceptions
-        try:
-            Draft202012Validator.check_schema(object)
-            return True
-        except exceptions.SchemaError:
-            return False
+        from jsonschema import Draft202012Validator
+        Draft202012Validator.check_schema(object)
+        return True
 
 class Tool(TypedDict):
     name: str
