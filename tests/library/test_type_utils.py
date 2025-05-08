@@ -352,7 +352,7 @@ class TestAssertTyping(UnitxtTestCase):
             )
         self.assertEqual(
             str(e.exception),
-            """Passed value '{'a': 'b'}' of field 'field_1' is not of required type: (Dict[str, float]) in Task ('my_task').
+            """Passed value {'a': 'b'} of field 'field_1' is not of required type: (Dict[str, float]) in Task ('my_task').
 Task description: This is my task.""",
         )
 
