@@ -824,9 +824,9 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
         for reference in references:
             value_matches = 0
             for key, val in prediction["arguments"].items():
-                predicted = json.dumps(val, sort_keys=True)
-                target = json.dumps(reference["arguments"][key], sort_keys=True)
                 try:
+                    predicted = json.dumps(val, sort_keys=True)
+                    target = json.dumps(reference["arguments"][key], sort_keys=True)
                     if predicted in target or target in predicted:
                         value_matches += 1
                 except:
