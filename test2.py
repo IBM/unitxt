@@ -17,7 +17,7 @@ dataset = load_dataset(card="cards.pop_qa",
 # HFPipelineBasedInferenceEngine
 model_name="meta-llama/Llama-3.3-70B-Instruct" # "meta-llama/Llama-3.2-1B-Instruct"
 max_new_tokens=120
-example_range = range(4)
+example_range = range(24)
 
 logging.critical(torch.cuda.device_count())
 auto_engine = HFAutoModelInferenceEngine(model_name=model_name, max_new_tokens=max_new_tokens, top_p=1, use_cache=False)
