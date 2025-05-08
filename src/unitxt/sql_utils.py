@@ -51,20 +51,107 @@ class DatabaseConnector(ABC):
         pass
 
 
+class QueryTimeoutError(Exception):
+    """Custom exception for query execution timeout."""
+
+    pass
+
+
 @lru_cache(maxsize=128)
-def execute_query_local(db_path: str, query: str) -> Any:
-    """Executes a query against the SQLite database."""
-    conn = None  # Initialize conn to None outside the try block
+def execute_query_local(
+    db_path: str,
+    query: str,
+    # Timeout in seconds for waiting on locked database/table
+    connection_timeout_seconds: float = 5.0,
+    # Timeout in seconds for the query execution itself
+    query_timeout_seconds: float = 10.0,
+):
+    """Executes a query against the SQLite database with connection and execution timeouts.
+
+    Args:
+        db_path: Path to the SQLite database file.
+        query: The SQL query string to execute.
+        connection_timeout_seconds: Max time (seconds) to wait for locks before
+                                     raising an OperationalError. Defaults to 5.0.
+        query_timeout_seconds: Max time (seconds) allowed for the query execution
+                                before interrupting it. Defaults to 10.0.
+
+    Returns:
+        A tuple containing (results, error_message).
+        - If successful: (list_of_tuples, None)
+        - If error: (None, error_string)
+        - If query timeout: (None, "Query exceeded execution time limit")
+    """
+    conn = None
+    start_time = time.monotonic()  # Use monotonic clock for duration measurement
+    interrupted = False  # Flag to check if progress handler interrupted
+
+    # --- Progress Handler for Query Timeout ---
+    def progress_handler():
+        nonlocal interrupted
+        elapsed_time = time.monotonic() - start_time
+        if elapsed_time > query_timeout_seconds:
+            interrupted = True  # Set the flag
+            logger.warning(f"Query execution timeout after {elapsed_time:.2f} seconds.")
+            return 1  # Return non-zero to interrupt the query
+        return 0  # Return zero to continue
+
     try:
-        conn = sqlite3.connect(db_path)
+        # Connect with the specified connection timeout
+        conn = sqlite3.connect(db_path, timeout=connection_timeout_seconds)
         cursor = conn.cursor()
+
+        # Register the progress handler
+        # The second argument (e.g., 1000) tells SQLite to call the handler
+        # approximately every 1000 virtual machine instructions.
+        # Adjust this value based on performance needs (lower means more checks,
+        # higher means less overhead but potentially less precise timeout).
+        conn.set_progress_handler(progress_handler, 1000)
+
+        # Record start time just before execution for query timeout check
+        start_time = time.monotonic()
+        interrupted = False  # Reset flag before execution
+
         cursor.execute(query)
-        return cursor.fetchall(), None
+
+        # If the query was interrupted by the handler, it might raise an
+        # OperationalError("interrupted"), or it might just stop execution.
+        # We check our 'interrupted' flag which the handler sets.
+        if interrupted:
+            # Unregister handler before raising the error
+            conn.set_progress_handler(None, 0)
+            raise QueryTimeoutError(
+                f"Query exceeded execution time limit of {query_timeout_seconds} seconds."
+            )
+
+        results = cursor.fetchall()
+        return results, None
+
+    except sqlite3.OperationalError as e:
+        # Check if the error is due to our interruption or another cause (like locking timeout)
+        if interrupted or "interrupted" in str(e).lower():
+            logger.warning(f"Query interrupted after exceeding time limit: {e}")
+            return (
+                None,
+                f"Query exceeded execution time limit of {query_timeout_seconds} seconds.",
+            )
+        # Likely a connection timeout or other operational error
+        logger.error(f"SQLite OperationalError: {e}")
+        return None, f"SQLite OperationalError: {e}"
+    except QueryTimeoutError as e:
+        logger.warning(str(e))
+        return None, str(e)
     except sqlite3.Error as e:
-        logger.info(f"Error executing SQL: {e}")
+        logger.error(f"Error executing SQL: {e}")
         return None, f"Error executing SQL: {e}"
     finally:
         if conn:
+            # Always ensure the progress handler is removed if the connection persists
+            try:
+                conn.set_progress_handler(None, 0)
+            except Exception:
+                # Ignore potential errors if connection is already closed or in a bad state
+                pass
             conn.close()
 
 
@@ -385,7 +472,7 @@ def execute_query_remote(
     retryable_exceptions: tuple = (ConnectionError, ReadTimeout),
     max_retries: int = 3,
     retry_delay: int = 5,  # seconds
-    timeout: int = 30,  # seconds
+    timeout: int = 5,  # seconds
 ) -> (Optional[dict], str):
     """Executes a query against the remote database, with retries for certain exceptions."""
     headers = {
@@ -481,7 +568,7 @@ class RemoteDatabaseConnector(DatabaseConnector):
             "Authorization": f"Bearer {self.api_key}",
         }
 
-        self.timeout = 30
+        self.timeout = 5
 
     def get_table_schema(
         self,

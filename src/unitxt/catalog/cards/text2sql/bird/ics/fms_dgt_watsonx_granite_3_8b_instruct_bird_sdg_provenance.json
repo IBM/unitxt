@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_csv",
         "files": {
-            "train": "data/text2sql/from_digit/processed/fms-dgt-watsonx-granite-3-8b-instruct-bird-sdg-provenance.jsonl"
+            "train": "data/text2sql/from_digit/processed/fms-dgt-watsonx-granite-3-8b-instruct-bird-sdg-provenance.jsonl",
+            "test": "data/text2sql/bird/processed/test.jsonl"
         },
         "file_type": "json",
         "lines": true

@@ -3,7 +3,7 @@
     "loader": {
         "__type__": "load_csv",
         "files": {
-            "train": "data/text2sql/from_digit/processed/fms-dgt-watsonx-llama-3-405b-instruct-bird-sdg-provenance.jsonl",
+            "train": "data/text2sql/from_digit/processed/fms-dgt-watsonx-mistral-bird-sdg-provenance.jsonl",
             "test": "data/text2sql/bird/processed/test.jsonl"
         },
         "file_type": "json",
