@@ -11,6 +11,7 @@ from unitxt.operators import (
     Set,
 )
 from unitxt.stream_operators import DeleteSplits, JoinStreams
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(
@@ -87,7 +88,7 @@ card = TaskCard(
     templates=["templates.generation.empty"],
 )
 
-# test_card(card, demos_taken_from="test", strict=False, loader_limit=100)
+test_card(card, demos_taken_from="test", strict=False, loader_limit=100)
 add_to_catalog(
     card,
     "cards.arena_hard.generation.english_gpt_4_0314_reference",
