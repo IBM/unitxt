@@ -1468,7 +1468,7 @@ class TestMetrics(UnitxtTestCase):
         )
 
         # Parameters should have correct types
-        self.assertEqual(outputs[0]["score"]["global"]["parameters_types"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["parameters_schema_validation"], 1.0)
 
         # Test case 8: Wrong parameter types
         prediction = {"name": "test_tool", "arguments": {"param1": "string", "param2": "not_an_integer"}}
