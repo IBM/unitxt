@@ -24,7 +24,7 @@
         {
             "__type__": "copy",
             "field_to_field": {
-                "turns/0/content": "model_input"
+                "prompt": "model_input"
             },
             "apply_to_streams": [
                 "questions"
@@ -42,8 +42,7 @@
         {
             "__type__": "copy",
             "field_to_field": {
-                "choices/0/turns/0/content": "reference_model_output",
-                "choices/0/turns/0/token_len": "reference_model_output_token_len"
+                "messages/1/content/answer": "reference_model_output"
             },
             "apply_to_streams": [
                 "model_answer"
@@ -52,7 +51,7 @@
         {
             "__type__": "rename",
             "field_to_field": {
-                "model_id": "reference_model"
+                "model": "reference_model"
             },
             "apply_to_streams": [
                 "model_answer"
@@ -75,7 +74,7 @@
             "right_stream": "model_answer",
             "how": "inner",
             "on": [
-                "question_id",
+                "uid",
                 "reference_model"
             ],
             "new_stream_name": "test"
@@ -90,7 +89,7 @@
         {
             "__type__": "select_fields",
             "fields": [
-                "question_id",
+                "uid",
                 "category",
                 "model_input",
                 "reference_model",
@@ -100,6 +99,7 @@
         {
             "__type__": "rename",
             "field_to_field": {
+                "uid": "question_id",
                 "model_input": "input",
                 "category": "group",
                 "reference_model_output": "output"
