@@ -796,7 +796,7 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
     def map(
         self, prediction: ToolCall, references: List[ToolCall], task_data: Dict[str, Any]
     ) -> Dict[str, float]:
-        from jsonschema import ValidationError, validate
+        import jsonschema
 
 
         exact_match = float(
@@ -842,14 +842,14 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             if tool["function"]["name"] == prediction["name"]:
                 parameters = tool["function"]["parameters"]
 
-        parameters_schema_validation = 0.0
-        if parameters is not None:
+        if parameters is None:
+            parameters_schema_validation = 0.0
+        else:
             try:
-                validate(prediction["arguments"], parameters)
+                jsonschema.validate(prediction["arguments"], parameters)
                 parameters_schema_validation = 1.0
-            except ValidationError:
-                pass
-
+            except jsonschema.ValidationError:
+                parameters_schema_validation = 0.0
 
         return {
             self.main_score: exact_match,
