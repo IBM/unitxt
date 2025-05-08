@@ -24,7 +24,6 @@ auto_engine = HFAutoModelInferenceEngine(model_name=model_name, max_new_tokens=m
 auto_engine_predictions = auto_engine.infer(dataset.select(example_range))
 
 
-exit()
 pipeline_engine = HFPipelineBasedInferenceEngine(model_name=model_name, max_new_tokens=max_new_tokens, top_p=1,
                                                 use_cache=False)
 pipeline_engine_predictions = pipeline_engine.infer(dataset.select(example_range))
