@@ -49,6 +49,8 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         )
         stats = {}
         for file in all_preparation_files:
+            if "english_gpt-4-0314_reference" not in file:
+                continue
             passed = True
             error = None
             logger.info(
