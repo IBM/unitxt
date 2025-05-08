@@ -208,7 +208,6 @@ The ToolCallingMetric in Unitxt provides several useful scores:
                 self.main_score: exact_match,
                 "tool_choice": tool_choice,
                 "parameter_choice": parameter_choice,
-                "parameters_types": parameters_types,
                 "parameter_values": parameter_values
             }
 

@@ -1481,7 +1481,7 @@ class TestMetrics(UnitxtTestCase):
         )
 
         # Only half of parameters have correct types
-        self.assertEqual(outputs[0]["score"]["global"]["parameters_types"], 0.5)
+        self.assertEqual(outputs[0]["score"]["global"]["parameters_schema_validation"], 0.0)
 
     def test_perplexity(self):
         prediction = ["who are we?"]
