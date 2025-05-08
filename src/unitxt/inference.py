@@ -685,7 +685,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         # cause an error because the data is always on the gpu
         # if torch.cuda.device_count() > 1:
         # assert self.device == torch.device(0)
-        # args["device_map"] = "auto"
+        args["device_map"] = "auto"
         # else:
         #     if not self.load_in_8bit:
         #         args["device"] = self.device
@@ -710,7 +710,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         self.model = model_class.from_pretrained(
             pretrained_model_name_or_path=self.model_name,
             trust_remote_code=True,
-            tp_plan="auto",
+            tp_plan=None,
             **model_args,
         )
         if self.device_map is None:
