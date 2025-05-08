@@ -12,5 +12,8 @@
     "metrics": [
         "metrics.tool_calling"
     ],
-    "default_template": "templates.tool_calling.base"
+    "default_template": "templates.tool_calling.base",
+    "requirements": [
+        "jsonschema"
+    ]
 }

@@ -15,6 +15,7 @@ add_to_catalog(
         prediction_type=ToolCall,
         metrics=["metrics.tool_calling"],
         default_template="templates.tool_calling.base",
+        requirements=["jsonschema"]
     ),
     "tasks.tool_calling.supervised",
     overwrite=True,

@@ -25,14 +25,10 @@ Unitxt uses specific typed structures for tool calling:
 
 .. code-block:: python
 
-    class Parameter(TypedDict):
-        name: str
-        type: Optional[Type]  # Using actual Python type objects
-
     class Tool(TypedDict):
         name: str
         description: str
-        parameters: List[Parameter]
+        parameters: JsonSchema # a well defined json schema
 
     class ToolCall(TypedDict):
         name: str
@@ -104,10 +100,10 @@ Create a Python file named ``bfcl.py`` and implement the DataCard as follows:
                 JoinStreams(left_stream="questions", right_stream="answers", how="inner", on="id", new_stream_name="test"),
                 # Extract the query from the question content
                 Copy(field="question/0/0/content", to_field="query"),
-                # Convert function data to a tool format
-                ToTool(field="function/0", to_field="tool"),
-                # Wrap the tool in a list for compatibility
-                Wrap(field="tool", inside="list", to_field="tools"),
+                # Starting to build the tools field as List[Tool]
+                Copy(field="function", to_field="tools"),
+                # Make Sure the json schema of the parameters is well defined
+                RecursiveReplace(key="type", map_values={"dict": "object", "float": "number", "tuple": "array"}, remove_values=["any"]),
                 # Process ground truth data
                 DictToTuplesList(field="ground_truth/0", to_field="call_tuples"),
                 # Extract tool name and arguments from ground truth
@@ -132,19 +128,14 @@ Each preprocessing step serves a specific purpose in transforming the raw data i
 
 1. ``JoinStreams``: Combines question and answer data based on ID
 2. ``Copy(field="question/0/0/content", to_field="query")``: Creates the ``query`` input field
-3. ``ToTool(field="function/0", to_field="tool")``: Converts function definitions to the ``Tool`` structure
-4. ``Wrap(field="tool", inside="list", to_field="tools")``: Creates the ``tools`` list input field
+3. ``Copy(field="function", to_field="tools")``: Creates the ``tools`` list input field
+4. ``RecursiveReplace(key="type", map_values={"dict": "object", "float": "number", "tuple": "array"}, remove_values=["any"])``: Converts parameters definitions to the ``JsonSchema`` structure
 5. ``DictToTuplesList`` and subsequent ``Copy`` operations: Create the reference ``call`` field with the proper ``ToolCall`` structure
 
 After preprocessing, each example will have:
 - A ``query`` that the model should respond to
 - Available ``tools`` that the model can choose from
 - A reference ``call`` showing which tool should be called with what arguments
-
-The ToTool Operator
-^^^^^^^^^^^^^^^^^
-
-The ``ToTool`` operator is a key component that converts function definitions into the ``Tool`` format expected by the task schema. This allows inference engines to understand the available tools and their parameters.
 
 Part 3: Inference and Evaluation
 -------------------------------
@@ -217,7 +208,6 @@ The ToolCallingMetric in Unitxt provides several useful scores:
                 self.main_score: exact_match,
                 "tool_choice": tool_choice,
                 "parameter_choice": parameter_choice,
-                "parameter_type": parameter_type,
                 "parameter_values": parameter_values
             }
 

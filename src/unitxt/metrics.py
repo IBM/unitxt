@@ -63,7 +63,6 @@ from .operators import ArtifactFetcherMixin, Copy, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
-from .tool_calling import convert_chat_api_format_to_tool
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .types import ToolCall
 from .utils import deep_copy, recursive_copy, retry_connection_with_exponential_backoff
@@ -804,10 +803,12 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "exact_match"
     reduction = MeanReduction()
     prediction_type = ToolCall
+    _requirements_list = ["jsonschema"]
 
     def map(
         self, prediction: ToolCall, references: List[ToolCall], task_data: Dict[str, Any]
     ) -> Dict[str, float]:
+        from jsonschema import validate
 
 
         exact_match = float(
@@ -847,27 +848,23 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             if score > parameter_values:
                 parameter_values = score
 
+
+        parameters = None
         for tool in task_data["__tools__"]:
-            tool = convert_chat_api_format_to_tool(tool)
-            tool_params_types = {}
-            for param in tool["parameters"]:
-                tool_params_types[param["name"]] = param["type"]
-            correct_parameter_types = 0
-            for key, value in prediction["arguments"].items():
-                typing_type = tool_params_types.get(key, Any)
-                if isoftype(value, typing_type):
-                    correct_parameter_types += 1
-            if len(prediction["arguments"]) > 0:
-                parameter_types = correct_parameter_types / len(prediction["arguments"])
-            else:
-                parameter_types = 1.0
+            if tool["function"]["name"] == prediction["name"]:
+                parameters = tool["function"]["parameters"]
+        try:
+            validate(prediction["arguments"], parameters)
+            parameters_schema_validation = 1.0
+        except:
+            parameters_schema_validation = 0.0
 
 
         return {
             self.main_score: exact_match,
             "tool_choice": tool_choice,
             "parameter_choice": parameter_choice,
-            "parameter_types": parameter_types,
+            "parameters_schema_validation": parameters_schema_validation,
             "parameter_values": parameter_values
         }
 
