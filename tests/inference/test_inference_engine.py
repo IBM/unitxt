@@ -483,16 +483,18 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             self.assertEqual(p1, p2)
 
     def test_wml_chat_tool_calling(self):
-        instance = [
-            {
-                "role": "system",
-                "content": "You are a helpful assistant.",
-            },
-            {
-                "role": "user",
-                "content": "What is 1 + 2?",
-            },
-        ]
+        instance = {
+            "source": [
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant.",
+                },
+                {
+                    "role": "user",
+                    "content": "What is 1 + 2?",
+                },
+            ],
+        }
 
         tool1 = {
             "type": "function",
