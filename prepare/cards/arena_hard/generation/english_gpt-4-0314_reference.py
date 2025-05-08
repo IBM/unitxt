@@ -27,7 +27,7 @@ card = TaskCard(
         # region Question file
         Rename(field_to_field={"cluster": "group"}, apply_to_streams=["questions"]),
         Copy(
-            field_to_field={"turns/0/content": "model_input"},
+            field_to_field={"prompt": "model_input"},
             apply_to_streams=["questions"],
         ),
         Set(fields={"reference_model": "gpt-4-0314"}, apply_to_streams=["questions"]),
@@ -35,13 +35,12 @@ card = TaskCard(
         # region Answers file processing
         Copy(
             field_to_field={
-                "choices/0/turns/0/content": "reference_model_output",
-                "choices/0/turns/0/token_len": "reference_model_output_token_len",
+                "messages/1/content/answer": "reference_model_output"
             },
             apply_to_streams=["model_answer"],
         ),
         Rename(
-            field_to_field={"model_id": "reference_model"},
+            field_to_field={"model": "reference_model"},
             apply_to_streams=["model_answer"],
         ),
         Apply(
@@ -56,13 +55,13 @@ card = TaskCard(
             left_stream="questions",
             right_stream="model_answer",
             how="inner",
-            on=["question_id", "reference_model"],
+            on=["uid", "reference_model"],
             new_stream_name="test",
         ),
         DeleteSplits(splits=["questions", "model_answer"]),
         SelectFields(
             fields=[
-                "question_id",
+                "uid",
                 "category",
                 "model_input",
                 "reference_model",
@@ -71,6 +70,7 @@ card = TaskCard(
         ),
         Rename(
             field_to_field={
+                "uid": "question_id",
                 "model_input": "input",
                 "category": "group",
                 "reference_model_output": "output",
