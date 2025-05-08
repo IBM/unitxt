@@ -2,7 +2,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.loaders import LoadCSV
+from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
     Apply,
     Copy,
@@ -13,25 +13,21 @@ from unitxt.operators import (
 from unitxt.stream_operators import DeleteSplits, JoinStreams
 from unitxt.test_utils.card import test_card
 
-# 'lmsys/arena-hard-browser' (https://huggingface.co/spaces/lmarena-ai/arena-hard-browser) was gone from HF.
-# https://paperswithcode.com/dataset/arena-hard points at git repository  https://github.com/lmarena/arena-hard-auto
-# from which the dataset is now fetched:
-
-question_git_repo_file_path = "https://raw.githubusercontent.com/lmarena/arena-hard-auto/57451f35d2be7fef9f05d5567f36e4c959bb6630/data/arena-hard-v0.1/question.jsonl"
-model_answer_git_repo_file_path = "https://raw.githubusercontent.com/lmarena/arena-hard-auto/57451f35d2be7fef9f05d5567f36e4c959bb6630/data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl"
-
 card = TaskCard(
-    loader=LoadCSV(
-        files={"questions": question_git_repo_file_path, "model_answer": model_answer_git_repo_file_path},
-            file_type="json",
-            lines=True,
-            data_classification_policy=["public"],
-        ),
+    loader=LoadFromHFSpace(
+        space_name="lmarena-ai/arena-hard-auto",
+        revision="15f3746e21432264ce9b453999bde4f3c946d2e6",  # pragma: allowlist secret
+        data_files={
+            "questions": "data/arena-hard-v0.1/question.jsonl",
+            "model_answer": "data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl",
+        },
+        data_classification_policy = ["public"],
+    ),
     preprocess_steps=[
         # region Question file
         Rename(field_to_field={"cluster": "group"}, apply_to_streams=["questions"]),
         Copy(
-            field_to_field={"prompt": "model_input"},
+            field_to_field={"turns/0/content": "model_input"},
             apply_to_streams=["questions"],
         ),
         Set(fields={"reference_model": "gpt-4-0314"}, apply_to_streams=["questions"]),
@@ -39,13 +35,13 @@ card = TaskCard(
         # region Answers file processing
         Copy(
             field_to_field={
-                "messages/1/content/answer": "reference_model_output"
-                # "choices/0/turns/0/token_len": "reference_model_output_token_len",
+                "choices/0/turns/0/content": "reference_model_output",
+                "choices/0/turns/0/token_len": "reference_model_output_token_len",
             },
             apply_to_streams=["model_answer"],
         ),
         Rename(
-            field_to_field={"model": "reference_model"},
+            field_to_field={"model_id": "reference_model"},
             apply_to_streams=["model_answer"],
         ),
         Apply(
@@ -60,13 +56,13 @@ card = TaskCard(
             left_stream="questions",
             right_stream="model_answer",
             how="inner",
-            on=["uid", "reference_model"],
+            on=["question_id", "reference_model"],
             new_stream_name="test",
         ),
         DeleteSplits(splits=["questions", "model_answer"]),
         SelectFields(
             fields=[
-                "uid",
+                "question_id",
                 "category",
                 "model_input",
                 "reference_model",
@@ -75,7 +71,6 @@ card = TaskCard(
         ),
         Rename(
             field_to_field={
-                "uid": "question_id",
                 "model_input": "input",
                 "category": "group",
                 "reference_model_output": "output",
