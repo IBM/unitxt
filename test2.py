@@ -15,7 +15,7 @@ dataset = load_dataset(card="cards.pop_qa",
 
 # HFAutoModelInferenceEngine
 # HFPipelineBasedInferenceEngine
-model_name="meta-llama/Llama-3.3-8B-Instruct" # "meta-llama/Llama-3.2-1B-Instruct"
+model_name="meta-llama/Llama-3.3-70B-Instruct" # "meta-llama/Llama-3.2-1B-Instruct"
 max_new_tokens=120
 example_range = range(4)
 
