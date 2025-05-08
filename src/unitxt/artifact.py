@@ -532,7 +532,7 @@ class UnitxtArtifactNotFoundError(UnitxtError):
         super().__init__(msg)
 
 
-def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[AbstractCatalog, None]]:
+def fetch_artifact(artifact_rep, overwrite_kwargs: Optional[Dict[str, Any]]=None) -> Tuple[Artifact, Union[AbstractCatalog, None]]:
     """Loads an artifict from one of possible representations.
 
     (1) If artifact representation is already an Artifact object, return it.
@@ -557,6 +557,11 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[AbstractCatalog, None]
         name, _ = separate_inside_and_outside_square_brackets(artifact_rep)
         if is_name_legal_for_catalog(name):
             catalog, artifact_rep, args = get_catalog_name_and_args(name=artifact_rep)
+            if overwrite_kwargs is not None:
+                if args is None:
+                    args = overwrite_kwargs
+                else:
+                    args.update(overwrite_kwargs)
             artifact_to_return = catalog.get_with_overwrite(
                 artifact_rep, overwrite_args=args
             )
