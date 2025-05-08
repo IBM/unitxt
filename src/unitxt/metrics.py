@@ -788,16 +788,15 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
         return result
 
 class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
+
     main_score = "exact_match"
     reduction = MeanReduction()
     prediction_type = ToolCall
-    _requirements_list = ["jsonschema"]
+    _requirements_list = ["jsonschema-rs"]
 
     def map(
         self, prediction: ToolCall, references: List[ToolCall], task_data: Dict[str, Any]
     ) -> Dict[str, float]:
-        import jsonschema
-
 
         exact_match = float(
             str(prediction) in [str(reference) for reference in references]
@@ -810,13 +809,11 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
         parameter_choice = 0.0
         for reference in references:
             if len(prediction["arguments"]) > 0:
-
                 score = len(set(prediction["arguments"]).intersection(set(reference["arguments"]))) / len(set(prediction["arguments"]))
             else:
                 score = 1.0
             if score > parameter_choice:
                 parameter_choice = score
-
 
         parameter_values = 0.0
         for reference in references:
@@ -842,13 +839,14 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             if tool["function"]["name"] == prediction["name"]:
                 parameters = tool["function"]["parameters"]
 
+        import jsonschema_rs
         if parameters is None:
             parameters_schema_validation = 0.0
         else:
             try:
-                jsonschema.validate(prediction["arguments"], parameters)
+                jsonschema_rs.validate(prediction["arguments"], parameters)
                 parameters_schema_validation = 1.0
-            except jsonschema.ValidationError:
+            except jsonschema_rs.ValidationError:
                 parameters_schema_validation = 0.0
 
         return {
