@@ -710,6 +710,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         self.model = model_class.from_pretrained(
             pretrained_model_name_or_path=self.model_name,
             trust_remote_code=True,
+            tp_plan="auto",
             **model_args,
         )
         if self.device_map is None:
