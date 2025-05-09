@@ -6,7 +6,6 @@ from unitxt.inference import (
 
 logger = get_logger()
 
-
 dataset = load_dataset(
     card="cards.bfcl.simple_v3",
     split="test",
