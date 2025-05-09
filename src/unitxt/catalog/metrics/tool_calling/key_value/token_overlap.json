@@ -1,0 +1,6 @@
+{
+    "__type__": "tool_call_key_value_extraction",
+    "__description__": "Metric that evaluates tool call predictions with reference calls.\nFirst generate unique key value pairs for the tool name, and all the parameters (including nested parameter).\nSupports only a single reference call per prediction.\n\nReports average token_overlap for each key, as well as micro and macro averages across all keys.\n",
+    "metric": "metrics.token_overlap",
+    "score_prefix": "token_overlap_"
+}

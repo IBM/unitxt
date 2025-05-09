@@ -788,7 +788,18 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
         return result
 
 class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
+    """Compares each predicted tool call with list of references tool call.
 
+    (When there are multiple references, the results on the best one is selected)
+
+    exact_match - % of predictions exactly as one of of the references
+    tool_choice - % of predictions with correct tool calls (does not check arguments)
+    parameter_choice- % of argument names in prediction that are the same as the reference argument names (does not check argument values)
+    parameter_values - % of argument values that are the same as in the references
+    parameter_types - % of argument types that are the same as in the tool definition
+
+    If the tool has nested parameters, all checks and comparisons are done at the top level of the parameters (e.g object/dictionaries parameters are compared as whole ).
+    """
     main_score = "exact_match"
     reduction = MeanReduction()
     prediction_type = ToolCall
@@ -814,7 +825,7 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
         parameter_choice = 0.0
         for reference in references:
             if len(prediction["arguments"]) > 0:
-                score = len(set(prediction["arguments"]).intersection(set(reference["arguments"]))) / len(set(prediction["arguments"]))
+                score = len(set(prediction["arguments"]).intersection(set(reference["arguments"]))) / len(set(reference["arguments"]))
             else:
                 score = 1.0
             if score > parameter_choice:
@@ -3578,6 +3589,33 @@ class KeyValueExtraction(GlobalMetric):
             result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 0
 
         return result
+
+class  ToolCallKeyValueExtraction(KeyValueExtraction):
+    prediction_type = ToolCall
+
+    def flatten_dict(self,nested_dict, parent_key="", sep="."):
+        flat_dict = {}
+        for k, v in nested_dict.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+            if isinstance(v, list):
+                for e in v:
+                    if isinstance(e,dict):
+                        flat_dict.update(self.flatten_dict(e, new_key, sep=sep))
+            elif isinstance(v, dict):
+                flat_dict.update(self.flatten_dict(v, new_key, sep=sep))
+            else:
+                flat_dict[new_key] = v
+        return flat_dict
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Dict],
+    ) -> dict:
+        return super().compute([[ self.flatten_dict(r) for r in ref ] for ref in references],
+                    [ self.flatten_dict(p) for p in predictions],task_data)
+
 
 
 class NER(CustomF1):

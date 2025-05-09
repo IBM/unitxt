@@ -217,7 +217,7 @@ The metrics evaluate different aspects of tool calling accuracy:
 2. **tool_choice**: Evaluates if the correct tool was selected
 3. **parameter_choice**: Checks if the correct parameters were identified
 4. **parameter_values**: Assesses if the parameter values are correct
-5. **parameters_types**: Verifies if parameter types match the tool definition
+5. **parameter_types**: Verifies if parameter types match the tool definition
 
 Custom Evaluation
 ^^^^^^^^^^^^^^^
