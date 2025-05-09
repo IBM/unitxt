@@ -1,7 +1,7 @@
 from unitxt.catalog import add_to_catalog
 from unitxt.inference import WMLInferenceEngine
 
-model_list = ["meta-llama/llama-3-70b-instruct"]
+model_list = ["meta-llama/llama-3-3-70b-instruct"]
 
 for model in model_list:
     model_label = model.split("/")[1].replace("-", "_").replace(".", ",").lower()
