@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal, NewType, Optional, Type, TypedDict, Union
+from typing import Any, Dict, List, Literal, NewType, Optional, TypedDict, Union
 
 from .type_utils import register_type
 
@@ -51,14 +51,20 @@ class SQLDatabase(TypedDict):
     dbms: Optional[str]
     data: Optional[Dict[str, Dict]]
 
-class Parameter(TypedDict):
-    name: str
-    type: Optional[Type]  # Using actual Python type objects
+class JsonSchema:
+
+    @classmethod
+    def __verify_type__(cls, object):
+        if not isinstance(object, dict):
+            return False
+        import jsonschema_rs
+        jsonschema_rs.meta.validate(object)
+        return True
 
 class Tool(TypedDict):
     name: str
     description: str
-    parameters: List[Parameter]
+    parameters: JsonSchema
 
 class ToolCall(TypedDict):
     name: str
@@ -76,7 +82,7 @@ register_type(Document)
 register_type(MultiDocument)
 register_type(RagResponse)
 register_type(SQLDatabase)
-register_type(Parameter)
 register_type(Tool)
+register_type(JsonSchema)
 register_type(ToolCall)
 

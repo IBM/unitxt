@@ -27,15 +27,21 @@
             "to_field": "query"
         },
         {
-            "__type__": "to_tool",
-            "field": "function/0",
-            "to_field": "tool"
+            "__type__": "copy",
+            "field": "function",
+            "to_field": "tools"
         },
         {
-            "__type__": "wrap",
-            "field": "tool",
-            "inside": "list",
-            "to_field": "tools"
+            "__type__": "recursive_replace",
+            "key": "type",
+            "map_values": {
+                "dict": "object",
+                "float": "number",
+                "tuple": "array"
+            },
+            "remove_values": [
+                "any"
+            ]
         },
         {
             "__type__": "dict_to_tuples_list",
