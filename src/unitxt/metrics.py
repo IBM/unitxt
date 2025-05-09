@@ -63,7 +63,6 @@ from .operators import ArtifactFetcherMixin, Copy, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
-from .tool_calling import convert_chat_api_format_to_tool
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .types import ToolCall
 from .utils import deep_copy, recursive_copy, retry_connection_with_exponential_backoff
@@ -789,17 +788,23 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
         return result
 
 class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
+
     main_score = "exact_match"
     reduction = MeanReduction()
     prediction_type = ToolCall
+    _requirements_list = ["jsonschema-rs"]
+
+    def prepare(self):
+        super().prepare()
+        import jsonschema_rs
+        self._schema = jsonschema_rs
 
     def map(
         self, prediction: ToolCall, references: List[ToolCall], task_data: Dict[str, Any]
     ) -> Dict[str, float]:
 
-
         exact_match = float(
-            str(prediction) in [str(reference) for reference in references]
+            json.dumps(prediction, sort_keys=True) in [json.dumps(reference, sort_keys=True) for reference in references]
         )
 
         tool_choice = float(
@@ -809,20 +814,20 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
         parameter_choice = 0.0
         for reference in references:
             if len(prediction["arguments"]) > 0:
-
                 score = len(set(prediction["arguments"]).intersection(set(reference["arguments"]))) / len(set(prediction["arguments"]))
             else:
                 score = 1.0
             if score > parameter_choice:
                 parameter_choice = score
 
-
         parameter_values = 0.0
         for reference in references:
             value_matches = 0
             for key, val in prediction["arguments"].items():
                 try:
-                    if val in reference["arguments"][key] or reference["arguments"][key] in val:
+                    predicted = json.dumps(val, sort_keys=True)
+                    target = json.dumps(reference["arguments"][key], sort_keys=True)
+                    if predicted in target or target in predicted:
                         value_matches += 1
                 except:
                     pass
@@ -835,27 +840,26 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             if score > parameter_values:
                 parameter_values = score
 
-        for tool in task_data["__tools__"]:
-            tool = convert_chat_api_format_to_tool(tool)
-            tool_params_types = {}
-            for param in tool["parameters"]:
-                tool_params_types[param["name"]] = param["type"]
-            correct_parameters_types = 0
-            for key, value in prediction["arguments"].items():
-                typing_type = tool_params_types.get(key, Any)
-                if isoftype(value, typing_type):
-                    correct_parameters_types += 1
-            if len(prediction["arguments"]) > 0:
-                parameters_types = correct_parameters_types / len(prediction["arguments"])
-            else:
-                parameters_types = 1.0
 
+        parameters = None
+        for tool in task_data["__tools__"]:
+            if tool["function"]["name"] == prediction["name"]:
+                parameters = tool["function"]["parameters"]
+
+        if parameters is None:
+            parameters_schema_validation = 0.0
+        else:
+            try:
+                self._schema.validate(parameters, prediction["arguments"], )
+                parameters_schema_validation = 1.0
+            except self._schema.ValidationError:
+                parameters_schema_validation = 0.0
 
         return {
             self.main_score: exact_match,
             "tool_choice": tool_choice,
             "parameter_choice": parameter_choice,
-            "parameters_types": parameters_types,
+            "parameters_schema_validation": parameters_schema_validation,
             "parameter_values": parameter_values
         }
 
