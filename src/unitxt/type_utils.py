@@ -1070,15 +1070,17 @@ def verify_required_schema(
             ) from e
 
         try:
-            if not isoftype(value, data_type):
-                raise ValueError(
-                    f"Passed value {value} of field '{field_name}' is not "
-                    f"of required type: ({to_type_string(data_type)}) in {class_name} ('{id}').\n"
-                    f"{class_name} description: {description}"
-                )
+            valid = isoftype(value, data_type)
         except Exception as e:
             raise ValueError(
                     f"Passed value {value} of field '{field_name}' is not "
                     f"of required type: ({to_type_string(data_type)}) in {class_name} ('{id}').\n"
                     f"{class_name} description: {description}\nReason:\n{e}"
                 ) from e
+
+        if not valid:
+            raise ValueError(
+                f"Passed value {value} of field '{field_name}' is not "
+                f"of required type: ({to_type_string(data_type)}) in {class_name} ('{id}').\n"
+                f"{class_name} description: {description}"
+            )

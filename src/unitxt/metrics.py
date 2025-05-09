@@ -805,12 +805,17 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
     prediction_type = ToolCall
     _requirements_list = ["jsonschema-rs"]
 
+    def prepare(self):
+        super().prepare()
+        import jsonschema_rs
+        self._schema = jsonschema_rs
+
     def map(
         self, prediction: ToolCall, references: List[ToolCall], task_data: Dict[str, Any]
     ) -> Dict[str, float]:
 
         exact_match = float(
-            str(prediction) in [str(reference) for reference in references]
+            json.dumps(prediction, sort_keys=True) in [json.dumps(reference, sort_keys=True) for reference in references]
         )
 
         tool_choice = float(
@@ -831,9 +836,10 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             value_matches = 0
             for key, val in prediction["arguments"].items():
                 try:
-                    if key in reference["arguments"]:
-                        if str(val) == str(reference["arguments"][key]):
-                            value_matches += 1
+                    predicted = json.dumps(val, sort_keys=True)
+                    target = json.dumps(reference["arguments"][key], sort_keys=True)
+                    if predicted in target or target in predicted:
+                        value_matches += 1
                 except:
                     pass
 
@@ -851,14 +857,13 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             if tool["function"]["name"] == prediction["name"]:
                 parameters = tool["function"]["parameters"]
 
-        import jsonschema_rs
         if parameters is None:
             parameters_schema_validation = 0.0
         else:
             try:
-                jsonschema_rs.validate(prediction["arguments"], parameters)
+                self._schema.validate(parameters, prediction["arguments"], )
                 parameters_schema_validation = 1.0
-            except jsonschema_rs.ValidationError:
+            except self._schema.ValidationError:
                 parameters_schema_validation = 0.0
 
         return {

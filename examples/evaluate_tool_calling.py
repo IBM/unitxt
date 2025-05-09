@@ -13,7 +13,7 @@ dataset = load_dataset(
     max_test_instances=10
 )
 
-model = CrossProviderInferenceEngine(model="granite-3-3-8b-instruct", provider="rits")
+model = CrossProviderInferenceEngine(model="granite-3-3-8b-instruct", provider="watsonx")
 
 
 predictions = model(dataset)
