@@ -44,6 +44,7 @@ jobs:
     - run: |
         pip install --only-binary :all: spacy
         pip install networkx==3.2.1
+        pip install datasets==3.5.1
 
     - name:  Hugging Face Login
       run: |
