@@ -37,12 +37,11 @@ def short_hex_hash(value, length=8):
     return h[:length]
 
 
-def _get_recipe_from_query(dataset_query: str) -> DatasetRecipe:
-    dataset_query = dataset_query.replace("sys_prompt", "instruction")
+def _get_recipe_from_query(dataset_query: str, overwrite_kwargs: Optional[Dict[str, Any]]=None) -> DatasetRecipe:
     try:
-        dataset_stream, _ = fetch_artifact(dataset_query)
+        dataset_stream, _ = fetch_artifact(dataset_query, overwrite_kwargs=overwrite_kwargs)
     except:
-        dataset_stream = get_dataset_artifact(dataset_query)
+        dataset_stream = get_dataset_artifact(dataset_query, overwrite_kwargs=overwrite_kwargs)
     return dataset_stream
 
 
@@ -82,13 +81,14 @@ def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> DatasetRecipe:
     if isinstance(dataset_query, (DatasetRecipe, Benchmark)):
         return dataset_query
 
-    _verify_dataset_args(dataset_query, kwargs)
-
     if dataset_query:
-        recipe = _get_recipe_from_query(dataset_query)
+        recipe = _get_recipe_from_query(dataset_query, kwargs)
 
-    if kwargs:
+    elif kwargs:
         recipe = _get_recipe_from_dict(kwargs)
+
+    else:
+        raise UnitxtError("Specify either dataset recipe string artifact name or recipe args.")
 
     return recipe
 
@@ -186,6 +186,8 @@ def load_dataset(
 
     Alternatively, dataset is loaded from a provided card based on explicitly
     given parameters.
+
+    If both are given, then the textual recipe is loaded with the key word args overriding the textual recipe args.
 
     Args:
         dataset_query (str, optional):
