@@ -6290,7 +6290,7 @@ class GraniteGuardianBase(InstanceMetric):
         return result
 
     def create_message(self, role: str, content: str) -> List[Dict[str, str]]:
-        return [{"role": role, "content": content}]
+        return [{"role": role, "content": str(content)}]
 
     def parse_output(self, generated_tokens_list):
         top_tokens_list = [
@@ -6421,12 +6421,22 @@ class GraniteGuardianAgenticRisk(GraniteGuardianBase):
 
     def process_input_fields(self, task_data):
         messages = []
+
+        tools = task_data[self.tools_field]
+        if isinstance(tools, str):
+            tools = json.loads(tools)
+
         messages += self.create_message(
-            "tools", json.loads(task_data[self.tools_field])
+            "tools", tools
         )
         messages += self.create_message("user", task_data[self.user_message_field])
+
+        calls = task_data[self.assistant_message_field]
+        if isinstance(calls, str):
+            calls = json.loads(calls)
+
         messages += self.create_message(
-            "assistant", task_data[self.assistant_message_field]
+            "assistant", calls
         )
         return messages
 
