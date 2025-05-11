@@ -564,3 +564,29 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             results[0],
             '{"name": "add", "arguments": {"a": 1, "b": 2}}'
         )
+
+    def test_hf_auto_model_and_hf_pipeline_equivalency(self):
+        unitxt.settings.allow_unverified_code = True
+        for _format in ["formats.chat_api", None]:
+
+
+            model_name = "HuggingFaceTB/SmolLM2-135M-Instruct" #pragma: allowlist secret
+            model_args = {"max_new_tokens":32,
+                          "temperature":0,
+                          "top_p":1,
+                          "use_cache":False,
+                          "device": "cpu"}
+
+            dataset = load_dataset(card="cards.openbook_qa",
+                                   split="test",
+                                   format=_format,
+                                   loader_limit=64) # the number of instances need to large enough to catch differences
+            pipeline_inference_model = HFPipelineBasedInferenceEngine(model_name=model_name, **model_args)
+            auto_inference_model = HFAutoModelInferenceEngine(model_name=model_name, **model_args)
+
+            pipeline_inference_model_predictions = pipeline_inference_model.infer(dataset)
+            auto_inference_model_predictions = auto_inference_model.infer(dataset)
+
+
+            self.assertEqual(pipeline_inference_model_predictions, auto_inference_model_predictions)
+
