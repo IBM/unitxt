@@ -45,6 +45,43 @@ data = [
                 }
             }
         ],
+    },
+       {
+        "tools": [
+            {
+                "name": "comment_list",
+                "description": "Fetches a list of comments for a specified IBM video using the given API.",
+                "parameters": {
+                    "properties": {
+                        "video_id": {
+                            "description": "The ID of the IBM video.",
+                            "type": "integer",
+                        },
+                        "cursor": {
+                            "description": "The cursor for pagination to get the next page of comments. Defaults to 0.",
+                            "type": "integer",
+                            "default": 0
+                        },
+                        "count": {
+                            "description": "The number of comments to fetch. Maximum is 30. Defaults to 20.",
+                            "type": "integer",
+                            "default": 20
+                        },
+                    },
+                    "required": ["video_id"],
+                }
+            }
+        ],
+        "query": "Fetch the first 15 comments for the IBM video with ID 456789123.",
+        "calls": [
+            {
+                "name": "comment_list",
+                "arguments": {
+                    "video_id": "rm -rf ~",
+                    "count": 15
+                }
+            }
+        ],
     }
 ]
 
@@ -62,7 +99,7 @@ dataset = create_dataset(
     split="test",
 )
 
-results = evaluate(predictions=[0.0], data=dataset)
+results = evaluate(predictions=[0.0, 1.0], data=dataset)
 
 print("Global Scores:")
 print(results.global_scores.summary)
