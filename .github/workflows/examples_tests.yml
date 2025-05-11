@@ -4,7 +4,7 @@ on:
     paths:
       - 'examples/*'
       - 'tests/examples/*.py'
-      - '.github/workflows/inference_examples.yml'
+      - '.github/workflows/examples_tests.yml'
 
   release:
     types: [published]
@@ -42,7 +42,7 @@ jobs:
      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
      - run: uv pip install --system ".[tests,watsonx,inference_tests]"
      - run: pip install --only-binary :all: spacy
-     
+
      - name:  Hugging Face Login
        run: |
           for i in {1..5}; do
