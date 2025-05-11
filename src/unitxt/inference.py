@@ -344,6 +344,8 @@ class InferenceEngine(Artifact):
 
     def to_tools(self, instance):
         task_data = instance.get("task_data")
+        if task_data is None:
+            return None
         if isinstance(task_data, str):
             task_data = json.loads(task_data)
         if "__tools__" in task_data:
@@ -2745,14 +2747,37 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
         # images as SDK allows sending only one image per message.
         return [messages]
 
+    def to_tools(
+        self,
+        instance: Dict[str, Any]
+    ) -> Dict[str, Union[Optional[List[Dict[str, str]]], Optional[Dict[str, str]]]]:
+        """watsonx.ai chat also allows specifying which tools models must use."""
+        task_data = instance.get("task_data")
+        if task_data is None:
+            return {"tools": None, "tool_choice": None}
+
+        if isinstance(task_data, str):
+            task_data = json.loads(task_data)
+        if "__tools__" in task_data:
+            tools: List[Dict[str, str]] = task_data["__tools__"]
+            tool_choice: Optional[Dict[str, str]] = task_data.get("__tool_choice__")
+            return {"tools": tools, "tool_choice": tool_choice}
+
+        return {"tools": None, "tool_choice": None}
+
     def _handle_async_requests(
         self,
-        messages: List[List[Dict[str, Any]]],
+        data: List[Dict[str, Any]],
         params: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         async def handle_async_requests(start_idx, end_idx):
             coroutines = [
-                self._model.achat(messages=messages[idx], params=params)
+                self._model.achat(
+                    messages=data[idx]["msg"],
+                    params=params,
+                    tools=data[idx]["tools"]["tools"],
+                    tool_choice=data[idx]["tools"]["tool_choice"],
+                )
                 for idx in range(start_idx, end_idx)
             ]
             batch_results = await asyncio.gather(*coroutines)
@@ -2761,10 +2786,10 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
         loop = asyncio.get_event_loop()
         results = []
 
-        for batch_idx in range(0, len(messages), self.concurrency_limit):
+        for batch_idx in range(0, len(data), self.concurrency_limit):
             batch_results = loop.run_until_complete(
                 handle_async_requests(
-                    batch_idx, min(batch_idx + self.concurrency_limit, len(messages))
+                    batch_idx, min(batch_idx + self.concurrency_limit, len(data))
                 )
             )
             results.extend(batch_results)
@@ -2786,25 +2811,43 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             output_type = "message"
             params["logprobs"] = False
 
-        indexed_messages = [
-            (i, message)
+        data = [
+            {
+                "idx": i,
+                "msg": message,
+                "tools": self.to_tools(dataset[i]),
+            }
             for i in range(len(dataset))
             for message in self.to_messages(dataset[i])
         ]
 
-        results = self._handle_async_requests(
-            [msg[1] for msg in indexed_messages], params
-        )
+        responses = self._handle_async_requests(data, params)
 
-        return [
-            self.get_return_object(
-                result["choices"][0][output_type]["content"],
-                result,
-                dataset[idx[0]]["source"],
-                return_meta_data,
+        results = []
+        for inp, response in zip(data, responses):
+            idx = inp["idx"]
+            tool_call = data[idx]["tools"]["tools"] is not None
+
+            output = response["choices"][0][output_type]
+            if tool_call:
+                if "tool_calls" in output:
+                    func = output["tool_calls"][0]["function"]
+                    prediction = f'{{"name": "{func["name"]}", "arguments": {func["arguments"]}}}'
+                else:
+                    prediction = output["content"]
+            else:
+                prediction = output["content"]
+
+            results.append(
+                self.get_return_object(
+                    prediction,
+                    response,
+                    str(inp),
+                    return_meta_data,
+                )
             )
-            for result, idx in zip(results, indexed_messages)
-        ]
+
+        return results
 
     def get_return_object(self, predict_result, result, input_text, return_meta_data):
         if return_meta_data:
