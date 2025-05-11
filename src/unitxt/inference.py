@@ -724,7 +724,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
                 add_generation_prompt=True,
                 **self.chat_kwargs_dict,
             )
-            tokenizer_kargs.update({"add_special_tokens": False})
+            tokenizer_kargs["add_special_tokens"] = False
 
         if self.processor.pad_token is None:
             self.processor.pad_token_id = self.model.config.eos_token_id[0]
