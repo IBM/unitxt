@@ -481,3 +481,112 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         self.assertEqual(len(predictions_without_cache), len(predictions_with_cache))
         for p1, p2 in zip(predictions_without_cache, predictions_with_cache):
             self.assertEqual(p1, p2)
+
+    def test_wml_chat_tool_calling(self):
+        instance = {
+            "source": [
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant.",
+                },
+                {
+                    "role": "user",
+                    "content": "What is 1 + 2?",
+                },
+            ],
+        }
+
+        tool1 = {
+            "type": "function",
+            "function": {
+                "name": "get_current_weather",
+                "description": "Get the current weather in a given location",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "description": "The city, e.g. San Francisco, CA",
+                            "type": "string",
+                        },
+                        "unit": {
+                            "enum": [
+                                "celsius",
+                                "fahrenheit"
+                            ],
+                            "type": "string",
+                        }
+                    },
+                    "required": [
+                        "location",
+                    ],
+                },
+            },
+        }
+        tool2 = {
+            "type": "function",
+            "function": {
+                "name": "add",
+                "description": "Add two numbers.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "a": {
+                            "type": "number",
+                        },
+                        "b": {
+                            "type": "number",
+                        },
+                    },
+                    "required": [
+                        "a",
+                        "b",
+                    ],
+                },
+            },
+        }
+
+        instance["task_data"] = {
+            "__tools__": [tool1, tool2],
+        }
+
+        dataset = [instance]
+
+        chat = WMLInferenceEngineChat(
+            seed=123,
+            max_tokens=256,
+            temperature=0.0,
+            model_name="ibm/granite-3-8b-instruct",
+        )
+
+        results = chat.infer(dataset, return_meta_data=False)
+
+        self.assertEqual(
+            results[0],
+            '{"name": "add", "arguments": {"a": 1, "b": 2}}'
+        )
+
+    def test_hf_auto_model_and_hf_pipeline_equivalency(self):
+        unitxt.settings.allow_unverified_code = True
+        for _format in ["formats.chat_api", None]:
+
+
+            model_name = "HuggingFaceTB/SmolLM2-135M-Instruct" #pragma: allowlist secret
+            model_args = {"max_new_tokens":32,
+                          "temperature":0,
+                          "top_p":1,
+                          "use_cache":False,
+                          "device": "cpu"}
+
+            dataset = load_dataset(card="cards.openbook_qa",
+                                   split="test",
+                                   format=_format,
+                                   loader_limit=64) # the number of instances need to large enough to catch differences
+            pipeline_inference_model = HFPipelineBasedInferenceEngine(model_name=model_name, **model_args)
+            auto_inference_model = HFAutoModelInferenceEngine(model_name=model_name, **model_args)
+
+            pipeline_inference_model_predictions = pipeline_inference_model.infer(dataset)
+            auto_inference_model_predictions = auto_inference_model.infer(dataset)
+
+
+            self.assertEqual(pipeline_inference_model_predictions, auto_inference_model_predictions)
+

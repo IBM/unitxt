@@ -40,6 +40,7 @@ from unitxt.operators import (
     MergeStreams,
     MinimumOneExamplePerLabelRefiner,
     Perturb,
+    RecursiveReplace,
     RemoveFields,
     RemoveValues,
     Rename,
@@ -3386,3 +3387,42 @@ Agent:"""
             }
         ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
+
+    def test_recursive_replace(self):
+
+        operator = RecursiveReplace(key="type", map_values={"int": "integer", "float": "number"}, remove_values=["any"])
+
+        inputs = [
+            {
+                "pro": {
+                    "type": "int"
+                },
+                "bro": [
+                    {
+                        "type": "float"
+                    },
+                    {
+                        "type": "any"
+                    }
+                ]
+
+             }
+        ]
+
+        targets = [
+            {
+                "pro": {
+                    "type": "integer"
+                },
+                "bro": [
+                    {
+                        "type": "number"
+                    },
+                    {
+                    }
+                ]
+
+             }
+        ]
+
+        check_operator(operator=operator, inputs=inputs, targets=targets)
