@@ -788,18 +788,7 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
         return result
 
 class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
-    """Compares each predicted tool call with list of references tool call.
-
-    (When there are multiple references, the results on the best one is selected)
-
-    exact_match - % of predictions exactly as one of of the references
-    tool_choice - % of predictions with correct tool calls (does not check arguments)
-    parameter_choice- % of argument names in prediction that are the same as the reference argument names (does not check argument values)
-    parameter_values - % of argument values that are the same as in the references
-    parameter_types - % of argument types that are the same as in the tool definition
-
-    If the tool has nested parameters, all checks and comparisons are done at the top level of the parameters (e.g object/dictionaries parameters are compared as whole ).
-    """
+    """Compares each predicted tool call with list of references tool call."""
     main_score = "exact_match"
     reduction = MeanReduction()
     prediction_type = ToolCall
@@ -822,35 +811,45 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             str(prediction["name"]) in [str(reference["name"]) for reference in references]
         )
 
-        parameter_choice = 0.0
+        parameter_recall = 0.0
         for reference in references:
-            if len(prediction["arguments"]) > 0:
+            if len(reference["arguments"]) > 0:
                 score = len(set(prediction["arguments"]).intersection(set(reference["arguments"]))) / len(set(reference["arguments"]))
             else:
                 score = 1.0
-            if score > parameter_choice:
-                parameter_choice = score
+            if score > parameter_recall:
+                parameter_recall = score
 
-        parameter_values = 0.0
+        parameter_precision = 0.0
+        for reference in references:
+            if len(prediction["arguments"]) > 0:
+                score = len(set(prediction["arguments"]).intersection(set(reference["arguments"]))) / len(set(prediction["arguments"]))
+            else:
+                score = 1.0
+            if score > parameter_precision:
+                parameter_precision = score
+
+
+        parameter_value_precision = 0.0
+
         for reference in references:
             value_matches = 0
+
             for key, val in prediction["arguments"].items():
                 try:
                     predicted = json.dumps(val, sort_keys=True)
                     target = json.dumps(reference["arguments"][key], sort_keys=True)
-                    if predicted in target or target in predicted:
+                    if predicted == target:
                         value_matches += 1
                 except:
                     pass
 
             if len(prediction["arguments"]) > 0:
-
                 score = value_matches / len(prediction["arguments"])
             else:
                 score = 1.0
-            if score > parameter_values:
-                parameter_values = score
-
+            if score > parameter_value_precision:
+                parameter_value_precision = score
 
         parameters = None
         for tool in task_data["__tools__"]:
@@ -858,20 +857,21 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
                 parameters = tool["function"]["parameters"]
 
         if parameters is None:
-            parameters_schema_validation = 0.0
+            parameter_schema_validation = 0.0
         else:
             try:
                 self._schema.validate(parameters, prediction["arguments"], )
-                parameters_schema_validation = 1.0
+                parameter_schema_validation = 1.0
             except self._schema.ValidationError:
-                parameters_schema_validation = 0.0
+                parameter_schema_validation = 0.0
 
         return {
             self.main_score: exact_match,
-            "tool_choice": tool_choice,
-            "parameter_choice": parameter_choice,
-            "parameters_schema_validation": parameters_schema_validation,
-            "parameter_values": parameter_values
+            "tool_choice_accuracy": tool_choice,
+            "parameter_name_recall": parameter_recall,
+            "parameter_name_precision": parameter_precision,
+            "parameter_value_precision": parameter_value_precision,
+            "parameter_schema_validation": parameter_schema_validation,
         }
 
 

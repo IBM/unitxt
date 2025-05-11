@@ -41,7 +41,7 @@ The task schema for supervised tool calling is defined as:
     Task(
         __description__="""Task to test tool calling capabilities.""",
         input_fields={"query": str, "tools": List[Tool]},
-        reference_fields={"call": ToolCall},
+        reference_fields={"reference_calls": ToolCall},
         prediction_type=ToolCall,
         metrics=["metrics.tool_calling"],
         default_template="templates.tool_calling.base",
@@ -181,12 +181,13 @@ Run the model and evaluate the results:
     # Evaluate the predictions
     results = evaluate(predictions=predictions, data=dataset)
 
+    print("Instance Results:")
+    print(results.instance_scores)
+
     # Print the results
     print("Global Results:")
     print(results.global_scores.summary)
 
-    print("Instance Results:")
-    print(results.instance_scores.summary)
 
 Part 4: Understanding the Tool Calling Metrics
 --------------------------------------------
@@ -206,18 +207,21 @@ The ToolCallingMetric in Unitxt provides several useful scores:
             # Implementation details...
             return {
                 self.main_score: exact_match,
-                "tool_choice": tool_choice,
-                "parameter_choice": parameter_choice,
-                "parameter_values": parameter_values
+                    "tool_choice_accuracy": tool_choice,
+                    "parameter_name_recall": parameter_recall,
+                    "parameter_name_precision": parameter_precision,            
+                    "parameter_value_precision": parameter_value_precision,
+                    "parameter_schema_validation": parameter_schema_validation,
             }
 
 The metrics evaluate different aspects of tool calling accuracy:
 
 1. **exact_match**: Measures if the tool call exactly matches a reference
-2. **tool_choice**: Evaluates if the correct tool was selected
-3. **parameter_choice**: Checks if the correct parameters were identified
-4. **parameter_values**: Assesses if the parameter values are correct
-5. **parameter_types**: Verifies if parameter types match the tool definition
+2. **tool_choice_accuracy**: Evaluates if the correct tool was selected
+3. **parameter_name_recall**: Assesses if all relevant parameters were set
+4. **parameter_name_precision**: Assesses if the parameter names are correct
+5. **parameter_value_precision**: Assesses if the parameter values are correct
+6. **parameter_schema_validation**: Verifies if parameter types match the tool definition
 
 Custom Evaluation
 ^^^^^^^^^^^^^^^
@@ -250,7 +254,7 @@ To better understand your model's performance, analyze individual instances:
         print(f"\nInstance {i+1}:")
         print(f"Query: {dataset[i]['query']}")
         print(f"Available tools: {dataset[i]['tools']}")
-        print(f"Expected tool call: {dataset[i]['call']}")
+        print(f"Expected tool calls: {dataset[i]['reference_calls']}")
         print(f"Model prediction: {predictions[i]}")
         print(f"Scores: {instance}")
 
