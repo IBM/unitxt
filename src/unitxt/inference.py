@@ -710,7 +710,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         self.model = model_class.from_pretrained(
             pretrained_model_name_or_path=self.model_name,
             trust_remote_code=True,
-            tp_plan=None,
             **model_args,
         )
 
