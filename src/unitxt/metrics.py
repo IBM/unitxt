@@ -3611,8 +3611,8 @@ class  ToolCallKeyValueExtraction(KeyValueExtraction):
 
     def compute(
         self,
-        references: List[List[Any]],
-        predictions: List[Any],
+        references: List[List[ToolCall]],
+        predictions: List[ToolCall],
         task_data: List[Dict],
     ) -> dict:
         return super().compute([[ self.flatten_dict(r) for r in ref ] for ref in references],
