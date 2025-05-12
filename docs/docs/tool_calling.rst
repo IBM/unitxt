@@ -207,11 +207,11 @@ The ToolCallingMetric in Unitxt provides several useful scores:
             # Implementation details...
             return {
                 self.main_score: exact_match,
-                    "tool_choice_accuracy": tool_choice,
-                    "parameter_name_recall": parameter_recall,
-                    "parameter_name_precision": parameter_precision,            
-                    "parameter_value_precision": parameter_value_precision,
-                    "parameter_schema_validation": parameter_schema_validation,
+                    "tool_name_accuracy": tool_choice,
+                    "argument_name_recall": parameter_recall,
+                    "argument_name_precision": parameter_precision,            
+                    "argument_value_precision": parameter_value_precision,
+                    "argument_schema_validation": parameter_schema_validation,
             }
 
 The metrics evaluate different aspects of tool calling accuracy:

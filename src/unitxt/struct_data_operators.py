@@ -758,8 +758,6 @@ class ToolCallPostProcessor(FieldOperator):
     failure_value: Any = None
     allow_failure: bool = False
     def process_value(self, value: str) -> ToolCall:
-        if ">" in value:
-            pass
         if self.allow_failure:
             try:
                 result = json.loads(value)

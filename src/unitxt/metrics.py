@@ -807,30 +807,32 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             json.dumps(prediction, sort_keys=True) in [json.dumps(reference, sort_keys=True) for reference in references]
         )
 
-        tool_choice = float(
+        tool_name_accuracy = float(
             str(prediction["name"]) in [str(reference["name"]) for reference in references]
         )
 
-        parameter_recall = 0.0
+        argument_name_recall = 0.0
         for reference in references:
             if len(reference["arguments"]) > 0:
                 score = len(set(prediction["arguments"]).intersection(set(reference["arguments"]))) / len(set(reference["arguments"]))
             else:
                 score = 1.0
-            if score > parameter_recall:
-                parameter_recall = score
+            if score > argument_name_recall:
+                argument_name_recall = score
 
-        parameter_precision = 0.0
+        argument_name_precision = 0.0
         for reference in references:
             if len(prediction["arguments"]) > 0:
                 score = len(set(prediction["arguments"]).intersection(set(reference["arguments"]))) / len(set(prediction["arguments"]))
-            else:
+            elif len(reference["arguments"]) == 0:
                 score = 1.0
-            if score > parameter_precision:
-                parameter_precision = score
+            else:
+                score = 0.0
+            if score > argument_name_precision:
+                argument_name_precision = score
 
 
-        parameter_value_precision = 0.0
+        argument_value_precision = 0.0
 
         for reference in references:
             value_matches = 0
@@ -848,8 +850,8 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
                 score = value_matches / len(prediction["arguments"])
             else:
                 score = 1.0
-            if score > parameter_value_precision:
-                parameter_value_precision = score
+            if score > argument_value_precision:
+                argument_value_precision = score
 
         parameters = None
         for tool in task_data["__tools__"]:
@@ -857,21 +859,21 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
                 parameters = tool["function"]["parameters"]
 
         if parameters is None:
-            parameter_schema_validation = 0.0
+            argument_schema_validation = 0.0
         else:
             try:
                 self._schema.validate(parameters, prediction["arguments"], )
-                parameter_schema_validation = 1.0
+                argument_schema_validation = 1.0
             except self._schema.ValidationError:
-                parameter_schema_validation = 0.0
+                argument_schema_validation = 0.0
 
         return {
             self.main_score: exact_match,
-            "tool_choice_accuracy": tool_choice,
-            "parameter_name_recall": parameter_recall,
-            "parameter_name_precision": parameter_precision,
-            "parameter_value_precision": parameter_value_precision,
-            "parameter_schema_validation": parameter_schema_validation,
+            "tool_name_accuracy": tool_name_accuracy,
+            "argument_name_recall": argument_name_recall,
+            "argument_name_precision": argument_name_precision,
+            "argument_value_precision": argument_value_precision,
+            "argument_schema_validation": argument_schema_validation,
         }
 
 
@@ -3514,7 +3516,7 @@ class CustomF1(GlobalMetric):
 class KeyValueExtraction(GlobalMetric):
     prediction_type = Dict[str, str]
     metric: Metric
-    single_reference_per_prediction = True
+    single_reference_per_prediction = False
     main_score = ""
 
     def prepare(self):
