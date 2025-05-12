@@ -13,7 +13,10 @@ add_to_catalog(
         },
         reference_fields={"linked_schema": List[str]},
         prediction_type=List[str],
-        metrics=["metrics.recall_macro_multi_label,metrics.f1_macro_multi_label"],
+        metrics=[
+            "metrics.f1_macro_multi_label",
+            "metrics.recall_macro_multi_label",
+            "metrics.precision_macro_multi_label"],
     ),
     "tasks.schema_linking",
     overwrite=True,

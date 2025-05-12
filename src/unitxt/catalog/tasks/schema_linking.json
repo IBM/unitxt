@@ -11,7 +11,8 @@
     },
     "prediction_type": "List[str]",
     "metrics": [
-        "metrics.recall_macro_multi_label", 
-        "metrics.f1_macro_multi_label"
+        "metrics.f1_macro_multi_label",
+        "metrics.recall_macro_multi_label",
+        "metrics.precision_macro_multi_label"
     ]
 }
