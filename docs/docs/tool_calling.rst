@@ -104,11 +104,15 @@ Create a Python file named ``bfcl.py`` and implement the DataCard as follows:
                 Copy(field="function", to_field="tools"),
                 # Make Sure the json schema of the parameters is well defined
                 RecursiveReplace(key="type", map_values={"dict": "object", "float": "number", "tuple": "array"}, remove_values=["any"]),
-                # Process ground truth data
-                DictToTuplesList(field="ground_truth/0", to_field="call_tuples"),
-                # Extract tool name and arguments from ground truth
-                Copy(field="call_tuples/0/0", to_field="call/name"),
-                Copy(field="call_tuples/0/1", to_field="call/arguments"),
+                # Process ground truth data in this dataset, which is a provided as a list of options per field,
+                # and convert it into a list of explicit tool calls
+                #
+                #[{"geometry.circumference": {"radius": [3], "units": ["cm", "m"]}}]}
+                # becomes:
+                # [{"name": "geometry.circumference", "arguments" : {"radius": 3, "units": "cm"}}, 
+                #  {"name": "geometry.circumference", "arguments" : {"radius": 3, "units": "m"}}]
+                ExecuteExpression(expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]',
+                              to_field="reference_calls", imports_list=["itertools"])
             ],
             task="tasks.tool_calling.supervised",
             templates=["templates.tool_calling.base"],

@@ -25,6 +25,14 @@ with unitxt.settings.context(allow_unverified_code=True):
             Copy(field="question/0/0/content", to_field="query"),
             Copy(field="function", to_field="tools"),
             RecursiveReplace(key="type", map_values={"dict": "object", "float": "number", "tuple": "array"}, remove_values=["any"]),
+            # Process ground truth data in this dataset, which is a provided as a list of options per field,
+            # and convert it into a list of explicit tool calls
+            #
+            #[{"geometry.circumference": {"radius": [3], "units": ["cm", "m"]}}]}
+            # becomes:
+            # [{"name": "geometry.circumference", "arguments" : {"radius": 3, "units": "cm"}},
+            #  {"name": "geometry.circumference", "arguments" : {"radius": 3, "units": "m"}}]
+
             ExecuteExpression(expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]',
                               to_field="reference_calls", imports_list=["itertools"])
         ],
