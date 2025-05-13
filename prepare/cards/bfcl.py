@@ -1,9 +1,12 @@
 import unitxt
 from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.collections_operators import DictToTuplesList
 from unitxt.loaders import LoadCSV
-from unitxt.operators import Copy, RecursiveReplace
+from unitxt.operators import (
+    Copy,
+    ExecuteExpression,
+    RecursiveReplace,
+)
 from unitxt.stream_operators import JoinStreams
 from unitxt.test_utils.card import test_card
 
@@ -22,9 +25,16 @@ with unitxt.settings.context(allow_unverified_code=True):
             Copy(field="question/0/0/content", to_field="query"),
             Copy(field="function", to_field="tools"),
             RecursiveReplace(key="type", map_values={"dict": "object", "float": "number", "tuple": "array"}, remove_values=["any"]),
-            DictToTuplesList(field="ground_truth/0", to_field="call_tuples"),
-            Copy(field="call_tuples/0/0", to_field="call/name"),
-            Copy(field="call_tuples/0/1", to_field="call/arguments"),
+            # Process ground truth data in this dataset, which is a provided as a list of options per field,
+            # and convert it into a list of explicit tool calls
+            #
+            #[{"geometry.circumference": {"radius": [3], "units": ["cm", "m"]}}]}
+            # becomes:
+            # [{"name": "geometry.circumference", "arguments" : {"radius": 3, "units": "cm"}},
+            #  {"name": "geometry.circumference", "arguments" : {"radius": 3, "units": "m"}}]
+
+            ExecuteExpression(expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]',
+                              to_field="reference_calls", imports_list=["itertools"])
         ],
         task="tasks.tool_calling.supervised",
         templates=["templates.tool_calling.base"],

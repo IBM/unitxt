@@ -43,7 +43,7 @@ from .operators import FieldOperator, InstanceOperator
 from .random_utils import new_random_generator
 from .serializers import ImageSerializer, TableSerializer
 from .type_utils import isoftype
-from .types import Table
+from .types import Table, ToolCall
 from .utils import recursive_copy
 
 
@@ -753,6 +753,26 @@ class LoadJson(FieldOperator):
         else:
             return json.loads(value, strict=False)
 
+
+class ToolCallPostProcessor(FieldOperator):
+    failure_value: Any = None
+    allow_failure: bool = False
+    def process_value(self, value: str) -> ToolCall:
+        if self.allow_failure:
+            try:
+                result = json.loads(value)
+            except json.JSONDecodeError:
+                return self.failure_value
+        else:
+            result = json.loads(value, strict=False)
+        if isoftype(result, List[ToolCall]):
+            if len(result) > 1:
+                UnitxtWarning(f"More than one tool returned from model: {result}"   )
+                return self.failure_value
+            return result[0]
+        if not isoftype(result, ToolCall):
+            return self.failure_value
+        return result
 
 class DumpJson(FieldOperator):
     def process_value(self, value: str) -> str:

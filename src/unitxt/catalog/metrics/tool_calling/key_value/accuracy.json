@@ -1,0 +1,5 @@
+{
+    "__type__": "tool_call_key_value_extraction",
+    "__description__": "Metric that evaluates tool call predictions with reference calls.\nFirst generate unique key value pairs for the tool name, and all the parameters (including nested parameter).\nReports average accuracy for each key, as well as micro and macro averages across all keys.\n\nSupports only a single reference call per prediction.\n\n",
+    "metric": "metrics.accuracy"
+}
