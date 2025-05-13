@@ -1845,15 +1845,26 @@ class OpenAiInferenceEngine(
     @run_with_imap
     def _get_chat_completion(self, instance, return_meta_data):
         import openai
-
+        tools = self.to_tools(instance)
         messages = self.to_messages(instance)
         try:
             response = self.client.chat.completions.create(
                 messages=messages,
+                tools=tools,
                 model=self.get_client_model_name(),
                 **self._get_completion_kwargs(),
+#                tool_choice="auto"
             )
-            prediction = response.choices[0].message.content
+
+            if tools is None:
+                prediction = response.choices[0].message.content
+            else:
+                try:
+                    func_call = response.choices[0].message.tool_calls[0].function
+                    prediction = f'{{"name": "{func_call.name}", "arguments": {func_call.arguments}}}'
+                except:
+                    prediction = response.choices[0].message.content or ""
+
             return self.get_return_object(prediction, response, return_meta_data)
         # catch in case of content_filtering failure
         except openai.BadRequestError as e:
@@ -3485,7 +3496,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "aws": LiteLLMInferenceEngine,
         "ollama": OllamaInferenceEngine,
         "bam": IbmGenAiInferenceEngine,
-        "watsonx-sdk": WMLInferenceEngine,
+        "watsonx-sdk": WMLInferenceEngineChat,
         "rits": RITSInferenceEngine,
         "azure": LiteLLMInferenceEngine,
         "vertex-ai": LiteLLMInferenceEngine,
