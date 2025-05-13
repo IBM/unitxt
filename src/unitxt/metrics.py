@@ -788,7 +788,7 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
         return result
 
 class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
-
+    """Compares each predicted tool call with list of references tool call."""
     main_score = "exact_match"
     reduction = MeanReduction()
     prediction_type = ToolCall
@@ -807,39 +807,51 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             json.dumps(prediction, sort_keys=True) in [json.dumps(reference, sort_keys=True) for reference in references]
         )
 
-        tool_choice = float(
+        tool_name_accuracy = float(
             str(prediction["name"]) in [str(reference["name"]) for reference in references]
         )
 
-        parameter_choice = 0.0
+        argument_name_recall = 0.0
+        for reference in references:
+            if len(reference["arguments"]) > 0:
+                score = len(set(prediction["arguments"]).intersection(set(reference["arguments"]))) / len(set(reference["arguments"]))
+            else:
+                score = 1.0
+            if score > argument_name_recall:
+                argument_name_recall = score
+
+        argument_name_precision = 0.0
         for reference in references:
             if len(prediction["arguments"]) > 0:
                 score = len(set(prediction["arguments"]).intersection(set(reference["arguments"]))) / len(set(prediction["arguments"]))
-            else:
+            elif len(reference["arguments"]) == 0:
                 score = 1.0
-            if score > parameter_choice:
-                parameter_choice = score
+            else:
+                score = 0.0
+            if score > argument_name_precision:
+                argument_name_precision = score
 
-        parameter_values = 0.0
+
+        argument_value_precision = 0.0
+
         for reference in references:
             value_matches = 0
+
             for key, val in prediction["arguments"].items():
                 try:
                     predicted = json.dumps(val, sort_keys=True)
                     target = json.dumps(reference["arguments"][key], sort_keys=True)
-                    if predicted in target or target in predicted:
+                    if predicted == target:
                         value_matches += 1
                 except:
                     pass
 
             if len(prediction["arguments"]) > 0:
-
                 score = value_matches / len(prediction["arguments"])
             else:
                 score = 1.0
-            if score > parameter_values:
-                parameter_values = score
-
+            if score > argument_value_precision:
+                argument_value_precision = score
 
         parameters = None
         for tool in task_data["__tools__"]:
@@ -847,20 +859,21 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
                 parameters = tool["function"]["parameters"]
 
         if parameters is None:
-            parameters_schema_validation = 0.0
+            argument_schema_validation = 0.0
         else:
             try:
                 self._schema.validate(parameters, prediction["arguments"], )
-                parameters_schema_validation = 1.0
+                argument_schema_validation = 1.0
             except self._schema.ValidationError:
-                parameters_schema_validation = 0.0
+                argument_schema_validation = 0.0
 
         return {
             self.main_score: exact_match,
-            "tool_choice": tool_choice,
-            "parameter_choice": parameter_choice,
-            "parameters_schema_validation": parameters_schema_validation,
-            "parameter_values": parameter_values
+            "tool_name_accuracy": tool_name_accuracy,
+            "argument_name_recall": argument_name_recall,
+            "argument_name_precision": argument_name_precision,
+            "argument_value_precision": argument_value_precision,
+            "argument_schema_validation": argument_schema_validation,
         }
 
 
@@ -3503,7 +3516,7 @@ class CustomF1(GlobalMetric):
 class KeyValueExtraction(GlobalMetric):
     prediction_type = Dict[str, str]
     metric: Metric
-    single_reference_per_prediction = True
+    single_reference_per_prediction = False
     main_score = ""
 
     def prepare(self):
@@ -3578,6 +3591,33 @@ class KeyValueExtraction(GlobalMetric):
             result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 0
 
         return result
+
+class  ToolCallKeyValueExtraction(KeyValueExtraction):
+    prediction_type = ToolCall
+
+    def flatten_dict(self,nested_dict, parent_key="", sep="."):
+        flat_dict = {}
+        for k, v in nested_dict.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+            if isinstance(v, list):
+                for e in v:
+                    if isinstance(e,dict):
+                        flat_dict.update(self.flatten_dict(e, new_key, sep=sep))
+            elif isinstance(v, dict):
+                flat_dict.update(self.flatten_dict(v, new_key, sep=sep))
+            else:
+                flat_dict[new_key] = v
+        return flat_dict
+
+    def compute(
+        self,
+        references: List[List[ToolCall]],
+        predictions: List[ToolCall],
+        task_data: List[Dict],
+    ) -> dict:
+        return super().compute([[ self.flatten_dict(r) for r in ref ] for ref in references],
+                    [ self.flatten_dict(p) for p in predictions],task_data)
+
 
 
 class NER(CustomF1):
