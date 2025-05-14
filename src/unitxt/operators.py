@@ -283,6 +283,7 @@ class Set(InstanceOperator):
             dict_set(instance, key, value)
         return instance
 
+
 def recursive_key_value_replace(data, target_key, value_map, value_remove=None):
     """Recursively traverses a data structure (dicts and lists), replaces values of target_key using value_map, and removes values listed in value_remove.
 
@@ -323,13 +324,19 @@ def recursive_key_value_replace(data, target_key, value_map, value_remove=None):
             recursive_key_value_replace(item, target_key, value_map, value_remove)
     return data
 
+
 class RecursiveReplace(InstanceOperator):
     key: str
     map_values: dict
     remove_values: Optional[list] = None
 
-    def process(self, instance: Dict[str, Any], stream_name: Optional[str] = None) -> Dict[str, Any]:
-        return recursive_key_value_replace(instance, self.key, self.map_values, self.remove_values)
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        return recursive_key_value_replace(
+            instance, self.key, self.map_values, self.remove_values
+        )
+
 
 @deprecation(version="2.0.0", alternative=Set)
 class AddFields(Set):
@@ -427,8 +434,8 @@ class InstanceFieldOperator(InstanceOperator):
     def verify_field_definition(self):
         if hasattr(self, "_field_to_field") and self._field_to_field is not None:
             return
-        assert (
-            (self.field is None) != (self.field_to_field is None)
+        assert (self.field is None) != (
+            self.field_to_field is None
         ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
         assert (
             self.to_field is None or self.field_to_field is None
@@ -784,9 +791,8 @@ class InterleaveListsToDialogOperator(InstanceOperator):
         user_turns = instance[self.user_turns_field]
         assistant_turns = instance[self.assistant_turns_field]
 
-        assert (
-            len(user_turns) == len(assistant_turns)
-            or (len(user_turns) - len(assistant_turns) == 1)
+        assert len(user_turns) == len(assistant_turns) or (
+            len(user_turns) - len(assistant_turns) == 1
         ), "user_turns must have either the same length as assistant_turns or one more turn."
 
         interleaved_dialog = []
@@ -977,7 +983,13 @@ class Cast(FieldOperator):
     failure_default: Optional[Any] = "__UNDEFINED__"
 
     def prepare(self):
-        self.types = {"int": int, "float": float, "str": str, "bool": bool, "tuple": tuple}
+        self.types = {
+            "int": int,
+            "float": float,
+            "str": str,
+            "bool": bool,
+            "tuple": tuple,
+        }
 
     def process_value(self, value):
         try:
@@ -1760,6 +1772,7 @@ class SplitByNestedGroup(MultiStreamOperator):
 
         return MultiStream.from_iterables(result)
 
+
 class AddIncrementalId(StreamOperator):
 
     to_field: str
@@ -2525,10 +2538,13 @@ class WikipediaFetcher(FieldOperator):
 
         return {"title": page.title, "body": getattr(page, self.mode)}
 
+
 class Fillna(FieldOperator):
     value: Any
+
     def process_value(self, value: Any) -> Any:
         import numpy as np
+
         try:
             if np.isnan(value):
                 return self.value
