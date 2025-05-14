@@ -620,10 +620,27 @@ class AddConstant(FieldOperator):
     def process_value(self, value: Any) -> Any:
         return self.add + value
 
-
 class ShuffleFieldValues(FieldOperator):
-    """Shuffles a list of values found in a field."""
+    # Assisted by watsonx Code Assistant
+    """An operator that shuffles the values of a list field.
 
+    the seed for shuffling in the is determined by the elements of the input field,
+    ensuring that the shuffling operation produces different results for different input lists,
+    but also that it is deterministic and reproducible.
+
+    Attributes:
+        None
+
+    Methods:
+        process_value(value: Any) -> Any:
+            Shuffles the elements of the input list and returns the shuffled list.
+
+            Parameters:
+                value (Any): The input list to be shuffled.
+
+    Returns:
+                Any: The shuffled list.
+    """
     def process_value(self, value: Any) -> Any:
         res = list(value)
         random_generator = new_random_generator(sub_seed=res)
@@ -960,7 +977,14 @@ class CopyFields(Copy):
 
 
 class GetItemByIndex(FieldOperator):
-    """Get from the item list by the index in the field."""
+    """Get the element from the fixed list by the index in the given field and store in another field.
+
+    Example:
+        GetItemByIndex(items_list=["dog",cat"],field="animal_index",to_field="animal")
+
+    on instance {"animal_index" : 1}  will change the instance to {"animal_index" : 1, "animal" : "cat"}
+
+    """
 
     items_list: List[Any]
 
