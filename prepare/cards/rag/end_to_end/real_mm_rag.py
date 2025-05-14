@@ -5,7 +5,7 @@ from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Wrap
 from unitxt.image_operators import ToImage
 from unitxt.loaders import LoadHF
-from unitxt.operators import Copy, FilterByCondition, AddIncrementalId, Cast
+from unitxt.operators import AddIncrementalId, Cast, Copy, FilterByCondition
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 

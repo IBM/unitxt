@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Union
 
 from unitxt import add_to_catalog
 from unitxt.blocks import Task
-from unitxt.types import Dialog, RagResponse, Image
+from unitxt.types import Dialog, Image, RagResponse
 
 add_to_catalog(
     Task(
