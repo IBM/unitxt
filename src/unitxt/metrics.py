@@ -788,7 +788,7 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
         return result
 
 class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
-
+    """Compares each predicted tool call with list of references tool call."""
     main_score = "exact_match"
     reduction = MeanReduction()
     prediction_type = ToolCall
@@ -807,39 +807,53 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
             json.dumps(prediction, sort_keys=True) in [json.dumps(reference, sort_keys=True) for reference in references]
         )
 
-        tool_choice = float(
+        tool_name_accuracy = float(
             str(prediction["name"]) in [str(reference["name"]) for reference in references]
         )
 
-        parameter_choice = 0.0
+        argument_name_recall = 0.0
+        for reference in references:
+            if len(reference["arguments"]) > 0:
+                score = len(set(prediction["arguments"]).intersection(set(reference["arguments"]))) / len(set(reference["arguments"]))
+            else:
+                score = 1.0
+            if score > argument_name_recall:
+                argument_name_recall = score
+
+        argument_name_precision = 0.0
         for reference in references:
             if len(prediction["arguments"]) > 0:
                 score = len(set(prediction["arguments"]).intersection(set(reference["arguments"]))) / len(set(prediction["arguments"]))
-            else:
+            elif len(reference["arguments"]) == 0:
                 score = 1.0
-            if score > parameter_choice:
-                parameter_choice = score
+            else:
+                score = 0.0
+            if score > argument_name_precision:
+                argument_name_precision = score
 
-        parameter_values = 0.0
+
+        argument_value_precision = 0.0
+
         for reference in references:
             value_matches = 0
+
             for key, val in prediction["arguments"].items():
                 try:
                     predicted = json.dumps(val, sort_keys=True)
                     target = json.dumps(reference["arguments"][key], sort_keys=True)
-                    if predicted in target or target in predicted:
+                    if predicted == target:
                         value_matches += 1
                 except:
                     pass
 
             if len(prediction["arguments"]) > 0:
-
                 score = value_matches / len(prediction["arguments"])
-            else:
+            elif len(reference["arguments"]) == 0:
                 score = 1.0
-            if score > parameter_values:
-                parameter_values = score
-
+            else:
+                score = 0.0
+            if score > argument_value_precision:
+                argument_value_precision = score
 
         parameters = None
         for tool in task_data["__tools__"]:
@@ -847,20 +861,21 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
                 parameters = tool["function"]["parameters"]
 
         if parameters is None:
-            parameters_schema_validation = 0.0
+            argument_schema_validation = 0.0
         else:
             try:
                 self._schema.validate(parameters, prediction["arguments"], )
-                parameters_schema_validation = 1.0
+                argument_schema_validation = 1.0
             except self._schema.ValidationError:
-                parameters_schema_validation = 0.0
+                argument_schema_validation = 0.0
 
         return {
             self.main_score: exact_match,
-            "tool_choice": tool_choice,
-            "parameter_choice": parameter_choice,
-            "parameters_schema_validation": parameters_schema_validation,
-            "parameter_values": parameter_values
+            "tool_name_accuracy": tool_name_accuracy,
+            "argument_name_recall": argument_name_recall,
+            "argument_name_precision": argument_name_precision,
+            "argument_value_precision": argument_value_precision,
+            "argument_schema_validation": argument_schema_validation,
         }
 
 
@@ -3503,7 +3518,7 @@ class CustomF1(GlobalMetric):
 class KeyValueExtraction(GlobalMetric):
     prediction_type = Dict[str, str]
     metric: Metric
-    single_reference_per_prediction = True
+    single_reference_per_prediction = False
     main_score = ""
 
     def prepare(self):
@@ -3578,6 +3593,77 @@ class KeyValueExtraction(GlobalMetric):
             result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 0
 
         return result
+
+class  ToolCallKeyValueExtraction(KeyValueExtraction):
+    """Metrics that formulate ToolCall evaluation as a Key Value Extraction task.
+
+    Each argument and each nested value are first flatten to a key value.
+
+    { arguments : {"name" : "John", "address" : { "street" : "Main St", "City" : "Smallville" } } }
+
+    becomes
+
+    argument.names = "John"
+    argument.address.street = "Main St"
+    argument.address.city = "Smallvile"
+
+    Note that by default, if a parameter is a list of dictionaries, they are flattened with indexes
+
+     { arguments : {"addresses" : [{ "street" : "Main St", "City" : "Smallville" } ,
+                                   { "street" : "Log St", "City" : "BigCity" } ] } }
+
+    argument.address.0.street = "Main St"
+    argument.address.0.city = "Smallvile"
+    argument.address.1.street = "Log St"
+    argument.address.1.city = "BigCity"
+
+    But if each dictionary  in the list has a single unique key, it is used instead.
+
+    { arguments : {"addresses" : [ { "home" : { "street" : "Main St", "City" : "Smallville" }} ,
+                                   { "work"  : {"street" : "Log St", "City" : "BigCity" } ] } }
+
+    argument.address.home.street = "Main St"
+    argument.address.home.city = "Smallvile"
+    argument.address.work.street = "Log St"
+    argument.address.work.city = "BigCity"
+
+    """
+    prediction_type = ToolCall
+
+    flatten_list_of_dictionaries = False
+
+    def flatten_dict(self,nested_dict, parent_key="", sep="."):
+        flat_dict = {}
+        for k, v in nested_dict.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+
+
+
+
+            if isoftype(v, List[Dict[Any,Any]]):
+                if (all(len(d) == 1 for d in v)):
+                    keys = [next(iter(d.keys())) for d in v]
+                    if len(keys) == len(set(keys)):
+                        for e in v:
+                            flat_dict.update(self.flatten_dict(e, f"{new_key}",sep=sep))
+                        continue
+                for i,e in enumerate(v):
+                    flat_dict.update(self.flatten_dict(e, f"{new_key}{sep}{i}",sep=sep))
+            elif isoftype(v, Dict[Any,Any]):
+                flat_dict.update(self.flatten_dict(v, new_key, sep=sep))
+            else:
+                flat_dict[new_key] = v
+        return flat_dict
+
+    def compute(
+        self,
+        references: List[List[ToolCall]],
+        predictions: List[ToolCall],
+        task_data: List[Dict],
+    ) -> dict:
+        return super().compute([[ self.flatten_dict(r) for r in ref ] for ref in references],
+                    [ self.flatten_dict(p) for p in predictions],task_data)
+
 
 
 class NER(CustomF1):
@@ -6250,7 +6336,7 @@ class GraniteGuardianBase(InstanceMetric):
         return result
 
     def create_message(self, role: str, content: str) -> List[Dict[str, str]]:
-        return [{"role": role, "content": content}]
+        return [{"role": role, "content": str(content)}]
 
     def parse_output(self, generated_tokens_list):
         top_tokens_list = [
@@ -6381,12 +6467,22 @@ class GraniteGuardianAgenticRisk(GraniteGuardianBase):
 
     def process_input_fields(self, task_data):
         messages = []
+
+        tools = task_data[self.tools_field]
+        if isinstance(tools, str):
+            tools = json.loads(tools)
+
         messages += self.create_message(
-            "tools", json.loads(task_data[self.tools_field])
+            "tools", tools
         )
         messages += self.create_message("user", task_data[self.user_message_field])
+
+        calls = task_data[self.assistant_message_field]
+        if isinstance(calls, str):
+            calls = json.loads(calls)
+
         messages += self.create_message(
-            "assistant", task_data[self.assistant_message_field]
+            "assistant", calls
         )
         return messages
 
