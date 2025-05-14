@@ -131,3 +131,33 @@ class TestBenchmark(UnitxtTestCase):
 
         for instance in test_dataset:
             self.assertTrue(instance["source"].startswith('[{"role": '))
+
+    def test_benchmark_with_split_size_limit(self):
+        benchmark = Benchmark(
+            format="formats.chat_api",
+            max_test_instances=16,
+            loader_limit=30,
+            subsets={
+                "cola": Benchmark(
+                    format="formats.user_agent",
+                    max_samples_per_subset=1,
+                    loader_limit=300,
+                    subsets={
+                        "cola": DatasetRecipe(
+                            card="cards.cola",
+                            template="templates.classification.multi_class.instruction",
+                        ),
+                        "wnli": DatasetRecipe(
+                            card="cards.wnli",
+                            format="formats.empty",
+                            template="templates.classification.multi_class.relation.default",
+                        ),
+                    },
+                ),
+                "wnli": DatasetRecipe(
+                    card="cards.wnli",
+                    template="templates.classification.multi_class.relation.default",
+                ),
+            },
+        )
+        self.assertEqual(len(list(benchmark()["test"])), 18)
