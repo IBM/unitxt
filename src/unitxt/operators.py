@@ -1760,6 +1760,15 @@ class SplitByNestedGroup(MultiStreamOperator):
 
         return MultiStream.from_iterables(result)
 
+class AddIncrementalId(StreamOperator):
+
+    to_field: str
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        for i, instance in enumerate(stream):
+            instance[self.to_field] = i
+            yield instance
+
 
 class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
     """Applies stream operators to a stream based on specified fields in each instance.
