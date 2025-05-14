@@ -1,7 +1,7 @@
 {
-    "__type__": "input_output_template",
+    "__type__": "multi_reference_template",
     "input_format": "{query}",
-    "output_format": "{call}",
+    "references_field": "reference_calls",
     "postprocessors": [
         "processors.load_json_or_empty_tool_call"
     ]
