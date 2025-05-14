@@ -20,8 +20,8 @@ description = (
 )
 
 datasets = [
-    {"hf_name": "REAL-MM-RAG_FinSlides", "unitxt_name": "real_mm_rag_fine_slides"},
-    {"hf_name": "REAL-MM-RAG_FinReport", "unitxt_name": "real_mm_rag_fine_report"},
+    {"hf_name": "REAL-MM-RAG_FinSlides", "unitxt_name": "real_mm_rag_fin_slides"},
+    {"hf_name": "REAL-MM-RAG_FinReport", "unitxt_name": "real_mm_rag_fin_report"},
     {"hf_name": "REAL-MM-RAG_TechReport", "unitxt_name": "real_mm_rag_tech_report"},
     {"hf_name": "REAL-MM-RAG_TechSlides", "unitxt_name": "real_mm_rag_tech_slides"},
 ]
