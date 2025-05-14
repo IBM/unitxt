@@ -30,14 +30,15 @@ conda create -y -n torr_env python=3.10
 conda activate torr_env
 ```
 
-* Set Environment Variables
+* Set environment variables
 
 ```
 export UNITXT_ALLOW_UNVERIFIED_CODE=True
 ```
 
 * Install Unitxt library
-To use, customize, or run the ToRR benchmark, install the Unitxt library in development mode
+
+To work with the ToRR benchmark, install Unitxt in development mode
 
 ```
 git clone https://github.com/IBM/unitxt.git
@@ -47,7 +48,7 @@ pip install -e ".[dev]"
 
 * Install additional dependencies as required
 
-To run the ToRR benchmark with inference engines, install the required dependencies:
+To run model inference on the ToRR benchmark, install required additional packages:
 
 ```bash
 pip install -r prepare/benchmarks/torr/requirements.txt
@@ -55,7 +56,7 @@ pip install -r prepare/benchmarks/torr/requirements.txt
 
 * Sample code for running the benchmark
 
-By default, ToRR Benchmark is registered in local Unitxt catalog by the name "benchmarks.torr" when you install Unitxt. Here is a sample code showing the benchmark use.
+By default, ToRR Benchmark is registered in local Unitxt catalog by the name "benchmarks.torr" when you install Unitxt. Here is a sample code showing the benchmark use with an inference engine.
 
 ```
 from unitxt import evaluate, load_dataset, settings
