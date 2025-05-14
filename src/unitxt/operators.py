@@ -324,6 +324,21 @@ def recursive_key_value_replace(data, target_key, value_map, value_remove=None):
     return data
 
 class RecursiveReplace(InstanceOperator):
+    # Assisted by watsonx Code Assistant
+    """An operator to recursively replace values in dictionary fields of instances based on a key and a mapping of values.
+
+    Attributes:
+        key (str): The key in the dictionary to start the replacement process.
+        map_values (dict): A dictionary containing the key-value pairs to replace the original values.
+        remove_values (Optional[list]): An optional list of values to remove from the dictionary. Defaults to None.
+
+    Example:
+    RecursiveReplace(key="a", map_values={"1": "hi", "2": "bye" }, remove_values=["3"])
+        replaces the value of key "a" in all instances of all streams:
+        instance ``{"field" : [{"a": "1", "b" : "2"}, {"a" : "3", "b:" "4"}}` becomes ``{"field" : [{"a": "hi", "b" : "2"}, {"b": "4"}}``
+
+        Notice how the value of field ``"a"`` in the first instance is replaced with ``"hi"`` and the value of field ``"a"`` in the second instance is removed.
+    """
     key: str
     map_values: dict
     remove_values: Optional[list] = None

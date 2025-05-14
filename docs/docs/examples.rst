@@ -92,7 +92,7 @@ The model is expected to generate tool calls and these are compared to the refer
  
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/tool_call_evaluation.py>`__
 
-Related documentation: :ref:`Tool calling task in catalog <catalog.tasks.tool_calling.supervised>`,:ref:`Tool calling tutorial <tool_calling>`,
+Related documentation: :ref:`Tool calling task in catalog <catalog.tasks.tool_calling.supervised>`, :ref:`Tool calling tutorial <tool_calling>`
 
 
 Evaluate API Call 
@@ -106,7 +106,7 @@ using  the standard key_value_extraction metric.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/api_call_evaluation.py>`__
 
-Related documentation: :ref:`Key Value Extraction metric in catalog <catalog.metrics.key_value_extraction>`,:ref:`Templates tutorial <adding_template>`,
+Related documentation: :ref:`Key Value Extraction metric in catalog <catalog.metrics.key_value_extraction>`, :ref:`Templates tutorial   <adding_template>`
 
 Evaluate using Unitxt metrics on existing predictions
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
