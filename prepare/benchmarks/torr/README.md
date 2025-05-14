@@ -1,6 +1,6 @@
 # ToRR Benchmark
 
-** Official code repository for paper "ToRR: A Multifaceted Benchmark for Table Reasoning and Robustness" **
+** Official code repository for paper "The Mighty ToRR: A Benchmark for Table Reasoning and Robustness" **
 
 ToRR is an open-source benchmark designed by domain experts to evaluate model performance and robustness on table reasoning tasks.
 
@@ -24,19 +24,87 @@ It encompasses 10 datasets belonging to six diverse downstream tabular tasks fro
 
 ## Usage
 
-To use the **ToRR** benchmark, first ensure you have [`unitxt`](https://github.com/IBM/unitxt) installed. 
+* Create conda environment
+```
+conda create -y -n torr_env python=3.10
+conda activate torr_env
+```
 
-By default, ToRR Benchmark is registered in your local Unitxt catalog by the name "benchmarks.torr" when you install Unitxt([torr.py](torr.py) contains the main script for creating and registering the benchmark in Unitxt catalog). 
+* Set Environment Variables
 
-Refer to [this](https://www.unitxt.ai/en/latest/docs/benchmark.html#benchmarks) link for running the benchmark in your environment.
+```
+export UNITXT_ALLOW_UNVERIFIED_CODE=True
+```
+
+* Install Unitxt library
+To use, customize, or run the ToRR benchmark, install the Unitxt library in development mode
+
+```
+git clone https://github.com/IBM/unitxt.git
+cd unitxt
+pip install -e ".[dev]"
+```
+
+* Install additional dependencies as required
+
+To run the ToRR benchmark with inference engines, install the required dependencies:
+
+```bash
+pip install -r prepare/benchmarks/torr/requirements.txt
+```
+
+* Sample code for running the benchmark
+
+By default, ToRR Benchmark is registered in local Unitxt catalog by the name "benchmarks.torr" when you install Unitxt. Here is a sample code showing the benchmark use.
+
+```
+from unitxt import evaluate, load_dataset, settings
+from unitxt.inference import (
+    HFPipelineBasedInferenceEngine,
+)
+
+test_dataset = load_dataset(
+    "benchmarks.torr",
+    split="test",
+    use_cache=True,
+)
+
+# Infer using inference engine and LLM of your choice
+model = HFPipelineBasedInferenceEngine(		# We used Together AI as inference engine
+    model_name="google/flan-t5-base", max_new_tokens=512	
+)
+
+predictions = model(test_dataset)
+results = evaluate(predictions=predictions, data=test_dataset)
+
+print("Global scores:")
+print(results.global_scores.summary)
+print("Subsets scores:")
+print(results.subsets.scores.summary)
+```
+
+
+## Additional Details
+
+For details on ToRR benchmark integration in Unitxt, see the [registration script](torr.py) and for the internal configuration details of the benchmark refer to corresponding [Unitxt recipe file](../../../prepare/recipes/torr.py).
+
+
+To customize ToRR benchmark, refer to [this example](../../../examples/evaluate_torr_custom_sizes.py).
+
+For general details on Unitxt benchmark support, refer to 
+[this](https://www.unitxt.ai/en/latest/docs/benchmark.html).
 
 
 ## Contact
-For any help, kindly email us at: email-id(NAME)
+For any help, kindly email us at: shir.ashury.tahan@ibm.com(Shir Ashury-Tahan)
 
 ## Citation
 
 ```
-@article{
+@article{ashury2025mighty,
+  title={The Mighty ToRR: A Benchmark for Table Reasoning and Robustness},
+  author={Ashury-Tahan, Shir and Mai, Yifan and C, Rajmohan and Gera, Ariel and Perlitz, Yotam and Yehudai, Asaf and Bandel, Elron and Choshen, Leshem and Shnarch, Eyal and Liang, Percy and Shmueli-Scheuer, Michal and others},
+  journal={arXiv preprint arXiv:2502.19412},
+  year={2025}
 }
 ```
