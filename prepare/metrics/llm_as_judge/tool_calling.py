@@ -68,6 +68,6 @@ tool_calling_metric = LLMJudgeDirect(
 
 add_to_catalog(
     tool_calling_metric,
-    "metrics.tool_usage.tool_calling_correctness.llama_3_3_70b_instruct_judge",
+    "metrics.tool_calling.correctness.llama_3_3_70b_instruct_judge",
     overwrite=True,
 )
