@@ -848,8 +848,10 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
 
             if len(prediction["arguments"]) > 0:
                 score = value_matches / len(prediction["arguments"])
-            else:
+            elif len(reference["arguments"]) == 0:
                 score = 1.0
+            else:
+                score = 0.0
             if score > argument_value_precision:
                 argument_value_precision = score
 
@@ -3593,17 +3595,61 @@ class KeyValueExtraction(GlobalMetric):
         return result
 
 class  ToolCallKeyValueExtraction(KeyValueExtraction):
+    """Metrics that formulate ToolCall evaluation as a Key Value Extraction task.
+
+    Each argument and each nested value are first flatten to a key value.
+
+    { arguments : {"name" : "John", "address" : { "street" : "Main St", "City" : "Smallville" } } }
+
+    becomes
+
+    argument.names = "John"
+    argument.address.street = "Main St"
+    argument.address.city = "Smallvile"
+
+    Note that by default, if a parameter is a list of dictionaries, they are flattened with indexes
+
+     { arguments : {"addresses" : [{ "street" : "Main St", "City" : "Smallville" } ,
+                                   { "street" : "Log St", "City" : "BigCity" } ] } }
+
+    argument.address.0.street = "Main St"
+    argument.address.0.city = "Smallvile"
+    argument.address.1.street = "Log St"
+    argument.address.1.city = "BigCity"
+
+    But if each dictionary  in the list has a single unique key, it is used instead.
+
+    { arguments : {"addresses" : [ { "home" : { "street" : "Main St", "City" : "Smallville" }} ,
+                                   { "work"  : {"street" : "Log St", "City" : "BigCity" } ] } }
+
+    argument.address.home.street = "Main St"
+    argument.address.home.city = "Smallvile"
+    argument.address.work.street = "Log St"
+    argument.address.work.city = "BigCity"
+
+    """
     prediction_type = ToolCall
+
+    flatten_list_of_dictionaries = False
 
     def flatten_dict(self,nested_dict, parent_key="", sep="."):
         flat_dict = {}
         for k, v in nested_dict.items():
             new_key = f"{parent_key}{sep}{k}" if parent_key else k
-            if isinstance(v, list):
-                for e in v:
-                    if isinstance(e,dict):
-                        flat_dict.update(self.flatten_dict(e, new_key, sep=sep))
-            elif isinstance(v, dict):
+
+
+
+
+            if isoftype(v, List[Dict[Any,Any]]):
+                if (all(len(d) == 1 for d in v)):
+                    keys = [next(iter(d.keys())) for d in v]
+                    if len(keys) == len(set(keys)):
+                        for e in v:
+                            flat_dict.update(self.flatten_dict(e, f"{new_key}",sep=sep))
+                        continue
+                for i,e in enumerate(v):
+                    flat_dict.update(self.flatten_dict(e, f"{new_key}{sep}{i}",sep=sep))
+            elif isoftype(v, Dict[Any,Any]):
                 flat_dict.update(self.flatten_dict(v, new_key, sep=sep))
             else:
                 flat_dict[new_key] = v
@@ -6290,7 +6336,7 @@ class GraniteGuardianBase(InstanceMetric):
         return result
 
     def create_message(self, role: str, content: str) -> List[Dict[str, str]]:
-        return [{"role": role, "content": content}]
+        return [{"role": role, "content": str(content)}]
 
     def parse_output(self, generated_tokens_list):
         top_tokens_list = [
@@ -6421,12 +6467,22 @@ class GraniteGuardianAgenticRisk(GraniteGuardianBase):
 
     def process_input_fields(self, task_data):
         messages = []
+
+        tools = task_data[self.tools_field]
+        if isinstance(tools, str):
+            tools = json.loads(tools)
+
         messages += self.create_message(
-            "tools", json.loads(task_data[self.tools_field])
+            "tools", tools
         )
         messages += self.create_message("user", task_data[self.user_message_field])
+
+        calls = task_data[self.assistant_message_field]
+        if isinstance(calls, str):
+            calls = json.loads(calls)
+
         messages += self.create_message(
-            "assistant", task_data[self.assistant_message_field]
+            "assistant", calls
         )
         return messages
 
