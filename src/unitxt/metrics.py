@@ -794,6 +794,25 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
     prediction_type = ToolCall
     _requirements_list = ["jsonschema-rs"]
 
+    def flatten_dict(self,nested_dict, parent_key="", sep="."):
+        flat_dict = {}
+        for k, v in nested_dict.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+            if isoftype(v, List[Dict[Any,Any]]):
+                if (all(len(d) == 1 for d in v)):
+                    keys = [next(iter(d.keys())) for d in v]
+                    if len(keys) == len(set(keys)):
+                        for e in v:
+                            flat_dict.update(self.flatten_dict(e, f"{new_key}",sep=sep))
+                        continue
+                for _, e in enumerate(v):
+                    flat_dict.update(self.flatten_dict(e, f"{new_key}",sep=sep))
+            elif isoftype(v, Dict[Any,Any]):
+                flat_dict.update(self.flatten_dict(v, new_key, sep=sep))
+            else:
+                flat_dict[new_key] = v
+        return flat_dict
+
     def prepare(self):
         super().prepare()
         import jsonschema_rs
@@ -803,8 +822,10 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
         self, prediction: ToolCall, references: List[ToolCall], task_data: Dict[str, Any]
     ) -> Dict[str, float]:
 
+        flatten_prediction = self.flatten_dict(prediction)
+        flatten_reference = self.flatten_dict(references[0])
         exact_match = float(
-            json.dumps(prediction, sort_keys=True) in [json.dumps(reference, sort_keys=True) for reference in references]
+            json.dumps(flatten_prediction, sort_keys=True) in [json.dumps(flatten_reference, sort_keys=True)]
         )
 
         tool_name_accuracy = float(
@@ -833,27 +854,21 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
 
 
         argument_value_precision = 0.0
-
-        for reference in references:
-            value_matches = 0
-
-            for key, val in prediction["arguments"].items():
-                try:
-                    predicted = json.dumps(val, sort_keys=True)
-                    target = json.dumps(reference["arguments"][key], sort_keys=True)
-                    if predicted == target:
-                        value_matches += 1
-                except:
-                    pass
-
-            if len(prediction["arguments"]) > 0:
-                score = value_matches / len(prediction["arguments"])
-            elif len(reference["arguments"]) == 0:
-                score = 1.0
-            else:
-                score = 0.0
-            if score > argument_value_precision:
-                argument_value_precision = score
+        value_matches = 0
+        for key in flatten_prediction:
+            if key == "name":
+                continue
+            if key in flatten_reference:
+                if flatten_reference[key] == flatten_prediction[key]:
+                    value_matches += 1
+        if len(flatten_prediction) - 1 > 0:
+            score = value_matches / (len(flatten_prediction) - 1)
+        elif len(flatten_reference) - 1 == 0:
+            score = 1.0
+        else:
+            score = 0.0
+        if score > argument_value_precision:
+            argument_value_precision = score
 
         parameters = None
         for tool in task_data["__tools__"]:
@@ -3636,10 +3651,6 @@ class  ToolCallKeyValueExtraction(KeyValueExtraction):
         flat_dict = {}
         for k, v in nested_dict.items():
             new_key = f"{parent_key}{sep}{k}" if parent_key else k
-
-
-
-
             if isoftype(v, List[Dict[Any,Any]]):
                 if (all(len(d) == 1 for d in v)):
                     keys = [next(iter(d.keys())) for d in v]
@@ -3647,8 +3658,8 @@ class  ToolCallKeyValueExtraction(KeyValueExtraction):
                         for e in v:
                             flat_dict.update(self.flatten_dict(e, f"{new_key}",sep=sep))
                         continue
-                for i,e in enumerate(v):
-                    flat_dict.update(self.flatten_dict(e, f"{new_key}{sep}{i}",sep=sep))
+                for _,e in enumerate(v):
+                    flat_dict.update(self.flatten_dict(e, f"{new_key}",sep=sep))
             elif isoftype(v, Dict[Any,Any]):
                 flat_dict.update(self.flatten_dict(v, new_key, sep=sep))
             else:
