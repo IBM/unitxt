@@ -11,13 +11,34 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "add_incremental_id",
-            "to_field": "document_id"
+            "__type__": "rename_splits",
+            "mapper": {
+                "test": "train"
+            }
         },
         {
-            "__type__": "cast",
-            "field": "document_id",
-            "to": "str"
+            "__type__": "copy",
+            "field": "image",
+            "to_field": "image_content_to_hash"
+        },
+        {
+            "__type__": "execute_expression",
+            "to_field": "image_content_to_hash",
+            "expression": "hashlib.md5(image.tobytes()).hexdigest()",
+            "imports_list": [
+                "hashlib"
+            ]
+        },
+        {
+            "__type__": "unique",
+            "fields": [
+                "image_content_to_hash"
+            ]
+        },
+        {
+            "__type__": "copy",
+            "field": "image_content_to_hash",
+            "to_field": "document_id"
         },
         {
             "__type__": "to_image",

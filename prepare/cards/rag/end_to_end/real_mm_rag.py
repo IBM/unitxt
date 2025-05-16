@@ -5,7 +5,15 @@ from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Wrap
 from unitxt.image_operators import ToImage
 from unitxt.loaders import LoadHF
-from unitxt.operators import AddIncrementalId, Cast, Copy, FilterByCondition
+from unitxt.operators import (
+    AddIncrementalId,
+    Cast,
+    Copy,
+    ExecuteExpression,
+    FilterByCondition,
+    Unique,
+)
+from unitxt.splitters import RenameSplits, SplitRandomMix
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
@@ -44,21 +52,25 @@ for dataset in datasets:
             data_classification_policy=["public"],
         ),
         preprocess_steps=[
-            AddIncrementalId(to_field="reference_context_ids"),
-            Cast(field="reference_context_ids", to="str"),
             FilterByCondition(values={"query": None}, condition="ne"),
-            AddIncrementalId(to_field="question_id"),
-            Cast(field="question_id", to="str"),
-            # SplitRandomMix(
-            #     {
-            #         "test": "test[30%]",
-            #         "train": "test[70%]",
-            #     }),
+            ExecuteExpression(
+                to_field="image",
+                expression="hashlib.md5(image.tobytes()).hexdigest()",
+                imports_list=["hashlib"]
+            ),
             Copy(
                 field_to_field={
+                    "image": "reference_context_ids",
                     "query": "question",
-                },
+                }
             ),
+            AddIncrementalId(to_field="question_id"),
+            Cast(field="question_id", to="str"),
+            SplitRandomMix(
+                {
+                    "test": "test[30%]",
+                    "train": "test[70%]",
+                }),
             Wrap(
                 field="answer",
                 inside="list",
@@ -101,8 +113,15 @@ for dataset in datasets:
             data_classification_policy=["public"],
         ),
         preprocess_steps=[
-            AddIncrementalId(to_field="document_id"),
-            Cast(field="document_id", to="str"),
+            RenameSplits({"test": "train"}),
+            Copy(field="image", to_field="image_content_to_hash"),
+            ExecuteExpression(
+                to_field="image_content_to_hash",
+                expression="hashlib.md5(image.tobytes()).hexdigest()",
+                imports_list=["hashlib"]
+            ),
+            Unique(fields=["image_content_to_hash"]),
+            Copy(field="image_content_to_hash", to_field="document_id"),
             ToImage(field="image"),
             Wrap(field="image", inside="list", to_field="passages"),
         ],

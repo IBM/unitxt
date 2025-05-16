@@ -84,7 +84,7 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import DynamicStream, Stream
+from .stream import DynamicStream, ListStream, Stream
 from .text_utils import nested_tuple_to_string, to_pretty_string
 from .type_utils import isoftype
 from .utils import (
@@ -1691,11 +1691,13 @@ class Unique(SingleStreamReducer):
 
     def process(self, stream: Stream) -> Stream:
         seen = set()
+        instances = []
         for instance in stream:
             values = self.to_tuple(instance, self.fields)
             if values not in seen:
                 seen.add(values)
-        return list(seen)
+                instances.append(instance)
+        return ListStream(instances_list=instances)
 
 
 class SplitByValue(MultiStreamOperator):
