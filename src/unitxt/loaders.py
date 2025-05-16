@@ -1036,7 +1036,7 @@ class LoadFromAPI(Loader):
     chunksize: int = 100000
     loader_limit: Optional[int] = None
     streaming: bool = False
-    api_key_env_var: str = "SQL_API_KEY"
+    api_key_env_var: Optional[str] = ""
     headers: Optional[Dict[str, Any]] = None
     data_field: str = "data"
     method: str = "GET"
@@ -1049,17 +1049,23 @@ class LoadFromAPI(Loader):
         self.set_default_data_classification(["proprietary"], "when loading from API")
 
     def load_iterables(self) -> Dict[str, Iterable]:
-        api_key = os.getenv(self.api_key_env_var, None)
-        if not api_key:
-            raise ValueError(
-                f"The environment variable '{self.api_key_env_var}' must be set to use the LoadFromAPI loader."
-            )
+        if self.api_key_env_var is not None:
+            api_key = os.getenv(self.api_key_env_var, None)
+            if not api_key:
+                raise ValueError(
+                    f"The environment variable '{self.api_key_env_var}' must be set to use the LoadFromAPI loader."
+                )
+        else:
+            api_key = None
 
         base_headers = {
             "Content-Type": "application/json",
             "accept": "application/json",
-            "Authorization": f"Bearer {api_key}",
         }
+        
+        if api_key is not None: 
+            base_headers["Authorization"] = f"Bearer {api_key}"
+
         if self.headers:
             base_headers.update(self.headers)
 
