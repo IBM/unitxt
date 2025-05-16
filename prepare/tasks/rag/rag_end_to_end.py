@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Union
 
 from unitxt import add_to_catalog
 from unitxt.blocks import Task
-from unitxt.types import Dialog, RagResponse
+from unitxt.types import Dialog, Image, RagResponse
 
 add_to_catalog(
     Task(
@@ -50,7 +50,7 @@ add_to_catalog(
         input_fields={
             "document_id": str,
             "title": str,
-            "passages": List[str],
+            "passages": List[Union[str, Image]],
             "metadata_tags": Dict[str, str],
         },
         reference_fields={},
