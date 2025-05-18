@@ -196,7 +196,7 @@
       <br>
       <br>
       <div class="large-text-black">
-         Unitxt was built by IBM Research to host a maintainable large collection of evaluation assets. If you care about robust evaluation that last, then Unitxt is for you.
+         Unitxt was built to host a maintainable large collection of evaluation assets. If you care about robust evaluation that last, then Unitxt is for you.
       </div>
       <br>
       <br>
@@ -230,10 +230,6 @@
                color: black;
          }
       </style>
-      <div class="ibm-logo">
-        <div class="ibm-text">IBM</div>
-        <div class="research-text">Research</div>
-      </div>
    </div>
    </div>
    </div>

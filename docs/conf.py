@@ -25,7 +25,6 @@ create_catalog_docs()
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "Unitxt"
-copyright = "2023, IBM Research"
 author = "IBM Research"
 release = constants.version
 html_short_title = "Unitxt"
