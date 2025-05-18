@@ -3,15 +3,14 @@ import json
 from unitxt import add_to_catalog
 from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Wrap
-from unitxt.image_operators import ToImage
+from unitxt.image_operators import HashImage, ToImage
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
     AddIncrementalId,
     Cast,
     Copy,
-    ExecuteExpression,
+    Deduplicate,
     FilterByCondition,
-    Unique,
 )
 from unitxt.splitters import RenameSplits, SplitRandomMix
 from unitxt.templates import InputOutputTemplate
@@ -28,10 +27,10 @@ description = (
 )
 
 datasets = [
-    {"hf_name": "REAL-MM-RAG_FinSlides", "unitxt_name": "real_mm_rag_fin_slides"},
-    {"hf_name": "REAL-MM-RAG_FinReport", "unitxt_name": "real_mm_rag_fin_report"},
-    {"hf_name": "REAL-MM-RAG_TechReport", "unitxt_name": "real_mm_rag_tech_report"},
-    {"hf_name": "REAL-MM-RAG_TechSlides", "unitxt_name": "real_mm_rag_tech_slides"},
+    {"hf_name": "REAL-MM-RAG_FinSlides", "subset": "fin_slides"},
+    {"hf_name": "REAL-MM-RAG_FinReport", "subset": "fin_report"},
+    {"hf_name": "REAL-MM-RAG_TechReport", "subset": "tech_report"},
+    {"hf_name": "REAL-MM-RAG_TechSlides", "subset": "tech_slides"},
 ]
 
 hf_ibm_research = "ibm-research"
@@ -41,7 +40,7 @@ for dataset in datasets:
     hf_name = dataset["hf_name"]
     hf_dataset_id = f"{hf_ibm_research}/{hf_name}"
     hf_url = f"{hf_url_base}/{hf_dataset_id}"
-    unitxt_name = dataset["unitxt_name"]
+    subset = dataset["subset"]
 
     # first we create the card for the benchmark
     card = TaskCard(
@@ -53,17 +52,11 @@ for dataset in datasets:
         ),
         preprocess_steps=[
             FilterByCondition(values={"query": None}, condition="ne"),
-            ExecuteExpression(
-                to_field="image",
-                expression="hashlib.md5(image.tobytes()).hexdigest()",
-                imports_list=["hashlib"]
+            HashImage(
+                field="image",
+                to_field="reference_context_ids",
             ),
-            Copy(
-                field_to_field={
-                    "image": "reference_context_ids",
-                    "query": "question",
-                }
-            ),
+            Copy( field="query", to_field="question"),
             AddIncrementalId(to_field="question_id"),
             Cast(field="question_id", to="str"),
             SplitRandomMix(
@@ -85,6 +78,7 @@ for dataset in datasets:
         task="tasks.rag.end_to_end",
         templates={"default": "templates.rag.end_to_end.json_predictions"},
         __tags__={"license": "cdla-permissive-2.0", "url": hf_url},
+        __title__=dataset["hf_name"].replace("-", "").replace("_", ": "),
         __description__=description,
     )
 
@@ -102,7 +96,7 @@ for dataset in datasets:
         debug=False,
     )
 
-    add_to_catalog(card, f"cards.rag.benchmark.{unitxt_name}.en", overwrite=True)
+    add_to_catalog(card, f"cards.rag.benchmark.real_mm_rag.{subset}", overwrite=True)
 
     # next we create the card for the pages (documents)
     card = TaskCard(
@@ -114,14 +108,11 @@ for dataset in datasets:
         ),
         preprocess_steps=[
             RenameSplits({"test": "train"}),
-            Copy(field="image", to_field="image_content_to_hash"),
-            ExecuteExpression(
-                to_field="image_content_to_hash",
-                expression="hashlib.md5(image.tobytes()).hexdigest()",
-                imports_list=["hashlib"]
+            HashImage(
+                field="image",
+                to_field="document_id",
             ),
-            Unique(fields=["image_content_to_hash"]),
-            Copy(field="image_content_to_hash", to_field="document_id"),
+            Deduplicate(by=["document_id"]),
             ToImage(field="image"),
             Wrap(field="image", inside="list", to_field="passages"),
         ],
@@ -133,7 +124,8 @@ for dataset in datasets:
             ),
         },
         __tags__={"license": "cdla-permissive-2.0", "url": hf_url},
+        __title__=dataset["hf_name"].replace("-", "").replace("_", ": "),
         __description__=description,
     )
     # Not testing card, because documents are not evaluated.
-    add_to_catalog(card, f"cards.rag.documents.{unitxt_name}.en", overwrite=True)
+    add_to_catalog(card, f"cards.rag.documents.real_mm_rag.{subset}", overwrite=True)

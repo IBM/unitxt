@@ -48,10 +48,8 @@ from unitxt.operators import (
     Set,
     Shuffle,
     ShuffleFieldValues,
-    SplitByValue,
     StreamRefiner,
     TakeByField,
-    Unique,
     ZipFieldValues,
 )
 from unitxt.stream import MultiStream
@@ -1060,21 +1058,6 @@ label (str):
             tester=self,
         )
 
-    def test_unique_on_single_field(self):
-        inputs = [
-            {"a": [1, 5], "b": 2},
-            {"a": [2, 5], "b": 3},
-            {"a": [2, 5], "b": 4},
-        ]
-
-        targets = {((1, 5),), ((2, 5),)}
-
-        outputs = apply_operator(
-            operator=Unique(fields=["a"]),
-            inputs=inputs,
-        )
-
-        self.assertSetEqual(set(outputs), targets)
 
     def test_apply_stream_operators_field(self):
         inputs = [
@@ -1104,48 +1087,6 @@ label (str):
             ],
             outputs,
         )
-
-    def test_unique_on_multiple_fields(self):
-        inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
-            {"a": 2, "b": 4},
-            {"a": 1, "b": 2},
-        ]
-        fields = ["a", "b"]
-        targets = {(1, 2), (2, 3), (2, 4)}
-
-        outputs = apply_operator(
-            operator=Unique(fields=fields),
-            inputs=inputs,
-        )
-
-        self.assertSetEqual(set(outputs), targets)
-
-    def test_split_by_value(self):
-        inputs = [
-            {"a": 1, "b": 4},
-            {"a": 2, "b": 3},
-            {"a": 2, "b": 4},
-        ]
-
-        outputs = apply_operator(
-            operator=SplitByValue(fields="a"), inputs=inputs, return_multi_stream=True
-        )
-
-        self.assertSetEqual(set(outputs.keys()), {"test_1", "test_2"})
-
-        outputs_1 = list(outputs["test_1"])
-        self.assertEqual(len(outputs_1), 1)
-
-        outputs_2 = list(outputs["test_2"])
-        self.assertEqual(len(outputs_2), 2)
-
-        for input_dict, output_dict in zip(inputs, outputs_1):
-            self.assertDictEqual(input_dict, output_dict)
-
-        for input_dict, output_dict in zip(inputs[1:], outputs_2):
-            self.assertDictEqual(input_dict, output_dict)
 
     def test_merge(self):
         # Test with default params

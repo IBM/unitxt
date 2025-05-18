@@ -76,7 +76,6 @@ from .operator import (
     PagedStreamOperator,
     SequentialOperator,
     SideEffectOperator,
-    SingleStreamReducer,
     SourceOperator,
     StreamingOperator,
     StreamInitializerOperator,
@@ -84,8 +83,8 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import DynamicStream, ListStream, Stream
-from .text_utils import nested_tuple_to_string, to_pretty_string
+from .stream import DynamicStream, Stream
+from .text_utils import to_pretty_string
 from .type_utils import isoftype
 from .utils import (
     LRUCache,
@@ -1668,65 +1667,6 @@ class RemoveValues(FieldOperator):
         if not isinstance(value, list):
             raise ValueError(f"The value in field is not a list but '{value}'")
         return [e for e in value if e not in self.unallowed_values]
-
-
-class Unique(SingleStreamReducer):
-    """Reduces a stream to unique instances based on specified fields.
-
-    Args:
-        fields (List[str]): The fields that should be unique in each instance.
-    """
-
-    fields: List[str] = field(default_factory=list)
-
-    @staticmethod
-    def to_tuple(instance: dict, fields: List[str]) -> tuple:
-        result = []
-        for field_name in fields:
-            value = instance[field_name]
-            if isinstance(value, list):
-                value = tuple(value)
-            result.append(value)
-        return tuple(result)
-
-    def process(self, stream: Stream) -> Stream:
-        seen = set()
-        instances = []
-        for instance in stream:
-            values = self.to_tuple(instance, self.fields)
-            if values not in seen:
-                seen.add(values)
-                instances.append(instance)
-        return ListStream(instances_list=instances)
-
-
-class SplitByValue(MultiStreamOperator):
-    """Splits a MultiStream into multiple streams based on unique values in specified fields.
-
-    Args:
-        fields (List[str]): The fields to use when splitting the MultiStream.
-    """
-
-    fields: List[str] = field(default_factory=list)
-
-    def process(self, multi_stream: MultiStream) -> MultiStream:
-        uniques = Unique(fields=self.fields)(multi_stream)
-
-        result = {}
-
-        for stream_name, stream in multi_stream.items():
-            stream_unique_values = uniques[stream_name]
-            for unique_values in stream_unique_values:
-                filtering_values = dict(zip(self.fields, unique_values))
-                filtered_streams = FilterByCondition(
-                    values=filtering_values, condition="eq"
-                )._process_single_stream(stream)
-                filtered_stream_name = (
-                    stream_name + "_" + nested_tuple_to_string(unique_values)
-                )
-                result[filtered_stream_name] = filtered_streams
-
-        return MultiStream(result)
 
 
 class SplitByNestedGroup(MultiStreamOperator):
