@@ -1,7 +1,7 @@
 import unitxt
 from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.loaders import LoadCSV
+from unitxt.loaders import LoadJsonFile
 from unitxt.operators import (
     Copy,
     ExecuteExpression,
@@ -14,9 +14,8 @@ base_path = "https://raw.githubusercontent.com/ShishirPatil/gorilla/70b6a4a21445
 
 with unitxt.settings.context(allow_unverified_code=True):
     card = TaskCard(
-        loader=LoadCSV(
+        loader=LoadJsonFile(
             files={"questions": base_path + "BFCL_v3_simple.json", "answers": base_path + "possible_answer/BFCL_v3_simple.json"},
-            file_type="json",
             lines=True,
             data_classification_policy=["public"],
         ),

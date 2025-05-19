@@ -1,12 +1,11 @@
 {
     "__type__": "task_card",
     "loader": {
-        "__type__": "load_csv",
+        "__type__": "load_json_file",
         "files": {
             "questions": "https://raw.githubusercontent.com/lmarena/arena-hard-auto/57451f35d2be7fef9f05d5567f36e4c959bb6630/data/arena-hard-v0.1/question.jsonl",
             "model_answer": "https://raw.githubusercontent.com/lmarena/arena-hard-auto/57451f35d2be7fef9f05d5567f36e4c959bb6630/data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl"
         },
-        "file_type": "json",
         "lines": true,
         "data_classification_policy": [
             "public"
