@@ -1,12 +1,11 @@
 {
     "__type__": "task_card",
     "loader": {
-        "__type__": "load_csv",
+        "__type__": "load_json_file",
         "files": {
             "train": "https://raw.githubusercontent.com/nyu-mll/quality/05e85750d4c5444d2a0a4ad299f6df5f4df06068/data/v1.0.1/QuALITY.v1.0.1.htmlstripped.train",
             "validation": "https://raw.githubusercontent.com/nyu-mll/quality/05e85750d4c5444d2a0a4ad299f6df5f4df06068/data/v1.0.1/QuALITY.v1.0.1.htmlstripped.dev"
         },
-        "file_type": "json",
         "lines": true,
         "data_classification_policy": [
             "public"

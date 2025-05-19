@@ -46,7 +46,6 @@ from typing import (
     Generator,
     Iterable,
     List,
-    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -66,6 +65,7 @@ from huggingface_hub import HfApi
 from tqdm import tqdm
 
 from .dataclass import NonPositionalField
+from .dict_utils import dict_get
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .fusion import FixedFusion
 from .logging_utils import get_logger
@@ -403,8 +403,77 @@ class LoadHF(LazyLoader):
                 if i + 1 >= limit:
                     break
 
+class LoadWithPandas(LazyLoader):
+    """Utility base class for classes loading with pandas."""
 
-class LoadCSV(LazyLoader):
+    files: Dict[str, str]
+    chunksize: int = 1000
+    loader_limit: Optional[int] = None
+    streaming: bool = True
+    compression: Optional[str] = None
+
+    def _maybe_set_classification_policy(self):
+        self.set_default_data_classification(
+            ["proprietary"], "when loading from local files"
+        )
+
+    def split_generator(self, split: str) -> Generator:
+        dataset_id = str(self) + "_" + split
+        dataset = self.__class__._loader_cache.get(dataset_id, None)
+        if dataset is None:
+            if self.get_limit() is not None:
+                self.log_limited_loading()
+            for attempt in range(settings.loaders_max_retries):
+                try:
+                    file = self.files[split]
+                    if self.get_limit() is not None:
+                        self.log_limited_loading()
+
+                    try:
+                        dataframe = self.read_dataframe(file)
+                        break
+                    except ValueError:
+                        import fsspec
+
+                        with fsspec.open(file, mode="rt") as file:
+                            dataframe = self.read_dataframe(file)
+                        break
+                except Exception as e:
+                    logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
+                    if attempt < settings.loaders_max_retries - 1:
+                        time.sleep(2)
+                    else:
+                        raise e
+
+            limit = self.get_limit()
+            if limit is not None and len(dataframe) > limit:
+                dataframe = dataframe.head(limit)
+
+            dataset = dataframe.to_dict("records")
+
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[dataset_id] = dataset
+
+        for instance in self.__class__._loader_cache[dataset_id]:
+            yield recursive_copy(instance)
+
+    def get_splits(self) -> List[str]:
+        return list(self.files.keys())
+
+
+    def get_args(self) -> Dict[str, Any]:
+        args = {}
+        if self.compression is not None:
+            args["compression"] = self.compression
+        if self.get_limit() is not None:
+            args["nrows"] = self.get_limit()
+        return args
+
+    @abstractmethod
+    def read_dataframe(self, file) -> pd.DataFrame:
+        ...
+
+class LoadCSV(LoadWithPandas):
     """Loads data from CSV files.
 
     Supports streaming and can handle large files by loading them in chunks.
@@ -424,77 +493,73 @@ class LoadCSV(LazyLoader):
             load_csv = LoadCSV(files={'train': 'path/to/train.csv'}, chunksize=100)
     """
 
-    files: Dict[str, str]
-    chunksize: int = 1000
-    loader_limit: Optional[int] = None
-    streaming: bool = True
     sep: str = ","
-    compression: Optional[str] = None
-    lines: Optional[bool] = None
-    file_type: Literal["csv", "json"] = "csv"
 
-    def _maybe_set_classification_policy(self):
-        self.set_default_data_classification(
-            ["proprietary"], "when loading from local files"
+    def read_dataframe(self, file) -> pd.DataFrame:
+        return pd.read_csv(
+            file,
+            sep=self.sep,
+            low_memory=self.streaming,
+            **self.get_args()
         )
 
-    def get_reader(self):
-        if self.file_type == "csv":
-            return pd.read_csv
-        if self.file_type == "json":
-            return pd.read_json
-        raise ValueError()
 
-    def get_args(self):
-        args = {}
-        if self.file_type == "csv":
-            args["sep"] = self.sep
-            args["low_memory"] = self.streaming
-        if self.compression is not None:
-            args["compression"] = self.compression
-        if self.lines is not None:
-            args["lines"] = self.lines
-        if self.get_limit() is not None:
-            args["nrows"] = self.get_limit()
-        return args
+def read_file(source) -> bytes:
 
-    def get_splits(self) -> List[str]:
-        return list(self.files.keys())
+    if hasattr(source, "read"):
+        return source.read()
 
-    def split_generator(self, split: str) -> Generator:
-        dataset_id = str(self) + "_" + split
-        dataset = self.__class__._loader_cache.get(dataset_id, None)
-        if dataset is None:
-            if self.get_limit() is not None:
-                self.log_limited_loading()
-            for attempt in range(settings.loaders_max_retries):
-                try:
-                    reader = self.get_reader()
-                    if self.get_limit() is not None:
-                        self.log_limited_loading()
+    if isinstance(source, str) and (source.startswith("http://") or source.startswith("https://")):
+        from urllib import request
+        with request.urlopen(source) as response:
+            return response.read()
 
-                    try:
-                        dataset = reader(self.files[split], **self.get_args()).to_dict(
-                            "records"
-                        )
-                        break
-                    except ValueError:
-                        import fsspec
+    with open(source, "rb") as f:
+        return f.read()
 
-                        with fsspec.open(self.files[split], mode="rt") as f:
-                            dataset = reader(f, **self.get_args()).to_dict("records")
-                        break
-                except Exception as e:
-                    logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
-                    if attempt < settings.loaders_max_retries - 1:
-                        time.sleep(2)
-                    else:
-                        raise e
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
-            self.__class__._loader_cache[dataset_id] = dataset
+class LoadJsonFile(LoadWithPandas):
+    """Loads data from JSON files.
 
-        for instance in self.__class__._loader_cache[dataset_id]:
-            yield recursive_copy(instance)
+    Supports streaming and can handle large files by loading them in chunks.
+
+    Args:
+        files (Dict[str, str]): A dictionary mapping names to file paths.
+        chunksize : Size of the chunks to load at a time.
+        loader_limit: Optional integer to specify a limit on the number of records to load.
+        streaming: Bool indicating if streaming should be used.
+        lines: Bool indicate if it is json lines file structure.
+        record_path: a field containing the list of instances.
+
+    Example:
+        Loading json lines
+
+        .. code-block:: python
+
+            load_csv = LoadJsonFile(files={'train': 'path/to/train.jsonl'}, line=True, chunksize=100)
+    """
+
+    lines: bool = False
+    data_field: Optional[str] = None
+
+    def read_dataframe(self, file) -> pd.DataFrame:
+
+        args =  self.get_args()
+        if not self.lines:
+            args.pop("nrows", None)
+
+        if self.data_field is None:
+            dataframe = pd.read_json(
+                file,
+                lines=self.lines,
+                **args
+            )
+        else:
+            data_dict = json.loads(read_file(file))
+            data = dict_get(data_dict, self.data_field)
+            dataframe = pd.DataFrame(data)
+
+        return dataframe
+
 
 
 class LoadFromSklearn(LazyLoader):

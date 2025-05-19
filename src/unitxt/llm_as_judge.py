@@ -251,7 +251,7 @@ class LLMJudgeDirect(LLMJudge):
         self.assessment_task = Task(
             input_fields={
                 "context_variables": str,
-                "response": str,
+                "response": Any,
                 "criteria_description": str,
                 "display_options_instruction": str,
             },
