@@ -5,28 +5,21 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.llm_as_judge_constants import DirectCriteriaCatalogEnum
-from unitxt.loaders import LoadFromAPI
+from unitxt.loaders import LoadJsonFile
 from unitxt.operators import Copy, MapInstanceValues, Rename
-from unitxt.splitters import SplitRandomMix
 from unitxt.task import Task
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadFromAPI(
-        urls={
-            # "train": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/toxic_chat/toxic_chat_train.json",
+    loader=LoadJsonFile(
+        files={
+            "train": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/toxic_chat/toxic_chat_train.json",
             "test":"https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/toxic_chat/toxic_chat_test.json"
         },
         data_classification_policy=["public"],
         data_field="instances",
-        loader_limit=10,
     ),
     preprocess_steps=[
-        SplitRandomMix(
-            mix={
-                "test": "test[100%]",
-            }
-        ),
         Rename(field="instance", to_field="text"),
         Rename(field="annotations/jailbreaking/majority_human", to_field="label"),
         MapInstanceValues(mappers={
@@ -35,7 +28,7 @@ card = TaskCard(
                 "1": "Yes"
             },
         }),
-        Copy(field_to_field={"label": "label_value"}),
+        Copy(field="label", to_field="label_value"),
         MapInstanceValues(mappers={
             "label_value": DirectCriteriaCatalogEnum.JAILBREAK_USER_MESSAGE.value.option_map,
         }),
@@ -64,15 +57,3 @@ add_to_catalog(
     "cards.judege_bench.toxic_chat.jailbreaking",
     overwrite=True,
 )
-
-# params = f"[criteria=metrics.llm_as_judge.direct.criteria.user_message_jailbreak,context_fields=[],check_positional_bias=False]"
-
-# metric_inference_engine = MetricInferenceEngine(
-#     metric=f"metrics.llm_as_judge.direct.watsonx.llama3_3_70b{params}",
-#     prediction_field="text",
-# )
-# predictions = [p["user_message_jailbreak"] for p in metric_inference_engine.infer(dataset)]
-
-# results = evaluate(predictions=predictions, data=dataset)
-# parsed_results = {"spearmanr": results.global_scores["spearmanr"], "accuracy": results.global_scores["accuracy"]}
-# print(parsed_results)
