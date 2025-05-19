@@ -2,7 +2,7 @@ import unitxt
 from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Explode
-from unitxt.loaders import LoadCSV
+from unitxt.loaders import LoadJsonFile
 from unitxt.operators import (
     Copy,
     MapInstanceValues,
@@ -15,9 +15,8 @@ file_path = "https://raw.githubusercontent.com/nyu-mll/quality/05e85750d4c5444d2
 
 with unitxt.settings.context(allow_unverified_code=True):
     card = TaskCard(
-        loader=LoadCSV(
+        loader=LoadJsonFile(
             files={"train": file_path + "train", "validation": file_path + "dev"},
-            file_type="json",
             lines=True,
             data_classification_policy=["public"],
         ),

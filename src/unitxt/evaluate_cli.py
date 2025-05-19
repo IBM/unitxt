@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from datasets import Dataset as HFDataset
 
-from .api import evaluate, load_dataset
+from .api import _source_to_dataset, evaluate, load_recipe
 from .artifact import UnitxtArtifactNotFoundError
 from .benchmark import Benchmark
 
@@ -27,7 +27,6 @@ from .logging_utils import get_logger
 from .metric_utils import EvaluationResults
 from .parsing_utils import parse_key_equals_value_string_to_dict
 from .settings_utils import settings
-from .standard import DatasetRecipe
 
 # Define logger early so it can be used in initial error handling
 # Basic config for initial messages, will be reconfigured in main()
@@ -294,21 +293,20 @@ def cli_load_dataset(args: argparse.Namespace) -> HFDataset:
 
     benchmark_subsets = {}
     for task_str in args.tasks:
-        dataset_args = task_str_to_dataset_args(task_str, args)
-
-        benchmark_subsets[task_str] = DatasetRecipe(**dataset_args)
+        overwrite_args = extract_overwrite_args(args)
+        benchmark_subsets[task_str] = load_recipe(dataset_query=task_str, **overwrite_args)
 
     benchmark = Benchmark(subsets=benchmark_subsets)
 
-    test_dataset = load_dataset(benchmark, split=args.split)
+    test_dataset = _source_to_dataset(benchmark, split=args.split)
     logger.info(
         f"Dataset loaded successfully. Number of instances: {len(test_dataset)}"
     )
     return test_dataset
 
 
-def task_str_to_dataset_args(task_str, args):
-    dataset_args = parse_key_equals_value_string_to_dict(task_str)
+def extract_overwrite_args(args):
+    dataset_args = {}
 
     if args.limit is not None:
         assert f"max_{args.split}_instances" not in dataset_args, (
