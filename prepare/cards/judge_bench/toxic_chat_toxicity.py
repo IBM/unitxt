@@ -1,5 +1,4 @@
 
-from unitxt.api import load_dataset
 from unitxt.blocks import (
     MapInstanceValues,
     Rename,
@@ -48,12 +47,8 @@ card = TaskCard(
     templates=["templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"]
 )
 
-dataset = load_dataset(
-    card=card,
-    split="test")
+test_card(card, demos_taken_from="test", strict=False)
 
-
-test_card(card, demos_taken_from="test", strict=False, loader_limit=100)
 add_to_catalog(
     card,
     "cards.judege_bench.toxic_chat.toxicity",
