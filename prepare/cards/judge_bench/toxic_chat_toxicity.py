@@ -45,7 +45,7 @@ card = TaskCard(
         ],
         default_template="templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
     ),
-    templates=[]
+    templates=["templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"]
 )
 
 dataset = load_dataset(
@@ -59,15 +59,3 @@ add_to_catalog(
     "cards.judege_bench.toxic_chat.toxicity",
     overwrite=True,
 )
-
-# params = f"[criteria=metrics.llm_as_judge.direct.criteria.toxicity,context_fields=[],check_positional_bias=False]"
-
-# metric_inference_engine = MetricInferenceEngine(
-#     metric=f"metrics.llm_as_judge.direct.watsonx.llama3_3_70b{params}",
-#     prediction_field="text",
-# )
-# predictions = [p["toxicity"] for p in metric_inference_engine.infer(dataset)]
-
-# results = evaluate(predictions=predictions, data=dataset)
-# parsed_results = {"spearmanr": results.global_scores["spearmanr"], "accuracy": results.global_scores["accuracy"]}
-# print(parsed_results)

@@ -43,7 +43,7 @@ card = TaskCard(
         ],
         default_template="templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
     ),
-    templates=[]
+    templates=["templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"]
 )
 
 dataset = load_dataset(
