@@ -50,6 +50,6 @@ test_card(card, demos_taken_from="test", strict=False)
 
 add_to_catalog(
     card,
-    "cards.judege_bench.toxic_chat.jailbreaking",
+    "cards.judge_bench.toxic_chat.jailbreaking",
     overwrite=True,
 )
