@@ -4,6 +4,7 @@
         "__type__": "load_hf",
         "path": "vincentkoc/hotpot_qa_archive",
         "name": "distractor",
+        "revision": "c060661",
         "data_classification_policy": [
             "public"
         ]
