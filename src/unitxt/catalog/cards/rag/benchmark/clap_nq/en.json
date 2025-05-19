@@ -1,0 +1,46 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_csv",
+        "sep": "\t",
+        "files": {
+            "train": "https://raw.githubusercontent.com/primeqa/clapnq/main/retrieval/train/question_train_answerable.tsv",
+            "test": "https://raw.githubusercontent.com/primeqa/clapnq/main/retrieval/dev/question_dev_answerable.tsv"
+        },
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "question": "question",
+                "id": "question_id"
+            }
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "doc-id-list"
+            ],
+            "to_field": "reference_context_ids"
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "answers"
+            ],
+            "to_field": "reference_answers"
+        }
+    ],
+    "task": "tasks.rag.end_to_end",
+    "__tags__": {
+        "license": "Apache License 2.0",
+        "url": "https://huggingface.co/datasets/PrimeQA/clapnq"
+    },
+    "__description__": "CLAP NQ is created from the subset of Natural Questions (NQ) that have a long answer but no short answer. NQ consists of ~380k examples. There are ~30k questions that are long answers without short answers excluding tables and lists. To increases the likelihood of longer answers we only explored ones that have more than 5 sentences in the passage. The subset that was annotated consists of ~12k examples. All examples where cohesion of non-consecutive sentences was required for the answer were annotated a second time. The final dataset is made up of all data that went through two rounds of annotation. (We provide the single round annotations as well - it is only training data) An equal amount of unanswerable questions have also been added from the original NQ train/dev sets. Details about the annotation task and unanswerables can be found at https://github.com/primeqa/clapnq/blob/main/annotated_data.",
+    "templates": {
+        "default": "templates.rag.end_to_end.json_predictions"
+    }
+}
