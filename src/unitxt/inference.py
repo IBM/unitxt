@@ -35,6 +35,7 @@ from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
 from .artifact import Artifact
+from .base_metric import Metric
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
 from .error_utils import UnitxtError, UnitxtWarning
@@ -3516,6 +3517,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         return self.provider if self.provider is not None else settings.default_provider
 
     def prepare_engine(self):
+        # print("provider", self.provider)
         provider = self.get_provider_name()
         if provider not in self._provider_to_base_class:
             raise UnitxtError(
@@ -3675,3 +3677,35 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
             predictions.append(options_scores.most_common(1)[0][0])
 
         return predictions
+
+class MetricInferenceEngine(InferenceEngine):
+    """An inference engine that uses the output of a metric as its prediction. Used to evaluate metrics like LLM as Judge or Granite Guardian.
+
+    Args:
+        InferenceEngine (_type_): _description_
+    """
+    metric: Metric
+    prediction_field: str
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        task_data = [
+            json.loads(instance["task_data"]) if "task_data" in instance else {}
+            for instance in dataset
+        ]
+        predictions=[td[self.prediction_field] for td in task_data]
+        references = [instance["references"] for instance in dataset]
+        return self.metric.compute(
+            task_data=task_data,
+            predictions=predictions,
+            references=references,
+        )
+
+    def prepare_engine(self):
+        pass
+
+    def get_engine_id(self):
+        return "metric_inference_engine"
