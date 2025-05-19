@@ -96,7 +96,7 @@ for dataset in datasets:
         debug=False,
     )
 
-    add_to_catalog(card, f"cards.rag.benchmark.real_mm_rag.{subset}", overwrite=True)
+    add_to_catalog(card, f"cards.rag.benchmark.real_mm_rag_{subset}.en", overwrite=True)
 
     # next we create the card for the pages (documents)
     card = TaskCard(
@@ -128,4 +128,4 @@ for dataset in datasets:
         __description__=description,
     )
     # Not testing card, because documents are not evaluated.
-    add_to_catalog(card, f"cards.rag.documents.real_mm_rag.{subset}", overwrite=True)
+    add_to_catalog(card, f"cards.rag.documents.real_mm_rag_{subset}.en", overwrite=True)
