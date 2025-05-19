@@ -90,7 +90,7 @@ This example demonstrates how to evaluate model tool calling capabilities.  It r
 a set of user textual requests and corresponding reference answers as tool calls.
 The model is expected to generate tool calls and these are compared to the references.
  
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/tool_call_evaluation.py>`__
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_tool_calling.py>`__
 
 Related documentation: :ref:`Tool calling task in catalog <catalog.tasks.tool_calling.supervised>`, :ref:`Tool calling tutorial <tool_calling>`
 
