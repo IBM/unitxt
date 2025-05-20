@@ -1,10 +1,12 @@
 
+from typing import Any
+
 from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadJsonFile
-from unitxt.operators import Cast, Rename
+from unitxt.operators import Cast, Rename, Set
 from unitxt.task import Task
 from unitxt.test_utils.card import test_card
 
@@ -20,9 +22,10 @@ card = TaskCard(
         Rename(field="instance", to_field="context"),
         Rename(field="annotations/Overall Quality/mean_human", to_field="mean_score"),
         Cast(field="mean_score", to="float"),
+        Set(fields={"criteria": "metrics.llm_as_judge.direct.criteria.step_by_step_reasoning_overall_quality"}),
     ],
     task=Task(
-        input_fields={"context": str},
+        input_fields={"context": str, "criteria": Any},
         reference_fields={"mean_score": float},
         prediction_type=float,
         metrics=[

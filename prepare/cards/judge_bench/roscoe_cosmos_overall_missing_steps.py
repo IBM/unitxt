@@ -1,11 +1,13 @@
 
+from typing import Any
+
 from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.llm_as_judge_constants import DirectCriteriaCatalogEnum
 from unitxt.loaders import LoadJsonFile
-from unitxt.operators import Copy, MapInstanceValues, Rename
+from unitxt.operators import Copy, MapInstanceValues, Rename, Set
 from unitxt.task import Task
 from unitxt.test_utils.card import test_card
 
@@ -28,11 +30,12 @@ card = TaskCard(
         }),
         Copy(field="label", to_field="label_value"),
         MapInstanceValues(mappers={
-            "label_value": DirectCriteriaCatalogEnum.STEP_BY_STEP_REASONING_COHERENCY.value.option_map,
+            "label_value": DirectCriteriaCatalogEnum.STEP_BY_STEP_REASONING_MISSING_STEPS.value.option_map,
         }),
+        Set(fields={"criteria": "metrics.llm_as_judge.direct.criteria.step_by_step_reasoning_missing_steps"}),
     ],
     task=Task(
-        input_fields={"context": str},
+        input_fields={"context": str, "criteria": Any},
         reference_fields={"mean_score": float},
         prediction_type=float,
         metrics=[
