@@ -1,4 +1,6 @@
 
+from typing import Any
+
 from unitxt.blocks import (
     MapInstanceValues,
     Rename,
@@ -7,7 +9,7 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.llm_as_judge_constants import DirectCriteriaCatalogEnum
 from unitxt.loaders import LoadJsonFile
-from unitxt.operators import Copy
+from unitxt.operators import Copy, Set
 from unitxt.task import Task
 from unitxt.test_utils.card import test_card
 
@@ -28,11 +30,12 @@ card = TaskCard(
         Rename(field="annotations/safety/majority_human", to_field="label"),
         Copy(field="label", to_field="label_value"),
         MapInstanceValues(mappers={
-            "label_value": DirectCriteriaCatalogEnum.GENERAL_HARM_ASSISTANT_MESSAGE.value.option_map,
+            "label_value": DirectCriteriaCatalogEnum.GENERAL_HARM_USER_MESSAGE.value.option_map,
         }),
+        Set(fields={"criteria": "metrics.llm_as_judge.direct.criteria.user_message_general_harm"}),
     ],
     task=Task(
-        input_fields={"user_prompt": str, "assistant_response": str, "label": str},
+        input_fields={"user_prompt": str, "assistant_response": str, "label": str, "criteria": Any},
         reference_fields={"label_value": float},
         prediction_type=float,
         metrics=[

@@ -1,4 +1,6 @@
 
+from typing import Any
+
 from unitxt.blocks import (
     MapInstanceValues,
     Rename,
@@ -7,7 +9,7 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.llm_as_judge_constants import DirectCriteriaCatalogEnum
 from unitxt.loaders import LoadJsonFile
-from unitxt.operators import Copy
+from unitxt.operators import Copy, Set
 from unitxt.task import Task
 from unitxt.test_utils.card import test_card
 
@@ -26,9 +28,10 @@ card = TaskCard(
         MapInstanceValues(mappers={
             "label_value": DirectCriteriaCatalogEnum.GRAMMAR_AND_PUNCTUATION.value.option_map,
         }),
+        Set(fields={"criteria": "metrics.llm_as_judge.direct.criteria.grammar_and_punctuation"}),
     ],
     task=Task(
-        input_fields={"text": str, "label": str},
+        input_fields={"text": str, "label": str, "criteria": Any},
         reference_fields={"label_value": float},
         prediction_type=float,
         metrics=[
