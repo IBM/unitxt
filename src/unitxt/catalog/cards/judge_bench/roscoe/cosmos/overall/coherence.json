@@ -25,12 +25,19 @@
             "__type__": "cast",
             "field": "mean_score",
             "to": "float"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "criteria": "metrics.llm_as_judge.direct.criteria.step_by_step_reasoning_coherency"
+            }
         }
     ],
     "task": {
         "__type__": "task",
         "input_fields": {
-            "context": "str"
+            "context": "str",
+            "criteria": "Any"
         },
         "reference_fields": {
             "mean_score": "float"
