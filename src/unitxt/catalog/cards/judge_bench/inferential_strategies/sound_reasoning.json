@@ -43,13 +43,20 @@
                     "No": 0.0
                 }
             }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "criteria": "metrics.llm_as_judge.direct.criteria.logical_validity_of_reasoning"
+            }
         }
     ],
     "task": {
         "__type__": "task",
         "input_fields": {
             "model_response": "str",
-            "label": "str"
+            "label": "str",
+            "criteria": "Any"
         },
         "reference_fields": {
             "label_value": "float"

@@ -39,6 +39,12 @@
                     "No": 0.0
                 }
             }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "criteria": "metrics.llm_as_judge.direct.criteria.assistant_message_general_harm"
+            }
         }
     ],
     "task": {
@@ -46,7 +52,8 @@
         "input_fields": {
             "user_prompt": "str",
             "assistant_response": "str",
-            "label": "str"
+            "label": "str",
+            "criteria": "Any"
         },
         "reference_fields": {
             "label_value": "float"

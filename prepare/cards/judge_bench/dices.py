@@ -19,7 +19,7 @@ card = TaskCard(
             "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/dices/dices_990.json",
             # "990": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/dices/dices_990.json",
             # "350_expert": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/dices/dices_350_expert.json",
-            # "350_crowdsourced": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/dices/dices_350_crowdsourced.json",
+            # "350_crowdso  urced": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/dices/dices_350_crowdsourced.json",
         },
         data_classification_policy=["public"],
         data_field="instances",
@@ -30,9 +30,9 @@ card = TaskCard(
         Rename(field="annotations/safety/majority_human", to_field="label"),
         Copy(field="label", to_field="label_value"),
         MapInstanceValues(mappers={
-            "label_value": DirectCriteriaCatalogEnum.GENERAL_HARM_USER_MESSAGE.value.option_map,
+            "label_value": DirectCriteriaCatalogEnum.GENERAL_HARM_ASSISTANT_MESSAGE.value.option_map,
         }),
-        Set(fields={"criteria": "metrics.llm_as_judge.direct.criteria.user_message_general_harm"}),
+        Set(fields={"criteria": "metrics.llm_as_judge.direct.criteria.assistant_message_general_harm"}),
     ],
     task=Task(
         input_fields={"user_prompt": str, "assistant_response": str, "label": str, "criteria": Any},
