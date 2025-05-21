@@ -552,7 +552,7 @@ class LoadJsonFile(LoadWithPandas):
                     raise UnitxtError(f"{self.data_field} of file {file} is not a list of dictionariess in LoadJsonFile loader")
             else:
                 if isoftype(data,Dict[str,Any]):
-                    instances = data
+                    instances = [data]
                 elif isoftype(data,List[Dict[str,Any]]):
                     instances=data
                 else:
