@@ -5,9 +5,9 @@
         "max_tokens": 1024,
         "seed": 42,
         "temperature": 0,
-        "provider": "rits",
-        "model": "llama-3-1-8b-instruct"
+        "provider": "together-ai",
+        "model": "llama-3-1-405b-instruct"
     },
-    "evaluator_name": "LLAMA3_1_8B",
+    "evaluator_name": "LLAMA3_1_405B",
     "generate_summaries": false
 }
