@@ -6,7 +6,7 @@
         "seed": 42,
         "temperature": 0,
         "provider": "rits",
-        "model": "llama-3-4-scout"
+        "model": "llama-4-scout"
     },
     "evaluator_name": "LLAMA3_4_SCOUT",
     "generate_summaries": false
