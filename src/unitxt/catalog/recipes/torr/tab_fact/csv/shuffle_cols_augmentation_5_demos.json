@@ -1,5 +1,5 @@
 {
-    "__type__": "dataset_recipe",
+    "__type__": "unitxt.standard.DatasetRecipe",
     "card": "cards.tab_fact",
     "serializer": null,
     "num_demos": 5,

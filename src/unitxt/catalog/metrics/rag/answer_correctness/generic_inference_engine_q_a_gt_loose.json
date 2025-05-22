@@ -1,7 +1,7 @@
 {
-    "__type__": "task_based_ll_mas_judge",
+    "__type__": "unitxt.llm_as_judge_from_template.TaskBasedLLMasJudge",
     "inference_model": {
-        "__type__": "generic_inference_engine"
+        "__type__": "unitxt.inference.GenericInferenceEngine"
     },
     "template": "templates.rag_eval.answer_correctness.judge_loose_match_no_context",
     "task": "tasks.rag_eval.answer_correctness.binary",

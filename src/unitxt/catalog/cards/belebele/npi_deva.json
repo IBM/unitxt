@@ -1,13 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "facebook/belebele",
         "name": "npi_Deva"
     },
     "preprocess_steps": [
         {
-            "__type__": "list_field_values",
+            "__type__": "unitxt.operators.ListFieldValues",
             "fields": [
                 "mc_answer1",
                 "mc_answer2",
@@ -17,25 +17,25 @@
             "to_field": "choices"
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "correct_answer_num": "answer",
                 "flores_passage": "context"
             }
         },
         {
-            "__type__": "cast_fields",
+            "__type__": "unitxt.operators.CastFields",
             "fields": {
                 "answer": "int"
             }
         },
         {
-            "__type__": "add_constant",
+            "__type__": "unitxt.operators.AddConstant",
             "field": "answer",
             "add": -1
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "context_type": "passage"
             }

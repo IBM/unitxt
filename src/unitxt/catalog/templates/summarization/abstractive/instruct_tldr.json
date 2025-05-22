@@ -1,5 +1,5 @@
 {
-    "__type__": "multi_reference_template",
+    "__type__": "unitxt.templates.MultiReferenceTemplate",
     "instruction": "TL;DR:",
     "input_format": "{document}\nSummary:",
     "references_field": "summaries"

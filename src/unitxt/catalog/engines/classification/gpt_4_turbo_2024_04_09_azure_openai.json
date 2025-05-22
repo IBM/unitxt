@@ -1,5 +1,5 @@
 {
-    "__type__": "azure_open_ai_inference_engine",
+    "__type__": "unitxt.inference.AzureOpenAIInferenceEngine",
     "model_name": "gpt-4-turbo-2024-04-09",
     "logprobs": true,
     "max_tokens": 5,

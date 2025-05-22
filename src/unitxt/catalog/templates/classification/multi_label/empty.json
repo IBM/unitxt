@@ -1,5 +1,5 @@
 {
-    "__type__": "multi_label_template",
+    "__type__": "unitxt.templates.MultiLabelTemplate",
     "input_format": "{text}",
     "output_format": "{labels}",
     "labels_field": "labels",

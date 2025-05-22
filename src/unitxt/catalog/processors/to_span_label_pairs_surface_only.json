@@ -1,7 +1,7 @@
 {
-    "__type__": "post_process",
+    "__type__": "unitxt.processors.PostProcess",
     "operator": {
-        "__type__": "regex_parser",
+        "__type__": "unitxt.processors.RegexParser",
         "regex": "\\s*((?:\\\\.|[^,])+?)\\s*(?:,|$)()",
         "termination_regex": "^\\s*None\\s*$"
     }

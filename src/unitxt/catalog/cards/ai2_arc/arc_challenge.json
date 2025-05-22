@@ -1,33 +1,33 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "ai2_arc",
         "name": "ARC-Challenge"
     },
     "preprocess_steps": [
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "topic": "science"
             }
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "answerKey": "label",
                 "choices": "_choices"
             }
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "_choices/text": "choices",
                 "_choices/label": "labels"
             }
         },
         {
-            "__type__": "index_of",
+            "__type__": "unitxt.operators.IndexOf",
             "search_in": "labels",
             "index_of": "label",
             "to_field": "answer"

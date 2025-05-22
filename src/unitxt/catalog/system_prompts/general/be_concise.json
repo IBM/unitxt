@@ -1,4 +1,4 @@
 {
-    "__type__": "textual_system_prompt",
+    "__type__": "unitxt.system_prompts.TextualSystemPrompt",
     "text": "Be concise. At every point give the shortest acceptable answer."
 }

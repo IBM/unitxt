@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "google/frames-benchmark",
         "data_classification_policy": [
             "public"
@@ -9,33 +9,33 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field": "Prompt",
             "to_field": "question"
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field": "Answer",
             "to_field": "answer"
         },
         {
-            "__type__": "wrap",
+            "__type__": "unitxt.collections_operators.Wrap",
             "field": "answer",
             "inside": "list",
             "to_field": "answers"
         },
         {
-            "__type__": "literal_eval",
+            "__type__": "unitxt.processors.LiteralEval",
             "field": "wiki_links",
             "to_field": "context"
         },
         {
-            "__type__": "wikipedia_fetcher",
+            "__type__": "unitxt.operators.WikipediaFetcher",
             "field": "context",
             "process_every_value": true
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "context_type": "wikipedia articles"
             }
