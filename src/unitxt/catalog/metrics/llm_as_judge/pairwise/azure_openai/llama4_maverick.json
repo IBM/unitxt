@@ -7,9 +7,9 @@
         "temperature": 0,
         "provider": "azure",
         "credentials": {
-            "api_base": "https://eteopenai.azure-api.net/openai/deployments/llama-3-4-maverick/chat/completions?api-version=2024-08-01-preview"
+            "api_base": "https://eteopenai.azure-api.net/openai/deployments/llama-4-maverick/chat/completions?api-version=2024-08-01-preview"
         },
-        "model": "llama-3-4-maverick"
+        "model": "llama-4-maverick"
     },
     "evaluator_name": "LLAMA3_4_MAVERICK",
     "generate_summaries": false

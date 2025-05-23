@@ -6,7 +6,7 @@
         "seed": 42,
         "temperature": 0,
         "provider": "replicate",
-        "model": "llama-3-4-maverick"
+        "model": "llama-4-maverick"
     },
     "evaluator_name": "LLAMA3_4_MAVERICK",
     "generate_summaries": false
