@@ -1,11 +1,13 @@
 
+from typing import Any
+
 from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.llm_as_judge_constants import DirectCriteriaCatalogEnum
 from unitxt.loaders import LoadJsonFile
-from unitxt.operators import Copy, MapInstanceValues, Rename
+from unitxt.operators import Copy, MapInstanceValues, Rename, Set
 from unitxt.task import Task
 from unitxt.test_utils.card import test_card
 
@@ -31,9 +33,10 @@ card = TaskCard(
         MapInstanceValues(mappers={
             "label_value": DirectCriteriaCatalogEnum.JAILBREAK_USER_MESSAGE.value.option_map,
         }),
+        Set(fields={"criteria": "metrics.llm_as_judge.direct.criteria.jailbreak_user_message"}),
     ],
     task=Task(
-        input_fields={"text": str, "label": str},
+        input_fields={"text": str, "label": str, "criteria": Any},
         reference_fields={"label_value": float},
         prediction_type=float,
         metrics=[
@@ -50,6 +53,6 @@ test_card(card, demos_taken_from="test", strict=False)
 
 add_to_catalog(
     card,
-    "cards.judege_bench.toxic_chat.jailbreaking",
+    "cards.judge_bench.toxic_chat.jailbreaking",
     overwrite=True,
 )
