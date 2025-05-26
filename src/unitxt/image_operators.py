@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import io
 import re
 from abc import abstractmethod
@@ -113,6 +114,10 @@ class EncodeImageToString(FieldOperator):
     def process_value(self, value: Any) -> Any:
         return {"image": self.encode_image_to_base64(value)}
 
+class HashImage(FieldOperator, PillowMixin):
+
+    def process_value(self, value: Any) -> Any:
+        return hashlib.md5(value.tobytes()).hexdigest()
 
 class DecodeImage(FieldOperator, PillowMixin):
     def process_value(self, value: str) -> Any:

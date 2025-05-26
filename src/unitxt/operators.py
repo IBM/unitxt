@@ -76,7 +76,6 @@ from .operator import (
     PagedStreamOperator,
     SequentialOperator,
     SideEffectOperator,
-    SingleStreamReducer,
     SourceOperator,
     StreamingOperator,
     StreamInitializerOperator,
@@ -85,7 +84,7 @@ from .operator import (
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
 from .stream import DynamicStream, Stream
-from .text_utils import nested_tuple_to_string, to_pretty_string
+from .text_utils import to_pretty_string
 from .type_utils import isoftype
 from .utils import (
     LRUCache,
@@ -283,6 +282,7 @@ class Set(InstanceOperator):
             dict_set(instance, key, value)
         return instance
 
+
 def recursive_key_value_replace(data, target_key, value_map, value_remove=None):
     """Recursively traverses a data structure (dicts and lists), replaces values of target_key using value_map, and removes values listed in value_remove.
 
@@ -323,13 +323,34 @@ def recursive_key_value_replace(data, target_key, value_map, value_remove=None):
             recursive_key_value_replace(item, target_key, value_map, value_remove)
     return data
 
+
 class RecursiveReplace(InstanceOperator):
+    # Assisted by watsonx Code Assistant
+    """An operator to recursively replace values in dictionary fields of instances based on a key and a mapping of values.
+
+    Attributes:
+        key (str): The key in the dictionary to start the replacement process.
+        map_values (dict): A dictionary containing the key-value pairs to replace the original values.
+        remove_values (Optional[list]): An optional list of values to remove from the dictionary. Defaults to None.
+
+    Example:
+    RecursiveReplace(key="a", map_values={"1": "hi", "2": "bye" }, remove_values=["3"])
+        replaces the value of key "a" in all instances of all streams:
+        instance ``{"field" : [{"a": "1", "b" : "2"}, {"a" : "3", "b:" "4"}}` becomes ``{"field" : [{"a": "hi", "b" : "2"}, {"b": "4"}}``
+
+        Notice how the value of field ``"a"`` in the first instance is replaced with ``"hi"`` and the value of field ``"a"`` in the second instance is removed.
+    """
     key: str
     map_values: dict
     remove_values: Optional[list] = None
 
-    def process(self, instance: Dict[str, Any], stream_name: Optional[str] = None) -> Dict[str, Any]:
-        return recursive_key_value_replace(instance, self.key, self.map_values, self.remove_values)
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        return recursive_key_value_replace(
+            instance, self.key, self.map_values, self.remove_values
+        )
+
 
 @deprecation(version="2.0.0", alternative=Set)
 class AddFields(Set):
@@ -427,8 +448,8 @@ class InstanceFieldOperator(InstanceOperator):
     def verify_field_definition(self):
         if hasattr(self, "_field_to_field") and self._field_to_field is not None:
             return
-        assert (
-            (self.field is None) != (self.field_to_field is None)
+        assert (self.field is None) != (
+            self.field_to_field is None
         ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
         assert (
             self.to_field is None or self.field_to_field is None
@@ -605,10 +626,27 @@ class AddConstant(FieldOperator):
     def process_value(self, value: Any) -> Any:
         return self.add + value
 
-
 class ShuffleFieldValues(FieldOperator):
-    """Shuffles a list of values found in a field."""
+    # Assisted by watsonx Code Assistant
+    """An operator that shuffles the values of a list field.
 
+    the seed for shuffling in the is determined by the elements of the input field,
+    ensuring that the shuffling operation produces different results for different input lists,
+    but also that it is deterministic and reproducible.
+
+    Attributes:
+        None
+
+    Methods:
+        process_value(value: Any) -> Any:
+            Shuffles the elements of the input list and returns the shuffled list.
+
+            Parameters:
+                value (Any): The input list to be shuffled.
+
+    Returns:
+                Any: The shuffled list.
+    """
     def process_value(self, value: Any) -> Any:
         res = list(value)
         random_generator = new_random_generator(sub_seed=res)
@@ -784,9 +822,8 @@ class InterleaveListsToDialogOperator(InstanceOperator):
         user_turns = instance[self.user_turns_field]
         assistant_turns = instance[self.assistant_turns_field]
 
-        assert (
-            len(user_turns) == len(assistant_turns)
-            or (len(user_turns) - len(assistant_turns) == 1)
+        assert len(user_turns) == len(assistant_turns) or (
+            len(user_turns) - len(assistant_turns) == 1
         ), "user_turns must have either the same length as assistant_turns or one more turn."
 
         interleaved_dialog = []
@@ -945,7 +982,14 @@ class CopyFields(Copy):
 
 
 class GetItemByIndex(FieldOperator):
-    """Get from the item list by the index in the field."""
+    """Get the element from the fixed list by the index in the given field and store in another field.
+
+    Example:
+        GetItemByIndex(items_list=["dog",cat"],field="animal_index",to_field="animal")
+
+    on instance {"animal_index" : 1}  will change the instance to {"animal_index" : 1, "animal" : "cat"}
+
+    """
 
     items_list: List[Any]
 
@@ -977,7 +1021,13 @@ class Cast(FieldOperator):
     failure_default: Optional[Any] = "__UNDEFINED__"
 
     def prepare(self):
-        self.types = {"int": int, "float": float, "str": str, "bool": bool, "tuple": tuple}
+        self.types = {
+            "int": int,
+            "float": float,
+            "str": str,
+            "bool": bool,
+            "tuple": tuple,
+        }
 
     def process_value(self, value):
         try:
@@ -1658,63 +1708,6 @@ class RemoveValues(FieldOperator):
         return [e for e in value if e not in self.unallowed_values]
 
 
-class Unique(SingleStreamReducer):
-    """Reduces a stream to unique instances based on specified fields.
-
-    Args:
-        fields (List[str]): The fields that should be unique in each instance.
-    """
-
-    fields: List[str] = field(default_factory=list)
-
-    @staticmethod
-    def to_tuple(instance: dict, fields: List[str]) -> tuple:
-        result = []
-        for field_name in fields:
-            value = instance[field_name]
-            if isinstance(value, list):
-                value = tuple(value)
-            result.append(value)
-        return tuple(result)
-
-    def process(self, stream: Stream) -> Stream:
-        seen = set()
-        for instance in stream:
-            values = self.to_tuple(instance, self.fields)
-            if values not in seen:
-                seen.add(values)
-        return list(seen)
-
-
-class SplitByValue(MultiStreamOperator):
-    """Splits a MultiStream into multiple streams based on unique values in specified fields.
-
-    Args:
-        fields (List[str]): The fields to use when splitting the MultiStream.
-    """
-
-    fields: List[str] = field(default_factory=list)
-
-    def process(self, multi_stream: MultiStream) -> MultiStream:
-        uniques = Unique(fields=self.fields)(multi_stream)
-
-        result = {}
-
-        for stream_name, stream in multi_stream.items():
-            stream_unique_values = uniques[stream_name]
-            for unique_values in stream_unique_values:
-                filtering_values = dict(zip(self.fields, unique_values))
-                filtered_streams = FilterByCondition(
-                    values=filtering_values, condition="eq"
-                )._process_single_stream(stream)
-                filtered_stream_name = (
-                    stream_name + "_" + nested_tuple_to_string(unique_values)
-                )
-                result[filtered_stream_name] = filtered_streams
-
-        return MultiStream(result)
-
-
 class SplitByNestedGroup(MultiStreamOperator):
     """Splits a MultiStream that is small - for metrics, hence: whole stream can sit in memory, split by the value of field 'group'.
 
@@ -1759,6 +1752,16 @@ class SplitByNestedGroup(MultiStreamOperator):
                 result[signature].append(instance)
 
         return MultiStream.from_iterables(result)
+
+
+class AddIncrementalId(StreamOperator):
+
+    to_field: str
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        for i, instance in enumerate(stream):
+            instance[self.to_field] = i
+            yield instance
 
 
 class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
@@ -2516,10 +2519,13 @@ class WikipediaFetcher(FieldOperator):
 
         return {"title": page.title, "body": getattr(page, self.mode)}
 
+
 class Fillna(FieldOperator):
     value: Any
+
     def process_value(self, value: Any) -> Any:
         import numpy as np
+
         try:
             if np.isnan(value):
                 return self.value

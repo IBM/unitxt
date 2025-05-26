@@ -1,0 +1,13 @@
+{
+    "__type__": "llm_judge_pairwise",
+    "inference_engine": {
+        "__type__": "cross_provider_inference_engine",
+        "max_tokens": 1024,
+        "seed": 42,
+        "temperature": 0,
+        "provider": "open-ai",
+        "model": "gpt-4-1"
+    },
+    "evaluator_name": "GPT4_1",
+    "generate_summaries": false
+}

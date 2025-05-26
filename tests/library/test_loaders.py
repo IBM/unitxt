@@ -11,6 +11,7 @@ from unitxt.loaders import (
     LoadFromHFSpace,
     LoadFromIBMCloud,
     LoadHF,
+    LoadJsonFile,
     MultipleSourceLoader,
 )
 from unitxt.logging_utils import get_logger
@@ -116,6 +117,69 @@ class TestLoaders(UnitxtTestCase):
                     dfs[file].iterrows(), ms[file]
                 ):
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
+
+    def test_load_json_list(self):
+        data = [
+            {"id": 0},
+            {"id": 1},
+            {"id": 2},
+        ]
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = os.path.join(tmp_dir, "json_list.json")
+            with open(path, mode="w+") as f:
+                json.dump(data, f)
+
+            result = list(LoadJsonFile(files={"train": path})()["train"])
+
+        for i, instance in enumerate(result):
+            self.assertEqual(instance["id"], i)
+
+    def test_load_json_single_object(self):
+        data = {"id": 0, "name": ["test1","test2"]}
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = os.path.join(tmp_dir, "json_object.json")
+            with open(path, mode="w+") as f:
+                json.dump(data, f)
+            result = list(LoadJsonFile(files={"train": path})()["train"])
+
+        self.assertEqual(len(result),1)
+        final_data = {"id": 0, "name": ["test1","test2"],"data_classification_policy":["proprietary"]}
+        self.assertEqual(result[0],final_data)
+
+    def test_load_json_lines(self):
+        data = [
+            {"id": 0},
+            {"id": 1},
+            {"id": 2},
+        ]
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = os.path.join(tmp_dir, "json_lines.jsonl")
+            pd.DataFrame(data).to_json(path, orient="records", lines=True)
+            result = list(LoadJsonFile(files={"train": path}, lines=True)()["train"])
+
+        for i, instance in enumerate(result):
+            self.assertEqual(instance["id"], i)
+
+    def test_load_json_record_path(self):
+        data ={
+            "data":[
+                {"id": 0},
+                {"id": 1},
+                {"id": 2},
+            ],
+            "x": [{"id": 3}, {"id": 4}]
+        }
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = os.path.join(tmp_dir, "json_file.json")
+            with open(path, mode="w+") as f:
+                json.dump(data, f)
+
+            result = list(LoadJsonFile(files={"train": path}, data_field="data")()["train"])
+
+        for i, instance in enumerate(result):
+            self.assertEqual(instance["id"], i)
+
+
 
     def test_load_from_ibm_cos(self):
         import ibm_boto3

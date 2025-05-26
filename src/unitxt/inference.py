@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import logging
+import math
 import os
 import re
 import sys
@@ -35,6 +36,7 @@ from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
 from .artifact import Artifact
+from .base_metric import Metric
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
 from .error_utils import UnitxtError, UnitxtWarning
@@ -238,7 +240,7 @@ class InferenceEngine(Artifact):
             result = self._mock_infer(dataset)
         else:
             if self.use_cache:
-                number_of_batches = len(dataset) // self.cache_batch_size + 1
+                number_of_batches = math.ceil(len(dataset) / self.cache_batch_size)
                 result = []
                 for batch_index, batch in enumerate(
                     batched(dataset, self.cache_batch_size)
@@ -3342,10 +3344,12 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     provider_model_map: Dict[_supported_apis, Dict[str, str]] = {
         "watsonx-sdk": {  # checked from ibm_watsonx_ai.APIClient().foundation_models.ChatModels
             "granite-20b-code-instruct": "ibm/granite-20b-code-instruct",
-            "granite-3-2-8b-instruct": "ibm/granite-3-2-8b-instruct",
-            "granite-3-3-8b-instruct": "ibm/granite-3-3-8b-instruct",
             "granite-3-2b-instruct": "ibm/granite-3-2b-instruct",
             "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",
+            "granite-3-2-2b-instruct": "ibm/granite-3-2-2b-instruct",
+            "granite-3-2-8b-instruct": "ibm/granite-3-2-8b-instruct",
+            "granite-3-3-2b-instruct": "ibm/granite-3-3-2b-instruct",
+            "granite-3-3-8b-instruct": "ibm/granite-3-3-8b-instruct",
             "granite-34b-code-instruct": "ibm/granite-34b-code-instruct",
             "granite-guardian-3-8b": "ibm/granite-guardian-3-8b",
             "granite-vision-3-2-2b": "ibm/granite-vision-3-2-2b",
@@ -3361,7 +3365,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mistral-large-instruct": "mistralai/mistral-large",
             "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7b-instruct-v01",
         },
-        "together-ai": {
+        "together-ai": { # checked from https://www.together.ai/models
             "llama-3-8b-instruct": "together_ai/meta-llama/Llama-3-8b-chat-hf",
             "llama-3-70b-instruct": "together_ai/meta-llama/Llama-3-70b-chat-hf",
             "llama-3-1-8b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
@@ -3369,10 +3373,23 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-1-405b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
             "llama-3-2-1b-instruct": "together_ai/togethercomputer/llama-3-2-1b-instruct",
             "llama-3-3-70b-instruct": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo",
+            "llama-4-maverick": "together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", #pragma: allowlist secret
+            "llama-4-scout": "together_ai/meta-llama/Llama-4-Scout-17B-16E-Instruct",
+            "deepseek-v3": "together_ai/deepseek-ai/DeepSeek-V3",
+            "llama-3-3-70b-instruct-free": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+            "deepseek-r1-distilled-llama-70b-free": "together_ai/deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free",
         },
-        "aws": {
+        "aws": { # checked from https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
             "llama-3-8b-instruct": "bedrock/meta.llama3-8b-instruct-v1:0",
             "llama-3-70b-instruct": "bedrock/meta.llama3-70b-instruct-v1:0",
+            "llama-3-1-70b-instruct": "bedrock/meta.llama3-1-70b-instruct-v1:0",
+            "llama-3-1-405b-instruct": "bedrock/meta.llama3-1-405b-instruct-v1:0",
+            "llama-3-3-70b-instruct": "bedrock/meta.llama3-3-70b-instruct-v1:0",
+            "llama-4-maverick": "bedrock/meta.llama4-maverick-17b-instruct-v1:0", #pragma: allowlist secret
+            "llama-4-scout": "bedrock/meta.llama4-scout-17b-instruct-v1:0",
+            "mistral-large-instruct": "bedrock/mistral.mistral-large-2407-v1:0",
+            "deepseek-r1": "bedrock/deepseek.r1-v1:0",
+            "claude-3-7-sonnet": "bedrock/anthropic.claude-3-7-sonnet-20250219-v1:0",
         },
         "ollama": {
             "llama-3-8b-instruct": "llama3:8b",
@@ -3383,6 +3400,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-1b-instruct": "llama3.2:1b",
             "llama-3-2-3b-instruct": "llama3.2:3b",
             "llama-3-3-70b-instruct": "llama3.3",
+            "granite-3-3-2b-instruct": "granite3.3:2b",
+            "granite-3-3-8b-instruct": "granite3.3:8b",
         },
         "bam": {
             "granite-3-8b-instruct": "ibm/granite-8b-instruct-preview-4k",
@@ -3401,9 +3420,12 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-11b-vision-instruct": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "llama-3-2-90b-vision-instruct": "meta-llama/Llama-3.2-90B-Vision-Instruct",
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
+            "llama-4-scout": "llama-4-scout-17b-16e",
+            "llama-4-maverick": "llama-4-mvk-17b-128e-fp8",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
-            "deepseek-v3": "deepseek-ai/DeepSeek-V3",
+            "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7B-instruct-v0.1",
+            "deepseek-v3": "deepseek-ai/deepseek-v3-h200",
             "granite-guardian-3-2-3b-a800m": "ibm-granite/granite-guardian-3.2-3b-a800m",
             "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
         },
@@ -3432,6 +3454,12 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "gpt-4-32k-0314": "gpt-4-32k-0314",
             "gpt-4-32k-0613": "gpt-4-32k-0613",
             "gpt-4-vision-preview": "gpt-4-vision-preview",
+            "gpt-4-1": "gpt-4.1",
+            "gpt-4-1-2025-04-14": "gpt-4.1-2025-04-14",
+            "gpt-4-1-nano": "gpt-4.1-nano",
+            "gpt-4-1-nano-2025-04-14": "gpt-4.1-nano-2025-04-14",
+            "gpt-4-1-mini": "gpt-4.1-mini",
+            "gpt-4-1-mini-2025-04-14": "gpt-4.1-mini-2025-04-14",
         },
         "azure": {
             "o1-mini": "azure/o1-mini",
@@ -3454,11 +3482,23 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "gpt-3.5-turbo-16k": "azure/gpt-3.5-turbo-16k",
             "gpt-3.5-turbo-16k-0613": "azure/gpt-3.5-turbo-16k-0613",
             "gpt-4-vision": "azure/gpt-4-vision",
+            "gpt-4-1": "azure/gpt-4.1",
+            "gpt-4-1-nano": "azure/gpt-4.1-nano",
+            "gpt-4-1-mini": "azure/gpt-4.1-mini",
+            "gpt-4-1-mini-2025-04-14": "azure/gpt-4.1-mini-2025-04-14",
+            "llama-3-1-405b-instruct": "azure/Meta-Llama-3.1-405B-Instruct",
+            "llama-3-3-70b-instruct": "azure/Llama-3.3-70B-Instruct",
+            "llama-4-maverick": "azure/Llama-4-Maverick-17B-128E-Instruct-FP8", #pragma: allowlist secret
+            "llama-4-scout": "azure/Llama-4-Scout-17B-16E-Instruct",
         },
         "vertex-ai": {
             "llama-3-1-8b-instruct": "vertex_ai/meta/llama-3.1-8b-instruct-maas",
             "llama-3-1-70b-instruct": "vertex_ai/meta/llama-3.1-70b-instruct-maas",
             "llama-3-1-405b-instruct": "vertex_ai/meta/llama-3.1-405b-instruct-maas",
+            "gemini-2-5-pro": "vertex_ai/gemini-2.5-pro-preview-05-06",
+            "gemini-2-5-pro-preview-05-06": "vertex_ai/gemini-2.5-pro-preview-05-06",
+            "gemini-2.5-flash": "gemini-2.5-flash-preview-05-20",
+            "gemini-2.5-flash-preview-05-20": "gemini-2.5-flash-preview-05-20",
         },
         "replicate": {
             "granite-3-2-8b-instruct": "replicate/ibm-granite/granite-3.2-8b-instruct",
@@ -3480,9 +3520,13 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-70b-instruct": "replicate/meta/meta-llama-3-70b-instruct",
             "llama-3-8b": "replicate/meta/meta-llama-3-8b",
             "llama-3-8b-instruct": "replicate/meta/meta-llama-3-8b-instruct",
+            "llama-3-3-70b-instruct": "replicate/meta/meta-llama-3.3-70b-instruct",
+            "llama-4-maverick": "replicate/meta/llama-4-maverick-instruct",
+            "llama-4-scout": "replicate/meta/llama-4-scout-instruct",
             "mistral-7b-instruct-v0.2": "replicate/mistralai/mistral-7b-instruct-v0.2",
             "mistral-7b-v0.1": "replicate/mistralai/mistral-7b-v0.1",
             "mixtral-8x7b-instruct-v0.1": "replicate/mistralai/mixtral-8x7b-instruct-v0.1",
+            "gpt-4-1": "replicate/openai/gpt-4.1",
         },
     }
     provider_model_map["watsonx"] = {
@@ -3516,6 +3560,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         return self.provider if self.provider is not None else settings.default_provider
 
     def prepare_engine(self):
+        # print("provider", self.provider)
         provider = self.get_provider_name()
         if provider not in self._provider_to_base_class:
             raise UnitxtError(
@@ -3675,3 +3720,35 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
             predictions.append(options_scores.most_common(1)[0][0])
 
         return predictions
+
+class MetricInferenceEngine(InferenceEngine):
+    """An inference engine that uses the output of a metric as its prediction. Used to evaluate metrics like LLM as Judge or Granite Guardian.
+
+    Args:
+        InferenceEngine (_type_): _description_
+    """
+    metric: Metric
+    prediction_field: str
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        task_data = [
+            json.loads(instance["task_data"]) if "task_data" in instance else {}
+            for instance in dataset
+        ]
+        predictions=[td[self.prediction_field] for td in task_data]
+        references = [instance["references"] for instance in dataset]
+        return self.metric.compute(
+            task_data=task_data,
+            predictions=predictions,
+            references=references,
+        )
+
+    def prepare_engine(self):
+        pass
+
+    def get_engine_id(self):
+        return "metric_inference_engine"
