@@ -134,6 +134,18 @@ class TestLoaders(UnitxtTestCase):
         for i, instance in enumerate(result):
             self.assertEqual(instance["id"], i)
 
+    def test_load_json_single_object(self):
+        data = {"id": 0, "name": ["test1","test2"]}
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = os.path.join(tmp_dir, "json_object.json")
+            with open(path, mode="w+") as f:
+                json.dump(data, f)
+            result = list(LoadJsonFile(files={"train": path})()["train"])
+
+        self.assertEqual(len(result),1)
+        final_data = {"id": 0, "name": ["test1","test2"],"data_classification_policy":["proprietary"]}
+        self.assertEqual(result[0],final_data)
+
     def test_load_json_lines(self):
         data = [
             {"id": 0},
@@ -166,6 +178,8 @@ class TestLoaders(UnitxtTestCase):
 
         for i, instance in enumerate(result):
             self.assertEqual(instance["id"], i)
+
+
 
     def test_load_from_ibm_cos(self):
         import ibm_boto3

@@ -71,8 +71,13 @@ class EvaluatorNameEnum(str, Enum):
     LLAMA3_1_70B = "Llama3.1-70b"
     LLAMA3_2_3B = "Llama3.2-3b"
     LLAMA3_3_70B = "Llama3.3-70b"
+    LLAMA3_4_MAVERICK = "Llama4-Maverick"
+    LLAMA3_4_SCOUT = "Llama4-Scout"
     PROMETHEUS = "Prometheus"
-    GPT4 = "GPT-4o"
+    GPT4o = "GPT-4o"
+    GPT4_1 = "GPT-4.1"
+    GPT4_1_NANO = "GPT-4.1-nano"
+    GPT4_1_MINI = "GPT-4.1-mini"
     O1_PREVIEW = "o1-Preview"
     O1_MINI = "o1-Mini"
     GRANITE_13B = "Granite-13b"
@@ -81,23 +86,36 @@ class EvaluatorNameEnum(str, Enum):
     GRANITE3_1_2B = "Granite3.1-2b"
     GRANITE3_1_8B = "Granite3.1-8b"
     GRANITE3_2_8B = "Granite3.2-8b"
-
+    GRANITE3_3_8B = "Granite3.3-8b"
+    DEEPSEEK_V3 = "DeepSeek V3"
+    GEMMA_2_5_PRO = "Gemmini 2.5 Pro"
+    GEMINI_2_5_FLASH = "Gemini 2.5 Flash"
 
 class ModelProviderEnum(str, Enum):
     WATSONX = "watsonx"
     OPENAI = "open-ai"
     RITS = "rits"
-    AZURE_OPENAI = "azure"
+    AZURE = "azure"
+    TOGETHER_AI = "together-ai"
+    AWS = "aws"
+    VERTEX_AI = "vertex-ai"
+    OLLAMA = "ollama"
+    REPLICATE = "replicate"
 
 
 EVALUATOR_TO_MODEL_ID = {
     EvaluatorNameEnum.MIXTRAL8_7b: "mixtral-8x7b-instruct-v01",
     EvaluatorNameEnum.MIXTRAL_LARGE: "mistral-large-instruct",
     EvaluatorNameEnum.LLAMA3_1_405B: "llama-3-1-405b-instruct",
-    EvaluatorNameEnum.LLAMA3_1_8B: "llama-3-1-70b-instruct",
+    EvaluatorNameEnum.LLAMA3_1_8B: "llama-3-1-8b-instruct",
     EvaluatorNameEnum.LLAMA3_1_70B: "llama-3-1-70b-instruct",
     EvaluatorNameEnum.LLAMA3_3_70B: "llama-3-3-70b-instruct",
-    EvaluatorNameEnum.GPT4: "gpt-4o-2024-08-06",
+    EvaluatorNameEnum.LLAMA3_4_MAVERICK: "llama-4-maverick",
+    EvaluatorNameEnum.LLAMA3_4_SCOUT: "llama-4-scout",
+    EvaluatorNameEnum.GPT4o: "gpt-4o-2024-08-06",
+    EvaluatorNameEnum.GPT4_1: "gpt-4-1",
+    EvaluatorNameEnum.GPT4_1_NANO: "gpt-4-1-nano",
+    EvaluatorNameEnum.GPT4_1_MINI: "gpt-4-1-mini",
     EvaluatorNameEnum.O1_PREVIEW: "o1-preview",
     EvaluatorNameEnum.O1_MINI: "o1-mini",
     EvaluatorNameEnum.GRANITE3_2B: "granite-3-2b-instruct",
@@ -105,7 +123,14 @@ EVALUATOR_TO_MODEL_ID = {
     EvaluatorNameEnum.GRANITE3_1_2B: "granite-3-1-2b-instruct",
     EvaluatorNameEnum.GRANITE3_1_8B: "granite-3-1-8b-instruct",
     EvaluatorNameEnum.GRANITE3_2_8B: "granite-3-2-8b-instruct",
+    EvaluatorNameEnum.GRANITE3_3_8B: "granite-3-3-8b-instruct",
+    EvaluatorNameEnum.DEEPSEEK_V3: "deepseek-ai/DeepSeek-V3",
+    EvaluatorNameEnum.GEMMA_2_5_PRO: "gemma-2-5-pro",
+    EvaluatorNameEnum.GEMINI_2_5_FLASH: "gemini-2-5-flash",
 }
+
+
+
 
 class EvaluatorMetadata:
     name: EvaluatorNameEnum
@@ -123,7 +148,7 @@ EVALUATORS_METADATA = [
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.MIXTRAL_LARGE,
-        [ModelProviderEnum.RITS, ModelProviderEnum.WATSONX],
+        [ModelProviderEnum.RITS, ModelProviderEnum.WATSONX, ModelProviderEnum.AWS],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.GRANITE3_8B,
@@ -138,33 +163,69 @@ EVALUATORS_METADATA = [
         [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
     ),
     EvaluatorMetadata(
-        EvaluatorNameEnum.GPT4,
-        [ModelProviderEnum.OPENAI, ModelProviderEnum.AZURE_OPENAI],
+        EvaluatorNameEnum.GRANITE3_3_8B,
+        [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS, ModelProviderEnum.OLLAMA],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.GPT4o,
+        [ModelProviderEnum.OPENAI, ModelProviderEnum.AZURE],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.O1_MINI,
-        [ModelProviderEnum.OPENAI, ModelProviderEnum.AZURE_OPENAI],
+        [ModelProviderEnum.OPENAI, ModelProviderEnum.AZURE],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.O1_PREVIEW,
-        [ModelProviderEnum.OPENAI, ModelProviderEnum.AZURE_OPENAI],
+        [ModelProviderEnum.OPENAI, ModelProviderEnum.AZURE],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.GPT4_1,
+        [ModelProviderEnum.OPENAI, ModelProviderEnum.AZURE, ModelProviderEnum.REPLICATE],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.GPT4_1_NANO,
+        [ModelProviderEnum.OPENAI, ModelProviderEnum.AZURE],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.GPT4_1_MINI,
+        [ModelProviderEnum.OPENAI, ModelProviderEnum.AZURE],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.LLAMA3_1_70B,
-        [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
+        [ModelProviderEnum.WATSONX, ModelProviderEnum.TOGETHER_AI, ModelProviderEnum.RITS, ModelProviderEnum.OLLAMA],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.LLAMA3_1_8B,
-        [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
+        [ModelProviderEnum.WATSONX, ModelProviderEnum.TOGETHER_AI, ModelProviderEnum.RITS, ModelProviderEnum.OLLAMA],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.LLAMA3_1_405B,
-        [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
+        [ModelProviderEnum.WATSONX, ModelProviderEnum.TOGETHER_AI, ModelProviderEnum.RITS, ModelProviderEnum.AWS, ModelProviderEnum.OLLAMA],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.LLAMA3_3_70B,
-        [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
+        [ModelProviderEnum.WATSONX, ModelProviderEnum.TOGETHER_AI, ModelProviderEnum.RITS, ModelProviderEnum.AWS, ModelProviderEnum.OLLAMA, ModelProviderEnum.AZURE],
     ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.LLAMA3_4_SCOUT,
+        [ModelProviderEnum.AZURE, ModelProviderEnum.TOGETHER_AI, ModelProviderEnum.AWS, ModelProviderEnum.REPLICATE, ModelProviderEnum.RITS],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.LLAMA3_4_MAVERICK,
+        [ModelProviderEnum.AZURE, ModelProviderEnum.TOGETHER_AI, ModelProviderEnum.AWS, ModelProviderEnum.REPLICATE, ModelProviderEnum.RITS],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.DEEPSEEK_V3,
+        [ModelProviderEnum.RITS, ModelProviderEnum.TOGETHER_AI, ModelProviderEnum.AWS],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.GEMMA_2_5_PRO,
+        [ModelProviderEnum.VERTEX_AI]
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.GEMINI_2_5_FLASH,
+        [ModelProviderEnum.VERTEX_AI]
+    )
 ]
 
 ################################  Direct Assessment Criterias ################################

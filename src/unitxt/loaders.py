@@ -439,7 +439,7 @@ class LoadWithPandas(LazyLoader):
                             dataframe = self.read_dataframe(file)
                         break
                 except Exception as e:
-                    logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
+                    logger.warning(f"Attempt  load {attempt + 1} failed: {e}")
                     if attempt < settings.loaders_max_retries - 1:
                         time.sleep(2)
                     else:
@@ -527,8 +527,8 @@ class LoadJsonFile(LoadWithPandas):
         chunksize : Size of the chunks to load at a time.
         loader_limit: Optional integer to specify a limit on the number of records to load.
         streaming: Bool indicating if streaming should be used.
-        lines: Bool indicate if it is json lines file structure.
-        record_path: a field containing the list of instances.
+        lines: Bool indicate if it is json lines file structure. Otherwise, assumes a single json object in the file.
+        data_field: optional field within the json object, that contains the list of instances.
 
     Example:
         Loading json lines
@@ -545,19 +545,27 @@ class LoadJsonFile(LoadWithPandas):
 
         args =  self.get_args()
         if not self.lines:
-            args.pop("nrows", None)
-
-        if self.data_field is None:
+            data = json.loads(read_file(file))
+            if (self.data_field):
+                instances = dict_get(data, self.data_field)
+                if not isoftype(instances,List[Dict[str,Any]]):
+                    raise UnitxtError(f"{self.data_field} of file {file} is not a list of dictionariess in LoadJsonFile loader")
+            else:
+                if isoftype(data,Dict[str,Any]):
+                    instances = [data]
+                elif isoftype(data,List[Dict[str,Any]]):
+                    instances=data
+                else:
+                    raise UnitxtError(f"data of file {file} is not dictionary or a list of dictionaries in LoadJsonFile loader")
+            dataframe = pd.DataFrame(instances)
+        else:
+            if self.data_field is not None:
+                raise UnitxtError("Can not load from a specific 'data_field' when loading multiple lines (lines=True)")
             dataframe = pd.read_json(
                 file,
                 lines=self.lines,
                 **args
             )
-        else:
-            data_dict = json.loads(read_file(file))
-            data = dict_get(data_dict, self.data_field)
-            dataframe = pd.DataFrame(data)
-
         return dataframe
 
 

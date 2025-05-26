@@ -11,6 +11,6 @@
         },
         "model": "gpt-4o-2024-08-06"
     },
-    "evaluator_name": "GPT4",
+    "evaluator_name": "GPT4o",
     "generate_summaries": false
 }
