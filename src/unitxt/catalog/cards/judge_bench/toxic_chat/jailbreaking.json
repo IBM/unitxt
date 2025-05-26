@@ -44,13 +44,20 @@
                     "No": 0.0
                 }
             }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "criteria": "metrics.llm_as_judge.direct.criteria.jailbreak_user_message"
+            }
         }
     ],
     "task": {
         "__type__": "task",
         "input_fields": {
             "text": "str",
-            "label": "str"
+            "label": "str",
+            "criteria": "Any"
         },
         "reference_fields": {
             "label_value": "float"

@@ -230,6 +230,39 @@ EVALUATORS_METADATA = [
 
 ################################  Direct Assessment Criterias ################################
 
+def get_yes_no_criteria(name: str = "", description: str = "", bigger_is_better: bool = True):
+    return CriteriaWithOptions(
+            name=name,
+            description=description,
+            options=[
+                CriteriaOption(name="Yes", description=""),
+                CriteriaOption(name="No", description=""),
+            ],
+            option_map={
+                "Yes": 1.0 if bigger_is_better else 0.0,
+                "No": 0.0 if bigger_is_better else 1.0,
+            },
+    )
+
+def get_graded_1_to_5_criteria(name: str = "", description: str = ""):
+    return CriteriaWithOptions(
+            name=name,
+            description=description,
+            options=[
+                CriteriaOption(name="1", description=""),
+                CriteriaOption(name="2", description=""),
+                CriteriaOption(name="3", description=""),
+                CriteriaOption(name="4", description=""),
+                CriteriaOption(name="5", description=""),
+            ],
+            option_map={
+                "1": 0.0,
+                "2": 0.25,
+                "3": 0.5,
+                "4": 0.75,
+                "5": 1.0,
+            },
+    )
 
 class DirectCriteriaCatalogEnum(Enum):
     TEMPERATURE = CriteriaWithOptions(
@@ -776,6 +809,48 @@ class DirectCriteriaCatalogEnum(Enum):
         },
     )
 
+    SUMMARIZATION_INFORMATIVENESS = get_graded_1_to_5_criteria(
+        "summarization_informativeness",
+        "On a scale of 1 (low) to 5 (high), how well does the summary capture the key points of the article?"
+    )
+
+    SUMMARIZATION_RELEVANCE = get_graded_1_to_5_criteria(
+        "summarization_relevance",
+        "On a scale of 1 (low) to 5 (high), are the details provided by the summary consistent with details in the article?"
+    )
+
+    SUMMARIZATION_FLUENCY = get_graded_1_to_5_criteria(
+        "summarization_fluency",
+        "On a scale of 1 (low) to 5 (high), are the individual sentences of the summary well-written and grammatical?"
+    )
+
+    SUMMARIZATION_COHERENCE = get_graded_1_to_5_criteria(
+        "summarization_coherence",
+        "On a scale of 1 (low) to 5 (high), do phrases and sentences of the summary fit together and make sense collectively?"
+    )
+
+    STEP_BY_STEP_REASONING_OVERALL_QUALITY = get_graded_1_to_5_criteria(
+        "step_by_step_reasoning_overall_quality",
+        "On a scale of 1 (low) to 5 (high), does the generated response answer the question in a well-justified manner?"
+    )
+
+    STEP_BY_STEP_REASONING_COHERENCY = get_graded_1_to_5_criteria(
+        "step_by_step_reasoning_coherency",
+        "On a scale of 1 (low) to 5 (high), does the whole generated response make sense? (Ie, does it sound understandable/non-contradictory/sensible, even if it fails to address the context?)"
+    )
+
+    STEP_BY_STEP_REASONING_MISSING_STEPS = get_yes_no_criteria(
+        "step_by_step_reasoning_missing_steps",
+        "Is the reasoning in the generated response incomplete and lacking required information to produce the correct answer? Specifically, does this response contain steps that, if added in, would make for a well-supported chain?",
+        bigger_is_better=False
+    )
+
+    STEP_BY_STEP_REASONING_CONTRADICTION = get_yes_no_criteria(
+        "step_by_step_reasoning_contradiction",
+        "Do steps contradict each other or fail to follow a cohesive story?",
+        bigger_is_better=False
+    )
+
     REFERENCE_DOCUMENT_FAITHFULNESS = CriteriaWithOptions(
         "reference_document_faithfulness",
         "Is the response faithful according to reference document?",
@@ -1031,6 +1106,28 @@ class DirectCriteriaCatalogEnum(Enum):
             "No": 0.0,
         }
     )
+    LOGICAL_VALIDITY_OF_REASONING = CriteriaWithOptions(
+        name="logical_validity_of_reasoning",
+        description=(
+            "Assess whether the model's reasoning is logically valid when solving problems "
+            "in propositional logic. The reasoning should follow correct logical principles "
+            "and lead to a valid conclusion based on the given premises."
+        ),
+        options=[
+            CriteriaOption(
+                name="Yes",
+                description="The reasoning is logically valid and correctly applies propositional logic principles."
+            ),
+            CriteriaOption(
+                name="No",
+                description="The reasoning is logically invalid or contains errors in applying propositional logic principles."
+            ),
+        ],
+        option_map={
+            "Yes": 1.0,
+            "No": 0.0,
+        }
+)
 
 
 DIRECT_CRITERIA = [c.value for c in DirectCriteriaCatalogEnum]

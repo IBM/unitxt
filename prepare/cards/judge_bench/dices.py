@@ -16,29 +16,26 @@ from unitxt.test_utils.card import test_card
 card = TaskCard(
     loader=LoadJsonFile(
         files={
-            "train": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/toxic_chat/toxic_chat_train.json",
-            "test":"https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/toxic_chat/toxic_chat_test.json"
+            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/dices/dices_990.json",
+            # "990": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/dices/dices_990.json",
+            # "350_expert": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/dices/dices_350_expert.json",
+            # "350_crowdso  urced": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/dices/dices_350_crowdsourced.json",
         },
         data_classification_policy=["public"],
         data_field="instances",
     ),
     preprocess_steps=[
-        Rename(field="instance", to_field="text"),
-        Rename(field="annotations/toxicity/majority_human", to_field="label"),
-        MapInstanceValues(mappers={
-            "label": {
-                "0": "No",
-                "1": "Yes"
-            },
-        }),
+        Rename(field="instance/user_prompt", to_field="user_prompt"),
+        Rename(field="instance/response", to_field="assistant_response"),
+        Rename(field="annotations/safety/majority_human", to_field="label"),
         Copy(field="label", to_field="label_value"),
         MapInstanceValues(mappers={
-            "label_value": DirectCriteriaCatalogEnum.TOXICITY.value.option_map,
+            "label_value": DirectCriteriaCatalogEnum.GENERAL_HARM_ASSISTANT_MESSAGE.value.option_map,
         }),
-        Set(fields={"criteria": "metrics.llm_as_judge.direct.criteria.toxicity"}),
+        Set(fields={"criteria": "metrics.llm_as_judge.direct.criteria.assistant_message_general_harm"}),
     ],
     task=Task(
-        input_fields={"text": str, "label": str, "criteria": Any},
+        input_fields={"user_prompt": str, "assistant_response": str, "label": str, "criteria": Any},
         reference_fields={"label_value": float},
         prediction_type=float,
         metrics=[
@@ -54,6 +51,6 @@ test_card(card, demos_taken_from="test", strict=False)
 
 add_to_catalog(
     card,
-    "cards.judge_bench.toxic_chat.toxicity",
+    "cards.judge_bench.dices.safety",
     overwrite=True,
 )
