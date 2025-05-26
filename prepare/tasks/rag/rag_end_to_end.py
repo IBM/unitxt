@@ -19,6 +19,7 @@ add_to_catalog(
             "reference_answers": List[str],
             "reference_contexts": List[str],
             "reference_context_ids": Union[List[int], List[str]],
+            "reference_context_page_ids": List[int],
             "is_answerable_label": bool,
         },
         metrics=[
@@ -36,6 +37,7 @@ add_to_catalog(
             "reference_answers": [],
             "reference_contexts": [],
             "reference_context_ids": [],
+            "reference_context_page_ids": [],
             "is_answerable_label": True,
         },
         default_template="templates.rag.end_to_end.json_predictions",
