@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import logging
+import math
 import os
 import re
 import sys
@@ -239,7 +240,7 @@ class InferenceEngine(Artifact):
             result = self._mock_infer(dataset)
         else:
             if self.use_cache:
-                number_of_batches = len(dataset) // self.cache_batch_size + 1
+                number_of_batches = math.ceil(len(dataset) / self.cache_batch_size)
                 result = []
                 for batch_index, batch in enumerate(
                     batched(dataset, self.cache_batch_size)
