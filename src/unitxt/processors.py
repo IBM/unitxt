@@ -292,13 +292,15 @@ class ExtractMtBenchRatingJudgment(FieldOperator):
         except:
             return 0.0
 
+
 class ExtractHarmRatingJudgement(FieldOperator):
     def process_value(self, text: Any) -> Any:
         match = re.search(r"\[\[([\d]+\.?[\d]*)\]\]", text)
         try:
-            return float(match.group(1))*0.25 - 0.25
+            return float(match.group(1)) * 0.25 - 0.25
         except:
             return np.NaN
+
 
 class ExtractMtBenchLabelJudgment(FieldOperator):
     def process_value(self, text: Any) -> Any:
@@ -438,12 +440,15 @@ class GetSQL(FieldOperator):
     after the first semicolon in the identified query.
     """
 
-    def process_value(self, text: str) -> str:
+
+class SQLProcessor:
+    def process_value(self, text: str, debug: bool = False) -> str:
         """Extracts the most plausible SQL query from the given text.
 
         Args:
             text: The input string potentially containing an SQL query
                   and other text (e.g., explanations, markdown).
+            debug: If True, print debugging information.
 
         Returns:
             The extracted SQL query string, or a message indicating
@@ -452,64 +457,72 @@ class GetSQL(FieldOperator):
         if not isinstance(text, str):
             return "Input must be a string"  # Basic type check
 
-        sql_query_candidate = None  # Renamed to indicate it might need cleanup
+        sql_query_candidate = None
 
         # 1. Try to find ```sql ... ``` code blocks
+        # Uses re.DOTALL to make . match newlines, and re.IGNORECASE for case-insensitivity
         sql_blocks = re.findall(
             r"```sql\s*(.*?)\s*```", text, re.DOTALL | re.IGNORECASE
         )
         if sql_blocks:
-            # Use the content of the last ```sql block
+            # Use the content of the last ```sql block found
             sql_query_candidate = sql_blocks[-1].strip()
+
         else:
             # 2. If no ```sql blocks, try to find generic ``` ... ``` blocks
             generic_blocks = re.findall(r"```\s*(.*?)\s*```", text, re.DOTALL)
             if generic_blocks:
                 # Check if the last block looks like SQL (starts with SELECT, INSERT, etc.)
                 last_block_content = generic_blocks[-1].strip()
-                # Allow common SQL starting keywords
-                sql_keywords = (
+                # Common SQL starting keywords (case-insensitive match at the beginning of the block)
+                sql_start_keywords = (
                     r"^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|WITH|DROP|TRUNCATE)\b"
                 )
-                if re.match(sql_keywords, last_block_content, re.IGNORECASE):
+                if re.match(sql_start_keywords, last_block_content, re.IGNORECASE):
                     sql_query_candidate = last_block_content
 
-        # 3. If no suitable code blocks found, search the entire text for the last relevant SQL keyword
+        # 3. If no suitable code blocks found, search the entire text for the FIRST relevant SQL keyword
         if sql_query_candidate is None:
-            # Find the start index of the *last* common SQL keyword (case-insensitive)
-            last_match = None
-            # Expand search beyond just SELECT for better fallback
-            sql_keywords_search = (
+            # Keywords to search for (as whole words, case-insensitive)
+            sql_search_keywords_pattern = (
                 r"\b(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|WITH|DROP|TRUNCATE)\b"
             )
-            for match in re.finditer(sql_keywords_search, text, re.IGNORECASE):
-                last_match = match
 
-            if last_match:
-                # Extract from the last keyword to the end of the string
-                sql_query_candidate = text[last_match.start() :].strip()
+            # Find the first occurrence using re.search
+            match_obj = re.search(sql_search_keywords_pattern, text, re.IGNORECASE)
 
-        # 4. Cleanup: Truncate at first semicolon and strip whitespace
+            if match_obj:
+                # Extract from the first keyword found to the end of the string
+                sql_query_candidate = text[match_obj.start() :].strip()
+
+        # 4. Cleanup: Truncate at first semicolon (if any) and strip whitespace
         if sql_query_candidate:
             # Find the first semicolon in the candidate string
             first_semicolon_index = sql_query_candidate.find(";")
             if first_semicolon_index != -1:
-                # If found, take everything before it
+                # If found, take everything before it and strip whitespace
                 sql_query = sql_query_candidate[:first_semicolon_index].strip()
+
             else:
                 # If no semicolon, use the candidate as is (after stripping)
-                sql_query = sql_query_candidate.strip()
+                sql_query = sql_query_candidate.strip()  # Ensure it's stripped
 
-            # clean the ```sql\n from the start and the \n``` in case it is there
-            sql_query = sql_query.replace("```sql", "").replace("```", "").strip()
+            # Clean any remaining ```sql\n or \n``` markers, just in case they were not fully handled
+            # by the regex or are part of a raw text extraction.
+            # This step might be redundant if block parsing is perfect but acts as a safeguard.
+            # Remove leading "```sql" (case-insensitive) and optional newline/space
+            sql_query = re.sub(
+                r"^\s*```sql\s*", "", sql_query, flags=re.IGNORECASE, count=1
+            )
+            # Remove trailing "```" and optional newline/space before it
+            sql_query = re.sub(r"\s*```\s*$", "", sql_query, count=1)
+            sql_query = sql_query.strip()
 
         else:
-            sql_query = None  # Ensure sql_query is None if no candidate was found
+            sql_query = None  # Ensure sql_query is None if no candidate was ever found
 
         # 5. Return result or 'not found' message
-        return (
-            sql_query if sql_query is not None else "No query found in generation"
-        )  # Check for None explicitly
+        return sql_query if sql_query else "No query found in generation"
 
 
 class ScaleNumberToZeroOneReturnZeroIfFails(FieldOperator):
