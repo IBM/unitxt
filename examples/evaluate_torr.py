@@ -13,7 +13,7 @@ with settings.context(
     )
     # Infer
     model = CrossProviderInferenceEngine(   # We used Together AI as inference engine
-        model="llama-3-3-8b-instruct",
+        model="llama-3-8b-instruct",
         max_tokens=512,
     )
     """
