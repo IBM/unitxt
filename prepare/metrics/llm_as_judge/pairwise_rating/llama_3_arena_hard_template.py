@@ -65,7 +65,7 @@ for template in templates:
 add_to_catalog(
     LLMAsJudge(
         inference_model=CrossProviderInferenceEngine(
-            model="llama-3-70b-instruct",
+            model="llama-3-3-70b-instruct",
             max_tokens=30,
         ),
         template="templates.response_assessment.pairwise_comparative_rating.arena_hard",
