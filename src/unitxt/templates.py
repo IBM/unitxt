@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from .artifact import Artifact
 from .collections import DictCollection, ListCollection
 from .dataclass import NonPositionalField
-from .dict_utils import dict_set
+from .dict_utils import dict_get, dict_set
 from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator, Operator
 from .random_utils import new_random_generator
@@ -198,6 +198,7 @@ class Template(InstanceOperator):
             raise TemplateFormatKeyError(
                 self, data, data_type, format_str, format_name
             ) from e
+
 
 
 class ApplyTemplate(InstanceOperator):
@@ -940,6 +941,15 @@ class MultiReferenceTemplate(InputOutputTemplate):
 
         return target, references
 
+
+class MultiTurnTemplate(MultiReferenceTemplate):
+    input_format = ""
+    turns_field: str
+
+    def post_process_instance(self, instance):
+        turns = dict_get(instance["input_fields"], self.turns_field)
+        instance["__turns__"] = turns
+        return super().post_process_instance(instance)
 
 def escape_chars(s, chars_to_escape):
     for char in chars_to_escape:
