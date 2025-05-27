@@ -13,13 +13,13 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from datasets import Dataset as HFDataset
 
-from .api import _source_to_dataset, evaluate, load_recipe
+from .api import evaluate
 from .artifact import UnitxtArtifactNotFoundError
-from .benchmark import Benchmark
 
 # Use HFAutoModelInferenceEngine for local models
 from .inference import (
     CrossProviderInferenceEngine,
+    DevstralInferenceEngine,
     HFAutoModelInferenceEngine,
     InferenceEngine,
 )
@@ -291,14 +291,22 @@ def cli_load_dataset(args: argparse.Namespace) -> HFDataset:
         f"Loading task/dataset using identifier: '{args.tasks}' with split '{args.split}'"
     )
 
-    benchmark_subsets = {}
-    for task_str in args.tasks:
-        overwrite_args = extract_overwrite_args(args)
-        benchmark_subsets[task_str] = load_recipe(dataset_query=task_str, **overwrite_args)
+    # benchmark_subsets = {}
+    # for task_str in args.tasks:
+    overwrite_args = extract_overwrite_args(args)
+    #     benchmark_subsets[task_str] = load_recipe(dataset_query=task_str, **overwrite_args)
 
-    benchmark = Benchmark(subsets=benchmark_subsets)
+    # benchmark = Benchmark(subsets=benchmark_subsets)
 
-    test_dataset = _source_to_dataset(benchmark, split=args.split)
+    # test_dataset = _source_to_dataset(benchmark, split=args.split)
+    from . import load_dataset
+
+    task_str = args.tasks[0]
+    if len(overwrite_args) > 0:
+        task_str = (
+            task_str + "," + ",".join([f"{k}={v}" for k, v in overwrite_args.items()])
+        )
+    test_dataset = load_dataset(task_str, split="validation")
     logger.info(
         f"Dataset loaded successfully. Number of instances: {len(test_dataset)}"
     )
@@ -406,7 +414,12 @@ def initialize_inference_engine(
         model_args_dict.update({"batch_size": args.batch_size})
         logger.info(f"HFAutoModelInferenceEngine args: {model_args_dict}")
 
-        inference_model = HFAutoModelInferenceEngine(
+        if "Devstral" in local_model_name:
+            cur_inference_engine = DevstralInferenceEngine
+        else:
+            cur_inference_engine = HFAutoModelInferenceEngine
+
+        inference_model = cur_inference_engine(
             model_name=local_model_name,
             **model_args_dict,
             chat_kwargs_dict=chat_kwargs_dict,
