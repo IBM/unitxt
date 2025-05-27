@@ -1,5 +1,5 @@
 {
-    "__type__": "templates_list",
+    "__type__": "unitxt.templates.TemplatesList",
     "items": [
         "templates.targeted_sentiment_extraction.positive.sentiment_extracted",
         "templates.targeted_sentiment_extraction.positive.having_sentiment",

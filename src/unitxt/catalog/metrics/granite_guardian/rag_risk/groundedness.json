@@ -1,4 +1,4 @@
 {
-    "__type__": "granite_guardian_rag_risk",
+    "__type__": "unitxt.metrics.GraniteGuardianRagRisk",
     "risk_name": "groundedness"
 }

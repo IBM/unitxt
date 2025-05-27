@@ -1,15 +1,15 @@
 {
-    "__type__": "criteria_with_options",
+    "__type__": "unitxt.llm_as_judge_constants.CriteriaWithOptions",
     "name": "naturalness",
     "description": "Is the user response natural?",
     "options": [
         {
-            "__type__": "criteria_option",
+            "__type__": "unitxt.llm_as_judge_constants.CriteriaOption",
             "name": "Yes",
             "description": "The user response is natural."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": "unitxt.llm_as_judge_constants.CriteriaOption",
             "name": "No",
             "description": "The user response isn't natural."
         }

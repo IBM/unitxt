@@ -1,8 +1,8 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": "unitxt.metrics.MetricPipeline",
     "main_score": "granite_guardian_groundedness",
     "metric": {
-        "__type__": "granite_guardian_rag_risk",
+        "__type__": "unitxt.metrics.GraniteGuardianRagRisk",
         "main_score": "granite_guardian_groundedness",
         "risk_name": "groundedness",
         "user_message_field": "question",
@@ -10,12 +10,12 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "join",
+            "__type__": "unitxt.string_operators.Join",
             "field": "contexts",
             "by": "\n"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "ground_truths": "task_data/ground_truths",
                 "answer": "task_data/answer",
@@ -25,14 +25,14 @@
             "not_exist_do_nothing": true
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "prediction": "task_data/answer"
             },
             "not_exist_do_nothing": true
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "prediction": 0.0,
                 "references": [

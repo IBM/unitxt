@@ -1,4 +1,4 @@
 {
-    "__type__": "sentence_bert",
+    "__type__": "unitxt.metrics.SentenceBert",
     "model_name": "BAAI/bge-large-en-v1.5"
 }

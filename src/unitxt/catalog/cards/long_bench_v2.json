@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "THUDM/LongBench-v2",
         "data_classification_policy": [
             "public"
@@ -9,13 +9,13 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_splits",
+            "__type__": "unitxt.splitters.RenameSplits",
             "mapper": {
                 "train": "test"
             }
         },
         {
-            "__type__": "list_field_values",
+            "__type__": "unitxt.operators.ListFieldValues",
             "fields": [
                 "choice_A",
                 "choice_B",
@@ -25,12 +25,12 @@
             "to_field": "choices"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "domain",
             "to_field": "context_type"
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": "unitxt.operators.MapInstanceValues",
             "mappers": {
                 "answer": {
                     "A": 0,

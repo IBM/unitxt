@@ -1,4 +1,4 @@
 {
-    "__type__": "string_equals",
+    "__type__": "unitxt.processors.StringEquals",
     "string": "hate speech"
 }

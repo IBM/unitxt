@@ -1,33 +1,33 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "yale-nlp/QTSumm"
     },
     "preprocess_steps": [
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "context_type": "table"
             }
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field": "table",
             "to_field": "context"
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field": "query",
             "to_field": "question"
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field": "summary",
             "to_field": "answers"
         },
         {
-            "__type__": "wrap",
+            "__type__": "unitxt.collections_operators.Wrap",
             "field": "answers",
             "inside": "list",
             "to_field": "answers"

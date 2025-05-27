@@ -1,5 +1,5 @@
 {
-    "__type__": "multi_reference_template",
+    "__type__": "unitxt.templates.MultiReferenceTemplate",
     "instruction": "Answer the question.",
     "input_format": "Question: {question}",
     "target_prefix": "Answer: ",
