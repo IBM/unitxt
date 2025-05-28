@@ -165,6 +165,33 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertListEqual(predictions,  ["7", "2"])
 
+    def test_watsonx_inference_with_external_client(self):
+        from ibm_watsonx_ai.client import APIClient, Credentials
+
+        model = WMLInferenceEngineGeneration(
+            model_name="google/flan-t5-xl",
+            data_classification_policy=["public"],
+            random_seed=111,
+            min_new_tokens=1,
+            max_new_tokens=3,
+            top_p=0.5,
+            top_k=1,
+            repetition_penalty=1.5,
+            decoding_method="greedy",
+            external_client=APIClient(
+                credentials=Credentials(
+                    api_key=os.environ.get("WML_APIKEY"), url=os.environ.get("WML_URL")
+                ),
+                space_id=os.environ.get("WML_SPACE_ID")
+            )
+        )
+
+        dataset = get_text_dataset()
+
+        predictions = model(dataset)
+
+        self.assertListEqual(predictions,  ["7", "2"])
+
     def test_rits_inference(self):
         import os
 
