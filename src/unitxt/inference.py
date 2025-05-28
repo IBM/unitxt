@@ -2238,6 +2238,7 @@ class WMLInferenceEngineBase(
         Union[WMLInferenceEngineParams, WMLGenerationParamsMixin, WMLChatParamsMixin]
     ] = None
 
+    external_client: Any = None
     _client: Any = InternalField(default=None, name="WML client")
     _model: Any = InternalField(default=None, name="WML model")
 
@@ -2263,6 +2264,9 @@ class WMLInferenceEngineBase(
     #     return data
 
     def _initialize_wml_client(self):
+        if self.external_client:
+            return self.external_client
+
         from ibm_watsonx_ai.client import APIClient, Credentials
 
         if self.credentials is None or len(self.credentials) == 0:  # TODO: change
