@@ -182,7 +182,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
                 credentials=Credentials(
                     api_key=os.environ.get("WML_APIKEY"), url=os.environ.get("WML_URL")
                 ),
-                space_id=os.environ.get("WML_SPACE_ID")
+                project_id=os.environ.get("WML_PROJECT_ID")
             )
         )
 
