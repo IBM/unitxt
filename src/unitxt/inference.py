@@ -2242,6 +2242,11 @@ class WMLInferenceEngineBase(
     _client: Any = InternalField(default=None, name="WML client")
     _model: Any = InternalField(default=None, name="WML model")
 
+    def process_data_before_dump(self, data):
+        data = super().process_data_before_dump(data)
+        data.pop("external_client", None)
+        return data
+
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name or self.deployment_id, self.label)
 
