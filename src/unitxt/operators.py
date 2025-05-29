@@ -1832,7 +1832,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
 
         metrics_list = []
         for metric_name in metric_names:
-            metric = self.get_artifact(metric_name)
+            metric, _ = fetch_artifact(metric_name)
             if isinstance(metric, MetricsList):
                 metrics_list.extend(list(metric.items))
             elif isinstance(metric, Metric):
