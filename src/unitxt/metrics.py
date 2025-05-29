@@ -4812,7 +4812,7 @@ def performance_drop_rate(
 ):
     """Percentage decrease of mean performance on test elements relative to that on a baseline (control).
 
-    from https://arxiv.org/pdf/2©06.04528.pdf.
+    from https://arxiv.org/pdf/2306.04528.pdf.
 
     Args:
         subgroup_scores_dict: dict where keys are subgroup types and values are lists of instance scores.
