@@ -2,7 +2,6 @@ import copy
 import functools
 import importlib.util
 import json
-import logging
 import os
 import random
 import re
@@ -16,9 +15,11 @@ from urllib.error import HTTPError as UrllibHTTPError
 from requests.exceptions import ConnectionError, HTTPError
 from requests.exceptions import Timeout as TimeoutError
 
+from .logging_utils import get_logger
 from .settings_utils import get_settings
 from .text_utils import is_made_of_sub_strings
 
+logger=get_logger()
 settings = get_settings()
 
 def retry_connection_with_exponential_backoff(max_retries=None,
@@ -80,7 +81,7 @@ def retry_connection_with_exponential_backoff(max_retries=None,
 
                     # Calculate exponential backoff with jitter
                     wait_time = backoff_factor * (2 ** attempt) + random.uniform(0, 1)
-                    logging.warning(f"{func.__name__} failed (attempt {attempt+1}/{retries}). "
+                    logger.warning(f"{func.__name__} failed (attempt {attempt+1}/{retries}). "
                                   f"Retrying in {wait_time:.2f}s. Error: {e!s}")
                     time.sleep(wait_time)
 
