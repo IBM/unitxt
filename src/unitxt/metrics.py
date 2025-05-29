@@ -2008,21 +2008,20 @@ class WebsrcSquadF1(GlobalMetric):
         return judge_list, {"f1": f1}
 
 
-class JaccardIndex(InstanceMetric):
-    reduction_map = {"mean": ["jaccard_index"]}
+
+class JaccardIndex(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "jaccard_index"
-    ci_scores = ["jaccard_index"]
+    reduction = MeanReduction()
 
-    prediction_type = Any  # string representation is compared
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
 
-    def compute(
-        self, references: List[Any], prediction: Any, task_data: List[Dict]
-    ) -> dict:
         if not isinstance(prediction, set):
             prediction = set(prediction)
         references = [set(reference) for reference in references]
 
-        result = {
+        return {
             self.main_score: max(
                 [
                     float(
@@ -2037,9 +2036,6 @@ class JaccardIndex(InstanceMetric):
                 ]
             )
         }
-        result["score"] = result[self.main_score]
-        result["score_name"] = self.main_score
-        return result
 
 
 class MaxAccuracy(Accuracy):
@@ -2062,24 +2058,18 @@ class UnsortedListExactMatch(InstanceMetric):
         return result
 
 
-class StringContainment(InstanceMetric):
-    reduction_map = {"mean": ["string_containment"]}
+class StringContainment(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "string_containment"
-    ci_scores = ["string_containment"]
+    reduction = MeanReduction()
 
-    prediction_type = Any  # string representation is compared
-
-    def compute(
-        self, references: List[Any], prediction: Any, task_data: List[Dict]
-    ) -> dict:
-        result = {
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
+        return {
             self.main_score: float(
                 any(str(reference) in str(prediction) for reference in references)
             )
         }
-        result["score"] = result[self.main_score]
-        result["score_name"] = self.main_score
-        return result
 
 
 class StringContainmentRatio(InstanceMetric):
