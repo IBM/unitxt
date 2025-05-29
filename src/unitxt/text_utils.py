@@ -191,11 +191,6 @@ def construct_dict_as_yaml_lines(d, indent_delta=2) -> List[str]:
         d: The element to be formatted.
         indent_delta (int, optional): The amount of spaces to add for each level of indentation. Defaults to 2.
     """
-
-    def is_simple(val) -> bool:
-        # if can show in same line as dictionary's key
-        return not isinstance(val, (dict, list)) or (len(val) == 0)
-
     indent_delta_str = " " * indent_delta
     ticked_indent_delta_str = indent_delta_str[:-2] + "- "
     assert (
@@ -211,8 +206,7 @@ def construct_dict_as_yaml_lines(d, indent_delta=2) -> List[str]:
             res.append(printable_key + ": ")
             yaml_for_val = construct_dict_as_yaml_lines(val, indent_delta=indent_delta)
             assert len(yaml_for_val) > 0
-            if is_simple(val):
-                assert len(yaml_for_val) == 1
+            if len(yaml_for_val) == 1:
                 res[-1] += yaml_for_val[0]
             else:
                 for line in yaml_for_val:
