@@ -1843,7 +1843,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
                 )
 
         for metric in metrics_list:
-            metric.set_confidence_interval_calculation(self.calc_confidence_intervals)
+            metric.return_confidence_interval(self.calc_confidence_intervals)
         # Each metric operator computes its score and then sets the main score, overwriting
         # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
         # This will cause the first listed metric to run last, and the main score will be set

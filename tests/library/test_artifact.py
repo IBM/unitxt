@@ -165,7 +165,7 @@ class TestArtifact(UnitxtTestCase):
         artifact_identifier = "metrics.accuracy"
         artifact, catalog1 = fetch_artifact(artifact_identifier)
         self.assertTrue(artifact.confidence_interval_calculation)
-        artifact.set_confidence_interval_calculation(False)
+        artifact.return_confidence_interval(False)
         self.assertFalse(artifact.confidence_interval_calculation)
         same_artifact_retrieved_again, catalog2 = fetch_artifact(artifact_identifier)
         self.assertTrue(same_artifact_retrieved_again.confidence_interval_calculation)

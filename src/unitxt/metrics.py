@@ -302,7 +302,7 @@ class MapReduceMetric(
     def reduce(self, intermediates: List[IntermediateType]) -> Dict[str, Any]:
         return {}
 
-    def set_confidence_interval_calculation(self,value: bool):
+    def return_confidence_interval(self,value: bool):
         self.confidence_interval_calculation = value
 
     def annotate_scores(self, scores):
@@ -692,7 +692,7 @@ class MetricWithConfidenceInterval(Metric):
         _max_32bit = 2**32 - 1
         return np.random.default_rng(hash(get_seed()) & _max_32bit)
 
-    def set_confidence_interval_calculation(self,value: bool):
+    def return_confidence_interval(self,value: bool):
         self.confidence_interval_calculation = value
 
     def _can_compute_confidence_intervals(self, num_predictions):
@@ -2143,8 +2143,8 @@ class MetricPipeline(MultiStreamOperator, Metric):
     postpreprocess_steps: Optional[List[StreamingOperator]] = None
     metric: Metric = None
 
-    def set_confidence_interval_calculation(self,value: bool):
-        self.metric.set_confidence_interval_calculation(value)
+    def return_confidence_interval(self,value: bool):
+        self.metric.return_confidence_interval(value)
 
     def verify(self):
         super().verify()
@@ -4756,7 +4756,7 @@ class RemoteMetric(StreamOperator, Metric):
         response_json = response.json()
         return MetricResponse(**response_json)
 
-    def set_confidence_interval_calculation(self,value: bool):
+    def return_confidence_interval(self,value: bool):
         """Confidence intervals are always disabled for RemoteMetric.
 
         No need to do anything.
