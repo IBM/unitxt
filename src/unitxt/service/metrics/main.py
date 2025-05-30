@@ -82,7 +82,7 @@ def compute(
             metric: Artifact = ArtifactFetcherMixin.get_artifact(metric_name)
             metric: MultiStreamOperator = cast(MultiStreamOperator, metric)
             # Confidence interval is currently always off for remote metrics.
-            # metric.disable_confidence_interval_calculation()
+            # metric.
 
             # prepare the input stream
             multi_stream: MultiStream = MultiStream.from_iterables(
