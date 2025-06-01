@@ -253,13 +253,13 @@ def fill_metadata(**kwargs):
 
 
 def evaluate(
-    predictions, dataset: Union[Dataset, IterableDataset] = None, data=None
+    predictions, dataset: Union[Dataset, IterableDataset] = None, data=None, calc_confidence_intervals : bool =True
 ) -> EvaluationResults:
     if dataset is None and data is None:
         raise UnitxtError(message="Specify 'dataset' in evaluate")
     if data is not None:
         dataset = data  # for backward compatibility
-    evaluation_result = _compute(predictions=predictions, references=dataset)
+    evaluation_result = _compute(predictions=predictions, references=dataset, calc_confidence_intervals=calc_confidence_intervals)
     if hasattr(dataset, "info") and hasattr(dataset.info, "description"):
         evaluation_result.metadata["dataset"] = dataset.info.description
     if hasattr(predictions, "metadata"):
