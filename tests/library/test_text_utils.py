@@ -1,9 +1,12 @@
 import pandas as pd
 from unitxt.text_utils import (
     camel_to_snake_case,
+    construct_dict_as_yaml_lines,
     is_camel_case,
     is_snake_case,
     lines_defining_obj_in_card,
+    print_dict_as_python,
+    print_dict_as_yaml,
     split_words,
     to_pretty_string,
 )
@@ -217,3 +220,97 @@ class TestTextUtils(UnitxtTestCase):
             result,
             "   Short  \\\n0      1\n1      2\n\n   A_very_long_column_name_to_force_wrapping  \\\n0                                          3\n1                                          4\n\n   Another_extremely_long_column_name_that_will_ex\nceed_width  \\\n0\n         5\n1\n         6\n\n   Yet_another_long_column_to_ensure_wrapping_occu\nrs_properly\n0\n          7\n1\n          8\n",
         )
+
+    def test_print_dict_as_yaml(self):
+        instance = {
+            "field_name": [
+                "peace", "on", {
+                    "earth": "land",
+                    "heavens": "skies",
+                }, 9, 10,
+            ]}
+        yaml_lines = construct_dict_as_yaml_lines(instance)
+        self.assertListEqual(["field_name: ", "  - peace", "  - on", "  - earth: land", "    heavens: skies", "  - 9", "  - 10"], yaml_lines)
+        self.assertEqual("\n".join(yaml_lines), print_dict_as_yaml(instance))
+
+    def test_print_dict_as_python(self):
+        instance = {
+            "__type__": "task_card",
+            "loader": {
+                "__type__": "load_hf",
+                "path": "fancyzhx/ag_news"
+            },
+            "preprocess_steps": [
+                {
+                    "__type__": "split_random_mix",
+                    "mix": {
+                        "train": "train[87.5%]",
+                        "validation": "train[12.5%]",
+                        "test": "test"
+                    }
+                },
+                {
+                    "__type__": "map_instance_values",
+                    "mappers": {
+                        "label": {
+                            "0": "World",
+                            "1": "Sports",
+                            "2": "Business",
+                            "3": "Sci/Tech"
+                        }
+                    }
+                },
+                {
+                    "__type__": "set",
+                    "fields": {
+                        "classes": [
+                            "World",
+                            "Sports",
+                            "Business",
+                            "Sci/Tech"
+                        ],
+                        "text_type": "sentence"
+                    }
+                }
+            ],
+            "task": "tasks.classification.multi_class.topic_classification",
+            "templates": "templates.classification.multi_class.all",
+        }
+
+        self.assertEqual("""__type__task_card(
+    loader=__type__load_hf(
+        path="fancyzhx/ag_news",
+    ),
+    preprocess_steps=[
+        __type__split_random_mix(
+            mix={
+                "train": "train[87.5%]",
+                "validation": "train[12.5%]",
+                "test": "test",
+            },
+        ),
+        __type__map_instance_values(
+            mappers={
+                "label": {
+                    "0": "World",
+                    "1": "Sports",
+                    "2": "Business",
+                    "3": "Sci/Tech",
+                },
+            },
+        ),
+        __type__set(
+            fields={
+                "classes": [
+                    "World",
+                    "Sports",
+                    "Business",
+                    "Sci/Tech",
+                ],
+                "text_type": "sentence",
+            },
+        ),
+    ],
+    task="tasks.classification.multi_class.topic_classification",
+    templates="templates.classification.multi_class.all",
+)""", print_dict_as_python(instance))
