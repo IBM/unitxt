@@ -206,6 +206,7 @@ class ConfidenceIntervalMixin(Artifact):
     n_resamples: int = 1000
     confidence_level: float = 0.95
     ci_score_names: List[str] = None
+    return_confidence_interval: bool = True
 
     @abstractmethod
     def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
@@ -302,8 +303,8 @@ class MapReduceMetric(
     def reduce(self, intermediates: List[IntermediateType]) -> Dict[str, Any]:
         return {}
 
-    def disable_confidence_interval_calculation(self):
-        self.n_resamples = None
+    def set_confidence_interval_calculation(self,return_confidence_interval: bool):
+        self.return_confidence_interval = return_confidence_interval
 
     def annotate_scores(self, scores):
         scores = {
@@ -324,7 +325,7 @@ class MapReduceMetric(
     ) -> Dict[str, Any]:
         scores = self.reduce(intermediates)
         score_names = [k for k, v in scores.items() if isinstance(v, float)]
-        if self.n_resamples is None or len(intermediates) <= 1:
+        if not self.return_confidence_interval or  self.n_resamples is None or len(intermediates) <= 1:
             return scores
         intervals = self.bootstrap(intermediates, score_names)
         return {**scores, **intervals}
@@ -680,6 +681,7 @@ class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
     # Use None to disable confidence interval computation.
     n_resamples: int = None
+    confidence_interval_calculation : bool = True
     confidence_level: float = 0.95
     ci_scores: List[str] = None
     ci_method: str = "BCa"
@@ -691,12 +693,13 @@ class MetricWithConfidenceInterval(Metric):
         _max_32bit = 2**32 - 1
         return np.random.default_rng(hash(get_seed()) & _max_32bit)
 
-    def disable_confidence_interval_calculation(self):
-        self.n_resamples = None
+    def set_confidence_interval_calculation(self,return_confidence_interval: bool):
+        self.confidence_interval_calculation = return_confidence_interval
 
     def _can_compute_confidence_intervals(self, num_predictions):
         return (
-            self.n_resamples is not None
+            self.confidence_interval_calculation
+            and self.n_resamples is not None
             and self.n_resamples > 1
             and num_predictions > 1
         )
@@ -1037,6 +1040,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     n_resamples: int = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
+    confidence_interval_calculation : bool =  True
     main_score: str
 
     reduction_map: Dict[str, List[str]]
@@ -1339,6 +1343,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     n_resamples: int = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
+    confidence_interval_calculation : bool = True
 
     # some group_mean aggregation functions (3rd element of "agg_func" list in the reduction)
     # only require a list of instance scores (e.g., mean, median, etc.).  Others aggregation functions
@@ -2131,8 +2136,8 @@ class MetricPipeline(MultiStreamOperator, Metric):
     postpreprocess_steps: Optional[List[StreamingOperator]] = None
     metric: Metric = None
 
-    def disable_confidence_interval_calculation(self):
-        self.metric.disable_confidence_interval_calculation()
+    def set_confidence_interval_calculation(self,return_confidence_interval: bool):
+        self.metric.set_confidence_interval_calculation(return_confidence_interval)
 
     def verify(self):
         super().verify()
@@ -4744,7 +4749,7 @@ class RemoteMetric(StreamOperator, Metric):
         response_json = response.json()
         return MetricResponse(**response_json)
 
-    def disable_confidence_interval_calculation(self):
+    def set_confidence_interval_calculation(self,return_confidence_interval: bool):
         """Confidence intervals are always disabled for RemoteMetric.
 
         No need to do anything.
