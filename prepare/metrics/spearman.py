@@ -1,18 +1,9 @@
 import numpy as np
 from unitxt import add_to_catalog
-from unitxt.metrics import MetricPipeline, Spearmanr
-from unitxt.operators import Copy
+from unitxt.metrics import Spearmanr
 from unitxt.test_utils.metrics import test_metric
 
-metric = MetricPipeline(
-    main_score="spearmanr",
-    preprocess_steps=[
-        Copy(field="references/0", to_field="references"),
-    ],
-    metric=Spearmanr(),
-    prediction_type=float,
-)
-
+metric=Spearmanr()
 predictions = [1.0, 2.0, 1.0]
 references = [[-1.0], [1.0], [0.0]]
 

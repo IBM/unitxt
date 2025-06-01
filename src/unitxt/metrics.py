@@ -3025,18 +3025,50 @@ class Wer(HuggingfaceMetric):
         return {self.main_score: result}
 
 
-class Spearmanr(HuggingfaceMetric):
-    hf_metric_name = "spearmanr"
-    main_score = "spearmanr"
-    process_single_instances = False
-    prediction_type = float
+class MeanSquaredError(ReductionInstanceMetric[float, Dict[str, float]]):
+    main_score = "mean_squared_error"
+    reduction = MeanReduction()
 
-    # Spearmanr references are not list
-    def _validate_reference(self, reference):
-        if not isoftype(reference, self.prediction_type):
-            raise ValueError(
-                f"Each reference is expected to be of type '{to_type_string(self.prediction_type)}' in {self.get_metric_name()} metric. Received prediction of type {type(reference)}: {reference}"
-            )
+    def map(
+        self, prediction: float, references: List[float], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
+        return {
+            self.main_score: (references[0] - prediction) ** 2
+        }
+
+class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
+    main_score = "spearmanr"
+    prediction_type = float
+    _requirements_list = ["scipy"]
+
+    def prepare(self):
+        super().prepare()
+        from scipy.stats import spearmanr
+        self.spearmanr = spearmanr
+
+    def map(
+        self,
+        prediction: float,
+        references: List[float],
+        task_data: Dict[str, Any],
+    ) -> Tuple[float, float]:
+        return (prediction, references[0])
+
+    def reduce_one(self, intermidate: Tuple[float, float]):
+        return {self.main_score: np.nan}
+
+    def reduce(self, intermediates: List[Tuple[float, float]]) -> Dict[str, Any]:
+        list_a = []
+        list_b = []
+        for a, b  in intermediates:
+            list_a.append(a)
+            list_b.append(b)
+
+        score, p_value = self.spearmanr(a=list_a, b=list_b)
+
+        return {
+            self.main_score: score
+        }
 
 
 class KendallTauMetric(GlobalMetric):

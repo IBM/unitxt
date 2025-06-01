@@ -53,6 +53,7 @@ from unitxt.metrics import (
     KeyValueExtraction,
     LlamaIndexCorrectness,
     MaxAccuracy,
+    MeanSquaredError,
     MeteorFast,
     MetricsEnsemble,
     NormalizedSacrebleu,
@@ -343,6 +344,35 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("f1_micro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_micro", outputs[0]["score"]["instance"]["score_name"])
+    def test_mean_squared_error(self):
+        metric = MeanSquaredError()
+        predictions = [1.0, 2.0, 1.0]
+        references = [[-1.0], [1.0], [0.0]]
+
+        instance_targets = [
+            {"mean_squared_error": 4.0, "score": 4.0, "score_name": "mean_squared_error"},
+            {"mean_squared_error": 1.0, "score": 1.0, "score_name": "mean_squared_error"},
+            {"mean_squared_error": 1.0, "score": 1.0, "score_name": "mean_squared_error"},
+        ]
+
+        global_target = {
+            "mean_squared_error": 2.0,
+            "score": 2.0,
+            "score_name": "mean_squared_error",
+            "mean_squared_error_ci_low": 1.0,
+            "mean_squared_error_ci_high": 4.0,
+            "score_ci_low": 1.0,
+            "score_ci_high": 4.0,
+            "num_of_instances": 3,
+        }
+
+        self.assertTrue(test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        ))
 
     def test_jaccard_metric(self):
         metric = JaccardIndex()
