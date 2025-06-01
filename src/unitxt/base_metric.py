@@ -174,8 +174,11 @@ class Metric(Artifact):
             scores["global"] = global_score
 
     @abstractmethod
-    def disable_confidence_interval_calculation(self):
+    def set_confidence_interval_calculation(self,return_confidence_interval : bool):
         pass
+
+    def disable_confidence_interval_calculation(self):  # For backward compatibility
+        self.set_confidence_interval_calculation(return_confidence_interval=False)
 
     # update instance["score"]["global"] with the global_score just computed for the
     # current metric.  global_score contains "score" and "score_name" fields that reflect

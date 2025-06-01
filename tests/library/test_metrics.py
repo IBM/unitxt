@@ -1913,7 +1913,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
         """Test that when metric.n_resamples is set to None, no confidence intervals are computed."""
         # Test one GlobalMetric and one InstanceMetric
         for metric in [Accuracy(), F1Macro()]:
-            metric.disable_confidence_interval_calculation()
+            metric.set_confidence_interval_calculation(return_confidence_interval=False)
             outputs = apply_metric(metric=metric, predictions=["A"], references=[["A"]])
 
             global_result = outputs[0]["score"]["global"]
