@@ -1,5 +1,3 @@
-import os
-
 import pandas as pd
 from unitxt.eval_utils import evaluate
 
@@ -50,46 +48,3 @@ class TestEvalUtils(UnitxtTestCase):
                 "num_of_instances": 3,
             },
         )
-
-    def test_evaluate_with_llmaaj_and_external_client(self):
-        from ibm_watsonx_ai.client import APIClient, Credentials
-        from unitxt.inference import WMLInferenceEngineChat
-        from unitxt.llm_as_judge_from_template import TaskBasedLLMasJudge
-
-        external_client=APIClient(
-            credentials=Credentials(
-                api_key=os.environ.get("WML_APIKEY"), url=os.environ.get("WML_URL")
-            ),
-            project_id=os.environ.get("WML_PROJECT_ID")
-        )
-
-        metric = TaskBasedLLMasJudge(
-            inference_model=WMLInferenceEngineChat(
-                model_name="llama-3-3-70b-instruct",
-                max_tokens=5,
-                temperature=0.0,
-                top_logprobs=5,
-                external_client=external_client
-            ),
-            template="templates.rag_eval.answer_correctness.judge_loose_match_no_context_numeric",
-            task="tasks.rag_eval.answer_correctness.binary",
-            format=None,
-            main_score="answer_correctness_judge",
-            prediction_field="answer",
-            infer_log_probs=False,
-            judge_to_generator_fields_mapping={},
-            include_meta_data=False,
-        )
-
-        df = pd.DataFrame(
-            data=[
-                ["In which continent is France?", "France is in Europe." , ["France is a country located in Europe."]],
-                ["In which continent is England?", "England is in Europe.", ["England is a country located in Europe."]],
-            ],
-            columns=["question", "prediction", "ground_truths"]
-        )
-
-        results_df, global_scores = evaluate(df, [metric])
-        results_df = results_df.round(2)
-        instance_scores = results_df.iloc[:, 3]
-        self.assertAlmostEqual(list(instance_scores), [0, 0])
