@@ -47,6 +47,8 @@ from unitxt.metrics import (
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
     HuggingfaceMetric,
+    JaccardIndex,
+    JaccardIndexWords,
     KendallTauMetric,
     KeyValueExtraction,
     LlamaIndexCorrectness,
@@ -341,6 +343,59 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("f1_micro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_micro", outputs[0]["score"]["instance"]["score_name"])
+
+    def test_jaccard_metric(self):
+        metric = JaccardIndex()
+
+        predictions = [["A", "B", "C"]]
+        references = [[["B", "A", "D"]]]
+
+        instance_targets = [
+            {"jaccard_index": 0.5, "score": 0.5, "score_name": "jaccard_index"},
+        ]
+
+        global_target = {
+            "jaccard_index": 0.5,
+            "score": 0.5,
+            "score_name": "jaccard_index",
+            "num_of_instances": 1,
+        }
+
+
+        self.assertTrue(test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        ))
+
+
+
+
+        metric = JaccardIndexWords()
+
+        predictions = ["A B C"]
+        references = [["B A D"]]
+
+
+
+        global_target = {
+            "jaccard_index": 0.5,
+            "score": 0.5,
+            "score_name": "jaccard_index",
+            "num_of_instances": 1,
+        }
+
+        self.assertTrue(test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        ))
+
+
 
     def test_f1_strings(self):
         metric = F1Strings()

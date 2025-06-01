@@ -60,10 +60,11 @@ from .operator import (
     StreamingOperator,
     StreamOperator,
 )
-from .operators import ArtifactFetcherMixin, Copy, Set
+from .operators import ArtifactFetcherMixin, Copy, FieldOperator, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
+from .string_operators import Split
 from .type_utils import isoftype, parse_type_string, to_type_string
 from .types import ToolCall
 from .utils import deep_copy, recursive_copy, retry_connection_with_exponential_backoff
@@ -2012,30 +2013,32 @@ class WebsrcSquadF1(GlobalMetric):
 class JaccardIndex(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "jaccard_index"
     reduction = MeanReduction()
-
+    prediction_type = Union[list, set]
     def map(
-        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+        self, prediction:  Union[list, set], references: List[Union[list, set]], task_data: Dict[str, Any]
     ) -> Dict[str, float]:
 
-        if not isinstance(prediction, set):
-            prediction = set(prediction)
+        prediction = set(prediction)
         references = [set(reference) for reference in references]
 
         return {
             self.main_score: max(
                 [
-                    float(
-                        (len(reference.intersection(prediction)))
-                        / (
-                            len(reference)
-                            + len(prediction)
-                            - len(reference.intersection(prediction))
-                        )
-                    )
+                    float(len(reference.intersection(prediction)) / len(reference.union(prediction)) )
                     for reference in references
                 ]
             )
         }
+
+class JaccardIndexWords(JaccardIndex):
+    splitter: FieldOperator = Split(by=" ")
+    prediction_type = str
+    def map(self, prediction: str, references:List[str], task_data: Dict[str, Any]) -> Dict[str, float]:
+        return super().map(
+            self.splitter.process_value(prediction),
+            [self.splitter.process_value(reference) for reference in references],
+            task_data
+        )
 
 
 class MaxAccuracy(Accuracy):
