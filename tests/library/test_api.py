@@ -323,6 +323,25 @@ class TestAPI(UnitxtTestCase):
             fillna(results[0], None), fillna(instance_with_results, None)
         )
 
+    def test_evaluate_no_confidence_internal(self):
+        dataset = load_dataset(
+            "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
+        )
+        predictions = ["2.5", "2.5", "2.2", "3", "4"]
+        results = evaluate(predictions, dataset["train"],calc_confidence_intervals=False)
+
+        instance_global_scores =  {
+                    "num_of_instances": 5,
+                    "spearmanr": 0.026315789473684213,
+                    "score": 0.026315789473684213,
+                    "score_name": "spearmanr",
+                }
+
+        self.assertDictEqual(
+            fillna(results[0]["score"]["global"], None), fillna(instance_global_scores, None)
+        )
+
+
     def test_evaluate_with_groups(self):
         dataset = load_dataset(
             "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
@@ -566,7 +585,7 @@ class TestAPI(UnitxtTestCase):
             np.random.randint(0, 256, (256, 256, 3), dtype=np.uint8)
         )
 
-        dataset = [
+        instances = [
             {
                 "context": {"image": random_image, "format": "JPEG"},
                 "context_type": "image",
@@ -581,8 +600,15 @@ class TestAPI(UnitxtTestCase):
             },
         ]
 
-        dataset = create_dataset(
+        create_dataset(
             task="tasks.qa.with_context",
             format="formats.chat_api",
-            test_set=dataset,
+            test_set=instances,
+        )
+        create_dataset(
+            task="tasks.qa.with_context",
+            format="formats.chat_api",
+            test_set=instances,
+            train_set=instances,
+            validation_set=instances,
         )
