@@ -585,7 +585,7 @@ class TestAPI(UnitxtTestCase):
             np.random.randint(0, 256, (256, 256, 3), dtype=np.uint8)
         )
 
-        dataset = [
+        instances = [
             {
                 "context": {"image": random_image, "format": "JPEG"},
                 "context_type": "image",
@@ -600,8 +600,15 @@ class TestAPI(UnitxtTestCase):
             },
         ]
 
-        dataset = create_dataset(
+        create_dataset(
             task="tasks.qa.with_context",
             format="formats.chat_api",
-            test_set=dataset,
+            test_set=instances,
+        )
+        create_dataset(
+            task="tasks.qa.with_context",
+            format="formats.chat_api",
+            test_set=instances,
+            train_set=instances,
+            validation_set=instances,
         )
