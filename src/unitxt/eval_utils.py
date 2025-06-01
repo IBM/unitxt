@@ -1,5 +1,5 @@
 from functools import singledispatch
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import pandas as pd
 
@@ -12,7 +12,7 @@ from .stream import MultiStream
 
 @singledispatch
 def evaluate(
-    dataset, metric_names: List[str] | List[Metric], compute_conf_intervals: Optional[bool] = False
+    dataset, metric_names: Union[List[str], List[Metric]], compute_conf_intervals: Optional[bool] = False
 ):
     """Placeholder for overloading the function, supporting both dataframe input and list input."""
     pass
@@ -21,7 +21,7 @@ def evaluate(
 @evaluate.register
 def _(
     dataset: list,
-    metric_names: List[str] | List[Metric],
+    metric_names: Union[List[str], List[Metric]],
     compute_conf_intervals: Optional[bool] = False,
 ):
     global_scores = {}
@@ -53,7 +53,7 @@ def _(
 @evaluate.register
 def _(
     dataset: pd.DataFrame,
-    metric_names: List[str] | List[Metric],
+    metric_names: Union[List[str], List[Metric]],
     compute_conf_intervals: Optional[bool] = False,
 ):
     results, global_scores = evaluate(
