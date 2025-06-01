@@ -2079,6 +2079,25 @@ class StringContainment(ReductionInstanceMetric[str, Dict[str, float]]):
             )
         }
 
+class StringContainmentOld(InstanceMetric):
+    reduction_map = {"mean": ["string_containment"]}
+    main_score = "string_containment"
+    ci_scores = ["string_containment"]
+
+    prediction_type = Any  # string representation is compared
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        result = {
+            self.main_score: float(
+                any(str(reference) in str(prediction) for reference in references)
+            )
+        }
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
 
 class StringContainmentRatio(InstanceMetric):
     """Metric that returns the ratio of values from a specific field contained in the prediction.
@@ -5120,11 +5139,11 @@ class FixedGroupMeanAccuracy(Accuracy):
 
 
 # same as above, now using StringContainment
-class GroupMeanStringContainment(StringContainment):
+class GroupMeanStringContainment(StringContainmentOld):
     reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, False]}}
 
 
-class FixedGroupMeanStringContainment(StringContainment):
+class FixedGroupMeanStringContainment(StringContainmentOld):
     # the same as GroupMeanStringContainment, except the groups are fixed and are resampled together
     reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, True]}}
 
@@ -5163,7 +5182,7 @@ class FixedGroupMeanParaphraseAccuracy(Accuracy):
 
 
 # same as above but using StringContainment
-class FixedGroupMeanBaselineStringContainment(StringContainment):
+class FixedGroupMeanBaselineStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     # take mean of "original" variants only
     reduction_map = {
@@ -5179,7 +5198,7 @@ class FixedGroupMeanBaselineStringContainment(StringContainment):
     }
 
 
-class FixedGroupMeanParaphraseStringContainment(StringContainment):
+class FixedGroupMeanParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     # take mean of "paraphrase" variants only
     reduction_map = {
@@ -5213,7 +5232,7 @@ class FixedGroupPDRParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupPDRParaphraseStringContainment(StringContainment):
+class FixedGroupPDRParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5257,7 +5276,7 @@ class FixedGroupNormCohensHParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupNormCohensHParaphraseStringContainment(StringContainment):
+class FixedGroupNormCohensHParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5292,7 +5311,7 @@ class FixedGroupNormHedgesGParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupNormHedgesGParaphraseStringContainment(StringContainment):
+class FixedGroupNormHedgesGParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5329,7 +5348,7 @@ class FixedGroupAbsvalNormCohensHParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupAbsvalNormCohensHParaphraseStringContainment(StringContainment):
+class FixedGroupAbsvalNormCohensHParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5367,7 +5386,7 @@ class FixedGroupAbsvalNormHedgesGParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
+class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
