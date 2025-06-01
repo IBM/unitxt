@@ -2064,9 +2064,9 @@ class UnsortedListExactMatch(InstanceMetric):
 class StringContainment(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "string_containment"
     reduction = MeanReduction()
-
+    prediction_type = Any
     def map(
-        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+        self, prediction: Any, references: List[Any], task_data: Dict[str, Any]
     ) -> Dict[str, float]:
         return {
             self.main_score: float(
