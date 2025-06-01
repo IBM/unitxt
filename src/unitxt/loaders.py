@@ -1135,8 +1135,8 @@ class LoadFromAPI(Loader):
             "Content-Type": "application/json",
             "accept": "application/json",
         }
-        
-        if api_key is not None: 
+
+        if api_key is not None:
             base_headers["Authorization"] = f"Bearer {api_key}"
 
         if self.headers:
