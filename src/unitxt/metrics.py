@@ -207,6 +207,9 @@ class ConfidenceIntervalMixin(Artifact):
     confidence_level: float = 0.95
     ci_score_names: List[str] = None
     return_confidence_interval: bool = True
+    ci_method: str = "BCa"
+    ci_paired: bool = True
+
 
     @abstractmethod
     def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
@@ -229,10 +232,10 @@ class ConfidenceIntervalMixin(Artifact):
                 statistic=statistic,
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
-                random_state=new_random_generator(),
-                paired=False,
+                rng=new_random_generator(),
+                paired=self.ci_paired,
                 vectorized=False,
-                method="BCa",
+                method=self.ci_method,
             ).confidence_interval
 
         result = {}
@@ -685,6 +688,7 @@ class MetricWithConfidenceInterval(Metric):
     confidence_level: float = 0.95
     ci_scores: List[str] = None
     ci_method: str = "BCa"
+
 
     @staticmethod
     def new_random_generator():
@@ -3057,6 +3061,7 @@ class MeanSquaredError(ReductionInstanceMetric[float, Dict[str, float]]):
 
 class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
     main_score = "spearmanr"
+    ci_score_names = ["spearmanr"]
     prediction_type = float
     _requirements_list = ["scipy"]
 
@@ -3086,7 +3091,8 @@ class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
         score, p_value = self.spearmanr(a=list_a, b=list_b)
 
         return {
-            self.main_score: score
+            self.main_score: score,
+            "spearmanr_p_value": p_value,
         }
 
 

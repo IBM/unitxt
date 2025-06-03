@@ -236,7 +236,7 @@ class TestAPI(UnitxtTestCase):
         dataset = load_dataset(
             "card=cards.stsb,template=[templates.regression.two_texts.simple,templates.regression.two_texts.title],max_train_instances=5,max_validation_instances=5,max_test_instances=5,group_by=[template]"
         )
-        predictions = ["2.5", "2.5", "2.2", "3", "4"]
+        predictions = ["2.6", "2.5", "2.2", "3", "4"]
         results = evaluate(predictions, dataset["train"])
         self.assertDictEqual(
             round_values(fillna(results[0]["score"]["groups"], None), 3),
@@ -247,20 +247,23 @@ class TestAPI(UnitxtTestCase):
                         "spearmanr": 0.5,
                         "score": 0.5,
                         "score_name": "spearmanr",
-                        "score_ci_low": -1.0,
-                        "score_ci_high": 1.0,
-                        "spearmanr_ci_low": -1.0,
-                        "spearmanr_ci_high": 1.0,
+                        "score_ci_low": None,
+                        "score_ci_high": None,
+                        "spearmanr_ci_low": None,
+                        "spearmanr_ci_high": None,
+                        "spearmanr_p_value": 0.667,
                     },
                     "templates.regression.two_texts.simple": {
                         "num_of_instances": 2,
                         "spearmanr": -1.0,
                         "score": -1.0,
                         "score_name": "spearmanr",
-                        "score_ci_low": None,
-                        "score_ci_high": None,
-                        "spearmanr_ci_low": None,
-                        "spearmanr_ci_high": None,
+                        "score_ci_low": -1.0,
+                        "score_ci_high": -1.0,
+                        "spearmanr_ci_low": -1.0,
+                        "spearmanr_ci_high": -1.0,
+                        "spearmanr_p_value": None,
+
                     },
                 }
             },
@@ -270,7 +273,7 @@ class TestAPI(UnitxtTestCase):
         dataset = load_dataset(
             "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
-        predictions = ["2.5", "2.5", "2.2", "3", "4"]
+        predictions = ["2.45", "2.5", "2.2", "3", "4"]
         results = evaluate(predictions, dataset["train"])
         # Processors are not serialized by correctly yet
         instance_with_results = {
@@ -297,19 +300,20 @@ class TestAPI(UnitxtTestCase):
             "groups": [],
             "media": {"audios": [], "images": []},
             "subset": [],
-            "prediction": "2.5",
-            "processed_prediction": 2.5,
+            "prediction": "2.45",
+            "processed_prediction": 2.45,
             "processed_references": [5.0],
             "score": {
                 "global": {
                     "num_of_instances": 5,
-                    "spearmanr": 0.026315789473684213,
-                    "score": 0.026315789473684213,
+                    "spearmanr": -0.10259783520851541,
+                    "score": -0.10259783520851541,
+                    "spearmanr_p_value": 0.8695979205185651,
+                    "spearmanr_ci_low": -1.0,
+                    "spearmanr_ci_high": 0.9946088287837848,
+                    "score_ci_low": -1.0,
+                    "score_ci_high": 0.9946088287837848,
                     "score_name": "spearmanr",
-                    "score_ci_low": -0.970678676196682,
-                    "score_ci_high": 0.9639697714358006,
-                    "spearmanr_ci_low": -0.970678676196682,
-                    "spearmanr_ci_high": 0.9639697714358006,
                 },
                 "instance": {
                     "score": np.nan,
@@ -328,7 +332,7 @@ class TestAPI(UnitxtTestCase):
             "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
         predictions = ["2.5", "2.5", "2.2", "3", "4"]
-        results = evaluate(predictions, dataset["train"],calc_confidence_intervals=False)
+        results = evaluate(predictions, dataset["train"], calc_confidence_intervals=False)
 
         instance_global_scores =  {
                     "num_of_instances": 5,
@@ -346,7 +350,7 @@ class TestAPI(UnitxtTestCase):
         dataset = load_dataset(
             "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
-        predictions = ["2.5", "2.5", "2.2", "3", "4"]
+        predictions = ["2.4", "2.5", "2.2", "3", "4"]
         results = evaluate(predictions, dataset["train"])
         instance_with_results = {
             "metrics": ["metrics.spearman"],
@@ -373,25 +377,26 @@ class TestAPI(UnitxtTestCase):
                 "processors.cast_to_float_return_zero_if_failed",
             ],
             "data_classification_policy": ["public"],
-            "prediction": "2.5",
+            "prediction": "2.4",
             "groups": [],
             "media": {"audios": [], "images": []},
             "subset": [],
-            "processed_prediction": 2.5,
+            "processed_prediction": 2.4,
             "processed_references": [5.0],
             "score": {
                 "global": {
                     "num_of_instances": 5,
-                    "score": 0.026315789473684213,
-                    "score_ci_high": 0.9639697714358006,
-                    "score_ci_low": -0.970678676196682,
+                    "score": -0.10259783520851541,
+                    "score_ci_high": 0.9946088287837848,
+                    "score_ci_low": -1.0,
                     "score_name": "spearmanr",
-                    "spearmanr": 0.026315789473684213,
-                    "spearmanr_ci_high": 0.9639697714358006,
-                    "spearmanr_ci_low": -0.970678676196682,
+                    "spearmanr": -0.10259783520851541,
+                    "spearmanr_ci_high": 0.9946088287837848,
+                    "spearmanr_ci_low":-1.0,
+                    "spearmanr_p_value": 0.8695979205185651,
                 },
                 "instance": {
-                    "score": np.nan,
+                    "score":np.nan,
                     "score_name": "spearmanr",
                     "spearmanr": np.nan,
                 },
