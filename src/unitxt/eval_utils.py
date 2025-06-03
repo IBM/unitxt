@@ -12,7 +12,9 @@ from .stream import MultiStream
 
 @singledispatch
 def evaluate(
-    dataset, metric_names: Union[List[str], List[Metric]], compute_conf_intervals: Optional[bool] = False
+    dataset,
+    metric_names: Union[List[str], List[Metric]],
+    compute_conf_intervals: Optional[bool] = False,
 ):
     """Placeholder for overloading the function, supporting both dataframe input and list input."""
     pass
