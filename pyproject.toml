@@ -233,6 +233,7 @@ keep-runtime-typing = true
 "examples/*.py" = ["T201"]
 "tests/library/test_retry.py" = ["B904", "N818"]
 "src/unitxt/tool_calling.py" = ["C901"]
+"src/unitxt/eval_utils.py" = ["F821"]  # For "Undefined name `Metric`": Metric is in a type hint with quotes
 
 [tool.ruff.lint]
 extend-select = [
