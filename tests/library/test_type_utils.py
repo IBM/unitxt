@@ -533,12 +533,11 @@ class TestToTypeString(UnitxtTestCase):
 
     def test_custom_type_validation(self):
         class CustomValidation:
-
             @classmethod
             def __verify_type__(cls, object):
                 return len(object) == 2
 
         register_type(CustomValidation)
 
-        self.assertTrue(isoftype([1,2], CustomValidation))
+        self.assertTrue(isoftype([1, 2], CustomValidation))
         self.assertFalse(isoftype([1], CustomValidation))

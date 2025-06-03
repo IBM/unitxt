@@ -130,7 +130,8 @@ class Template(InstanceOperator):
 
         source = self.input_fields_to_source(serialized_inputs)
         instruction, target_prefix = self.input_fields_to_instruction_and_target_prefix(
-            serialized_inputs, instance.get(constants.instruction_field, self.instruction)
+            serialized_inputs,
+            instance.get(constants.instruction_field, self.instruction),
         )
 
         result = {

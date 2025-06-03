@@ -116,11 +116,11 @@ class Dataset(datasets.GeneratorBasedBuilder):
             dl_manager, "no_checks", **prepare_splits_kwargs
         )
 
-    def as_streaming_dataset(self, split: Optional[str] = None, base_path: Optional[str] = None) -> Union[Dict[str, datasets.IterableDataset], datasets.IterableDataset]:
+    def as_streaming_dataset(
+        self, split: Optional[str] = None, base_path: Optional[str] = None
+    ) -> Union[Dict[str, datasets.IterableDataset], datasets.IterableDataset]:
         return (
-            super()
-            .as_streaming_dataset(split, base_path=base_path)
-            .map(loads_instance)
+            super().as_streaming_dataset(split, base_path=base_path).map(loads_instance)
         )
 
     def as_dataset(

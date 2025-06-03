@@ -12,7 +12,7 @@ logger = get_logger()
 settings = get_settings()
 
 
-def fetch(artifact_name: str, overwrite_kwargs: Optional[Dict[str, Any]]=None):
+def fetch(artifact_name: str, overwrite_kwargs: Optional[Dict[str, Any]] = None):
     try:
         artifact, _ = fetch_artifact(artifact_name, overwrite_kwargs=overwrite_kwargs)
         return artifact
@@ -24,7 +24,7 @@ def parse(query: str) -> dict:
     return parse_key_equals_value_string_to_dict(query)
 
 
-def get_dataset_artifact(dataset, overwrite_kwargs: Optional[Dict[str, Any]]=None):
+def get_dataset_artifact(dataset, overwrite_kwargs: Optional[Dict[str, Any]] = None):
     if isinstance(dataset, DatasetRecipe):
         return dataset
     assert isinstance(

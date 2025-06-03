@@ -23,6 +23,7 @@ from .type_utils import Type, isoftype, parse_type_string, to_type_string
 def parse_string_types_instead_of_actual_objects(obj):
     return parse_type_string(obj)
 
+
 class Metric(Artifact):
     main_score: str = AbstractField()
     # Override 'prediction_type' with the expected type of predictions
@@ -174,7 +175,7 @@ class Metric(Artifact):
             scores["global"] = global_score
 
     @abstractmethod
-    def set_confidence_interval_calculation(self,return_confidence_interval : bool):
+    def set_confidence_interval_calculation(self, return_confidence_interval: bool):
         pass
 
     def disable_confidence_interval_calculation(self):  # For backward compatibility
@@ -229,4 +230,3 @@ class Metric(Artifact):
                 continue
             if score_ci in instance["score"]["global"]:
                 instance["score"]["global"].pop(score_ci)
-

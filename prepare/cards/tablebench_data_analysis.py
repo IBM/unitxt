@@ -14,7 +14,7 @@ from unitxt.types import Table
 card = TaskCard(
     loader=LoadHF(
         path="Multilingual-Multimodal-NLP/TableBench",
-        revision="90593ad8af90f027f6f478b8c4c1981d9f073a83", # pragma: allowlist secret
+        revision="90593ad8af90f027f6f478b8c4c1981d9f073a83",  # pragma: allowlist secret
         data_classification_policy=["public"],
         splits=["test"],
     ),
@@ -39,8 +39,6 @@ card = TaskCard(
         Set({"context_type": "Table"}),
         Rename(field_to_field={"table": "context", "answer": "answers"}),
         RemoveFields(fields=["instruction"]),
-
-
     ],
     task=Task(
         input_fields={

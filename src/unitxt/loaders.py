@@ -79,9 +79,14 @@ from .utils import LRUCache, recursive_copy, retry_connection_with_exponential_b
 logger = get_logger()
 settings = get_settings()
 
+
 class UnitxtUnverifiedCodeError(UnitxtError):
     def __init__(self, path):
-        super().__init__(f"Loader cannot load and run remote code from {path} in huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE.", Documentation.SETTINGS)
+        super().__init__(
+            f"Loader cannot load and run remote code from {path} in huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE.",
+            Documentation.SETTINGS,
+        )
+
 
 @retry_connection_with_exponential_backoff(backoff_factor=2)
 def hf_load_dataset(path: str, *args, **kwargs):
@@ -90,15 +95,18 @@ def hf_load_dataset(path: str, *args, **kwargs):
     try:
         return _hf_load_dataset(
             path,
-            *args, **kwargs,
-                verification_mode="no_checks",
-                trust_remote_code=settings.allow_unverified_code,
-                download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
-            )
+            *args,
+            **kwargs,
+            verification_mode="no_checks",
+            trust_remote_code=settings.allow_unverified_code,
+            download_mode="force_redownload"
+            if settings.disable_hf_datasets_cache
+            else "reuse_dataset_if_exists",
+        )
     except ValueError as e:
         if "trust_remote_code" in str(e):
             raise UnitxtUnverifiedCodeError(path) from e
-        raise e # Re raise
+        raise e  # Re raise
 
 
 @retry_connection_with_exponential_backoff(backoff_factor=2)
@@ -115,8 +123,11 @@ def hf_get_dataset_splits(path: str, name: str, revision=None):
             raise UnitxtUnverifiedCodeError(path) from e
 
         if "Couldn't find cache" in str(e):
-            raise FileNotFoundError(f"Dataset cache path={path}, name={name} was not found.") from e
-        raise e # Re raise
+            raise FileNotFoundError(
+                f"Dataset cache path={path}, name={name} was not found."
+            ) from e
+        raise e  # Re raise
+
 
 class Loader(SourceOperator):
     """A base class for all loaders.
@@ -160,7 +171,10 @@ class Loader(SourceOperator):
         return f"{self.__class__.__name__}.loader_limit"
 
     def log_limited_loading(self):
-        if not hasattr(self, "_already_logged_limited_loading") or not self._already_logged_limited_loading:
+        if (
+            not hasattr(self, "_already_logged_limited_loading")
+            or not self._already_logged_limited_loading
+        ):
             self._already_logged_limited_loading = True
             logger.info(
                 f"\nLoading limited to {self.get_limit()} instances by setting {self.get_limiter()};"
@@ -237,10 +251,12 @@ class LazyLoader(Loader):
         else:
             splits = self.get_splits()
 
-        return MultiStream({
-            split: DynamicStream(self.split_generator, gen_kwargs={"split": split})
-            for split in splits
-        })
+        return MultiStream(
+            {
+                split: DynamicStream(self.split_generator, gen_kwargs={"split": split})
+                for split in splits
+            }
+        )
 
 
 class LoadHF(LazyLoader):
@@ -306,6 +322,7 @@ class LoadHF(LazyLoader):
     def is_in_cache(self, split):
         dataset_id = str(self) + "_" + str(split)
         return dataset_id in self.__class__._loader_cache
+
     # returns Dict when split names are not known in advance, and just the the single split dataset - if known
     def load_dataset(
         self, split: str, streaming=None, disable_memory_caching=False
@@ -370,13 +387,13 @@ class LoadHF(LazyLoader):
                 dataset = self.load_dataset(
                     split=None, disable_memory_caching=True, streaming=True
                 )
-            except (
-                NotImplementedError
-            ):  # streaming is not supported for zipped files so we load without streaming
+            except NotImplementedError:  # streaming is not supported for zipped files so we load without streaming
                 dataset = self.load_dataset(split=None, streaming=False)
 
             if dataset is None:
-                raise FileNotFoundError(f"Dataset path={self.path}, name={self.name} was not found.") from None
+                raise FileNotFoundError(
+                    f"Dataset path={self.path}, name={self.name} was not found."
+                ) from None
 
             return list(dataset.keys())
 
@@ -402,6 +419,7 @@ class LoadHF(LazyLoader):
                 yield instance
                 if i + 1 >= limit:
                     break
+
 
 class LoadWithPandas(LazyLoader):
     """Utility base class for classes loading with pandas."""
@@ -460,7 +478,6 @@ class LoadWithPandas(LazyLoader):
     def get_splits(self) -> List[str]:
         return list(self.files.keys())
 
-
     def get_args(self) -> Dict[str, Any]:
         args = {}
         if self.compression is not None:
@@ -472,6 +489,7 @@ class LoadWithPandas(LazyLoader):
     @abstractmethod
     def read_dataframe(self, file) -> pd.DataFrame:
         ...
+
 
 class LoadCSV(LoadWithPandas):
     """Loads data from CSV files.
@@ -497,25 +515,25 @@ class LoadCSV(LoadWithPandas):
 
     def read_dataframe(self, file) -> pd.DataFrame:
         return pd.read_csv(
-            file,
-            sep=self.sep,
-            low_memory=self.streaming,
-            **self.get_args()
+            file, sep=self.sep, low_memory=self.streaming, **self.get_args()
         )
 
 
 def read_file(source) -> bytes:
-
     if hasattr(source, "read"):
         return source.read()
 
-    if isinstance(source, str) and (source.startswith("http://") or source.startswith("https://")):
+    if isinstance(source, str) and (
+        source.startswith("http://") or source.startswith("https://")
+    ):
         from urllib import request
+
         with request.urlopen(source) as response:
             return response.read()
 
     with open(source, "rb") as f:
         return f.read()
+
 
 class LoadJsonFile(LoadWithPandas):
     """Loads data from JSON files.
@@ -542,32 +560,32 @@ class LoadJsonFile(LoadWithPandas):
     data_field: Optional[str] = None
 
     def read_dataframe(self, file) -> pd.DataFrame:
-
-        args =  self.get_args()
+        args = self.get_args()
         if not self.lines:
             data = json.loads(read_file(file))
-            if (self.data_field):
+            if self.data_field:
                 instances = dict_get(data, self.data_field)
-                if not isoftype(instances,List[Dict[str,Any]]):
-                    raise UnitxtError(f"{self.data_field} of file {file} is not a list of dictionariess in LoadJsonFile loader")
+                if not isoftype(instances, List[Dict[str, Any]]):
+                    raise UnitxtError(
+                        f"{self.data_field} of file {file} is not a list of dictionariess in LoadJsonFile loader"
+                    )
             else:
-                if isoftype(data,Dict[str,Any]):
+                if isoftype(data, Dict[str, Any]):
                     instances = [data]
-                elif isoftype(data,List[Dict[str,Any]]):
-                    instances=data
+                elif isoftype(data, List[Dict[str, Any]]):
+                    instances = data
                 else:
-                    raise UnitxtError(f"data of file {file} is not dictionary or a list of dictionaries in LoadJsonFile loader")
+                    raise UnitxtError(
+                        f"data of file {file} is not dictionary or a list of dictionaries in LoadJsonFile loader"
+                    )
             dataframe = pd.DataFrame(instances)
         else:
             if self.data_field is not None:
-                raise UnitxtError("Can not load from a specific 'data_field' when loading multiple lines (lines=True)")
-            dataframe = pd.read_json(
-                file,
-                lines=self.lines,
-                **args
-            )
+                raise UnitxtError(
+                    "Can not load from a specific 'data_field' when loading multiple lines (lines=True)"
+                )
+            dataframe = pd.read_json(file, lines=self.lines, **args)
         return dataframe
-
 
 
 class LoadFromSklearn(LazyLoader):
@@ -1005,8 +1023,6 @@ class LoadFromHFSpace(LazyLoader):
         wildcard_characters = ["*", "?", "[", "]"]
         return any(char in path for char in wildcard_characters)
 
-
-
     def _get_repo_files(self):
         if not hasattr(self, "_repo_files") or self._repo_files is None:
             api = HfApi()
@@ -1020,7 +1036,6 @@ class LoadFromHFSpace(LazyLoader):
             return fnmatch.filter(self._get_repo_files(), file)
         return [file]
 
-
     def get_splits(self) -> List[str]:
         if isinstance(self.data_files, Mapping):
             return list(self.data_files.keys())
@@ -1031,7 +1046,11 @@ class LoadFromHFSpace(LazyLoader):
         from huggingface_hub.utils import EntryNotFoundError, RepositoryNotFoundError
 
         token = self._get_token()
-        files = self.data_files.get(split, self.data_files) if isinstance(self.data_files, Mapping) else self.data_files
+        files = (
+            self.data_files.get(split, self.data_files)
+            if isinstance(self.data_files, Mapping)
+            else self.data_files
+        )
 
         if isinstance(files, str):
             files = [files]
@@ -1071,7 +1090,6 @@ class LoadFromHFSpace(LazyLoader):
                             total += 1
                             if total >= limit:
                                 return
-
 
 
 class LoadFromAPI(Loader):

@@ -12,9 +12,7 @@ inference_model = CrossProviderInferenceEngine(
     model=model, max_tokens=20, seed=get_seed(), temperature=1e-7
 )
 
-model_label = (
-    model.replace("-", "_").replace(".", ",").lower() + "_cross_provider"
-)
+model_label = model.replace("-", "_").replace(".", ",").lower() + "_cross_provider"
 
 template_label = template.split(".")[-1]
 

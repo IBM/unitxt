@@ -22,7 +22,7 @@ benchmark = Benchmark(
         "ai2d": DatasetRecipe(
             card="cards.ai2d",
             template="templates.qa.llama_vision.multiple_choice.with_context.ai2d",
-            format="formats.chat_api"
+            format="formats.chat_api",
         ),
     },
 )

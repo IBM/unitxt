@@ -37,11 +37,17 @@ def short_hex_hash(value, length=8):
     return h[:length]
 
 
-def _get_recipe_from_query(dataset_query: str, overwrite_kwargs: Optional[Dict[str, Any]]=None) -> DatasetRecipe:
+def _get_recipe_from_query(
+    dataset_query: str, overwrite_kwargs: Optional[Dict[str, Any]] = None
+) -> DatasetRecipe:
     try:
-        dataset_stream, _ = fetch_artifact(dataset_query, overwrite_kwargs=overwrite_kwargs)
+        dataset_stream, _ = fetch_artifact(
+            dataset_query, overwrite_kwargs=overwrite_kwargs
+        )
     except:
-        dataset_stream = get_dataset_artifact(dataset_query, overwrite_kwargs=overwrite_kwargs)
+        dataset_stream = get_dataset_artifact(
+            dataset_query, overwrite_kwargs=overwrite_kwargs
+        )
     return dataset_stream
 
 
@@ -88,7 +94,9 @@ def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> DatasetRecipe:
         recipe = _get_recipe_from_dict(kwargs)
 
     else:
-        raise UnitxtError("Specify either dataset recipe string artifact name or recipe args.")
+        raise UnitxtError(
+            "Specify either dataset recipe string artifact name or recipe args."
+        )
 
     return recipe
 
@@ -99,7 +107,7 @@ def create_dataset(
     train_set: Optional[List[Dict[Any, Any]]] = None,
     validation_set: Optional[List[Dict[Any, Any]]] = None,
     split: Optional[str] = None,
-    data_classification_policy:  Optional[List[str]] = None,
+    data_classification_policy: Optional[List[str]] = None,
     **kwargs,
 ) -> Union[DatasetDict, IterableDatasetDict, Dataset, IterableDataset]:
     """Creates dataset from input data based on a specific task.
@@ -132,7 +140,12 @@ def create_dataset(
             f"No 'template' was passed to the create_dataset() and the given task ('{task.__id__}') has no 'default_template' field."
         )
 
-    card = TaskCard(loader=LoadFromDictionary(data=data, data_classification_policy=data_classification_policy), task=task)
+    card = TaskCard(
+        loader=LoadFromDictionary(
+            data=data, data_classification_policy=data_classification_policy
+        ),
+        task=task,
+    )
     return load_dataset(card=card, split=split, **kwargs)
 
 
@@ -253,13 +266,20 @@ def fill_metadata(**kwargs):
 
 
 def evaluate(
-    predictions, dataset: Union[Dataset, IterableDataset] = None, data=None, calc_confidence_intervals : bool =True
+    predictions,
+    dataset: Union[Dataset, IterableDataset] = None,
+    data=None,
+    calc_confidence_intervals: bool = True,
 ) -> EvaluationResults:
     if dataset is None and data is None:
         raise UnitxtError(message="Specify 'dataset' in evaluate")
     if data is not None:
         dataset = data  # for backward compatibility
-    evaluation_result = _compute(predictions=predictions, references=dataset, calc_confidence_intervals=calc_confidence_intervals)
+    evaluation_result = _compute(
+        predictions=predictions,
+        references=dataset,
+        calc_confidence_intervals=calc_confidence_intervals,
+    )
     if hasattr(dataset, "info") and hasattr(dataset.info, "description"):
         evaluation_result.metadata["dataset"] = dataset.info.description
     if hasattr(predictions, "metadata"):

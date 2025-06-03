@@ -294,7 +294,9 @@ def cli_load_dataset(args: argparse.Namespace) -> HFDataset:
     benchmark_subsets = {}
     for task_str in args.tasks:
         overwrite_args = extract_overwrite_args(args)
-        benchmark_subsets[task_str] = load_recipe(dataset_query=task_str, **overwrite_args)
+        benchmark_subsets[task_str] = load_recipe(
+            dataset_query=task_str, **overwrite_args
+        )
 
     benchmark = Benchmark(subsets=benchmark_subsets)
 
@@ -309,9 +311,9 @@ def extract_overwrite_args(args):
     dataset_args = {}
 
     if args.limit is not None:
-        assert f"max_{args.split}_instances" not in dataset_args, (
-            "limit was inputted both as an arg and as a task parameter"
-        )
+        assert (
+            f"max_{args.split}_instances" not in dataset_args
+        ), "limit was inputted both as an arg and as a task parameter"
         # Check if limit or loader_limit is already present
         # dataset_args[f"max_{args.split}_instances"] = args.limit
         dataset_args[f"max_{args.split}_instances"] = args.limit
@@ -321,9 +323,9 @@ def extract_overwrite_args(args):
         )
 
     if args.num_fewshots:
-        assert "num_demos" not in dataset_args, (
-            "num_demos was inputted both as an arg and as a task parameter"
-        )
+        assert (
+            "num_demos" not in dataset_args
+        ), "num_demos was inputted both as an arg and as a task parameter"
         dataset_args["num_demos"] = args.num_fewshots
         dataset_args.update(
             {
@@ -337,9 +339,9 @@ def extract_overwrite_args(args):
         )
 
     if args.apply_chat_template:
-        assert "format" not in dataset_args, (
-            "format was inputted as a task parameter, but chat_api was requested"
-        )
+        assert (
+            "format" not in dataset_args
+        ), "format was inputted as a task parameter, but chat_api was requested"
         dataset_args["format"] = "formats.chat_api"
         logger.info(
             "Applying chat template from --apply_chat_template argument: format=formats.chat_api"
@@ -651,9 +653,9 @@ def _save_results_to_disk(
                 config_to_save[k] = repr(v)
             except Exception:
                 # Fallback if repr fails
-                config_to_save[k] = (
-                    f"<Object of type {type(v).__name__} could not be represented>"
-                )
+                config_to_save[
+                    k
+                ] = f"<Object of type {type(v).__name__} could not be represented>"
 
     # --- Gather Environment Info ---
     unitxt_commit = _get_unitxt_commit_hash()
