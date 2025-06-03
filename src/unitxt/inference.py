@@ -189,7 +189,10 @@ class InferenceEngine(Artifact):
             self.prepare_engine()
             if self.use_cache:
                 from diskcache import Cache
-                self._cache = Cache(settings.inference_engine_cache_path + self.__class__.__name__)
+
+                self._cache = Cache(
+                    settings.inference_engine_cache_path + self.__class__.__name__
+                )
 
     def __call__(
         self,
@@ -734,8 +737,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             padding=self.padding,
             truncation=self.truncation,
             padding_side=self.padding_side,
-            **tokenizer_kargs
-
+            **tokenizer_kargs,
         ).to(self.device or self.device_map)
 
     def _infer_fn(
@@ -763,7 +765,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             desc=f"Running inference in batches of {self.batch_size}",
             total=len(dataset) // self.batch_size,
         ):
-
             # Get the current batch
             batch_sources = [instance["source"] for instance in batch]
 
@@ -1003,7 +1004,9 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
 
         model_class = (
             AutoPeftModelForSeq2SeqLM
-            if AutoConfig.from_pretrained(self.peft_config.base_model_name_or_path).is_encoder_decoder
+            if AutoConfig.from_pretrained(
+                self.peft_config.base_model_name_or_path
+            ).is_encoder_decoder
             else AutoPeftModelForCausalLM
         )
         path = self.model_name
@@ -1017,7 +1020,9 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
             low_cpu_mem_usage=self.low_cpu_mem_usage,
             torch_dtype=self._get_torch_dtype(),
         )
-        self.model = self.model.to(dtype=self._get_torch_dtype()) # Make sure that base model and adapter use same dtype
+        self.model = self.model.to(
+            dtype=self._get_torch_dtype()
+        )  # Make sure that base model and adapter use same dtype
         if self.device_map is None:
             self.model.to(self.device)
 
@@ -1433,9 +1438,9 @@ class OptionSelectingByLogProbsInferenceEngine:
             for option in instance["task_data"]["options"]
         ]
 
-        dataset_with_options_logprobs: List[List[Dict[str, Union[float, str]]]] = (
-            self.get_options_log_probs(dataset_with_options)
-        )
+        dataset_with_options_logprobs: List[
+            List[Dict[str, Union[float, str]]]
+        ] = self.get_options_log_probs(dataset_with_options)
 
         dataset_iterator = iter(dataset_with_options_logprobs)
 
@@ -1594,9 +1599,9 @@ class IbmGenAiInferenceEngine(
         predict_results = []
         for prediction in predictions:
             result: TextGenerationResult = prediction.results[0]
-            assert isinstance(result.generated_tokens, list), (
-                "result.generated_tokens should be a list"
-            )
+            assert isinstance(
+                result.generated_tokens, list
+            ), "result.generated_tokens should be a list"
 
             predict_result = []
             for base_token in result.generated_tokens:
@@ -1844,6 +1849,7 @@ class OpenAiInferenceEngine(
     @run_with_imap
     def _get_chat_completion(self, instance, return_meta_data):
         import openai
+
         tools = self.to_tools(instance)
         messages = self.to_messages(instance)
         try:
@@ -1852,7 +1858,7 @@ class OpenAiInferenceEngine(
                 tools=tools,
                 model=self.get_client_model_name(),
                 **self._get_completion_kwargs(),
-#                tool_choice="auto"
+                #                tool_choice="auto"
             )
 
             if tools is None:
@@ -1938,9 +1944,9 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
         api_version = self.credentials.get(
             "api_version", os.environ.get("OPENAI_API_VERSION", None)
         )
-        assert api_version and azure_openai_host, (
-            "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
-        )
+        assert (
+            api_version and azure_openai_host
+        ), "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
         api_url = f"{azure_openai_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
 
         return {"api_key": api_key, "api_url": api_url, "api_version": api_version}
@@ -1983,7 +1989,9 @@ class RITSInferenceEngine(
     def get_client_model_name(self):
         if self.model_name.startswith("byom-"):
             # Remove "byom-xyz/" initial part of model name, since that's part of the endpoint.
-            return "/".join(self.model_name.split("/")[1:])  # This is wrong. since in next iteration
+            return "/".join(
+                self.model_name.split("/")[1:]
+            )  # This is wrong. since in next iteration
         return self.model_name
 
     @staticmethod
@@ -2001,10 +2009,12 @@ class RITSInferenceEngine(
             return cls.model_names_dict[model_name]
         if model_name.startswith("byom-"):
             model_name_for_endpoint = model_name.split("/")[0]
-            logger.info(f"Using BYOM model: {model_name_for_endpoint}") # For RITS BYOM the model name has the following convention:
-                                                  # <byom endpoint>/<actual model name>. e.g.
-                                                  # byom-gb-iqk-lora/ibm-granite/granite-3.1-8b-instruct
-                                                  # at this case we should use https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/byom-gb-iqk-lora/v1/chat/completions
+            logger.info(
+                f"Using BYOM model: {model_name_for_endpoint}"
+            )  # For RITS BYOM the model name has the following convention:
+            # <byom endpoint>/<actual model name>. e.g.
+            # byom-gb-iqk-lora/ibm-granite/granite-3.1-8b-instruct
+            # at this case we should use https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/byom-gb-iqk-lora/v1/chat/completions
             return model_name_for_endpoint
         return (
             model_name.split("/")[-1]
@@ -2063,9 +2073,9 @@ class TogetherAiInferenceEngine(
             together_model.id: together_model.type for together_model in together_models
         }
         model_type = together_model_id_to_type.get(self.model_name)
-        assert model_type is not None, (
-            f"Could not find model {self.model_name} in Together AI model list"
-        )
+        assert (
+            model_type is not None
+        ), f"Could not find model {self.model_name} in Together AI model list"
         assert model_type in [ModelType.CHAT, ModelType.LANGUAGE, ModelType.CODE], (
             f"Together AI model type {model_type} is not supported; "
             "supported types are 'chat', 'language' and 'code'."
@@ -2186,7 +2196,16 @@ class WMLChatParamsMixin(Artifact):
 
 
 CredentialsWML = Dict[
-    Literal["url", "username", "password", "api_key", "project_id", "space_id", "instance_id"], str
+    Literal[
+        "url",
+        "username",
+        "password",
+        "api_key",
+        "project_id",
+        "space_id",
+        "instance_id",
+    ],
+    str,
 ]
 
 
@@ -2250,11 +2269,10 @@ class WMLInferenceEngineBase(
     def verify(self):
         super().verify()
 
-        assert self.model_name or (
-            self.deployment_id and not (self.model_name and self.deployment_id)
-        ), (
-            "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
-        )
+        assert (
+            self.model_name
+            or (self.deployment_id and not (self.model_name and self.deployment_id))
+        ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
 
     # def process_data_before_dump(self, data):
     #     if "credentials" in data:
@@ -2352,9 +2370,9 @@ class WMLInferenceEngineBase(
             "['url', 'api_key', 'username', 'password']."
         )
 
-        assert credentials.get("url"), (
-            "'url' is a mandatory key for WML credentials dict."
-        )
+        assert credentials.get(
+            "url"
+        ), "'url' is a mandatory key for WML credentials dict."
         assert "space_id" in credentials or "project_id" in credentials, (
             "Either 'space_id' or 'project_id' must be provided "
             "as keys for WML credentials dict."
@@ -2767,8 +2785,7 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
         return [messages]
 
     def to_tools(
-        self,
-        instance: Dict[str, Any]
+        self, instance: Dict[str, Any]
     ) -> Dict[str, Union[Optional[List[Dict[str, str]]], Optional[Dict[str, str]]]]:
         """watsonx.ai chat also allows specifying which tools models must use."""
         task_data = instance.get("task_data")
@@ -3261,7 +3278,9 @@ class LiteLLMInferenceEngine(
                 prediction = response["choices"][0]["message"]["content"]
             else:
                 try:
-                    func_call = response["choices"][0]["message"]["tool_calls"][0]["function"]
+                    func_call = response["choices"][0]["message"]["tool_calls"][0][
+                        "function"
+                    ]
                     prediction = f'{{"name": "{func_call.name}", "arguments": {func_call.arguments}}}'
                 except:
                     prediction = response["choices"][0]["message"]["content"] or ""
@@ -3371,7 +3390,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mistral-large-instruct": "mistralai/mistral-large",
             "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7b-instruct-v01",
         },
-        "together-ai": { # checked from https://www.together.ai/models
+        "together-ai": {  # checked from https://www.together.ai/models
             "llama-3-8b-instruct": "together_ai/meta-llama/Llama-3-8b-chat-hf",
             "llama-3-70b-instruct": "together_ai/meta-llama/Llama-3-70b-chat-hf",
             "llama-3-1-8b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
@@ -3379,19 +3398,19 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-1-405b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
             "llama-3-2-1b-instruct": "together_ai/togethercomputer/llama-3-2-1b-instruct",
             "llama-3-3-70b-instruct": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo",
-            "llama-4-maverick": "together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", #pragma: allowlist secret
+            "llama-4-maverick": "together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",  # pragma: allowlist secret
             "llama-4-scout": "together_ai/meta-llama/Llama-4-Scout-17B-16E-Instruct",
             "deepseek-v3": "together_ai/deepseek-ai/DeepSeek-V3",
             "llama-3-3-70b-instruct-free": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
             "deepseek-r1-distilled-llama-70b-free": "together_ai/deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free",
         },
-        "aws": { # checked from https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
+        "aws": {  # checked from https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
             "llama-3-8b-instruct": "bedrock/meta.llama3-8b-instruct-v1:0",
             "llama-3-70b-instruct": "bedrock/meta.llama3-70b-instruct-v1:0",
             "llama-3-1-70b-instruct": "bedrock/meta.llama3-1-70b-instruct-v1:0",
             "llama-3-1-405b-instruct": "bedrock/meta.llama3-1-405b-instruct-v1:0",
             "llama-3-3-70b-instruct": "bedrock/meta.llama3-3-70b-instruct-v1:0",
-            "llama-4-maverick": "bedrock/meta.llama4-maverick-17b-instruct-v1:0", #pragma: allowlist secret
+            "llama-4-maverick": "bedrock/meta.llama4-maverick-17b-instruct-v1:0",  # pragma: allowlist secret
             "llama-4-scout": "bedrock/meta.llama4-scout-17b-instruct-v1:0",
             "mistral-large-instruct": "bedrock/mistral.mistral-large-2407-v1:0",
             "deepseek-r1": "bedrock/deepseek.r1-v1:0",
@@ -3494,7 +3513,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "gpt-4-1-mini-2025-04-14": "azure/gpt-4.1-mini-2025-04-14",
             "llama-3-1-405b-instruct": "azure/Meta-Llama-3.1-405B-Instruct",
             "llama-3-3-70b-instruct": "azure/Llama-3.3-70B-Instruct",
-            "llama-4-maverick": "azure/Llama-4-Maverick-17B-128E-Instruct-FP8", #pragma: allowlist secret
+            "llama-4-maverick": "azure/Llama-4-Maverick-17B-128E-Instruct-FP8",  # pragma: allowlist secret
             "llama-4-scout": "azure/Llama-4-Scout-17B-16E-Instruct",
         },
         "vertex-ai": {
@@ -3727,12 +3746,14 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 
         return predictions
 
+
 class MetricInferenceEngine(InferenceEngine):
     """An inference engine that uses the output of a metric as its prediction. Used to evaluate metrics like LLM as Judge or Granite Guardian.
 
     Args:
         InferenceEngine (_type_): _description_
     """
+
     metric: Metric
     prediction_field: str
 
@@ -3745,7 +3766,7 @@ class MetricInferenceEngine(InferenceEngine):
             json.loads(instance["task_data"]) if "task_data" in instance else {}
             for instance in dataset
         ]
-        predictions=[td[self.prediction_field] for td in task_data]
+        predictions = [td[self.prediction_field] for td in task_data]
         references = [instance["references"] for instance in dataset]
         return self.metric.compute(
             task_data=task_data,

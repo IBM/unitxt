@@ -2,8 +2,14 @@ import json
 
 from unitxt.eval_utils import evaluate
 
-references = [ {"key1": "value1" , "key2" :  "values2"    , "key3": "value3"}, {"key1": "value3" , "key2" :  "value4"}]
-predictions = [ {"key1": "value1" , "key2" :  "wrong-value", "wrong-key" : "values3" },{"key1": "value3",  "key2" : "value4", "key3" : "value9"}]
+references = [
+    {"key1": "value1", "key2": "values2", "key3": "value3"},
+    {"key1": "value3", "key2": "value4"},
+]
+predictions = [
+    {"key1": "value1", "key2": "wrong-value", "wrong-key": "values3"},
+    {"key1": "value3", "key2": "value4", "key3": "value9"},
+]
 
 
 # Use  from unitxt.eval_utils import evaluate
@@ -79,17 +85,19 @@ predictions = [ {"key1": "value1" , "key2" :  "wrong-value", "wrong-key" : "valu
 # }
 
 
-
-data = [ {"prediction" : prediction, "references" : [reference]} for prediction, reference in zip(predictions,references) ]
+data = [
+    {"prediction": prediction, "references": [reference]}
+    for prediction, reference in zip(predictions, references)
+]
 
 instance_results, global_scores = evaluate(
-        data,
-        metric_names=[
-            "metrics.key_value_extraction.token_overlap",
-            "metrics.key_value_extraction.accuracy"
-        ],
-        compute_conf_intervals=False
-    )
+    data,
+    metric_names=[
+        "metrics.key_value_extraction.token_overlap",
+        "metrics.key_value_extraction.accuracy",
+    ],
+    compute_conf_intervals=False,
+)
 
 print("Instance results:")
 print(json.dumps(instance_results, indent=2))

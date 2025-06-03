@@ -224,30 +224,43 @@ class TestTextUtils(UnitxtTestCase):
     def test_print_dict_as_yaml(self):
         instance = {
             "field_name": [
-                "peace", "on", {
+                "peace",
+                "on",
+                {
                     "earth": "land",
                     "heavens": "skies",
-                }, 9, 10,
-            ]}
+                },
+                9,
+                10,
+            ]
+        }
         yaml_lines = construct_dict_as_yaml_lines(instance)
-        self.assertListEqual(["field_name: ", "  - peace", "  - on", "  - earth: land", "    heavens: skies", "  - 9", "  - 10"], yaml_lines)
+        self.assertListEqual(
+            [
+                "field_name: ",
+                "  - peace",
+                "  - on",
+                "  - earth: land",
+                "    heavens: skies",
+                "  - 9",
+                "  - 10",
+            ],
+            yaml_lines,
+        )
         self.assertEqual("\n".join(yaml_lines), print_dict_as_yaml(instance))
 
     def test_print_dict_as_python(self):
         instance = {
             "__type__": "task_card",
-            "loader": {
-                "__type__": "load_hf",
-                "path": "fancyzhx/ag_news"
-            },
+            "loader": {"__type__": "load_hf", "path": "fancyzhx/ag_news"},
             "preprocess_steps": [
                 {
                     "__type__": "split_random_mix",
                     "mix": {
                         "train": "train[87.5%]",
                         "validation": "train[12.5%]",
-                        "test": "test"
-                    }
+                        "test": "test",
+                    },
                 },
                 {
                     "__type__": "map_instance_values",
@@ -256,28 +269,24 @@ class TestTextUtils(UnitxtTestCase):
                             "0": "World",
                             "1": "Sports",
                             "2": "Business",
-                            "3": "Sci/Tech"
+                            "3": "Sci/Tech",
                         }
-                    }
+                    },
                 },
                 {
                     "__type__": "set",
                     "fields": {
-                        "classes": [
-                            "World",
-                            "Sports",
-                            "Business",
-                            "Sci/Tech"
-                        ],
-                        "text_type": "sentence"
-                    }
-                }
+                        "classes": ["World", "Sports", "Business", "Sci/Tech"],
+                        "text_type": "sentence",
+                    },
+                },
             ],
             "task": "tasks.classification.multi_class.topic_classification",
             "templates": "templates.classification.multi_class.all",
         }
 
-        self.assertEqual("""__type__task_card(
+        self.assertEqual(
+            """__type__task_card(
     loader=__type__load_hf(
         path="fancyzhx/ag_news",
     ),
@@ -313,4 +322,6 @@ class TestTextUtils(UnitxtTestCase):
     ],
     task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
-)""", print_dict_as_python(instance))
+)""",
+            print_dict_as_python(instance),
+        )

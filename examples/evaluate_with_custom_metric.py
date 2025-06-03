@@ -17,22 +17,30 @@ data = [
     {"text": "IBM was paid 200 dollars by Phil"},
 ]
 
-class IsValidJson(InstanceMetric):
 
-    main_score = "valid_json" # name of the main score
-    reduction_map = {"mean": ["valid_json"]} # defines that the global score is a mean of the instance scores
-    ci_scores = ["valid_json"] # define that confidence internal should be calculated on the score
-    prediction_type = str # the metric expect the prediction as an int
+class IsValidJson(InstanceMetric):
+    main_score = "valid_json"  # name of the main score
+    reduction_map = {
+        "mean": ["valid_json"]
+    }  # defines that the global score is a mean of the instance scores
+    ci_scores = [
+        "valid_json"
+    ]  # define that confidence internal should be calculated on the score
+    prediction_type = str  # the metric expect the prediction as an int
 
     def compute(
         self, references: List[str], prediction: str, task_data: List[Dict]
     ) -> dict:
         try:
             import json
+
             json.loads(prediction)
-            return { self.main_score : 1.0, "error" : "no errors. successfully parsed json."}
+            return {
+                self.main_score: 1.0,
+                "error": "no errors. successfully parsed json.",
+            }
         except Exception as e:
-            return { self.main_score : 0, "error" : str(e)}
+            return {self.main_score: 0, "error": str(e)}
 
 
 # define the QA task
@@ -59,9 +67,9 @@ dataset = create_dataset(
 
 
 # Infer using SmolLM2 using HF API
-#model = HFPipelineBasedInferenceEngine(
+# model = HFPipelineBasedInferenceEngine(
 #    model_name="HuggingFaceTB/SmolLM2-1.7B-Instruct", max_new_tokens=32
-#)
+# )
 # Change to this to infer with external APIs:
 # from unitxt.inference import CrossProviderInferenceEngine
 model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")

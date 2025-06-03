@@ -1060,7 +1060,6 @@ label (str):
             tester=self,
         )
 
-
     def test_apply_stream_operators_field(self):
         inputs = [
             {
@@ -3278,8 +3277,6 @@ Agent:"""
         ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
 
-
-
     def test_join_errors(self):
         input_multi_stream = MultiStream(
             {
@@ -3310,7 +3307,7 @@ Agent:"""
                 how="inner",
                 on=["id"],
                 new_stream_name="questions_and_answers",
-             )(input_multi_stream)
+            )(input_multi_stream)
 
         self.assertEqual(
             str(cm.exception),
@@ -3346,7 +3343,7 @@ Agent:"""
                 how="inner",
                 on=["id"],
                 new_stream_name="questions_and_answers",
-             )(input_multi_stream)
+            )(input_multi_stream)
 
         self.assertEqual(
             str(cm.exception),
@@ -3406,41 +3403,15 @@ Agent:"""
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
 
     def test_recursive_replace(self):
+        operator = RecursiveReplace(
+            key="type",
+            map_values={"int": "integer", "float": "number"},
+            remove_values=["any"],
+        )
 
-        operator = RecursiveReplace(key="type", map_values={"int": "integer", "float": "number"}, remove_values=["any"])
+        inputs = [{"pro": {"type": "int"}, "bro": [{"type": "float"}, {"type": "any"}]}]
 
-        inputs = [
-            {
-                "pro": {
-                    "type": "int"
-                },
-                "bro": [
-                    {
-                        "type": "float"
-                    },
-                    {
-                        "type": "any"
-                    }
-                ]
-
-             }
-        ]
-
-        targets = [
-            {
-                "pro": {
-                    "type": "integer"
-                },
-                "bro": [
-                    {
-                        "type": "number"
-                    },
-                    {
-                    }
-                ]
-
-             }
-        ]
+        targets = [{"pro": {"type": "integer"}, "bro": [{"type": "number"}, {}]}]
 
         check_operator(operator=operator, inputs=inputs, targets=targets)
 
@@ -3448,4 +3419,6 @@ Agent:"""
         normalizer = NormalizeListFields(fields=["field_containing_a_list"])
         instance = {"field_containing_a_list": ["a", "b", "c", "d"]}
         processed_instance = normalizer.process(instance)
-        self.assertDictEqual({"field_containing_a_list": "a, b, c, d"}, processed_instance)
+        self.assertDictEqual(
+            {"field_containing_a_list": "a, b, c, d"}, processed_instance
+        )

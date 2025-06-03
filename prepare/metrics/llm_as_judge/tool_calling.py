@@ -52,7 +52,10 @@ add_to_catalog(
 
 tool_calling_metric = LLMJudgeDirect(
     inference_engine=CrossProviderInferenceEngine(
-        model="llama-3-3-70b-instruct", max_tokens=1024, temperature=0, provider="watsonx"
+        model="llama-3-3-70b-instruct",
+        max_tokens=1024,
+        temperature=0,
+        provider="watsonx",
     ),
     criteria=tool_calling_criteria,
     context_fields={

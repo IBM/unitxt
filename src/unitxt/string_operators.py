@@ -13,6 +13,7 @@ from .utils import retry_connection_with_exponential_backoff
 
 settings = get_settings()
 
+
 class Split(FieldOperator):
     by: str
 
@@ -34,6 +35,7 @@ class TokensSplit(FieldOperator):
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer
+
         path = self.model
         if settings.hf_offline_models_path is not None:
             path = os.path.join(settings.hf_offline_models_path, path)
@@ -55,6 +57,7 @@ class TokensSlice(FieldOperator):
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer
+
         path = self.model
         if settings.hf_offline_models_path is not None:
             path = os.path.join(settings.hf_offline_models_path, path)

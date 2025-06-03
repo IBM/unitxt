@@ -187,9 +187,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_load_dataset_with_benchmark_mixed_args(self):
         dataset = load_dataset(
-            "benchmarks.glue",
-            max_samples_per_subset=1,
-            loader_limit=300
+            "benchmarks.glue", max_samples_per_subset=1, loader_limit=300
         )
         first_result = dataset["test"].to_list()[0]
         last_result = dataset["test"].to_list()[-1]
@@ -332,19 +330,22 @@ class TestAPI(UnitxtTestCase):
             "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
         predictions = ["2.5", "2.5", "2.2", "3", "4"]
-        results = evaluate(predictions, dataset["train"], calc_confidence_intervals=False)
 
-        instance_global_scores =  {
-                    "num_of_instances": 5,
-                    "spearmanr": 0.026315789473684213,
-                    "score": 0.026315789473684213,
-                    "score_name": "spearmanr",
-                }
-
-        self.assertDictEqual(
-            fillna(results[0]["score"]["global"], None), fillna(instance_global_scores, None)
+        results = evaluate(
+            predictions, dataset["train"], calc_confidence_intervals=False
         )
 
+        instance_global_scores = {
+            "num_of_instances": 5,
+            "spearmanr": 0.026315789473684213,
+            "score": 0.026315789473684213,
+            "score_name": "spearmanr",
+        }
+
+        self.assertDictEqual(
+            fillna(results[0]["score"]["global"], None),
+            fillna(instance_global_scores, None),
+        )
 
     def test_evaluate_with_groups(self):
         dataset = load_dataset(

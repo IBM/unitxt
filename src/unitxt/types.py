@@ -51,24 +51,28 @@ class SQLDatabase(TypedDict):
     dbms: Optional[str]
     data: Optional[Dict[str, Dict]]
 
-class JsonSchema:
 
+class JsonSchema:
     @classmethod
     def __verify_type__(cls, object):
         if not isinstance(object, dict):
             return False
         import jsonschema_rs
+
         jsonschema_rs.meta.validate(object)
         return True
+
 
 class Tool(TypedDict):
     name: str
     description: str
     parameters: JsonSchema
 
+
 class ToolCall(TypedDict):
     name: str
     arguments: Dict[str, Any]
+
 
 register_type(Text)
 register_type(Number)
@@ -85,4 +89,3 @@ register_type(SQLDatabase)
 register_type(Tool)
 register_type(JsonSchema)
 register_type(ToolCall)
-

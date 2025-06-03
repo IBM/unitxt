@@ -31,6 +31,7 @@ from tests.utils import UnitxtInferenceTestCase
 logger = get_logger()
 settings = get_settings()
 
+
 @lru_cache
 def get_image_dataset(format=None):
     import numpy as np
@@ -63,6 +64,7 @@ def get_image_dataset(format=None):
         data_classification_policy=["public"],
     )
 
+
 @lru_cache
 def get_text_dataset(format=None):
     instances = [
@@ -85,6 +87,7 @@ def get_text_dataset(format=None):
         data_classification_policy=["public"],
     )
 
+
 class TestInferenceEngine(UnitxtInferenceTestCase):
     def test_pipeline_based_inference_engine(self):
         model = HFPipelineBasedInferenceEngine(
@@ -95,7 +98,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         predictions = model(dataset)
 
-        self.assertListEqual(predictions,  ["365", "1"])
+        self.assertListEqual(predictions, ["365", "1"])
 
     def test_pipeline_based_inference_engine_lazy_load(self):
         model = HFPipelineBasedInferenceEngine(
@@ -105,7 +108,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         predictions = model(dataset)
 
-        self.assertListEqual(predictions,  ["365", "1"])
+        self.assertListEqual(predictions, ["365", "1"])
 
     def test_dataset_verification_inference_engine(self):
         inference_model = HFPipelineBasedInferenceEngine(
@@ -129,7 +132,9 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_llava_inference_engine(self):
         model = HFLlavaInferenceEngine(
-            model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=3, temperature=0.0
+            model_name="llava-hf/llava-interleave-qwen-0.5b-hf",
+            max_new_tokens=3,
+            temperature=0.0,
         )
 
         dataset = get_image_dataset(format="formats.chat_api")
@@ -163,7 +168,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         predictions = model(dataset)
 
-        self.assertListEqual(predictions,  ["7", "2"])
+        self.assertListEqual(predictions, ["7", "2"])
 
     def test_watsonx_inference_with_external_client(self):
         from ibm_watsonx_ai.client import APIClient, Credentials
@@ -182,15 +187,15 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
                 credentials=Credentials(
                     api_key=os.environ.get("WML_APIKEY"), url=os.environ.get("WML_URL")
                 ),
-                project_id=os.environ.get("WML_PROJECT_ID")
-            )
+                project_id=os.environ.get("WML_PROJECT_ID"),
+            ),
         )
 
         dataset = get_text_dataset()
 
         predictions = model(dataset)
 
-        self.assertListEqual(predictions,  ["7", "2"])
+        self.assertListEqual(predictions, ["7", "2"])
 
     def test_rits_inference(self):
         import os
@@ -210,7 +215,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         predictions = model(dataset)
 
-        self.assertListEqual(predictions,  ["7", "2"])
+        self.assertListEqual(predictions, ["7", "2"])
 
     def test_rits_byom_inference(self):
         import os
@@ -232,7 +237,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         predictions = model(dataset)
 
-        self.assertListEqual(predictions,  ["7", "2"])
+        self.assertListEqual(predictions, ["7", "2"])
 
     def test_option_selecting_by_log_prob_inference_engines(self):
         dataset = [
@@ -301,7 +306,6 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         self.assertEqual(results[0], "365")
 
     def test_watsonx_inference_with_images(self):
-
         dataset = get_image_dataset()
 
         inference_engine = WMLInferenceEngineChat(
@@ -330,13 +334,12 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         self.assertIsInstance(results[0], str)
 
     def test_lite_llm_inference_engine(self):
-
         model = LiteLLMInferenceEngine(
             model="watsonx/meta-llama/llama-3-2-1b-instruct",
             max_tokens=2,
-            temperature = 0,
-            top_p = 1,
-            seed= 42,
+            temperature=0,
+            top_p=1,
+            seed=42,
         )
 
         dataset = get_text_dataset(format="formats.chat_api")
@@ -348,12 +351,10 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         LiteLLMInferenceEngine(
             model="watsonx/meta-llama/llama-3-2-1b-instruct",
             max_tokens=2,
-            temperature = 0,
-            top_p = 1,
-            seed= 42,
+            temperature=0,
+            top_p=1,
+            seed=42,
         ).infer([{"source": "say hello."}])
-
-
 
     def test_log_prob_scoring_inference_engine(self):
         engine = HFOptionSelectingInferenceEngine(model_name="gpt2", batch_size=1)
@@ -434,20 +435,32 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         if os.path.exists(unitxt.settings.inference_engine_cache_path):
             shutil.rmtree(unitxt.settings.inference_engine_cache_path)
 
-        dataset = load_dataset(card="cards.openbook_qa",
-                               split="test",
-                               #format="formats.chat_api",
-                               loader_limit=20)
+        dataset = load_dataset(
+            card="cards.openbook_qa",
+            split="test",
+            # format="formats.chat_api",
+            loader_limit=20,
+        )
         inference_model = HFPipelineBasedInferenceEngine(
-            model_name="google/flan-t5-small", max_new_tokens=32,temperature=0,top_p=1,use_cache=False, device="cpu"
+            model_name="google/flan-t5-small",
+            max_new_tokens=32,
+            temperature=0,
+            top_p=1,
+            use_cache=False,
+            device="cpu",
         )
         start_time = time.time()
         predictions_without_cache = inference_model.infer(dataset)
         inference_without_cache_time = time.time() - start_time
         # Set seed for reproducibility
         inference_model = HFPipelineBasedInferenceEngine(
-            model_name="google/flan-t5-small", max_new_tokens=32, temperature=0, top_p=1, use_cache=True,
-            cache_batch_size = 5,device="cpu"
+            model_name="google/flan-t5-small",
+            max_new_tokens=32,
+            temperature=0,
+            top_p=1,
+            use_cache=True,
+            cache_batch_size=5,
+            device="cpu",
         )
         start_time = time.time()
         predictions_with_cache = inference_model.infer(dataset)
@@ -457,8 +470,10 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         for p1, p2 in zip(predictions_without_cache, predictions_with_cache):
             self.assertEqual(p1, p2)
 
-        logger.info(f"Time of inference without cache: {inference_without_cache_time}, "
-                    f"with cache (cache is empty): {inference_with_cache_time}")
+        logger.info(
+            f"Time of inference without cache: {inference_without_cache_time}, "
+            f"with cache (cache is empty): {inference_with_cache_time}"
+        )
 
         start_time = time.time()
         predictions_with_cache = inference_model.infer(dataset)
@@ -468,8 +483,10 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         for p1, p2 in zip(predictions_without_cache, predictions_with_cache):
             self.assertEqual(p1, p2)
 
-        logger.info(f"Time of inference without cache: {inference_without_cache_time}, "
-                    f"with cache (cache is full): {inference_with_cache_time}")
+        logger.info(
+            f"Time of inference without cache: {inference_without_cache_time}, "
+            f"with cache (cache is full): {inference_with_cache_time}"
+        )
 
         self.assertGreater(inference_without_cache_time, 2)
         self.assertLess(inference_with_cache_time, 0.5)
@@ -484,8 +501,13 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             shutil.rmtree(unitxt.settings.inference_engine_cache_path)
 
         inference_model = HFPipelineBasedInferenceEngine(
-            model_name="google/flan-t5-small", max_new_tokens=32, temperature=0, top_p=1, use_cache=True,
-            cache_batch_size = 5, device="cpu"
+            model_name="google/flan-t5-small",
+            max_new_tokens=32,
+            temperature=0,
+            top_p=1,
+            use_cache=True,
+            cache_batch_size=5,
+            device="cpu",
         )
 
         def my_wrapper(original_method):
@@ -503,7 +525,9 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             start_time = time.time()
             predictions = inference_model.infer(dataset)
             inference_time = time.time() - start_time
-            logger.info(f"Inference time: {inference_time}, predictions contains {predictions.count(None)} Nones")
+            logger.info(
+                f"Inference time: {inference_time}, predictions contains {predictions.count(None)} Nones"
+            )
 
         self.assertEqual(len(predictions_without_cache), len(predictions_with_cache))
         for p1, p2 in zip(predictions_without_cache, predictions_with_cache):
@@ -536,12 +560,9 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
                             "type": "string",
                         },
                         "unit": {
-                            "enum": [
-                                "celsius",
-                                "fahrenheit"
-                            ],
+                            "enum": ["celsius", "fahrenheit"],
                             "type": "string",
-                        }
+                        },
                     },
                     "required": [
                         "location",
@@ -587,35 +608,40 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         results = chat.infer(dataset, return_meta_data=False)
 
-        self.assertEqual(
-            results[0],
-            '{"name": "add", "arguments": {"a": 1, "b": 2}}'
-        )
+        self.assertEqual(results[0], '{"name": "add", "arguments": {"a": 1, "b": 2}}')
 
     def test_hf_auto_model_and_hf_pipeline_equivalency(self):
         unitxt.settings.allow_unverified_code = True
         for _format in ["formats.chat_api", None]:
+            model_name = (
+                "HuggingFaceTB/SmolLM2-135M-Instruct"  # pragma: allowlist secret
+            )
+            model_args = {
+                "max_new_tokens": 32,
+                "temperature": 0,
+                "top_p": 1,
+                "use_cache": False,
+                "device": "cpu",
+            }
 
+            dataset = load_dataset(
+                card="cards.openbook_qa", split="test", format=_format, loader_limit=64
+            )  # the number of instances need to large enough to catch differences
+            pipeline_inference_model = HFPipelineBasedInferenceEngine(
+                model_name=model_name, **model_args
+            )
+            auto_inference_model = HFAutoModelInferenceEngine(
+                model_name=model_name, **model_args
+            )
 
-            model_name = "HuggingFaceTB/SmolLM2-135M-Instruct" #pragma: allowlist secret
-            model_args = {"max_new_tokens":32,
-                          "temperature":0,
-                          "top_p":1,
-                          "use_cache":False,
-                          "device": "cpu"}
-
-            dataset = load_dataset(card="cards.openbook_qa",
-                                   split="test",
-                                   format=_format,
-                                   loader_limit=64) # the number of instances need to large enough to catch differences
-            pipeline_inference_model = HFPipelineBasedInferenceEngine(model_name=model_name, **model_args)
-            auto_inference_model = HFAutoModelInferenceEngine(model_name=model_name, **model_args)
-
-            pipeline_inference_model_predictions = pipeline_inference_model.infer(dataset)
+            pipeline_inference_model_predictions = pipeline_inference_model.infer(
+                dataset
+            )
             auto_inference_model_predictions = auto_inference_model.infer(dataset)
 
-
-            self.assertEqual(pipeline_inference_model_predictions, auto_inference_model_predictions)
+            self.assertEqual(
+                pipeline_inference_model_predictions, auto_inference_model_predictions
+            )
 
     def test_multi_byte_tokens_decoding(self):
         model = HFAutoModelInferenceEngine(
@@ -624,9 +650,9 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             use_cache=False,
         )
         from transformers import AutoTokenizer
+
         tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen1.5-0.5B-Chat")
         text = "以下の質問に答えてください。回答は1単語で述べてください。"
         tokens = tokenizer(text)["input_ids"]
         decoded_text = model.decode_tokens(tokens, 0)
         self.assertEqual(text, decoded_text)
-

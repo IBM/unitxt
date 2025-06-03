@@ -36,7 +36,10 @@ card = TaskCard(
     ],
     task="tasks.rag.end_to_end",
     templates={"default": "templates.rag.end_to_end.json_predictions"},
-    __tags__={"license": "cc-by-2.5", "url":"https://huggingface.co/datasets/enelpol/rag-mini-bioasq"},
+    __tags__={
+        "license": "cc-by-2.5",
+        "url": "https://huggingface.co/datasets/enelpol/rag-mini-bioasq",
+    },
     __description__="""This dataset is a subset of a training dataset by the BioASQ Challenge, which is available here.
 
 It is derived from rag-datasets/rag-mini-bioasq.
@@ -88,7 +91,10 @@ card = TaskCard(
             output_format="",
         ),
     },
-    __tags__={"license": "cc-by-2.5", "url" : "https://huggingface.co/datasets/enelpol/rag-mini-bioasq"},
+    __tags__={
+        "license": "cc-by-2.5",
+        "url": "https://huggingface.co/datasets/enelpol/rag-mini-bioasq",
+    },
     __description__="""This dataset is a subset of a training dataset by the BioASQ Challenge, which is available here.
 
 It is derived from rag-datasets/rag-mini-bioasq.

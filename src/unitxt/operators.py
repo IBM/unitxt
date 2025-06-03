@@ -340,6 +340,7 @@ class RecursiveReplace(InstanceOperator):
 
         Notice how the value of field ``"a"`` in the first instance is replaced with ``"hi"`` and the value of field ``"a"`` in the second instance is removed.
     """
+
     key: str
     map_values: dict
     remove_values: Optional[list] = None
@@ -448,8 +449,8 @@ class InstanceFieldOperator(InstanceOperator):
     def verify_field_definition(self):
         if hasattr(self, "_field_to_field") and self._field_to_field is not None:
             return
-        assert (self.field is None) != (
-            self.field_to_field is None
+        assert (
+            (self.field is None) != (self.field_to_field is None)
         ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
         assert (
             self.to_field is None or self.field_to_field is None
@@ -626,6 +627,7 @@ class AddConstant(FieldOperator):
     def process_value(self, value: Any) -> Any:
         return self.add + value
 
+
 class ShuffleFieldValues(FieldOperator):
     # Assisted by watsonx Code Assistant
     """An operator that shuffles the values of a list field.
@@ -647,6 +649,7 @@ class ShuffleFieldValues(FieldOperator):
     Returns:
                 Any: The shuffled list.
     """
+
     def process_value(self, value: Any) -> Any:
         res = list(value)
         random_generator = new_random_generator(sub_seed=res)
@@ -822,8 +825,9 @@ class InterleaveListsToDialogOperator(InstanceOperator):
         user_turns = instance[self.user_turns_field]
         assistant_turns = instance[self.assistant_turns_field]
 
-        assert len(user_turns) == len(assistant_turns) or (
-            len(user_turns) - len(assistant_turns) == 1
+        assert (
+            len(user_turns) == len(assistant_turns)
+            or (len(user_turns) - len(assistant_turns) == 1)
         ), "user_turns must have either the same length as assistant_turns or one more turn."
 
         interleaved_dialog = []
@@ -1755,7 +1759,6 @@ class SplitByNestedGroup(MultiStreamOperator):
 
 
 class AddIncrementalId(StreamOperator):
-
     to_field: str
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
@@ -1832,7 +1835,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
 
         metrics_list = []
         for metric_name in metric_names:
-            metric =  self.get_artifact(metric_name)
+            metric = self.get_artifact(metric_name)
             if isinstance(metric, MetricsList):
                 metrics_list.extend(list(metric.items))
             elif isinstance(metric, Metric):
