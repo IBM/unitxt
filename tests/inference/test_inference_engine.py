@@ -617,3 +617,16 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
             self.assertEqual(pipeline_inference_model_predictions, auto_inference_model_predictions)
 
+    def test_multi_byte_tokens_decoding(self):
+        model = HFAutoModelInferenceEngine(
+            model_name="Qwen/Qwen1.5-0.5B-Chat",
+            max_new_tokens=32,
+            use_cache=False,
+        )
+        from transformers import AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen1.5-0.5B-Chat")
+        text = "以下の質問に答えてください。回答は1単語で述べてください。"
+        tokens = tokenizer(text)["input_ids"]
+        decoded_text = model.decode_tokens(tokens, 0)
+        self.assertEqual(text, decoded_text)
+
