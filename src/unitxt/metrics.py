@@ -6460,7 +6460,7 @@ class SQLExecutionAccuracy(InstanceMetric):
     ]
 
     prediction_type = "Any"  # string representation is compared
-    sql_timeout = 30.0
+    sql_timeout = 60.0
 
     _requirements_list = ["sqlglot", "func_timeout"]
 
@@ -6633,8 +6633,8 @@ class SQLExecutionAccuracy(InstanceMetric):
             end_time = time.perf_counter()
             gold_sql_runtime = end_time - start_time
         except FunctionTimedOut as e:
-            pred_error = f"Timeout error executing gold SQL: {e}"
-            logger.warning(pred_error)
+            gold_error = f"Timeout error executing gold SQL: {e}"
+            logger.warning(gold_error)
         except Exception as e:
             gold_error = f"Error executing gold SQL: {e}"
         if gold_error is not None:
@@ -6646,7 +6646,7 @@ class SQLExecutionAccuracy(InstanceMetric):
                 gold_sql_runtime,
                 0,
                 0,
-                0,
+                1,
                 0,
                 "",
                 "",
@@ -6716,7 +6716,7 @@ class SQLExecutionAccuracy(InstanceMetric):
                 pred_to_gold_runtime_ratio,
                 0,
                 1,
-                "",
+                gold_df.to_json(),
                 "",
                 pred_error,
             )
