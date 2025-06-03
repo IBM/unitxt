@@ -48,7 +48,7 @@ from unitxt.metrics import (
     GroupMeanTokenOverlap,
     HuggingfaceMetric,
     JaccardIndex,
-    JaccardIndexWords,
+    JaccardIndexString,
     KendallTauMetric,
     KeyValueExtraction,
     LlamaIndexCorrectness,
@@ -376,9 +376,11 @@ class TestMetrics(UnitxtTestCase):
 
     def test_jaccard_metric(self):
         metric = JaccardIndex()
+        from unitxt.string_operators import RegexSplit
 
-        predictions = [["A", "B", "C"]]
-        references = [[["B", "A", "D"]]]
+
+        predictions = [["Apple", "Boy", "Cat"]]
+        references = [[["Boy", "Apple", "Dog"]]]
 
         instance_targets = [
             {"jaccard_index": 0.5, "score": 0.5, "score_name": "jaccard_index"},
@@ -403,10 +405,10 @@ class TestMetrics(UnitxtTestCase):
 
 
 
-        metric = JaccardIndexWords()
+        metric = JaccardIndexString(splitter=RegexSplit(by=r"\s+"))
 
-        predictions = ["A B C"]
-        references = [["B A D"]]
+        predictions = ["Apple Boy Cat"]
+        references = [["Boy    Apple Dog"]]
 
 
 
