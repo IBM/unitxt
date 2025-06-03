@@ -519,10 +519,7 @@ class HFInferenceEngineBase(
         return get_model_and_label_id(self.model_name, self.label)
 
     def decode_tokens(self, tokens: Sequence, inp_length: int) -> List[str]:
-        return [
-            self.processor.decode(token, skip_special_tokens=True)
-            for token in tokens[inp_length:]
-        ]
+        return self.processor.decode(tokens[inp_length:], skip_special_tokens=True)
 
     @staticmethod
     def create_string_from_tokens(string_tokens: List[str]) -> str:
