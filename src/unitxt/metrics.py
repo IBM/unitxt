@@ -209,7 +209,6 @@ class ConfidenceIntervalMixin(Artifact):
     ci_method: str = "BCa"
     ci_paired: bool = True
 
-
     @abstractmethod
     def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
         pass
@@ -458,9 +457,11 @@ class MeanReduction(DictReduction):
     def reduce_list(self, lst: List[float]):
         return nan_mean(lst)
 
+
 class RootMeanReduction(DictReduction):
     def reduce_list(self, lst: List[float]):
         return math.sqrt(nan_mean(lst))
+
 
 class MaxReduction(DictReduction):
     def reduce_list(self, lst: List[float]):
@@ -711,7 +712,6 @@ class MetricWithConfidenceInterval(Metric):
     confidence_level: float = 0.95
     ci_scores: List[str] = None
     ci_method: str = "BCa"
-
 
     @staticmethod
     def new_random_generator():
@@ -2039,26 +2039,32 @@ class WebsrcSquadF1(GlobalMetric):
         return judge_list, {"f1": f1}
 
 
-
 class JaccardIndex(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "jaccard_index"
     reduction = MeanReduction()
     prediction_type = Union[list, set]
-    def map(
-        self, prediction:  Union[list, set], references: List[Union[list, set]], task_data: Dict[str, Any]
-    ) -> Dict[str, float]:
 
+    def map(
+        self,
+        prediction: Union[list, set],
+        references: List[Union[list, set]],
+        task_data: Dict[str, Any],
+    ) -> Dict[str, float]:
         prediction = set(prediction)
         references = [set(reference) for reference in references]
 
         return {
             self.main_score: max(
                 [
-                    float(len(reference.intersection(prediction)) / len(reference.union(prediction)) )
+                    float(
+                        len(reference.intersection(prediction))
+                        / len(reference.union(prediction))
+                    )
                     for reference in references
                 ]
             )
         }
+
 
 class JaccardIndexString(JaccardIndex):
     """Calculates JaccardIndex on strings.
@@ -2067,13 +2073,17 @@ class JaccardIndexString(JaccardIndex):
 
     These tokens are passed to the JaccardIndex as lists.
     """
+
     splitter: FieldOperator
     prediction_type = str
-    def map(self, prediction: str, references:List[str], task_data: Dict[str, Any]) -> Dict[str, float]:
+
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
         return super().map(
             self.splitter.process_value(prediction),
             [self.splitter.process_value(reference) for reference in references],
-            task_data
+            task_data,
         )
 
 
@@ -2101,6 +2111,7 @@ class StringContainment(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "string_containment"
     reduction = MeanReduction()
     prediction_type = Any
+
     def map(
         self, prediction: Any, references: List[Any], task_data: Dict[str, Any]
     ) -> Dict[str, float]:
@@ -2109,6 +2120,7 @@ class StringContainment(ReductionInstanceMetric[str, Dict[str, float]]):
                 any(str(reference) in str(prediction) for reference in references)
             )
         }
+
 
 class StringContainmentOld(InstanceMetric):
     reduction_map = {"mean": ["string_containment"]}
@@ -3086,11 +3098,13 @@ class MeanSquaredError(MapReduceMetric[float, float]):
     def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
         return {self.main_score: nan_mean(intermediates)}
 
+
 class RootMeanSquaredError(MeanSquaredError):
     main_score = "root_mean_squared_error"
 
     def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
-        return {self.main_score: nan_mean(intermediates)  ** 0.5}
+        return {self.main_score: nan_mean(intermediates) ** 0.5}
+
 
 class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
     main_score = "spearmanr"
@@ -3101,6 +3115,7 @@ class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
     def prepare(self):
         super().prepare()
         from scipy.stats import spearmanr
+
         self.spearmanr = spearmanr
 
     def map(
@@ -3117,7 +3132,7 @@ class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
     def reduce(self, intermediates: List[Tuple[float, float]]) -> Dict[str, Any]:
         list_a = []
         list_b = []
-        for a, b  in intermediates:
+        for a, b in intermediates:
             list_a.append(a)
             list_b.append(b)
 

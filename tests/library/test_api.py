@@ -261,7 +261,6 @@ class TestAPI(UnitxtTestCase):
                         "spearmanr_ci_low": -1.0,
                         "spearmanr_ci_high": -1.0,
                         "spearmanr_p_value": None,
-
                     },
                 }
             },
@@ -393,11 +392,11 @@ class TestAPI(UnitxtTestCase):
                     "score_name": "spearmanr",
                     "spearmanr": -0.10259783520851541,
                     "spearmanr_ci_high": 0.9946088287837848,
-                    "spearmanr_ci_low":-1.0,
+                    "spearmanr_ci_low": -1.0,
                     "spearmanr_p_value": 0.8695979205185651,
                 },
                 "instance": {
-                    "score":np.nan,
+                    "score": np.nan,
                     "score_name": "spearmanr",
                     "spearmanr": np.nan,
                 },

@@ -351,9 +351,21 @@ class TestMetrics(UnitxtTestCase):
         references = [[-1.0], [1.0], [0.0]]
 
         instance_targets = [
-            {"mean_squared_error": 4.0, "score": 4.0, "score_name": "mean_squared_error"},
-            {"mean_squared_error": 1.0, "score": 1.0, "score_name": "mean_squared_error"},
-            {"mean_squared_error": 1.0, "score": 1.0, "score_name": "mean_squared_error"},
+            {
+                "mean_squared_error": 4.0,
+                "score": 4.0,
+                "score_name": "mean_squared_error",
+            },
+            {
+                "mean_squared_error": 1.0,
+                "score": 1.0,
+                "score_name": "mean_squared_error",
+            },
+            {
+                "mean_squared_error": 1.0,
+                "score": 1.0,
+                "score_name": "mean_squared_error",
+            },
         ]
 
         global_target = {
@@ -367,18 +379,19 @@ class TestMetrics(UnitxtTestCase):
             "num_of_instances": 3,
         }
 
-        self.assertTrue(test_metric(
-            metric=metric,
-            predictions=predictions,
-            references=references,
-            instance_targets=instance_targets,
-            global_target=global_target,
-        ))
+        self.assertTrue(
+            test_metric(
+                metric=metric,
+                predictions=predictions,
+                references=references,
+                instance_targets=instance_targets,
+                global_target=global_target,
+            )
+        )
 
     def test_jaccard_metric(self):
         metric = JaccardIndex()
         from unitxt.string_operators import RegexSplit
-
 
         predictions = [["Apple", "Boy", "Cat"]]
         references = [[["Boy", "Apple", "Dog"]]]
@@ -394,24 +407,20 @@ class TestMetrics(UnitxtTestCase):
             "num_of_instances": 1,
         }
 
-
-        self.assertTrue(test_metric(
-            metric=metric,
-            predictions=predictions,
-            references=references,
-            instance_targets=instance_targets,
-            global_target=global_target,
-        ))
-
-
-
+        self.assertTrue(
+            test_metric(
+                metric=metric,
+                predictions=predictions,
+                references=references,
+                instance_targets=instance_targets,
+                global_target=global_target,
+            )
+        )
 
         metric = JaccardIndexString(splitter=RegexSplit(by=r"\s+"))
 
         predictions = ["Apple Boy Cat"]
         references = [["Boy    Apple Dog"]]
-
-
 
         global_target = {
             "jaccard_index": 0.5,
@@ -420,15 +429,15 @@ class TestMetrics(UnitxtTestCase):
             "num_of_instances": 1,
         }
 
-        self.assertTrue(test_metric(
-            metric=metric,
-            predictions=predictions,
-            references=references,
-            instance_targets=instance_targets,
-            global_target=global_target,
-        ))
-
-
+        self.assertTrue(
+            test_metric(
+                metric=metric,
+                predictions=predictions,
+                references=references,
+                instance_targets=instance_targets,
+                global_target=global_target,
+            )
+        )
 
     def test_f1_strings(self):
         metric = F1Strings()
