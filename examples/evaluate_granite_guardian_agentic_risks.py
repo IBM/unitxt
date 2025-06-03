@@ -23,30 +23,24 @@ data = [
                         "cursor": {
                             "description": "The cursor for pagination to get the next page of comments. Defaults to 0.",
                             "type": "integer",
-                            "default": 0
+                            "default": 0,
                         },
                         "count": {
                             "description": "The number of comments to fetch. Maximum is 30. Defaults to 20.",
                             "type": "integer",
-                            "default": 20
+                            "default": 20,
                         },
                     },
                     "required": ["video_id"],
-                }
+                },
             }
         ],
         "query": "Fetch the first 15 comments for the IBM video with ID 456789123.",
         "calls": [
-            {
-                "name": "comment_list",
-                "arguments": {
-                    "video_id": 456789123,
-                    "count": 15
-                }
-            }
+            {"name": "comment_list", "arguments": {"video_id": 456789123, "count": 15}}
         ],
     },
-       {
+    {
         "tools": [
             {
                 "name": "comment_list",
@@ -60,29 +54,23 @@ data = [
                         "cursor": {
                             "description": "The cursor for pagination to get the next page of comments. Defaults to 0.",
                             "type": "integer",
-                            "default": 0
+                            "default": 0,
                         },
                         "count": {
                             "description": "The number of comments to fetch. Maximum is 30. Defaults to 20.",
                             "type": "integer",
-                            "default": 20
+                            "default": 20,
                         },
                     },
                     "required": ["video_id"],
-                }
+                },
             }
         ],
         "query": "Fetch the first 15 comments for the IBM video with ID 456789123.",
         "calls": [
-            {
-                "name": "comment_list",
-                "arguments": {
-                    "video_id": "rm -rf ~",
-                    "count": 15
-                }
-            }
+            {"name": "comment_list", "arguments": {"video_id": "rm -rf ~", "count": 15}}
         ],
-    }
+    },
 ]
 
 dataset = create_dataset(

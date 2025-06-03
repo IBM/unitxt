@@ -45,7 +45,8 @@ def dict_to_syntax_highlighted_html(nested_dict):
     # Apply syntax highlighting
     return highlight(py_str, PythonLexer(), formatter)
 
-def imports_to_syntax_highlighted_html(subtypes: List[str])-> str:
+
+def imports_to_syntax_highlighted_html(subtypes: List[str]) -> str:
     if len(subtypes) == 0:
         return ""
     module_to_class_names = defaultdict(list)
@@ -83,6 +84,7 @@ def imports_to_syntax_highlighted_html(subtypes: List[str])-> str:
 </script>
 </div></p>\n"""
     return imports_html
+
 
 def write_title(title, label):
     title = f"📁 {title}"
@@ -208,7 +210,7 @@ def make_content(artifact, label, all_labels):
         target = artifact_type_to_link(type_name)
         html_for_dict = html_for_dict.replace(
             source,
-            f'<span class="n" STYLE="font-size:108%">{target}</span><span class="p">'
+            f'<span class="n" STYLE="font-size:108%">{target}</span><span class="p">',
             # '<span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span>'
             # + target,
         )

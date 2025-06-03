@@ -30,6 +30,7 @@ def get_evaluator_metadata(
         raise ValueError(f"An evaluator with id {name} matched several models.")
     return evaluator_search[0]
 
+
 def rank_indexes(numbers):
     # Generate the initial list of indices
     indices = list(range(len(numbers)))

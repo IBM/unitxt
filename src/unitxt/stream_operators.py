@@ -93,16 +93,15 @@ class JoinStreams(MultiStreamOperator):
             right_on=self.right_on,
         )
 
-        def assert_col_values_are_identical(
-            df: pd.DataFrame, col_name
-        ):
-
+        def assert_col_values_are_identical(df: pd.DataFrame, col_name):
             (col_name_1, col_name_2) = (f"{col_name}_x", f"{col_name}_y")
-            if not  df.apply(
+            if not df.apply(
                 lambda row: str(row[col_name_1]) == str(row[col_name_2]),
                 axis=1,
-                ).all():
-                raise UnitxtError(f"'{col_name}' field is not identical in both left and right instances merged in JoinStreams.")
+            ).all():
+                raise UnitxtError(
+                    f"'{col_name}' field is not identical in both left and right instances merged in JoinStreams."
+                )
 
         # If 2 streams / Dataframes contains column with the same names, which are not the columns the join is operated
         # on they will be renamed to "[column_name]_x" and "[column_name]_y". Some of these columns are metadsta
@@ -110,17 +109,16 @@ class JoinStreams(MultiStreamOperator):
         # the same metadata values and rename the columns accordingly.
         common_cols_to_verify = ["data_classification_policy", "recipe_metadata"]
         for common_col in common_cols_to_verify:
-            assert_col_values_are_identical(
-                merged_df, common_col
-            )
+            assert_col_values_are_identical(merged_df, common_col)
             merged_df[common_col] = merged_df[f"{common_col}_x"]
             merged_df = merged_df.drop(
                 columns=[f"{common_col}_x", f"{common_col}_y"], errors="ignore"
             )
 
-        if  len(merged_df) == 0:
-            raise UnitxtError(f"JoinStreams resulted in an empty stream. It means that that keys in fields '{self.on}' on the left and on right streams do not match the merge policy of '{self.how}'."
-        )
+        if len(merged_df) == 0:
+            raise UnitxtError(
+                f"JoinStreams resulted in an empty stream. It means that that keys in fields '{self.on}' on the left and on right streams do not match the merge policy of '{self.how}'."
+            )
         return merged_df.to_dict(orient="records")
 
     def process(self, multi_stream: MultiStream) -> MultiStream:

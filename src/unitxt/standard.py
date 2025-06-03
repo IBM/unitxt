@@ -608,7 +608,10 @@ class DatasetRecipe(SourceSequentialOperator):
                     )
                 )
                 self.verbalization.steps.append(
-                    GetLength(field=constants.demos_field, to_field="recipe_metadata/num_demos")
+                    GetLength(
+                        field=constants.demos_field,
+                        to_field="recipe_metadata/num_demos",
+                    )
                 )
                 self.verbalization.steps.append(
                     Set(
@@ -665,7 +668,11 @@ class DatasetRecipe(SourceSequentialOperator):
 
     @property
     def has_card_templates(self):
-        return self.card is not None and self.card.templates is not None and len(self.card.templates) > 0
+        return (
+            self.card is not None
+            and self.card.templates is not None
+            and len(self.card.templates) > 0
+        )
 
     @property
     def has_no_templates(self):
@@ -687,7 +694,6 @@ class DatasetRecipe(SourceSequentialOperator):
                 )
             else:
                 self.template = self.card.task.default_template
-
 
         if self.template is None and self.template_card_index is not None:
             try:

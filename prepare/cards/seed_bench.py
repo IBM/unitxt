@@ -7,12 +7,12 @@ from unitxt.test_utils.card import test_card
 
 templates = get_from_catalog("templates.qa.multiple_choice.with_context.no_intro.all")
 template = MultipleChoiceTemplate(
-        input_format="{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
-        choices_separator="\n",
-        target_field="answer",
-        enumerator="capitals",
-        __description__="lmms-evals default template for seed bench.",
-    )
+    input_format="{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
+    choices_separator="\n",
+    target_field="answer",
+    enumerator="capitals",
+    __description__="lmms-evals default template for seed bench.",
+)
 
 card = TaskCard(
     loader=LoadHF(path="lmms-lab/SEED-Bench"),

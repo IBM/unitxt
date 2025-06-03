@@ -89,7 +89,10 @@ add_to_catalog(
 # now = define the judge metric using the criteria
 adherence_metric = LLMJudgeDirect(
     inference_engine=CrossProviderInferenceEngine(  # or your favorite inference model
-        model="llama-3-3-70b-instruct", max_tokens=1024, temperature=0, provider="watsonx"
+        model="llama-3-3-70b-instruct",
+        max_tokens=1024,
+        temperature=0,
+        provider="watsonx",
     ),
     criteria=adherence_criteria,
     # the fields from the generation task to be presented to the judge. Those fields must be present

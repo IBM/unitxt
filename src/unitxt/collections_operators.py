@@ -12,10 +12,11 @@ class Dictify(FieldOperator):
     def process_value(self, tup: Any) -> Any:
         return dict(zip(self.with_keys, tup))
 
-class DictToTuplesList(FieldOperator):
 
+class DictToTuplesList(FieldOperator):
     def process_value(self, dic: Dict) -> Any:
         return list(dic.items())
+
 
 class Wrap(FieldOperator):
     inside: str

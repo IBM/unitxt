@@ -21,16 +21,15 @@ for subset in [
     "techqa",
 ]:
     card = TaskCard(
-        loader=LoadHF(
-            path="rungalileo/ragbench",
-            name=subset,
-            split="test"
-        ),
+        loader=LoadHF(path="rungalileo/ragbench", name=subset, split="test"),
         preprocess_steps=[
             Copy(field="response", to_field="answer"),
             Copy(field="documents", to_field="contexts"),
             ExecuteExpression(expression="int(adherence_score)", to_field="number_val"),
-            ExecuteExpression(expression="['yes' if adherence_score else 'no']", to_field="is_faithful"),
+            ExecuteExpression(
+                expression="['yes' if adherence_score else 'no']",
+                to_field="is_faithful",
+            ),
         ],
         task="tasks.rag_eval.faithfulness.binary",
         templates={"default": NullTemplate()},
