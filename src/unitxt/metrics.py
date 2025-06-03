@@ -60,7 +60,7 @@ from .operator import (
     StreamingOperator,
     StreamOperator,
 )
-from .operators import ArtifactFetcherMixin, Copy, Set
+from .operators import ArtifactFetcherMixin, Copy, FieldOperator, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
@@ -206,6 +206,8 @@ class ConfidenceIntervalMixin(Artifact):
     confidence_level: float = 0.95
     ci_score_names: List[str] = None
     return_confidence_interval: bool = True
+    ci_method: str = "BCa"
+    ci_paired: bool = True
 
     @abstractmethod
     def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
@@ -229,9 +231,9 @@ class ConfidenceIntervalMixin(Artifact):
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
                 random_state=new_random_generator(),
-                paired=False,
+                paired=self.ci_paired,
                 vectorized=False,
-                method="BCa",
+                method=self.ci_method,
             ).confidence_interval
 
         result = {}
@@ -454,6 +456,11 @@ class DictReduction(AggregationReduction[Dict[str, float]]):
 class MeanReduction(DictReduction):
     def reduce_list(self, lst: List[float]):
         return nan_mean(lst)
+
+
+class RootMeanReduction(DictReduction):
+    def reduce_list(self, lst: List[float]):
+        return math.sqrt(nan_mean(lst))
 
 
 class MaxReduction(DictReduction):
@@ -2032,38 +2039,52 @@ class WebsrcSquadF1(GlobalMetric):
         return judge_list, {"f1": f1}
 
 
-class JaccardIndex(InstanceMetric):
-    reduction_map = {"mean": ["jaccard_index"]}
+class JaccardIndex(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "jaccard_index"
-    ci_scores = ["jaccard_index"]
+    reduction = MeanReduction()
+    prediction_type = Union[list, set]
 
-    prediction_type = Any  # string representation is compared
-
-    def compute(
-        self, references: List[Any], prediction: Any, task_data: List[Dict]
-    ) -> dict:
-        if not isinstance(prediction, set):
-            prediction = set(prediction)
+    def map(
+        self,
+        prediction: Union[list, set],
+        references: List[Union[list, set]],
+        task_data: Dict[str, Any],
+    ) -> Dict[str, float]:
+        prediction = set(prediction)
         references = [set(reference) for reference in references]
 
-        result = {
+        return {
             self.main_score: max(
                 [
                     float(
-                        (len(reference.intersection(prediction)))
-                        / (
-                            len(reference)
-                            + len(prediction)
-                            - len(reference.intersection(prediction))
-                        )
+                        len(reference.intersection(prediction))
+                        / len(reference.union(prediction))
                     )
                     for reference in references
                 ]
             )
         }
-        result["score"] = result[self.main_score]
-        result["score_name"] = self.main_score
-        return result
+
+
+class JaccardIndexString(JaccardIndex):
+    """Calculates JaccardIndex on strings.
+
+    Requires setting the 'splitter' to a FieldOperator (such as Split or RegexSplit) to tokenize the predictions and references into lists of strings tokens.
+
+    These tokens are passed to the JaccardIndex as lists.
+    """
+
+    splitter: FieldOperator
+    prediction_type = str
+
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
+        return super().map(
+            self.splitter.process_value(prediction),
+            [self.splitter.process_value(reference) for reference in references],
+            task_data,
+        )
 
 
 class MaxAccuracy(Accuracy):
@@ -2086,7 +2107,22 @@ class UnsortedListExactMatch(InstanceMetric):
         return result
 
 
-class StringContainment(InstanceMetric):
+class StringContainment(ReductionInstanceMetric[str, Dict[str, float]]):
+    main_score = "string_containment"
+    reduction = MeanReduction()
+    prediction_type = Any
+
+    def map(
+        self, prediction: Any, references: List[Any], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
+        return {
+            self.main_score: float(
+                any(str(reference) in str(prediction) for reference in references)
+            )
+        }
+
+
+class StringContainmentOld(InstanceMetric):
     reduction_map = {"mean": ["string_containment"]}
     main_score = "string_containment"
     ci_scores = ["string_containment"]
@@ -3049,18 +3085,63 @@ class Wer(HuggingfaceMetric):
         return {self.main_score: result}
 
 
-class Spearmanr(HuggingfaceMetric):
-    hf_metric_name = "spearmanr"
-    main_score = "spearmanr"
-    process_single_instances = False
+class MeanSquaredError(MapReduceMetric[float, float]):
+    main_score = "mean_squared_error"
     prediction_type = float
+    single_reference_per_prediction = True
 
-    # Spearmanr references are not list
-    def _validate_reference(self, reference):
-        if not isoftype(reference, self.prediction_type):
-            raise ValueError(
-                f"Each reference is expected to be of type '{to_type_string(self.prediction_type)}' in {self.get_metric_name()} metric. Received prediction of type {type(reference)}: {reference}"
-            )
+    def map(
+        self, prediction: float, references: List[float], task_data: Dict[str, Any]
+    ) -> float:
+        return (references[0] - prediction) ** 2
+
+    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
+        return {self.main_score: nan_mean(intermediates)}
+
+
+class RootMeanSquaredError(MeanSquaredError):
+    main_score = "root_mean_squared_error"
+
+    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
+        return {self.main_score: nan_mean(intermediates) ** 0.5}
+
+
+class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
+    main_score = "spearmanr"
+    ci_score_names = ["spearmanr"]
+    prediction_type = float
+    _requirements_list = ["scipy"]
+
+    def prepare(self):
+        super().prepare()
+        from scipy.stats import spearmanr
+
+        self.spearmanr = spearmanr
+
+    def map(
+        self,
+        prediction: float,
+        references: List[float],
+        task_data: Dict[str, Any],
+    ) -> Tuple[float, float]:
+        return (prediction, references[0])
+
+    def reduce_one(self, intermidate: Tuple[float, float]):
+        return {self.main_score: np.nan}
+
+    def reduce(self, intermediates: List[Tuple[float, float]]) -> Dict[str, Any]:
+        list_a = []
+        list_b = []
+        for a, b in intermediates:
+            list_a.append(a)
+            list_b.append(b)
+
+        score, p_value = self.spearmanr(a=list_a, b=list_b)
+
+        return {
+            self.main_score: score,
+            "spearmanr_p_value": p_value,
+        }
 
 
 class KendallTauMetric(GlobalMetric):
@@ -5117,11 +5198,11 @@ class FixedGroupMeanAccuracy(Accuracy):
 
 
 # same as above, now using StringContainment
-class GroupMeanStringContainment(StringContainment):
+class GroupMeanStringContainment(StringContainmentOld):
     reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, False]}}
 
 
-class FixedGroupMeanStringContainment(StringContainment):
+class FixedGroupMeanStringContainment(StringContainmentOld):
     # the same as GroupMeanStringContainment, except the groups are fixed and are resampled together
     reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, True]}}
 
@@ -5160,7 +5241,7 @@ class FixedGroupMeanParaphraseAccuracy(Accuracy):
 
 
 # same as above but using StringContainment
-class FixedGroupMeanBaselineStringContainment(StringContainment):
+class FixedGroupMeanBaselineStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     # take mean of "original" variants only
     reduction_map = {
@@ -5176,7 +5257,7 @@ class FixedGroupMeanBaselineStringContainment(StringContainment):
     }
 
 
-class FixedGroupMeanParaphraseStringContainment(StringContainment):
+class FixedGroupMeanParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     # take mean of "paraphrase" variants only
     reduction_map = {
@@ -5210,7 +5291,7 @@ class FixedGroupPDRParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupPDRParaphraseStringContainment(StringContainment):
+class FixedGroupPDRParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5254,7 +5335,7 @@ class FixedGroupNormCohensHParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupNormCohensHParaphraseStringContainment(StringContainment):
+class FixedGroupNormCohensHParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5289,7 +5370,7 @@ class FixedGroupNormHedgesGParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupNormHedgesGParaphraseStringContainment(StringContainment):
+class FixedGroupNormHedgesGParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5326,7 +5407,7 @@ class FixedGroupAbsvalNormCohensHParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupAbsvalNormCohensHParaphraseStringContainment(StringContainment):
+class FixedGroupAbsvalNormCohensHParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5364,7 +5445,7 @@ class FixedGroupAbsvalNormHedgesGParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
+class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {

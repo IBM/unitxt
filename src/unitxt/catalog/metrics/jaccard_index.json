@@ -1,3 +1,4 @@
 {
-    "__type__": "jaccard_index"
+    "__type__": "jaccard_index",
+    "__description__": "JaccardIndex metric that operates on predictions and references that are list of elements.\n    For each prediction, it calculates the score as Intersect(prediction,reference)/Union(prediction,reference).\n    If multiple references exist, it takes for each predictions, the best ratio achieved by one of the references.\n    It then aggregates the mean over all references.\n\n    Note the metric assumes the prediction and references are either a set of elements or a list of elements.\n    If the prediction and references are strings use JaccardIndexString metrics like \"metrics.jaccard_index_words\" .\n    "
 }
