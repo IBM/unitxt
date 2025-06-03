@@ -8,7 +8,8 @@ import uuid
 import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
-from dataclasses import field
+from dataclasses import asdict, dataclass, field
+from dataclasses import fields as dataclasses_fields
 from enum import Enum
 from functools import lru_cache
 from typing import (
@@ -6436,395 +6437,287 @@ RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
 }
 
 
+@dataclass
+class SQLExecutionResult:
+    execution_accuracy: int  # Whether the predicted and gold SQL results match exactly
+    non_empty_execution_accuracy: (
+        int  # Same as execution_accuracy but only if gold is non-empty
+    )
+    subset_non_empty_execution_accuracy: (
+        int  # Whether predicted is a subset of gold or vice versa, non-empty only
+    )
+    non_empty_gold_df: int  # Whether the gold SQL produced a non-empty dataframe
+    gold_sql_runtime: float  # Time taken to execute the gold SQL
+    predicted_sql_runtime: float  # Time taken to execute the predicted SQL
+    pred_to_gold_runtime_ratio: float  # Ratio of predicted runtime to gold runtime
+    gold_error: int  # Whether the gold SQL had an execution error
+    predicted_error: int  # Whether the predicted SQL had an execution error
+    gold_df_json: str  # JSON representation of the gold SQL result dataframe
+    predicted_df_json: str  # JSON representation of the predicted SQL result dataframe
+    error_message: str  # Error message from predicted execution if any
+
+
 class SQLExecutionAccuracy(InstanceMetric):
-    reduction_map = {
-        "mean": [
-            "execution_accuracy",
-            "non_empty_execution_accuracy",
-            "subset_non_empty_execution_result",
-            "non_empty_gold_df",
-            "gold_sql_runtime",
-            "predicted_sql_runtime",
-            "pred_to_gold_runtime_ratio",
-            "gold_error",
-            "predicted_error",
-        ]
-    }
+    sql_timeout: float = 60.0
+    prediction_type = "Any"  # string representation is compared
+    _requirements_list = ["sqlglot", "func_timeout"]
+
     main_score = "non_empty_execution_accuracy"
+
+    all_metrics = [
+        f.name
+        for f in dataclasses_fields(SQLExecutionResult)
+        if isinstance(f.type, type) and f.type in (int, float)
+    ]
+
+    reduction_map = {"mean": all_metrics}
+
     ci_scores = [
         "execution_accuracy",
         "non_empty_execution_accuracy",
-        "subset_non_empty_execution_result",
+        "subset_non_empty_execution_accuracy",
         "gold_sql_runtime",
         "predicted_sql_runtime",
     ]
 
-    prediction_type = "Any"  # string representation is compared
-    sql_timeout = 60.0
-
-    _requirements_list = ["sqlglot", "func_timeout"]
-
     @staticmethod
-    def compare_dfs_ignore_colnames_ordered_rows(df1, df2):
-        """Compares two DataFrames based on row content, ignoring column names.
-
-        Args:
-            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
-            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
-
-        Returns:
-            True if the DataFrames have the same ordered rows (ignoring column names),
-            False otherwise.
-        """
+    def compare_dfs_ignore_colnames_ordered_rows(
+        df1: pd.DataFrame, df2: pd.DataFrame
+    ) -> bool:
         df1.fillna(0, inplace=True)
         df2.fillna(0, inplace=True)
-
-        # Compare row counts first for a quick check
         if df1.shape != df2.shape:
             return False
-
-        # Convert DataFrames to numpy arrays of strings to handle mixed types
-        df1_array = df1.values.astype(str)
-        df2_array = df2.values.astype(str)
-
-        # Sort each row's elements (column order independence)
-        df1_sorted_rows = np.array([np.sort(row) for row in df1_array])
-        df2_sorted_rows = np.array([np.sort(row) for row in df2_array])
-
-        # Compare the sorted rows in order
+        df1_sorted_rows = np.array([np.sort(row) for row in df1.values.astype(str)])
+        df2_sorted_rows = np.array([np.sort(row) for row in df2.values.astype(str)])
         return np.array_equal(df1_sorted_rows, df2_sorted_rows)
 
     @staticmethod
-    def compare_dfs_ignore_colnames_unordered_rows(df1, df2):
-        """Compares two DataFrames based on row content, ignoring row order and column names.
-
-        Args:
-            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
-            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
-
-        Returns:
-            True if the DataFrames have the same content (ignoring column names and row order),
-            False otherwise.
-        """
-        # Compare shapes early on
+    def compare_dfs_ignore_colnames_unordered_rows(
+        df1: pd.DataFrame, df2: pd.DataFrame
+    ) -> bool:
         if df1.shape != df2.shape:
             return False
-
-        # Convert DataFrames to numpy arrays of strings (to handle mixed data types)
-        df1_array = df1.values.astype(str)
-        df2_array = df2.values.astype(str)
-
-        # Sort columns first, then sort rows
-        df1_sorted = np.sort(np.sort(df1_array, axis=1), axis=0)
-        df2_sorted = np.sort(np.sort(df2_array, axis=1), axis=0)
-
-        # Compare the sorted arrays
+        df1_sorted = np.sort(np.sort(df1.values.astype(str), axis=1), axis=0)
+        df2_sorted = np.sort(np.sort(df2.values.astype(str), axis=1), axis=0)
         return np.array_equal(df1_sorted, df2_sorted)
 
     @staticmethod
-    def compare_dfs_ignore_colnames_subset(df1, df2, ignore_row_order=True):
-        """Checks if the values of either DataFrame are a subset of the values in the other DataFrame.
-
-        Comparison is column order independent, and could optionally be row order independent.
-        We interpret "subset" as follows:
-
-        - For each row in df1, there must be a matching (or superset) row in df2, i.e. the set of values
-          in the df1 row is a subset of the set of values in that df2 row. Then do the same check in reverse.
-        - If either condition (df1 is subset of df2 OR df2 is subset of df1) is satisfied, return True.
-
-        We treat an empty dataframe as a subset of nothing, while in theory is a subset of any dataframe.
-
-        Args:
-            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
-            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
-            ignore_row_order (bool): If True, row order doesn't matter; if False, row order is respected.
-
-        Returns:
-            bool: True if df1 is a subset of df2 or vice versa, based on the specified row-order condition.
-
-        """
+    def compare_dfs_ignore_colnames_subset(
+        df1: pd.DataFrame, df2: pd.DataFrame, ignore_row_order: bool = True
+    ) -> bool:
         df1_array = df1.values.astype(str)
         df2_array = df2.values.astype(str)
+        df1_rows = [np.sort(row) for row in df1_array]
+        df2_rows = [np.sort(row) for row in df2_array]
 
-        df1_sorted_rows = [np.sort(row) for row in df1_array]
-        df2_sorted_rows = [np.sort(row) for row in df2_array]
-
-        def row_is_subset(r_small, r_big):
-            """Check if all elements of r_small are in r_big."""
-            return set(r_small).issubset(set(r_big))
-
-        def df_is_subset_of_another(rows_small, rows_big, respect_order):
-            """Check if the rows_small is subset of rows_big under the given order condition."""
-            if not rows_small:
-                return False  # DataFrame needs to be non-empty
-
-            # If row order matters:
-            if respect_order:
-                i, j = 0, 0
-                while i < len(rows_small) and j < len(rows_big):
-                    if row_is_subset(rows_small[i], rows_big[j]):
-                        i += 1
-                    j += 1
-                return i == len(rows_small)
-            # Row order doesn't matter:
-            matched_indices = set()
+        def is_subset(rows_small, rows_big):
+            matched = set()
             for r_small in rows_small:
-                found_match = False
                 for idx, r_big in enumerate(rows_big):
-                    if idx not in matched_indices and row_is_subset(r_small, r_big):
-                        found_match = True
-                        matched_indices.add(idx)
+                    if idx in matched:
+                        continue
+                    if set(r_small).issubset(set(r_big)):
+                        matched.add(idx)
                         break
-                if not found_match:
+                else:
                     return False
             return True
 
-        df1_sub_df2 = df_is_subset_of_another(
-            df1_sorted_rows, df2_sorted_rows, not ignore_row_order
-        )
-        df2_sub_df1 = df_is_subset_of_another(
-            df2_sorted_rows, df1_sorted_rows, not ignore_row_order
-        )
+        if not df1_rows:
+            return False
 
-        return df1_sub_df2 or df2_sub_df1
+        if not ignore_row_order:
+            return all(set(a).issubset(set(b)) for a, b in zip(df1_rows, df2_rows))
 
-    def get_sql_execution_results(
-        self, predicted_sql: str, gold_sql: str, connector
-    ) -> (int, int, int, int, int, int, int, int, int, str, str, str):
-        """Runs SQL queries using the provided connector and gets scores and results.
+        return is_subset(df1_rows, df2_rows) or is_subset(df2_rows, df1_rows)
 
-        Args:
-            predicted_sql (str): predicted SQL query
-            gold_sql (str): gold reference SQL query
-            connector: database connector
-
-        Returns:
-        a 12-tuple of
-        1. execution_result: if df responses match
-        2. non_empty_execution_result: if dfs are non-empty and match
-        3. subset_non_empty_execution_result: if non-empty dfs and one is a subset of the other
-        4. non_empty_gold_df: if gt df is non-empty
-        5. gold_sql_runtime: ground truth query runtime
-        6. predicted_sql_runtime: predicted query runtime
-        7. pred_to_gold_runtime_ratio: ratio of predicted query runtime to gt query runtime
-        8. gold_error: if gt has an error
-        9. predicted_error: if predicted query has an error
-        10. ground truth dataframe
-        11. predicted query's dataframe
-        12. error message (if any)
-        """
+    def _run_query(
+        self, sql: str, connector
+    ) -> Tuple[Optional[pd.DataFrame], float, str]:
         import time
 
         from func_timeout import func_timeout
         from func_timeout.exceptions import FunctionTimedOut
 
+        try:
+            start = time.perf_counter()
+            result, error = func_timeout(
+                self.sql_timeout, connector.execute_query, args=(sql,)
+            )
+            duration = time.perf_counter() - start
+            if isinstance(result, dict) and "results" in result:
+                result = result["results"]
+            if error:
+                return None, duration, error
+            return pd.DataFrame(result), duration, ""
+        except FunctionTimedOut as e:
+            return None, 0.0, f"Timeout: {e}"
+        except Exception as e:
+            return None, 0.0, f"Error: {e}"
+
+    def _compare_results(
+        self, gold_df: pd.DataFrame, pred_df: pd.DataFrame, gold_sql: str
+    ) -> Tuple[int, int, int]:
+        subset_match = 0
+        non_empty_match = 0
+        if "ORDER BY" in gold_sql.upper():
+            match = int(self.compare_dfs_ignore_colnames_ordered_rows(pred_df, gold_df))
+            if not gold_df.empty and not pred_df.empty:
+                non_empty_match = match
+                if self.compare_dfs_ignore_colnames_subset(
+                    gold_df, pred_df, ignore_row_order=False
+                ):
+                    subset_match = 1
+        else:
+            match = int(
+                self.compare_dfs_ignore_colnames_unordered_rows(pred_df, gold_df)
+            )
+            if not gold_df.empty and not pred_df.empty:
+                non_empty_match = match
+                if self.compare_dfs_ignore_colnames_subset(
+                    gold_df, pred_df, ignore_row_order=True
+                ):
+                    subset_match = 1
+        return match, non_empty_match, subset_match
+
+    def get_sql_execution_results(
+        self, predicted_sql: str, gold_sql: str, connector
+    ) -> SQLExecutionResult:
         from .sql_utils import sqlglot_optimized_equivalence
 
-        gold_res = None
-        gold_error = ""
-        gold_sql_runtime = 0
-        try:
-            start_time = time.perf_counter()
-            gold_res, gold_error = func_timeout(
-                self.sql_timeout,
-                connector.execute_query,
-                args=(gold_sql,),
-            )
-            end_time = time.perf_counter()
-            gold_sql_runtime = end_time - start_time
-        except FunctionTimedOut as e:
-            gold_error = f"Timeout error executing gold SQL: {e}"
-            logger.warning(gold_error)
-        except Exception as e:
-            gold_error = f"Error executing gold SQL: {e}"
-        if gold_error is not None:
-            return (
-                0,
-                0,
-                0,
-                0,
-                gold_sql_runtime,
-                0,
-                0,
-                1,
-                0,
-                "",
-                "",
-                gold_error,
+        gold_df, gold_runtime, gold_error_msg = self._run_query(gold_sql, connector)
+        gold_error = int(bool(gold_error_msg))
+
+        if gold_error:
+            return SQLExecutionResult(
+                execution_accuracy=0,
+                non_empty_execution_accuracy=0,
+                subset_non_empty_execution_accuracy=0,
+                non_empty_gold_df=0,
+                gold_sql_runtime=gold_runtime,
+                predicted_sql_runtime=0,
+                pred_to_gold_runtime_ratio=0,
+                gold_error=gold_error,
+                predicted_error=0,
+                gold_df_json="",
+                predicted_df_json="",
+                error_message=gold_error_msg,
             )
 
-        if isinstance(gold_res, dict) and "results" in gold_res:
-            gold_res = gold_res["results"]
-        gold_df = pd.DataFrame(gold_res)
-        non_empty_gold_df = 0 if gold_df.empty else 1
+        non_empty_gold_df = int(not gold_df.empty)
+        if predicted_sql.strip().lower() == gold_sql.strip().lower():
+            return SQLExecutionResult(
+                execution_accuracy=1,
+                non_empty_execution_accuracy=non_empty_gold_df,
+                subset_non_empty_execution_accuracy=non_empty_gold_df,
+                non_empty_gold_df=non_empty_gold_df,
+                gold_sql_runtime=gold_runtime,
+                predicted_sql_runtime=0,
+                pred_to_gold_runtime_ratio=0,
+                gold_error=0,
+                predicted_error=0,
+                gold_df_json=gold_df.to_json(),
+                predicted_df_json="",
+                error_message="",
+            )
 
-        no_execution_match_result = (
-            1,
-            non_empty_gold_df,
-            non_empty_gold_df,
-            non_empty_gold_df,
-            gold_sql_runtime,
-            0,
-            0,
-            0,
-            0,
-            gold_df.to_json(),
-            "",
-            "",
-        )
-        if predicted_sql.lower().strip() == gold_sql.lower().strip():
-            return no_execution_match_result
         try:
             if sqlglot_optimized_equivalence(gold_sql, predicted_sql):
-                return no_execution_match_result
-        except Exception as e:  # Catch specific exceptions if possible
-            logger.info(
-                f"Couldn't test equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
-            )
-
-        pred_res = None
-        pred_error = ""
-        pred_sql_runtime = 0
-        try:
-            start_time = time.perf_counter()
-            pred_res, pred_error = func_timeout(
-                self.sql_timeout,
-                connector.execute_query,
-                args=(predicted_sql,),
-            )
-            end_time = time.perf_counter()
-            pred_sql_runtime = end_time - start_time
-        except FunctionTimedOut as e:
-            pred_error = f"Timeout error executing predicted SQL: {e}"
-            logger.info(pred_error)
+                return SQLExecutionResult(
+                    execution_accuracy=1,
+                    non_empty_execution_accuracy=non_empty_gold_df,
+                    subset_non_empty_execution_accuracy=non_empty_gold_df,
+                    non_empty_gold_df=non_empty_gold_df,
+                    gold_sql_runtime=gold_runtime,
+                    predicted_sql_runtime=0,
+                    pred_to_gold_runtime_ratio=0,
+                    gold_error=0,
+                    predicted_error=0,
+                    gold_df_json=gold_df.to_json(),
+                    predicted_df_json="",
+                    error_message="",
+                )
         except Exception as e:
-            pred_error = f"Error executing predicted SQL: {e}"
-            logger.info(pred_error)
+            logger.info(f"Could not check SQL equivalence: {e}")
 
-        pred_to_gold_runtime_ratio = (
-            float(pred_sql_runtime) / gold_sql_runtime if gold_sql_runtime > 0 else 0
+        pred_df, pred_runtime, pred_error_msg = self._run_query(
+            predicted_sql, connector
+        )
+        pred_error = 1 if pred_error_msg else 0
+
+        if pred_df is None:
+            return SQLExecutionResult(
+                execution_accuracy=0,
+                non_empty_execution_accuracy=0,
+                subset_non_empty_execution_accuracy=0,
+                non_empty_gold_df=non_empty_gold_df,
+                gold_sql_runtime=gold_runtime,
+                predicted_sql_runtime=pred_runtime,
+                pred_to_gold_runtime_ratio=(pred_runtime / gold_runtime)
+                if gold_runtime > 0
+                else 0,
+                gold_error=0,
+                predicted_error=pred_error,
+                gold_df_json=gold_df.to_json(),
+                predicted_df_json="",
+                error_message=pred_error_msg,
+            )
+
+        match, non_empty_match, subset_match = self._compare_results(
+            gold_df, pred_df, gold_sql
         )
 
-        if pred_res is None:
-            return (
-                0,
-                0,
-                0,
-                0,
-                gold_sql_runtime,
-                pred_sql_runtime,
-                pred_to_gold_runtime_ratio,
-                0,
-                1,
-                gold_df.to_json(),
-                "",
-                pred_error,
-            )
-
-        if isinstance(pred_res, dict) and "results" in pred_res:
-            pred_res = pred_res["results"]
-        predicted_df = pd.DataFrame(pred_res)
-
-        subset_non_empty_execution_result = 0
-        non_empty_execution_result = 0
-        if "ORDER BY" in gold_sql.upper():
-            execution_result = (
-                1
-                if self.compare_dfs_ignore_colnames_ordered_rows(predicted_df, gold_df)
-                else 0
-            )
-            if non_empty_gold_df:
-                if execution_result == 1:
-                    non_empty_execution_result = 1
-                if self.compare_dfs_ignore_colnames_subset(
-                    gold_df, predicted_df, ignore_row_order=False
-                ):
-                    subset_non_empty_execution_result = 1
-        else:
-            execution_result = (
-                1
-                if self.compare_dfs_ignore_colnames_unordered_rows(
-                    predicted_df, gold_df
-                )
-                else 0
-            )
-            if non_empty_gold_df:
-                if execution_result == 1:
-                    non_empty_execution_result = 1
-                if self.compare_dfs_ignore_colnames_subset(
-                    gold_df, predicted_df, ignore_row_order=True
-                ):
-                    subset_non_empty_execution_result = 1
-
-        return (
-            execution_result,
-            non_empty_execution_result,
-            subset_non_empty_execution_result,
-            non_empty_gold_df,
-            gold_sql_runtime,
-            pred_sql_runtime,
-            pred_to_gold_runtime_ratio,
-            0,
-            0,
-            gold_df.to_json(),
-            predicted_df.to_json(),
-            pred_error,
+        return SQLExecutionResult(
+            execution_accuracy=match,
+            non_empty_execution_accuracy=non_empty_match,
+            subset_non_empty_execution_accuracy=subset_match,
+            non_empty_gold_df=non_empty_gold_df,
+            gold_sql_runtime=gold_runtime,
+            predicted_sql_runtime=pred_runtime,
+            pred_to_gold_runtime_ratio=(pred_runtime / gold_runtime)
+            if gold_runtime > 0
+            else 0,
+            gold_error=0,
+            predicted_error=0,
+            gold_df_json=gold_df.to_json(),
+            predicted_df_json=pred_df.to_json(),
+            error_message=pred_error_msg,
         )
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
         from .sql_utils import get_db_connector
 
-        predicted_sql = prediction
-        execution_result: float = 0.0
+        predicted_sql = prediction.strip()
+        if not predicted_sql:
+            return {}
 
-        if predicted_sql and predicted_sql.strip() != "":
-            if not predicted_sql.startswith("SELECT") and "SELECT" in predicted_sql:
-                predicted_sql = predicted_sql[predicted_sql.find("SELECT") :]
-            if ";" in predicted_sql:
-                predicted_sql = predicted_sql[: predicted_sql.find(";") + 1]
+        if not predicted_sql.startswith("SELECT") and "SELECT" in predicted_sql:
+            predicted_sql = predicted_sql[predicted_sql.find("SELECT") :]
+        if ";" in predicted_sql:
+            predicted_sql = predicted_sql[: predicted_sql.find(";") + 1]
 
-            db_connector = get_db_connector(task_data["db"]["db_type"])(task_data["db"])
+        db_connector = get_db_connector(task_data["db"]["db_type"])(task_data["db"])
+        result_obj = self.get_sql_execution_results(
+            predicted_sql, references[0], db_connector
+        )
 
-            logger.debug(
-                f"Starting to get SQL execution results over DB: {task_data['db']}"
-            )
-            (
-                execution_result,
-                non_empty_execution_result,
-                subset_non_empty_execution_result,
-                non_empty_gold_df,
-                gold_sql_runtime,
-                predicted_sql_runtime,
-                pred_to_gold_runtime_ratio,
-                gold_error,
-                predicted_error,
-                gold_df_json,
-                predicted_df_json,
-                error_message,
-            ) = self.get_sql_execution_results(
-                predicted_sql, references[0], db_connector
-            )
-
-        result = {
-            "execution_accuracy": float(execution_result),
-            "non_empty_execution_accuracy": float(non_empty_execution_result),
-            "subset_non_empty_execution_result": float(
-                subset_non_empty_execution_result
-            ),
-            "non_empty_gold_df": float(non_empty_gold_df),
-            "gold_sql_runtime": float(gold_sql_runtime),
-            "predicted_sql_runtime": float(predicted_sql_runtime),
-            "pred_to_gold_runtime_ratio": float(pred_to_gold_runtime_ratio),
-            "gold_error": float(gold_error),
-            "predicted_error": float(predicted_error),
-            "error_message": str(error_message),
-            "gold_df_json": str(gold_df_json),
-            "predicted_df_json": str(predicted_df_json),
-        }
+        result = asdict(result_obj)
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         logger.debug(f"SQL Execution Accuracy Result: {result}")
         return result
+
+
+@dataclass
+class SQLNonExecutionMetricResult:
+    sqlglot_validity: int  # Whether SQL parses with sqlglot
+    sqlparse_validity: int  # Whether SQL parses with sqlparse
+    sqlglot_equivalence: int  # Semantic equivalence using sqlglot AST
+    sqlglot_optimized_equivalence: int  # Equivalence after optimization via sqlglot
+    sqlparse_equivalence: int  # Equivalence using sqlparse AST
+    sql_exact_match: int  # Exact string match of predicted and gold SQL
+    sql_syntactic_equivalence: int  # Any of the above equivalence conditions hold
 
 
 class SQLNonExecutionAccuracy(InstanceMetric):
@@ -6875,37 +6768,40 @@ class SQLNonExecutionAccuracy(InstanceMetric):
 
         is_sqlglot_parsable = is_sqlglot_parsable(predicted_sql)
         is_sqlparse_parsable = is_sqlparse_parsable(predicted_sql)
-        result = {
-            "sqlglot_validity": float(is_sqlglot_parsable),
-            "sqlparse_validity": float(is_sqlparse_parsable),
-            "sqlglot_equivalence": float(
+        result_obj = SQLNonExecutionMetricResult(
+            sqlglot_validity=int(is_sqlglot_parsable),
+            sqlparse_validity=int(is_sqlparse_parsable),
+            sqlglot_equivalence=int(
                 sqlglot_parsed_queries_equivalent(predicted_sql, gold_sql)
                 if is_sqlglot_parsable
                 else 0
             ),
-            "sqlglot_optimized_equivalence": float(
+            sqlglot_optimized_equivalence=int(
                 sqlglot_optimized_equivalence(predicted_sql, gold_sql)
                 if is_sqlglot_parsable
                 else 0
             ),
-            "sqlparse_equivalence": float(
+            sqlparse_equivalence=int(
                 sqlparse_queries_equivalent(predicted_sql, gold_sql)
                 if is_sqlparse_parsable
                 else 0
             ),
-            "sql_exact_match": float(sql_exact_match(predicted_sql, gold_sql)),
-        }
-        result["sql_syntactic_equivalence"] = float(
+            sql_exact_match=int(sql_exact_match(predicted_sql, gold_sql)),
+            sql_syntactic_equivalence=0,  # will update below
+        )
+
+        result_obj.sql_syntactic_equivalence = int(
             any(
-                result[key]
-                for key in [
-                    "sqlglot_equivalence",
-                    "sqlglot_optimized_equivalence",
-                    "sqlparse_equivalence",
-                    "sql_exact_match",
+                [
+                    result_obj.sqlglot_equivalence,
+                    result_obj.sqlglot_optimized_equivalence,
+                    result_obj.sqlparse_equivalence,
+                    result_obj.sql_exact_match,
                 ]
             )
         )
+
+        result = asdict(result_obj)
         logger.debug(f"SQL Non Execution Accuracy Result: {result}")
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
