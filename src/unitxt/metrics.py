@@ -64,7 +64,6 @@ from .operators import ArtifactFetcherMixin, Copy, FieldOperator, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
-from .string_operators import Split
 from .type_utils import isoftype, parse_type_string, to_type_string
 from .types import ToolCall
 from .utils import deep_copy, recursive_copy, retry_connection_with_exponential_backoff
@@ -2039,8 +2038,14 @@ class JaccardIndex(ReductionInstanceMetric[str, Dict[str, float]]):
             )
         }
 
-class JaccardIndexWords(JaccardIndex):
-    splitter: FieldOperator = Split(by=" ")
+class JaccardIndexString(JaccardIndex):
+    """Calculates JaccardIndex on strings.
+
+    Requires setting the 'splitter' to a FieldOperator (such as Split or RegexSplit) to tokenize the predictions and references into lists of strings tokens.
+
+    These tokens are passed to the JaccardIndex as lists.
+    """
+    splitter: FieldOperator
     prediction_type = str
     def map(self, prediction: str, references:List[str], task_data: Dict[str, Any]) -> Dict[str, float]:
         return super().map(
@@ -3051,6 +3056,8 @@ class Wer(HuggingfaceMetric):
 class MeanSquaredError(ReductionInstanceMetric[float, Dict[str, float]]):
     main_score = "mean_squared_error"
     reduction = MeanReduction()
+    prediction_type = float
+    single_reference_per_prediction = True
 
     def map(
         self, prediction: float, references: List[float], task_data: Dict[str, Any]

@@ -5,6 +5,7 @@ from typing import Any
 from unitxt.error_utils import UnitxtError
 from unitxt.formats import SystemFormat
 from unitxt.metrics import MetricsList
+from unitxt.normalizers import NormalizeListFields
 from unitxt.operators import (
     AddConstant,
     Apply,
@@ -2190,7 +2191,6 @@ label (str):
                 fields={"a/d": "float", "b": "int"},
                 failure_defaults={"a/d": 0.0, "b": 0},
                 process_every_value=True,
-                use_nested_query=True,
             ),
             inputs=[{"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}],
             targets=[{"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}],
@@ -3443,3 +3443,9 @@ Agent:"""
         ]
 
         check_operator(operator=operator, inputs=inputs, targets=targets)
+
+    def test_normalizers(self):
+        normalizer = NormalizeListFields(fields=["field_containing_a_list"])
+        instance = {"field_containing_a_list": ["a", "b", "c", "d"]}
+        processed_instance = normalizer.process(instance)
+        self.assertDictEqual({"field_containing_a_list": "a, b, c, d"}, processed_instance)

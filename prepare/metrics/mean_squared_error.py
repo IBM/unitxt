@@ -2,7 +2,12 @@ from unitxt import add_to_catalog
 from unitxt.metrics import MeanSquaredError
 from unitxt.test_utils.metrics import test_metric
 
-metric=MeanSquaredError()
+metric=MeanSquaredError(__description__ = """Metric to calculate the mean squared error (MSE) between the prediction and the reference values.
+
+    Assume both the prediction and reference are floats.
+
+    Support only a single reference per prediction  .
+    """)
 predictions = [1.0, 2.0, 1.0]
 references = [[-1.0], [1.0], [0.0]]
 
