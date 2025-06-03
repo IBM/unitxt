@@ -454,6 +454,9 @@ class MeanReduction(DictReduction):
     def reduce_list(self, lst: List[float]):
         return nan_mean(lst)
 
+class RootMeanReduction(DictReduction):
+    def reduce_list(self, lst: List[float]):
+        return math.sqrt(nan_mean(lst))
 
 class MaxReduction(DictReduction):
     def reduce_list(self, lst: List[float]):
@@ -3053,18 +3056,24 @@ class Wer(HuggingfaceMetric):
         return {self.main_score: result}
 
 
-class MeanSquaredError(ReductionInstanceMetric[float, Dict[str, float]]):
+class MeanSquaredError(MapReduceMetric[float, float]):
     main_score = "mean_squared_error"
-    reduction = MeanReduction()
     prediction_type = float
     single_reference_per_prediction = True
 
     def map(
         self, prediction: float, references: List[float], task_data: Dict[str, Any]
-    ) -> Dict[str, float]:
-        return {
-            self.main_score: (references[0] - prediction) ** 2
-        }
+    ) -> float:
+        return (references[0] - prediction) ** 2
+
+    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
+        return {self.main_score: nan_mean(intermediates)}
+
+class RootMeanSquaredError(MeanSquaredError):
+    main_score = "root_mean_squared_error"
+
+    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
+        return {self.main_score: nan_mean(intermediates)  ** 0.5}
 
 class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
     main_score = "spearmanr"
