@@ -24,7 +24,6 @@ class TestLLMaaJMetrics(UnitxtInferenceTestCase):
                 model_name="meta-llama/llama-3-3-70b-instruct",
                 max_tokens=5,
                 temperature=0.0,
-                top_logprobs=5,
                 external_client=external_client
             ),
             template="templates.rag_eval.answer_correctness.judge_loose_match_no_context_numeric",
@@ -48,4 +47,4 @@ class TestLLMaaJMetrics(UnitxtInferenceTestCase):
         results_df, global_scores = evaluate(df, [metric])
         results_df = results_df.round(2)
         instance_scores = results_df.iloc[:, 3]
-        self.assertAlmostEqual(list(instance_scores), [0, 0])
+        self.assertListEqual(list(instance_scores), [1.0, 1.0])
