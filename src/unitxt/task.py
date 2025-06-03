@@ -310,7 +310,9 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
             result[constants.instruction_field] = instance[constants.instruction_field]
 
         if constants.system_prompt_field in instance:
-            result[constants.system_prompt_field] = instance[constants.system_prompt_field]
+            result[constants.system_prompt_field] = instance[
+                constants.system_prompt_field
+            ]
 
         if stream_name == constants.inference_stream:
             return result

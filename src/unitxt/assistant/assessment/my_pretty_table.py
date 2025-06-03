@@ -7,7 +7,6 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 
-
 def print_generic_table(headers: list, data: List, col_widths: Optional[dict] = None):
     """Prints a table with the given headers, column widths (with a default uniform width), and data.
 
@@ -22,7 +21,9 @@ def print_generic_table(headers: list, data: List, col_widths: Optional[dict] = 
         col_widths = {header: 20 for header in headers}
 
     # Calculate the total table width based on column widths
-    table_width = sum(col_widths.values()) + len(col_widths) * 3 + 2  # Adjust for separators and | at left and right
+    table_width = (
+        sum(col_widths.values()) + len(col_widths) * 3 + 2
+    )  # Adjust for separators and | at left and right
 
     # Print separator before the table
     logger.info("=" * table_width)
@@ -37,7 +38,9 @@ def print_generic_table(headers: list, data: List, col_widths: Optional[dict] = 
     # Loop through the data and print each row
     for row in data:
         # Wrap text to fit within column widths and prepare wrapped rows
-        wrapped_columns = {col: textwrap.fill(str(row[col]), width=col_widths[col]) for col in headers}
+        wrapped_columns = {
+            col: textwrap.fill(str(row[col]), width=col_widths[col]) for col in headers
+        }
 
         # Split wrapped columns into multiple lines
         wrapped_lines = {col: wrapped_columns[col].split("\n") for col in headers}
@@ -47,7 +50,15 @@ def print_generic_table(headers: list, data: List, col_widths: Optional[dict] = 
 
         # Print each line
         for i in range(max_lines):
-            line = "| " + " | ".join([f"{wrapped_lines[col][i] if i < len(wrapped_lines[col]) else '':<{col_widths[col]}}"
-                                    for col in headers]) + " |"
+            line = (
+                "| "
+                + " | ".join(
+                    [
+                        f"{wrapped_lines[col][i] if i < len(wrapped_lines[col]) else '':<{col_widths[col]}}"
+                        for col in headers
+                    ]
+                )
+                + " |"
+            )
             logger.info(line)
         logger.info("=" * table_width)  # Separator line after each row

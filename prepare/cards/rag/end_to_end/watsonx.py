@@ -34,7 +34,10 @@ card = TaskCard(
     ],
     task="tasks.rag.end_to_end",
     templates={"default": "templates.rag.end_to_end.json_predictions"},
-    __tags__={"license": "Apache 2.0", "url":"https://huggingface.co/datasets/ibm-research/watsonxDocsQA"},
+    __tags__={
+        "license": "Apache 2.0",
+        "url": "https://huggingface.co/datasets/ibm-research/watsonxDocsQA",
+    },
     __description__="""watsonxDocsQA is a new open-source dataset and benchmark contributed by IBM. The dataset is derived from enterprise product documentation and designed specifically for end-to-end Retrieval-Augmented Generation (RAG) evaluation. The dataset consists of two components:
 
     Documents:
@@ -83,7 +86,10 @@ card = TaskCard(
             output_format="",
         ),
     },
-    __tags__={"license": "Apache 2.0", "url" : "https://huggingface.co/datasets/ibm-research/watsonxDocsQA"},
+    __tags__={
+        "license": "Apache 2.0",
+        "url": "https://huggingface.co/datasets/ibm-research/watsonxDocsQA",
+    },
     __description__="""watsonxDocsQA is a new open-source dataset and benchmark contributed by IBM. The dataset is derived from enterprise product documentation and designed specifically for end-to-end Retrieval-Augmented Generation (RAG) evaluation. The dataset consists of two components:
 
     Documents:

@@ -230,6 +230,7 @@ def construct_dict_as_yaml_lines(d, indent_delta=2) -> List[str]:
         d1 = f'"{d1}"'
     return [d1]
 
+
 def construct_dict_as_python_lines(d, indent_delta=4) -> List[str]:
     """Constructs the lines of a dictionary formatted as a piece of python code.
 
@@ -260,7 +261,7 @@ def construct_dict_as_python_lines(d, indent_delta=4) -> List[str]:
             py_for_val = construct_dict_as_python_lines(val, indent_delta=indent_delta)
             assert len(py_for_val) > 0
             if len(py_for_val) == 1:
-                res[-1] += (py_for_val[0] +",")
+                res[-1] += py_for_val[0] + ","
             else:
                 res[-1] += py_for_val[0]
                 if py_for_val[0].startswith("{") or py_for_val[0].startswith("["):
@@ -269,11 +270,11 @@ def construct_dict_as_python_lines(d, indent_delta=4) -> List[str]:
                 else:
                     # val is type, its inner lines are already indented
                     res.extend(py_for_val[1:-1])
-                res.append(py_for_val[-1]+",")
+                res.append(py_for_val[-1] + ",")
         res.append(")" if istype else "}")
         if istype:
-            for i in range(1,len(res)-1):
-                res[i] = indent_delta_str+res[i]
+            for i in range(1, len(res) - 1):
+                res[i] = indent_delta_str + res[i]
         return res
 
     if isinstance(d, list):
@@ -292,7 +293,7 @@ def construct_dict_as_python_lines(d, indent_delta=4) -> List[str]:
     # d1 = re.sub(r"(\n+)", r'"\1"', str(d))
     if isinstance(d, str):
         return [f'"{d}"']
-    if d is None or isinstance (d, (int, float, bool)):
+    if d is None or isinstance(d, (int, float, bool)):
         return [f"{d}"]
     raise RuntimeError(f"unrecognized value to print as python: {d}")
 
@@ -311,10 +312,12 @@ def print_dict_as_yaml(d: dict, indent_delta=2) -> str:
     # yaml_lines = [line.replace("\n", "\\n") for line in yaml_lines]
     return "\n".join(yaml_lines)
 
+
 def print_dict_as_python(d: dict, indent_delta=4) -> str:
     py_lines = construct_dict_as_python_lines(d, indent_delta=indent_delta)
-    assert len(py_lines)> 0
+    assert len(py_lines) > 0
     return "\n".join(py_lines)
+
 
 def nested_tuple_to_string(nested_tuple: tuple) -> str:
     """Converts a nested tuple to a string, with elements separated by underscores.

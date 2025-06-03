@@ -37,7 +37,9 @@ def _(
 
         if not compute_conf_intervals:
             first_step = metrics_operator.steps[0]
-            first_step.set_confidence_interval_calculation(return_confidence_interval=False)
+            first_step.set_confidence_interval_calculation(
+                return_confidence_interval=False
+            )
 
         multi_stream = MultiStream.from_iterables({"test": dataset}, copying=True)
         instances = list(metrics_operator(multi_stream)["test"])

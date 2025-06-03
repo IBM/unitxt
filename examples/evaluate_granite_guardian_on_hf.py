@@ -33,8 +33,8 @@ dataset = create_dataset(
                 inference_engine=HFAutoModelInferenceEngine(
                     model_name="ibm-granite/granite-guardian-3.1-2b",
                     max_new_tokens=20,
-                    device="cpu"
-                )
+                    device="cpu",
+                ),
             )
         ],
     ),

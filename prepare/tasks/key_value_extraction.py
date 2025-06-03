@@ -9,7 +9,10 @@ add_to_catalog(
         input_fields={"input": Any, "keys": List[str]},
         reference_fields={"key_value_pairs_answer": Dict[str, str]},
         prediction_type=Dict[str, str],
-        metrics=["metrics.key_value_extraction.accuracy","metrics.key_value_extraction.token_overlap"],
+        metrics=[
+            "metrics.key_value_extraction.accuracy",
+            "metrics.key_value_extraction.token_overlap",
+        ],
         default_template="templates.key_value_extraction.extract_in_json_format",
     ),
     "tasks.key_value_extraction",

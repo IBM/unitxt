@@ -163,9 +163,7 @@ class MultiDocumentSerializer(DocumentSerializer):
         return "\n\n".join(documents)
 
 
-
 class ToolsSerializer(SingleTypeSerializer):
-
     serialized_type = List[Tool]
 
     def serialize(self, value: List[Tool], instance: Dict[str, Any]) -> str:
@@ -173,17 +171,16 @@ class ToolsSerializer(SingleTypeSerializer):
             instance["__tools__"] = []
         tool = []
         for tool in value:
-            instance["__tools__"].append(
-                {"type": "function", "function": tool}
-            )
+            instance["__tools__"].append({"type": "function", "function": tool})
         return json.dumps(instance["__tools__"], indent=4)
 
-class ToolCallSerializer(SingleTypeSerializer):
 
+class ToolCallSerializer(SingleTypeSerializer):
     serialized_type = ToolCall
 
     def serialize(self, value: ToolCall, instance: Dict[str, Any]) -> str:
         return json.dumps(value)
+
 
 class MultiTypeSerializer(Serializer):
     serializers: List[SingleTypeSerializer] = Field(

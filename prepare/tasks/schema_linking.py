@@ -16,7 +16,8 @@ add_to_catalog(
         metrics=[
             "metrics.f1_macro_multi_label",
             "metrics.recall_macro_multi_label",
-            "metrics.precision_macro_multi_label"],
+            "metrics.precision_macro_multi_label",
+        ],
     ),
     "tasks.schema_linking",
     overwrite=True,

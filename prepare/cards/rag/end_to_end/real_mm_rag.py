@@ -56,14 +56,15 @@ for dataset in datasets:
                 field="image",
                 to_field="reference_context_ids",
             ),
-            Copy( field="query", to_field="question"),
+            Copy(field="query", to_field="question"),
             AddIncrementalId(to_field="question_id"),
             Cast(field="question_id", to="str"),
             SplitRandomMix(
                 {
                     "test": "test[30%]",
                     "train": "test[70%]",
-                }),
+                }
+            ),
             Wrap(
                 field="answer",
                 inside="list",

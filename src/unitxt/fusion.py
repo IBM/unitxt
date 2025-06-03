@@ -10,6 +10,7 @@ from .type_utils import isoftype
 
 logger = get_logger()
 
+
 class BaseFusion(SourceOperator):
     """BaseFusion operator that combines multiple multistreams into one.
 
@@ -67,7 +68,7 @@ class FixedFusion(BaseFusion):
     """
 
     max_instances_per_subset: Optional[int] = None
-    max_instances_per_split: Optional[Dict[str, int]]= None
+    max_instances_per_split: Optional[Dict[str, int]] = None
 
     def prepare(self):
         super().prepare()
