@@ -338,6 +338,7 @@ class TestAPI(UnitxtTestCase):
             "num_of_instances": 5,
             "spearmanr": 0.026315789473684213,
             "score": 0.026315789473684213,
+            "spearmanr_p_value": 0.9664975638949244,
             "score_name": "spearmanr",
         }
 
