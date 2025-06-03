@@ -230,7 +230,7 @@ class ConfidenceIntervalMixin(Artifact):
                 statistic=statistic,
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
-                rng=new_random_generator(),
+                random_state=new_random_generator(),
                 paired=self.ci_paired,
                 vectorized=False,
                 method=self.ci_method,
