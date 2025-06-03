@@ -344,6 +344,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("f1_micro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_micro", outputs[0]["score"]["instance"]["score_name"])
+
     def test_mean_squared_error(self):
         metric = MeanSquaredError()
         predictions = [1.0, 2.0, 1.0]

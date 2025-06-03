@@ -3052,6 +3052,8 @@ class Wer(HuggingfaceMetric):
 class MeanSquaredError(ReductionInstanceMetric[float, Dict[str, float]]):
     main_score = "mean_squared_error"
     reduction = MeanReduction()
+    prediction_type = float
+    single_reference_per_prediction = True
 
     def map(
         self, prediction: float, references: List[float], task_data: Dict[str, Any]
