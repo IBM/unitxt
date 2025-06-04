@@ -1,17 +1,22 @@
 {
     "__type__": "criteria_with_options",
     "name": "assistant_message_groundedness",
-    "description": "Assistant message is not grounded or faithful to the information provided in the Context.",
+    "description": "Assistant message is grounded or faithful to the information provided in the Context.",
+    "prediction_field": "assistant message",
+    "context_fields": [
+        "user message",
+        "context"
+    ],
     "options": [
         {
             "__type__": "criteria_option",
             "name": "Yes",
-            "description": ""
+            "description": "The assistant message is grounded or faithful to the context."
         },
         {
             "__type__": "criteria_option",
             "name": "No",
-            "description": ""
+            "description": "The assistant message is not grounded or faithful to the context."
         }
     ],
     "option_map": {

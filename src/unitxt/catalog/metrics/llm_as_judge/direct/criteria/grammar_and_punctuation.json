@@ -2,6 +2,8 @@
     "__type__": "criteria_with_options",
     "name": "grammar_and_punctuation",
     "description": "Does the response exhibit proper grammar and punctuation?",
+    "prediction_field": "response",
+    "context_fields": [],
     "options": [
         {
             "__type__": "criteria_option",

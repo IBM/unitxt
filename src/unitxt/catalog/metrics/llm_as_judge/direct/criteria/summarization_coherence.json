@@ -1,0 +1,8 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "summarization_coherence",
+    "description": "On a scale of 1 (low) to 5 (high), do phrases and sentences of the summary fit together and make sense collectively?",
+    "prediction_field": "summary",
+    "context_fields": [],
+    "options": []
+}

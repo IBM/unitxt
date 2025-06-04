@@ -2,6 +2,10 @@
     "__type__": "criteria_with_options",
     "name": "consistency",
     "description": "Is the response consistent with respect to the original text? The response should be consistent with the facts in the original article. Consider whether the response does reproduce all facts accurately and does not make up false information.",
+    "prediction_field": "response",
+    "context_fields": [
+        "original text"
+    ],
     "options": [
         {
             "__type__": "criteria_option",

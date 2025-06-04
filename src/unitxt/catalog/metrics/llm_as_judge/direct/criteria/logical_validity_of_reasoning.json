@@ -1,0 +1,23 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "logical_validity_of_reasoning",
+    "description": "Assess whether the model's reasoning is logically valid when solving problems in propositional logic. The reasoning should follow correct logical principles and lead to a valid conclusion based on the given premises.",
+    "prediction_field": "reasoning",
+    "context_fields": [],
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": "The reasoning is logically valid and correctly applies propositional logic principles."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": "The reasoning is logically invalid or contains errors in applying propositional logic principles."
+        }
+    ],
+    "option_map": {
+        "Yes": 1.0,
+        "No": 0.0
+    }
+}

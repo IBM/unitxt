@@ -1,0 +1,8 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "summarization_fluency",
+    "description": "On a scale of 1 (low) to 5 (high), are the individual sentences of the summary well-written and grammatical?",
+    "prediction_field": "summary",
+    "context_fields": [],
+    "options": []
+}
