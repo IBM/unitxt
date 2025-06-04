@@ -1,4 +1,4 @@
 {
-    "__type__": "spearmanr",
+    "__type__": "unitxt.metrics.Spearmanr",
     "n_resamples": 100
 }

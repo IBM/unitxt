@@ -1,10 +1,10 @@
 {
-    "__type__": "multi_turn_metric",
+    "__type__": "unitxt.metrics.MultiTurnMetric",
     "metric": {
-        "__type__": "accuracy_fast"
+        "__type__": "unitxt.metrics.AccuracyFast"
     },
     "in_group_reduction": {
-        "__type__": "sequential_success"
+        "__type__": "unitxt.metrics.SequentialSuccess"
     },
     "score_prefix": "sequential_success_"
 }

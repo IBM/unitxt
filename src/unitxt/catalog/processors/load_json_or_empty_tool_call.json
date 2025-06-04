@@ -1,7 +1,7 @@
 {
-    "__type__": "post_process",
+    "__type__": "unitxt.processors.PostProcess",
     "operator": {
-        "__type__": "tool_call_post_processor",
+        "__type__": "unitxt.struct_data_operators.ToolCallPostProcessor",
         "allow_failure": true,
         "failure_value": {
             "name": "null",

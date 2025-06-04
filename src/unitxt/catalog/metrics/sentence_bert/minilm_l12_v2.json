@@ -1,4 +1,4 @@
 {
-    "__type__": "sentence_bert",
+    "__type__": "unitxt.metrics.SentenceBert",
     "model_name": "sentence-transformers/all-MiniLM-L12-v2"
 }

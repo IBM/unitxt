@@ -1,16 +1,16 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": "unitxt.metrics.MetricPipeline",
     "main_score": "sacrebleu",
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "task_data/target_language",
             "to_field": "task_data/tokenize",
             "not_exist_ok": true,
             "get_default": "en"
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": "unitxt.operators.MapInstanceValues",
             "mappers": {
                 "task_data/tokenize": {
                     "en": "",
@@ -21,7 +21,7 @@
         }
     ],
     "metric": {
-        "__type__": "huggingface_metric",
+        "__type__": "unitxt.metrics.HuggingfaceMetric",
         "hf_metric_name": "sacrebleu",
         "hf_main_score": "score",
         "prediction_type": "str",

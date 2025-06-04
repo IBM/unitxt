@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "vincentkoc/hotpot_qa_archive",
         "revision": "c060661",
         "name": "distractor",
@@ -11,14 +11,14 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "join",
+            "__type__": "unitxt.string_operators.Join",
             "field": "context/sentences",
             "by": " ",
             "to_field": "context_sentences",
             "process_every_value": true
         },
         {
-            "__type__": "zip_field_values",
+            "__type__": "unitxt.operators.ZipFieldValues",
             "fields": [
                 "context/title",
                 "context_sentences"
@@ -26,34 +26,34 @@
             "to_field": "documents"
         },
         {
-            "__type__": "explode",
+            "__type__": "unitxt.collections_operators.Explode",
             "field": "documents",
             "to_field": "document"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "document/0",
             "to_field": "document_id"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "document/0",
             "to_field": "title"
         },
         {
-            "__type__": "replace",
+            "__type__": "unitxt.string_operators.Replace",
             "field": "document/1",
             "old": " ",
             "new": " "
         },
         {
-            "__type__": "wrap",
+            "__type__": "unitxt.collections_operators.Wrap",
             "field": "document/1",
             "inside": "list",
             "to_field": "passages"
         },
         {
-            "__type__": "deduplicate",
+            "__type__": "unitxt.operators.Deduplicate",
             "by": [
                 "document_id"
             ]
@@ -62,7 +62,7 @@
     "task": "tasks.rag.corpora",
     "templates": {
         "empty": {
-            "__type__": "input_output_template",
+            "__type__": "unitxt.templates.InputOutputTemplate",
             "input_format": "",
             "output_format": ""
         }

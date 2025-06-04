@@ -1,5 +1,5 @@
 {
-    "__type__": "system_format",
+    "__type__": "unitxt.formats.SystemFormat",
     "demo_format": "User: {source}\nAgent: {target_prefix}{target}\n\n",
     "model_input_format": "{system_prompt}{instruction}\n{demos}\nUser:{source}\nAgent:{target_prefix}"
 }

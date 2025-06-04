@@ -1,15 +1,15 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": "unitxt.metrics.MetricPipeline",
     "main_score": "reward_score",
     "preprocess_steps": [
         {
-            "__type__": "wrap",
+            "__type__": "unitxt.collections_operators.Wrap",
             "field": "task_data/question",
             "inside": "list",
             "to_field": "references"
         },
         {
-            "__type__": "multi_type_serializer",
+            "__type__": "unitxt.serializers.MultiTypeSerializer",
             "field": "references",
             "process_every_value": true
         }

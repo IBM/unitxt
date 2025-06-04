@@ -1,5 +1,5 @@
 {
-    "__type__": "cross_provider_inference_engine",
+    "__type__": "unitxt.inference.CrossProviderInferenceEngine",
     "model": "gpt-4-turbo",
     "logprobs": true,
     "max_tokens": 5,

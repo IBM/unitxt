@@ -1,5 +1,5 @@
 {
-    "__type__": "wml_inference_engine",
+    "__type__": "unitxt.inference.WMLInferenceEngine",
     "model_name": "meta-llama/llama-3-3-70b-instruct",
     "max_new_tokens": 2048,
     "random_seed": 42

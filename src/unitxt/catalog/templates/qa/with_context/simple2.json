@@ -1,5 +1,5 @@
 {
-    "__type__": "multi_reference_template",
+    "__type__": "unitxt.templates.MultiReferenceTemplate",
     "input_format": "based on this text: {context}\n answer the question: {question}",
     "references_field": "answers"
 }

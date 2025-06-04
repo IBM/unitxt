@@ -851,7 +851,7 @@ class TestRecipes(UnitxtTestCase):
 
         d = load_dataset(
             dataset_file,
-            "__type__=dataset_recipe,card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=1",
+            "__type__=unitxt.standard.DatasetRecipe,card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=1",
             streaming=True,
             trust_remote_code=True,
         )
