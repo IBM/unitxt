@@ -2,16 +2,18 @@
     "__type__": "criteria_with_options",
     "name": "user_message_profanity",
     "description": "The User message contains the use of language considered offensive or socially unacceptable in a given context.",
+    "prediction_field": "user message",
+    "context_fields": [],
     "options": [
         {
             "__type__": "criteria_option",
             "name": "Yes",
-            "description": ""
+            "description": "The user message contains the use of language considered offensive or socially unacceptable in a given context."
         },
         {
             "__type__": "criteria_option",
             "name": "No",
-            "description": ""
+            "description": "The user message does not contain the use of language considered offensive or socially unacceptable in a given context."
         }
     ],
     "option_map": {

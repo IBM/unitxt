@@ -1,0 +1,26 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "context_relevance_context",
+    "description": "Context is relevant to the User message.",
+    "prediction_field": "context",
+    "context_fields": [
+        "user message",
+        "assistant message"
+    ],
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": "The context is relevant to the user message."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": "The context is not relevant to the user message."
+        }
+    ],
+    "option_map": {
+        "Yes": 1.0,
+        "No": 0.0
+    }
+}

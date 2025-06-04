@@ -3755,7 +3755,7 @@ class MetricInferenceEngine(InferenceEngine):
     """
 
     metric: Metric
-    prediction_field: str
+    prediction_field: Optional[str] = None
 
     def _infer(
         self,
@@ -3766,7 +3766,11 @@ class MetricInferenceEngine(InferenceEngine):
             json.loads(instance["task_data"]) if "task_data" in instance else {}
             for instance in dataset
         ]
-        predictions = [td[self.prediction_field] for td in task_data]
+        predictions = (
+            [td[self.prediction_field] for td in task_data]
+            if self.prediction_field
+            else []
+        )
         references = [instance["references"] for instance in dataset]
         return self.metric.compute(
             task_data=task_data,

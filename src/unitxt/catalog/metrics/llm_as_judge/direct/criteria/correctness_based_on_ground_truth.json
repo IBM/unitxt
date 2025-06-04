@@ -2,6 +2,10 @@
     "__type__": "criteria_with_options",
     "name": "correctness_based_on_ground_truth",
     "description": "Does the response correctly convey the same factual information as the ground truth?",
+    "prediction_field": "response",
+    "context_fields": [
+        "ground truth"
+    ],
     "options": [
         {
             "__type__": "criteria_option",

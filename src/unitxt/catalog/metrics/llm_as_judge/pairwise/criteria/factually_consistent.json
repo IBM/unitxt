@@ -1,5 +1,7 @@
 {
     "__type__": "criteria",
     "name": "factually_consistent",
-    "description": "A factually consistent response contains only statements that are entailed by the source document."
+    "description": "A factually consistent response contains only statements that are entailed by the source document.",
+    "prediction_field": "response",
+    "context_fields": []
 }
