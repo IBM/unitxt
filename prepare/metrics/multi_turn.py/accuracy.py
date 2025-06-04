@@ -37,7 +37,12 @@ instance_targets = [
     {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
 ]
 
-global_target = {"accuracy": 0.75, "num_of_instances": 3, "score": 0.75, "score_name": "accuracy"}
+global_target = {
+    "accuracy": 0.75,
+    "num_of_instances": 3,
+    "score": 0.75,
+    "score_name": "accuracy",
+}
 
 outputs = test_metric(
     metric=metric,
@@ -51,7 +56,11 @@ outputs = test_metric(
 add_to_catalog(metric, "metrics.multi_turn.accuracy", overwrite=True)
 
 
-metric = MultiTurnMetric(metric=AccuracyFast(), in_group_reduction=SequentialSuccess(), score_prefix="sequential_success_")
+metric = MultiTurnMetric(
+    metric=AccuracyFast(),
+    in_group_reduction=SequentialSuccess(),
+    score_prefix="sequential_success_",
+)
 
 
 predictions = ["A", "B", "C"]
@@ -82,12 +91,29 @@ task_data = [
 ]
 
 instance_targets = [
-    {"sequential_success_accuracy": 1.0, "score": 1.0, "score_name": "sequential_success_accuracy"},
-    {"sequential_success_accuracy": 0.0, "score": 0.0, "score_name": "sequential_success_accuracy"},
-    {"sequential_success_accuracy": 1.0, "score": 1.0, "score_name": "sequential_success_accuracy"},
+    {
+        "sequential_success_accuracy": 1.0,
+        "score": 1.0,
+        "score_name": "sequential_success_accuracy",
+    },
+    {
+        "sequential_success_accuracy": 0.0,
+        "score": 0.0,
+        "score_name": "sequential_success_accuracy",
+    },
+    {
+        "sequential_success_accuracy": 1.0,
+        "score": 1.0,
+        "score_name": "sequential_success_accuracy",
+    },
 ]
 
-global_target = {"num_of_instances": 3, "score": 0.75, "score_name": "sequential_success_accuracy", "sequential_success_accuracy": 0.75}
+global_target = {
+    "num_of_instances": 3,
+    "score": 0.75,
+    "score_name": "sequential_success_accuracy",
+    "sequential_success_accuracy": 0.75,
+}
 
 outputs = test_metric(
     metric=metric,
