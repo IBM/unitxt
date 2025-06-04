@@ -776,6 +776,25 @@ class ToolCallPostProcessor(FieldOperator):
         return result
 
 
+class MultipleToolCallPostProcessor(FieldOperator):
+    failure_value: Any = None
+    allow_failure: bool = False
+
+    def process_value(self, value: str) -> List[ToolCall]:
+        if self.allow_failure:
+            try:
+                result = json.loads(value)
+            except json.JSONDecodeError:
+                return self.failure_value
+        else:
+            result = json.loads(value, strict=False)
+        if isoftype(result, List[ToolCall]):
+            return result
+        if not isoftype(result, ToolCall):
+            return self.failure_value
+        return [result]
+
+
 class DumpJson(FieldOperator):
     def process_value(self, value: str) -> str:
         return json.dumps(value)
