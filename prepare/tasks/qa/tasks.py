@@ -49,7 +49,10 @@ add_to_catalog(
         },
         reference_fields={"answers": List[str]},
         prediction_type=str,
-        metrics=["metrics.multi_turn.accuracy"],
+        metrics=[
+            "metrics.multi_turn.accuracy",
+            "metrics.multi_turn.sequential_success_accuracy",
+        ],
         default_template="templates.qa.multi_turn.with_context.simple",
         augmentable_inputs=["context"],
     ),

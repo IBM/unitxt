@@ -8,7 +8,7 @@ with settings.context(
     disable_hf_datasets_cache=False,
 ):
     model = CrossProviderInferenceEngine(
-        model="llama-3-2-1b-instruct", provider="watsonx"
+        model="llama-3-3-70b-instruct", provider="watsonx"
     )
     dataset = load_dataset(
         card="cards.coqa.multi_turn",
@@ -23,5 +23,5 @@ with settings.context(
     print("Global Results:")
     print(results.global_scores.summary)
 
-    print("Instance Results:")
-    print(results.instance_scores.summary)
+    # print("Instance Results:")
+    # print(results.instance_scores.summary)

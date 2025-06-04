@@ -28,5 +28,12 @@
                 "__type__": "sql_database_as_schema_serializer"
             }
         ]
-    }
+    },
+    "postprocessors": [
+        "processors.take_first_non_empty_line",
+        "processors.lower_case",
+        "processors.remove_punctuations",
+        "processors.remove_articles",
+        "processors.fix_whitespace"
+    ]
 }

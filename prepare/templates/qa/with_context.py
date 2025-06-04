@@ -199,6 +199,13 @@ add_to_catalog(
                 SQLDatabaseAsSchemaSerializer(),
             ]
         ),
+        postprocessors=[
+            "processors.take_first_non_empty_line",
+            "processors.lower_case",
+            "processors.remove_punctuations",
+            "processors.remove_articles",
+            "processors.fix_whitespace",
+        ],
     ),
     "templates.qa.multi_turn.with_context.simple",
     overwrite=True,
