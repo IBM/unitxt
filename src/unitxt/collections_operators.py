@@ -64,6 +64,13 @@ class Get(FieldOperator):
         return collection[self.item]
 
 
+class Pop(FieldOperator):
+    item: Any = None
+
+    def process_value(self, collection: Any) -> Any:
+        return collection.pop(self.item)
+
+
 class DuplicateByList(StreamOperator):
     field: str
     to_field: Optional[str] = None

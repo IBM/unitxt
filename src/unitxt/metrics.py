@@ -43,6 +43,7 @@ from .dataclass import (
     OptionalField,
 )
 from .deprecation_utils import deprecation
+from .dict_utils import dict_get
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .inference import (
     HFPipelineBasedInferenceEngine,
@@ -455,6 +456,43 @@ class DictReduction(AggregationReduction[Dict[str, float]]):
         return result
 
 
+class GroupReduction(AggregationReduction[Tuple[str, Dict[str, float]]]):
+    def reduce_list(self, lst: List[Tuple[str, float]]):
+        pass
+
+    def reduce(self, intermidates: Tuple[str, Dict[str, float]]):
+        lists = {}
+        for id, intermidate in intermidates:
+            for key, val in intermidate.items():
+                if key not in lists:
+                    lists[key] = []
+                lists[key].append((id, val))
+
+        result = {}
+        for key, val_list in lists.items():
+            result[key] = self.reduce_list(val_list)
+        return result
+
+
+class GroupMean(GroupReduction):
+    def reduce_list(self, lst: List[Tuple[str, float]]):
+        return nan_mean([item[1] for item in lst])
+
+
+class SequentialSuccess(GroupReduction):
+    threshold: float = 0.5
+
+    def reduce_list(self, lst: List[Tuple[str, float]]):
+        sorted_items = [item for _, item in sorted(lst, key=lambda x: x[0])]
+        successful = 0
+        for item in sorted_items:
+            if item > self.threshold:
+                successful += 1
+            else:
+                break
+        return successful / len(lst)
+
+
 class MeanReduction(DictReduction):
     def reduce_list(self, lst: List[float]):
         return nan_mean(lst)
@@ -468,6 +506,91 @@ class RootMeanReduction(DictReduction):
 class MaxReduction(DictReduction):
     def reduce_list(self, lst: List[float]):
         return float(nan_max(lst))
+
+
+class GroupMetric(
+    MapReduceMetric[PredictionType, IntermediateType],
+    Generic[PredictionType, IntermediateType],
+):
+    main_score: str = None
+    metric: MapReduceMetric[PredictionType, IntermediateType]
+    group_id_field: str
+    item_id_field: str
+    in_group_reduction: GroupReduction = GroupMean()
+    cross_group_reduction: GroupReduction = GroupMean()
+    n_resamples = None
+
+    def _get_group_id(self, task_data) -> str:
+        return str(dict_get(task_data, self.group_id_field))
+
+    def _get_item_id(self, task_data) -> str:
+        return str(dict_get(task_data, self.item_id_field))
+
+    def prepare(self):
+        super().prepare()
+        self.main_score = self.metric.main_score
+
+    def map_stream(
+        self,
+        evaluation_inputs_stream: Generator[
+            EvaluationInput[PredictionType], None, None
+        ],
+    ) -> List[Tuple[IntermediateType, str, str]]:
+        group_ids: List[str] = []
+        item_ids: List[str] = []
+
+        def multi_turn_stream(
+            evaluation_inputs_stream: Generator[
+                EvaluationInput[PredictionType], None, None
+            ],
+        ) -> Generator[
+            Tuple[PredictionType, List[PredictionType], Dict[str, Any]], None, None
+        ]:
+            for prediction, references, task_data in evaluation_inputs_stream:
+                group_ids.append(self._get_group_id(task_data))
+                item_ids.append(self._get_item_id(task_data))
+                yield prediction, references, task_data
+
+        intermediates: List[IntermediateType] = list(
+            self.metric.map_stream(multi_turn_stream(evaluation_inputs_stream))
+        )
+
+        return list(zip(intermediates, group_ids, item_ids))
+
+    def reduce_group(self, dialog_data: Dict[str, Dict[str, Any]]):
+        return self.in_group_reduction.reduce(list(dialog_data.items()))
+
+    def reduce_one(self, intermidate: Tuple[IntermediateType, str, str]):
+        return self.metric.reduce_one(intermidate[0])
+
+    def reduce(
+        self, intermediates: List[Tuple[IntermediateType, str, str]]
+    ) -> Dict[str, Any]:
+        data: Dict[str, Dict[str, Any]] = {}
+        for intermediate, group_id, item_id in intermediates:
+            if group_id not in data:
+                data[group_id] = {}
+            data[group_id][item_id] = self.metric.reduce_one(intermediate)
+
+        group_scores: Dict[str, Dict[str, Any]] = {
+            dialog_id: self.reduce_group(dialog_data)
+            for dialog_id, dialog_data in data.items()
+        }
+
+        return self.cross_group_reduction.reduce(list(group_scores.items()))
+
+
+class MultiTurnMetric(
+    GroupMetric[PredictionType, IntermediateType],
+    Generic[PredictionType, IntermediateType],
+):
+    group_id_field = "conversation/id"
+    item_id_field = "conversation/dialog"
+
+    def _get_item_id(self, task_data):
+        return "assistant_turn_" + str(
+            len(dict_get(task_data, self.item_id_field)) // 2
+        )
 
 
 class ReductionInstanceMetric(
