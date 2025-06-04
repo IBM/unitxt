@@ -2,6 +2,10 @@
     "__type__": "criteria_with_options",
     "name": "answer_relevance",
     "description": "Does the response directly answer the question?",
+    "prediction_field": "response",
+    "context_fields": [
+        "question"
+    ],
     "options": [
         {
             "__type__": "criteria_option",

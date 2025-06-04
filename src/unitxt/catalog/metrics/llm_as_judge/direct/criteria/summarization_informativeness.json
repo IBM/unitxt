@@ -1,0 +1,43 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "summarization_informativeness",
+    "description": "On a scale of 1 (low) to 5 (high), how well does the summary capture the key points of the article?",
+    "prediction_field": "summary",
+    "context_fields": [
+        "article"
+    ],
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "1",
+            "description": ""
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "2",
+            "description": ""
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "3",
+            "description": ""
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "4",
+            "description": ""
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "5",
+            "description": ""
+        }
+    ],
+    "option_map": {
+        "1": 0.0,
+        "2": 0.25,
+        "3": 0.5,
+        "4": 0.75,
+        "5": 1.0
+    }
+}
