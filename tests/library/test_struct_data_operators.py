@@ -4,7 +4,7 @@ from unitxt.struct_data_operators import (
     DuplicateTableColumns,
     DuplicateTableRows,
     InsertEmptyTableRows,
-    JsonStrToListOfKeyValuePairs,
+    JsonStrToDict,
     ListToKeyValPairs,
     LoadJson,
     MapHTMLTableToJSON,
@@ -711,7 +711,7 @@ class TestStructDataOperators(UnitxtTestCase):
             tester=self,
         )
 
-    def test_json_str_to_list_of_key_value_pairs(self):
+    def test_json_str_to_dict(self):
         inputs = [
             {
                 "prediction": """
@@ -720,25 +720,25 @@ class TestStructDataOperators(UnitxtTestCase):
             }
         ]
 
-        targets = [{"prediction": [("b", "3"), ("c", "word")]}]
+        targets = [{"prediction": {"b": "3", "c": "word"}}]
 
         check_operator(
-            operator=JsonStrToListOfKeyValuePairs(field="prediction"),
+            operator=JsonStrToDict(field="prediction"),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
         check_operator(
-            operator=JsonStrToListOfKeyValuePairs(field="prediction"),
+            operator=JsonStrToDict(field="prediction"),
             inputs=[{"prediction": "bad input"}],
-            targets=[{"prediction": []}],
+            targets=[{"prediction": {}}],
             tester=self,
         )
 
         check_operator(
-            operator=JsonStrToListOfKeyValuePairs(field="prediction"),
+            operator=JsonStrToDict(field="prediction"),
             inputs=[{"prediction": "3"}],
-            targets=[{"prediction": []}],
+            targets=[{"prediction": {}}],
             tester=self,
         )

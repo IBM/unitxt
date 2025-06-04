@@ -1,0 +1,6 @@
+{
+    "__type__": "multi_reference_template",
+    "input_format": "{context} {question}\nAnswer the question with a single word.",
+    "references_field": "answers",
+    "__description__": "lmms-evals default template for chartqa."
+}

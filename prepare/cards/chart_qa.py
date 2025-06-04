@@ -3,21 +3,16 @@ from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
 from unitxt.image_operators import ToImage
-from unitxt.operators import Rename
+from unitxt.operators import Rename, Shuffle
 from unitxt.splitters import RenameSplits
-from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
 templates = get_from_catalog("templates.qa.with_context.all")
-template = MultiReferenceTemplate(
-    input_format="{context}\n{question}\nAnswer the question using a single word.",
-    references_field="answers",
-    __description__="lmms-evals default template for chartqa.",
-)
 
 card = TaskCard(
     loader=LoadHF(path="HuggingFaceM4/ChartQA"),
     preprocess_steps=[
+        Shuffle(),
         RenameSplits(mapper={"train": "train", "val": "validation", "test": "test"}),
         Rename(field="label", to_field="answers"),
         Rename(field="query", to_field="question"),
@@ -25,7 +20,7 @@ card = TaskCard(
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context",
-    templates=[template, *templates.items],
+    templates=["templates.qa.with_context.chart_qa", *templates.items],
     __tags__={
         "license": "GPL-3.0",
         "multilinguality": "monolingual",
@@ -46,12 +41,13 @@ add_to_catalog(card, "cards.chart_qa", overwrite=True)
 card = TaskCard(
     loader=LoadHF(path="lmms-lab/ChartQA"),
     preprocess_steps=[
+        Shuffle(),
         Wrap(field="answer", inside="list", to_field="answers"),
         ToImage(field="image", to_field="context"),
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context.with_type[metrics=[metrics.relaxed_correctness]]",
-    templates=[template, *templates.items],
+    templates=["templates.qa.with_context.chart_qa", *templates.items],
     __tags__={
         "license": "GPL-3.0",
         "multilinguality": "monolingual",

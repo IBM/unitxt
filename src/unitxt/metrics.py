@@ -29,11 +29,11 @@ import numpy
 import numpy as np
 import pandas as pd
 import requests
-from datasets import DownloadConfig
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
+from .base_metric import Metric
 from .collections import ListCollection
 from .dataclass import (
     AbstractField,
@@ -61,21 +61,21 @@ from .operator import (
     StreamingOperator,
     StreamOperator,
 )
-from .operators import ArtifactFetcherMixin, Copy, Set
+from .operators import ArtifactFetcherMixin, Copy, FieldOperator, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
-from .sql_utils import get_db_connector
 from .stream import MultiStream, Stream
-from .type_utils import Type, isoftype, parse_type_string, to_type_string
-from .utils import deep_copy, recursive_copy
-
-FINQA_HASH = "42430b8613082bb4b85d49210284135d"
+from .type_utils import isoftype, parse_type_string, to_type_string
+from .types import ToolCall
+from .utils import deep_copy, recursive_copy, retry_connection_with_exponential_backoff
 
 logger = get_logger()
 settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
+
+@retry_connection_with_exponential_backoff(backoff_factor=2)
 def hf_evaluate_load(path: str, *args, **kwargs):
     if settings.hf_offline_metrics_path is not None:
         path = os.path.join(settings.hf_offline_metrics_path, path)
@@ -84,13 +84,15 @@ def hf_evaluate_load(path: str, *args, **kwargs):
         *args,
         **kwargs,
         experiment_id=str(uuid.uuid4()),
-         download_config=DownloadConfig(
-                max_retries=settings.loaders_max_retries,
-            ),
-            verification_mode="no_checks",
-            trust_remote_code=settings.allow_unverified_code,
-            download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
-        )
+        verification_mode="no_checks",
+        trust_remote_code=settings.allow_unverified_code,
+        download_mode=(
+            "force_redownload"
+            if settings.disable_hf_datasets_cache
+            else "reuse_dataset_if_exists"
+        ),
+    )
+
 
 class MetricsList(ListCollection):
     def verify(self):
@@ -122,12 +124,18 @@ def nan_mean(x):
 
 def nan_max(x):
     with warnings.catch_warnings():
-        # final mean should be mean of scores, ignoring NaN, hence nanmax
-        # but if the group function values is NaN for ALL values, nanmean throws a
-        # RuntimeWarning that it is calculating the mean of an empty slice (with no non-Nans)
-        # this is the desired behavior, but we want to avoid the warning here
         warnings.simplefilter("ignore", category=RuntimeWarning)
         return np.nanmax(x)
+
+
+def nan_std(x):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        result = np.nanstd(x)
+        try:
+            return float(result)
+        except:
+            return result
 
 
 class UpdateStream(InstanceOperator):
@@ -148,211 +156,6 @@ def parse_string_types_instead_of_actual_objects(obj):
     return parse_type_string(obj)
 
 
-class Metric(Artifact):
-    main_score: str = AbstractField()
-    # Override 'prediction_type' with the expected type of predictions
-    # and references.  Example: "List[str]", "List[Dict]"", "string".
-    # If left with default None, a warning will be displayed.
-    # In future versions of unitxt, this will be an error.
-    prediction_type: Union[Type, str] = Any
-
-    # Standard metrics can receive multiple references per predictions (in a list)
-    # Some metrics support only a single reference per prediction (one element in the list)
-    single_reference_per_prediction: bool = False
-
-    #
-    # Used to add a prefix to all score, except the "score_name" and "score" fields.
-    # This is used to distinguish two scores of the same metrics, operating on different fields of the task
-    #
-    score_prefix: str = ""
-
-    def prepare_args(self):
-        super().prepare_args()
-        if isinstance(self.prediction_type, str):
-            self.prediction_type = parse_string_types_instead_of_actual_objects(
-                self.prediction_type
-            )
-
-    @classmethod
-    def process_data_after_load(cls, data):
-        if "prediction_type" in data:
-            data["prediction_type"] = parse_type_string(data["prediction_type"])
-        return data
-
-    def process_data_before_dump(self, data):
-        if "prediction_type" in data:
-            if not isinstance(data["prediction_type"], str):
-                data["prediction_type"] = to_type_string(data["prediction_type"])
-        return data
-
-    def _add_score_prefix(self, score_name):
-        return (
-            self.score_prefix + score_name
-            if score_name not in ["score", "score_name", "num_of_instances"]
-            else score_name
-        )
-
-    def _add_score_prefixes_to_score_dict_and_check_against_existing_scores(
-        self, scores: Dict[str, Any], existing_scores: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        new_scores = {}
-        for score_name, score in scores.items():
-            score_with_prefix = self._add_score_prefix(score_name)
-            new_scores[score_with_prefix] = (
-                score if score_name not in ["score_name"] else self.score_prefix + score
-            )
-        for new_score_name in new_scores:
-            if new_score_name in ["score", "score_name", "num_of_instances"]:
-                continue
-            if new_score_name in existing_scores:
-                UnitxtWarning(
-                    message=f"Metric '{new_score_name}' that has just been evaluated to {new_scores[new_score_name]}, is already recorded "
-                    f"to have value {existing_scores[new_score_name]} by a previous metric evaluation on this instance or stream. "
-                    f"To avoid overwriting the existing value, add a score_prefix to the metric name (e.g. score_prefix='my_second_' , "
-                    f"which will yield, in this case, a score named: 'my_second_{new_score_name}')",
-                    additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
-                )
-        return new_scores
-
-    def _validate_references_and_prediction(self, references, predictions):
-        if not isoftype(predictions, List[Any]):
-            raise ValueError(
-                f"Metric {self.get_metric_name()} should receive a list of predictions {self.get_metric_name()}.  Received predictions of type {type(predictions)}: {predictions}"
-            )
-
-        if not isoftype(references, List[Any]):
-            raise ValueError(
-                f"Metric {self.get_metric_name()} should receive a list of predictions. Received references of type {type(references)}: {references}"
-            )
-
-        if len(references) != len(predictions):
-            raise ValueError(
-                f"references size ({len(references)})"
-                f" doesn't mach predictions size ({len(references)})."
-            )
-
-        for reference in references:
-            self._validate_reference(reference)
-
-        for prediction in predictions:
-            self._validate_prediction(prediction)
-
-    def _validate_prediction(self, prediction):
-        if not isoftype(prediction, self.prediction_type):
-            raise ValueError(
-                f"Each prediction is expected to be of type '{to_type_string(self.prediction_type)}' in {self.get_metric_name()} metric. Received prediction of type {type(prediction)}: {prediction}"
-            )
-
-    def _validate_reference(self, reference):
-        if not isoftype(reference, List[Any]):
-            raise ValueError(
-                f"Expecting a list of references for each prediction in {self.get_metric_name()} metric. Received reference of type {type(reference)}: {reference}"
-            )
-        if self.single_reference_per_prediction and not len(reference) == 1:
-            raise ValueError(
-                f"Expecting a list with a single reference per prediction in {self.get_metric_name()} metric. Received a list with multiple references: {reference}"
-            )
-        for ref in reference:
-            if not isoftype(ref, self.prediction_type):
-                raise ValueError(
-                    f"Each reference is expected to be of type '{to_type_string(self.prediction_type)}' in {self.get_metric_name()} metric. Received reference of type {type(ref)}: {ref}"
-                )
-
-    def get_metric_name(self):
-        if self.__id__ is not None:
-            return self.__id__
-        return self.__class__.__name__
-
-    def consume_stream(self, stream: Stream):
-        references = []
-        predictions = []
-        additional_inputs = []
-        instances = []
-        for instance in stream:
-            instance = self.verify_instance(instance)
-            references.append(instance["references"])
-            predictions.append(instance["prediction"])
-            additional_inputs.append(
-                instance["additional_inputs"] if "additional_inputs" in instance else {}
-            )
-            instances.append(instance)
-        return predictions, references, additional_inputs, instances
-
-    @staticmethod
-    def update_instance_scores(instances, instances_scores: List[Dict[str, Any]]):
-        for instance, new_scores in zip(instances, instances_scores):
-            if "score" not in instance:
-                instance["score"] = {}
-            scores = instance["score"]
-            if "instance" not in scores:
-                scores["instance"] = {}
-            scores["instance"].update(new_scores)
-
-    @staticmethod
-    def set_global_score(instances, global_score: Dict[str, Any]):
-        for instance in instances:
-            if "score" not in instance:
-                instance["score"] = {}
-            scores = instance["score"]
-            if "global" not in scores:
-                scores["global"] = {}
-            scores["global"] = global_score
-
-    @abstractmethod
-    def disable_confidence_interval_calculation(self):
-        pass
-
-    # update instance["score"]["global"] with the global_score just computed for the
-    # current metric.  global_score contains "score" and "score_name" fields that reflect
-    # (the main_score of) the current metric. If CI was computed for global_score, then global_score
-    # also contains "score_ci_low" and "score_ci_high" that reflect (the main_score of) the current metric.
-    # A simple python-dictionary-update adds new fields to instance["score"]["global"], and also replaces the values
-    # of its fields "score" and "score_name" (and "score_ci_low", "score_ci_high" if applicable),
-    # to reflect the current metric, overwriting previous metrics' settings of these fields
-    # (if any previous metric exists).
-    # When global_score does NOT contain ci score (because CI was not computed for the current metric), but
-    # one of the previous metrics computed did have, the last of such previous metrics set the values in
-    # fields "score_ci_low" and "score_ci_high" in instance["score"]["global"] to reflect its
-    # (the previous metric's) CI scores.
-    # Because CI is not computed for the current metric, global_score does not contain fields "score_ci_low" and
-    # "score_ci_high" to overwrite the ones existing in instance["score"]["global"], and these might remain in
-    # instance["score"]["global"], but their values, that are not associated with the current metric, are,
-    # therefore, not consistent with "score_name".
-    # In such a case, following the python-dictionary-update, we pop out fields "score_ci_low" and
-    # "score_ci_high" from instance["score"]["global"], so that now all the fields "score.." in
-    # instance["score"]["global"] are consistent with the current metric: The metric that is named
-    # instance["score"]["global"]["score_name"], its score shows in
-    # field instance["score"]["global"]["score"], and it does not have ci_scores,
-    # which is also reflected in the absence of fields "score_ci_low" and "score_ci_high" from instance["score"]["global"].
-    # If ci IS computed for the current metric, global_score contains "score_ci_low" and "score_ci_high", and these overwrite
-    # the ones existing in instance["score"]["global"] by the simple python-dictionary-update, and no need for any further fixeup.
-    def update_and_adjust_global_score(
-        self, instance: Dict[str, Any], global_score: dict
-    ):
-        for score_name in global_score:
-            if score_name in [
-                "score",
-                "score_name",
-                "score_ci_low",
-                "score_ci_high",
-                "num_of_instances",
-            ]:
-                continue
-            if score_name in instance["score"]["global"]:
-                UnitxtWarning(
-                    message=f"Global metric '{score_name}' that has just been evaluated to {global_score[score_name]}, is already recorded "
-                    f"to have value {instance['score']['global'][score_name]} by a previous metric evaluation on this stream. "
-                    f"To avoid overwriting the value, add a score_prefix to the metric (e.g. score_prefix='my_{score_name}'.",
-                    additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
-                )
-        instance["score"]["global"].update(global_score)
-        for score_ci in ["score_ci_low", "score_ci_high"]:
-            if score_ci in global_score:
-                continue
-            if score_ci in instance["score"]["global"]:
-                instance["score"]["global"].pop(score_ci)
-
-
 def new_random_generator():
     # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
     # So use '& MAX_32BIT' to get a 32-bit seed.
@@ -360,51 +163,93 @@ def new_random_generator():
     return np.random.default_rng(hash(get_seed()) & _max_32bit)
 
 
+class Statistic:
+    """Statistic for which the confidence interval is to be calculated.
+
+    `statistic` must be a callable that accepts ``len(data)`` samples
+    as separate arguments and returns the resulting statistic.
+    If `vectorized` is set ``True``,
+    `statistic` must also accept a keyword argument `axis` and be
+    vectorized to compute the statistic along the provided `axis`.
+    """
+
+    def __init__(self, data, score_names, scorer):
+        self.data = data
+        self.score_names = score_names
+        self.scorer = scorer
+        self._history = []
+
+    def __call__(self, indices, axis=0):
+        # indices might be a 1D or 2D array, depending on bootstrap internals
+        # For simplicity, ensure we handle them as 1D.
+        indices = np.atleast_1d(indices).astype(int)
+
+        # Gather the subset
+        sample = [self.data[i] for i in indices]
+
+        # Compute metrics on this sample
+        scores = self.scorer(sample)
+
+        # Return them in consistent order
+        result = np.array([scores[m] for m in self.score_names])
+        self._history.append(result)
+        return result
+
+    def mean(self, idx):
+        return nan_mean([result[idx] for result in self._history])
+
+    def std(self, idx):
+        return nan_std([result[idx] for result in self._history])
+
+
 class ConfidenceIntervalMixin(Artifact):
     n_resamples: int = 1000
     confidence_level: float = 0.95
     ci_score_names: List[str] = None
+    return_confidence_interval: bool = True
+    ci_method: str = "BCa"
+    ci_paired: bool = True
 
     @abstractmethod
     def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
         pass
 
-    def get_statistic(self, data: List[Any], score_names: List[str]):
-        def statistic_function(indices, axis=0):
-            # indices might be a 1D or 2D array, depending on bootstrap internals
-            # For simplicity, ensure we handle them as 1D.
-            indices = np.atleast_1d(indices).astype(int)
-
-            # Gather the subset
-            sample = [data[i] for i in indices]
-
-            # Compute metrics on this sample
-            scores = self._sample_to_scores(sample)
-
-            # Return them in consistent order
-            return np.array([scores[m] for m in score_names])
-
-        return statistic_function
-
     def bootstrap(self, data: List[Any], score_names: List[str]):
         if self.ci_score_names is not None:
             score_names = self.ci_score_names
 
-        intervals = bootstrap(
-            (np.arange(len(data)),),
-            statistic=self.get_statistic(data, score_names),
-            n_resamples=self.n_resamples,
-            confidence_level=self.confidence_level,
-            random_state=new_random_generator(),
-            paired=False,
-            vectorized=False,  # set to True if your statistic function is vectorized
-            method="BCa",
-        ).confidence_interval
+        statistic = Statistic(data, score_names, self._sample_to_scores)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(  # Ignore error the arises when all sample scores are identical
+                "ignore",
+                message="invalid value encountered in divide",
+                category=RuntimeWarning,
+            )
+
+            intervals = bootstrap(
+                (np.arange(len(data)),),
+                statistic=statistic,
+                n_resamples=self.n_resamples,
+                confidence_level=self.confidence_level,
+                random_state=new_random_generator(),
+                paired=self.ci_paired,
+                vectorized=False,
+                method=self.ci_method,
+            ).confidence_interval
 
         result = {}
         for i, metric in enumerate(score_names):
-            result[f"{metric}_ci_low"] = float(intervals.low[i])
-            result[f"{metric}_ci_high"] = float(intervals.high[i])
+            high = intervals.high[i]
+            low = intervals.low[i]
+            if np.isnan(high) and np.isnan(low):
+                if (
+                    statistic.std(i) == 0
+                ):  # When sample scores are identical "BCa" will fail (due to division by std 0)
+                    high = low = statistic.mean(
+                        i
+                    )  # In this case we will use the mean (as there is no variance)
+            result[f"{metric}_ci_low"] = float(low)
+            result[f"{metric}_ci_high"] = float(high)
 
         return result
 
@@ -460,8 +305,8 @@ class MapReduceMetric(
     def reduce(self, intermediates: List[IntermediateType]) -> Dict[str, Any]:
         return {}
 
-    def disable_confidence_interval_calculation(self):
-        self.n_resamples = None
+    def set_confidence_interval_calculation(self, return_confidence_interval: bool):
+        self.return_confidence_interval = return_confidence_interval
 
     def annotate_scores(self, scores):
         scores = {
@@ -482,7 +327,11 @@ class MapReduceMetric(
     ) -> Dict[str, Any]:
         scores = self.reduce(intermediates)
         score_names = [k for k, v in scores.items() if isinstance(v, float)]
-        if self.n_resamples is None or len(intermediates) <= 1:
+        if (
+            not self.return_confidence_interval
+            or self.n_resamples is None
+            or len(intermediates) <= 1
+        ):
             return scores
         intervals = self.bootstrap(intermediates, score_names)
         return {**scores, **intervals}
@@ -604,8 +453,8 @@ class DictReduction(AggregationReduction[Dict[str, float]]):
             result[key] = self.reduce_list(val_list)
         return result
 
-class GroupReduction(AggregationReduction[Tuple[str, Dict[str, float]]]):
 
+class GroupReduction(AggregationReduction[Tuple[str, Dict[str, float]]]):
     def reduce_list(self, lst: List[Tuple[str, float]]):
         pass
 
@@ -622,12 +471,15 @@ class GroupReduction(AggregationReduction[Tuple[str, Dict[str, float]]]):
             result[key] = self.reduce_list(val_list)
         return result
 
+
 class GroupMean(GroupReduction):
     def reduce_list(self, lst: List[Tuple[str, float]]):
         return nan_mean([item[1] for item in lst])
 
+
 class SequentialSuccess(GroupReduction):
     threshold: float = 0.5
+
     def reduce_list(self, lst: List[Tuple[str, float]]):
         sorted_items = [item for _, item in sorted(lst, key=lambda x: x[0])]
         successful = 0
@@ -638,9 +490,15 @@ class SequentialSuccess(GroupReduction):
                 break
         return successful / len(lst)
 
+
 class MeanReduction(DictReduction):
     def reduce_list(self, lst: List[float]):
         return nan_mean(lst)
+
+
+class RootMeanReduction(DictReduction):
+    def reduce_list(self, lst: List[float]):
+        return math.sqrt(nan_mean(lst))
 
 
 class MaxReduction(DictReduction):
@@ -728,7 +586,9 @@ class MultiTurnMetric(
     item_id_field = "conversation/dialog"
 
     def _get_item_id(self, task_data):
-        return "assistant_turn_" + str(len(dict_get(task_data, self.item_id_field)) // 2)
+        return "assistant_turn_" + str(
+            len(dict_get(task_data, self.item_id_field)) // 2
+        )
 
 
 class ReductionInstanceMetric(
@@ -859,12 +719,122 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
         return result
 
 
+class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
+    """Compares each predicted tool call with list of references tool call."""
+
+    main_score = "exact_match"
+    reduction = MeanReduction()
+    prediction_type = ToolCall
+    _requirements_list = ["jsonschema-rs"]
+
+    def prepare(self):
+        super().prepare()
+        import jsonschema_rs
+
+        self._schema = jsonschema_rs
+
+    def map(
+        self,
+        prediction: ToolCall,
+        references: List[ToolCall],
+        task_data: Dict[str, Any],
+    ) -> Dict[str, float]:
+        exact_match = float(
+            json.dumps(prediction, sort_keys=True)
+            in [json.dumps(reference, sort_keys=True) for reference in references]
+        )
+
+        tool_name_accuracy = float(
+            str(prediction["name"])
+            in [str(reference["name"]) for reference in references]
+        )
+
+        argument_name_recall = 0.0
+        for reference in references:
+            if len(reference["arguments"]) > 0:
+                score = len(
+                    set(prediction["arguments"]).intersection(
+                        set(reference["arguments"])
+                    )
+                ) / len(set(reference["arguments"]))
+            else:
+                score = 1.0
+            if score > argument_name_recall:
+                argument_name_recall = score
+
+        argument_name_precision = 0.0
+        for reference in references:
+            if len(prediction["arguments"]) > 0:
+                score = len(
+                    set(prediction["arguments"]).intersection(
+                        set(reference["arguments"])
+                    )
+                ) / len(set(prediction["arguments"]))
+            elif len(reference["arguments"]) == 0:
+                score = 1.0
+            else:
+                score = 0.0
+            if score > argument_name_precision:
+                argument_name_precision = score
+
+        argument_value_precision = 0.0
+
+        for reference in references:
+            value_matches = 0
+
+            for key, val in prediction["arguments"].items():
+                try:
+                    predicted = json.dumps(val, sort_keys=True)
+                    target = json.dumps(reference["arguments"][key], sort_keys=True)
+                    if predicted == target:
+                        value_matches += 1
+                except:
+                    pass
+
+            if len(prediction["arguments"]) > 0:
+                score = value_matches / len(prediction["arguments"])
+            elif len(reference["arguments"]) == 0:
+                score = 1.0
+            else:
+                score = 0.0
+            if score > argument_value_precision:
+                argument_value_precision = score
+
+        parameters = None
+        for tool in task_data["__tools__"]:
+            if tool["function"]["name"] == prediction["name"]:
+                parameters = tool["function"]["parameters"]
+
+        if parameters is None:
+            argument_schema_validation = 0.0
+        else:
+            try:
+                self._schema.validate(
+                    parameters,
+                    prediction["arguments"],
+                )
+                argument_schema_validation = 1.0
+            except self._schema.ValidationError:
+                argument_schema_validation = 0.0
+
+        return {
+            self.main_score: exact_match,
+            "tool_name_accuracy": tool_name_accuracy,
+            "argument_name_recall": argument_name_recall,
+            "argument_name_precision": argument_name_precision,
+            "argument_value_precision": argument_value_precision,
+            "argument_schema_validation": argument_schema_validation,
+        }
+
+
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
     # Use None to disable confidence interval computation.
     n_resamples: int = None
+    confidence_interval_calculation: bool = True
     confidence_level: float = 0.95
     ci_scores: List[str] = None
+    ci_method: str = "BCa"
 
     @staticmethod
     def new_random_generator():
@@ -873,12 +843,13 @@ class MetricWithConfidenceInterval(Metric):
         _max_32bit = 2**32 - 1
         return np.random.default_rng(hash(get_seed()) & _max_32bit)
 
-    def disable_confidence_interval_calculation(self):
-        self.n_resamples = None
+    def set_confidence_interval_calculation(self, return_confidence_interval: bool):
+        self.confidence_interval_calculation = return_confidence_interval
 
     def _can_compute_confidence_intervals(self, num_predictions):
         return (
-            self.n_resamples is not None
+            self.confidence_interval_calculation
+            and self.n_resamples is not None
             and self.n_resamples > 1
             and num_predictions > 1
         )
@@ -980,6 +951,7 @@ class MetricWithConfidenceInterval(Metric):
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
                 random_state=self.new_random_generator(),
+                method=self.ci_method,
             ).confidence_interval
             full_score_name = ci_score_prefix + score_name
             result[f"{full_score_name}_ci_low"] = ci.low
@@ -1080,6 +1052,7 @@ class MetricWithConfidenceInterval(Metric):
                     n_resamples=self.n_resamples,
                     confidence_level=self.confidence_level,
                     random_state=random_gen,
+                    method=self.ci_method,
                 ).confidence_interval
             result["score_ci_low"] = float(ci.low)
             result["score_ci_high"] = float(ci.high)
@@ -1217,6 +1190,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     n_resamples: int = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
+    confidence_interval_calculation: bool = True
     main_score: str
 
     reduction_map: Dict[str, List[str]]
@@ -1519,6 +1493,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     n_resamples: int = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
+    confidence_interval_calculation: bool = True
 
     # some group_mean aggregation functions (3rd element of "agg_func" list in the reduction)
     # only require a list of instance scores (e.g., mean, median, etc.).  Others aggregation functions
@@ -2187,38 +2162,52 @@ class WebsrcSquadF1(GlobalMetric):
         return judge_list, {"f1": f1}
 
 
-class JaccardIndex(InstanceMetric):
-    reduction_map = {"mean": ["jaccard_index"]}
+class JaccardIndex(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "jaccard_index"
-    ci_scores = ["jaccard_index"]
+    reduction = MeanReduction()
+    prediction_type = Union[list, set]
 
-    prediction_type = Any  # string representation is compared
-
-    def compute(
-        self, references: List[Any], prediction: Any, task_data: List[Dict]
-    ) -> dict:
-        if not isinstance(prediction, set):
-            prediction = set(prediction)
+    def map(
+        self,
+        prediction: Union[list, set],
+        references: List[Union[list, set]],
+        task_data: Dict[str, Any],
+    ) -> Dict[str, float]:
+        prediction = set(prediction)
         references = [set(reference) for reference in references]
 
-        result = {
+        return {
             self.main_score: max(
                 [
                     float(
-                        (len(reference.intersection(prediction)))
-                        / (
-                            len(reference)
-                            + len(prediction)
-                            - len(reference.intersection(prediction))
-                        )
+                        len(reference.intersection(prediction))
+                        / len(reference.union(prediction))
                     )
                     for reference in references
                 ]
             )
         }
-        result["score"] = result[self.main_score]
-        result["score_name"] = self.main_score
-        return result
+
+
+class JaccardIndexString(JaccardIndex):
+    """Calculates JaccardIndex on strings.
+
+    Requires setting the 'splitter' to a FieldOperator (such as Split or RegexSplit) to tokenize the predictions and references into lists of strings tokens.
+
+    These tokens are passed to the JaccardIndex as lists.
+    """
+
+    splitter: FieldOperator
+    prediction_type = str
+
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
+        return super().map(
+            self.splitter.process_value(prediction),
+            [self.splitter.process_value(reference) for reference in references],
+            task_data,
+        )
 
 
 class MaxAccuracy(Accuracy):
@@ -2241,7 +2230,22 @@ class UnsortedListExactMatch(InstanceMetric):
         return result
 
 
-class StringContainment(InstanceMetric):
+class StringContainment(ReductionInstanceMetric[str, Dict[str, float]]):
+    main_score = "string_containment"
+    reduction = MeanReduction()
+    prediction_type = Any
+
+    def map(
+        self, prediction: Any, references: List[Any], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
+        return {
+            self.main_score: float(
+                any(str(reference) in str(prediction) for reference in references)
+            )
+        }
+
+
+class StringContainmentOld(InstanceMetric):
     reduction_map = {"mean": ["string_containment"]}
     main_score = "string_containment"
     ci_scores = ["string_containment"]
@@ -2317,8 +2321,8 @@ class MetricPipeline(MultiStreamOperator, Metric):
     postpreprocess_steps: Optional[List[StreamingOperator]] = None
     metric: Metric = None
 
-    def disable_confidence_interval_calculation(self):
-        self.metric.disable_confidence_interval_calculation()
+    def set_confidence_interval_calculation(self, return_confidence_interval: bool):
+        self.metric.set_confidence_interval_calculation(return_confidence_interval)
 
     def verify(self):
         super().verify()
@@ -2882,7 +2886,7 @@ class FinQAEval(InstanceMetric):
         remote_url = "https://raw.githubusercontent.com/czyssrs/FinQA/dfc5b72c01ee17c442d28d5201b82a1f4e95d5af/code/evaluate/evaluate.py"
         local_filepath = "/tmp/finqa_eval_script.py"
         module_name = "finqa_eval"
-        hash_of_script = FINQA_HASH
+        hash_of_script = "42430b8613082bb4b85d49210284135d"  # pragma: allowlist secret
 
         download_finqa_eval_script_file(remote_url, local_filepath, hash_of_script)
         self.finqa_module = load_finqa_eval_module_from_file(
@@ -2943,9 +2947,7 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
     def prepare(self):
         super().prepare()
 
-        self._metric = hf_evaluate_load(
-            self.metric, "multilabel"
-        )
+        self._metric = hf_evaluate_load(self.metric, "multilabel")
 
     def add_str_to_id(self, str):
         if str not in self.str_to_id:
@@ -3206,18 +3208,63 @@ class Wer(HuggingfaceMetric):
         return {self.main_score: result}
 
 
-class Spearmanr(HuggingfaceMetric):
-    hf_metric_name = "spearmanr"
-    main_score = "spearmanr"
-    process_single_instances = False
+class MeanSquaredError(MapReduceMetric[float, float]):
+    main_score = "mean_squared_error"
     prediction_type = float
+    single_reference_per_prediction = True
 
-    # Spearmanr references are not list
-    def _validate_reference(self, reference):
-        if not isoftype(reference, self.prediction_type):
-            raise ValueError(
-                f"Each reference is expected to be of type '{to_type_string(self.prediction_type)}' in {self.get_metric_name()} metric. Received prediction of type {type(reference)}: {reference}"
-            )
+    def map(
+        self, prediction: float, references: List[float], task_data: Dict[str, Any]
+    ) -> float:
+        return (references[0] - prediction) ** 2
+
+    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
+        return {self.main_score: nan_mean(intermediates)}
+
+
+class RootMeanSquaredError(MeanSquaredError):
+    main_score = "root_mean_squared_error"
+
+    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
+        return {self.main_score: nan_mean(intermediates) ** 0.5}
+
+
+class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
+    main_score = "spearmanr"
+    ci_score_names = ["spearmanr"]
+    prediction_type = float
+    _requirements_list = ["scipy"]
+
+    def prepare(self):
+        super().prepare()
+        from scipy.stats import spearmanr
+
+        self.spearmanr = spearmanr
+
+    def map(
+        self,
+        prediction: float,
+        references: List[float],
+        task_data: Dict[str, Any],
+    ) -> Tuple[float, float]:
+        return (prediction, references[0])
+
+    def reduce_one(self, intermidate: Tuple[float, float]):
+        return {self.main_score: np.nan}
+
+    def reduce(self, intermediates: List[Tuple[float, float]]) -> Dict[str, Any]:
+        list_a = []
+        list_b = []
+        for a, b in intermediates:
+            list_a.append(a)
+            list_b.append(b)
+
+        score, p_value = self.spearmanr(a=list_a, b=list_b)
+
+        return {
+            self.main_score: score,
+            "spearmanr_p_value": p_value,
+        }
 
 
 class KendallTauMetric(GlobalMetric):
@@ -3490,6 +3537,162 @@ class CustomF1(GlobalMetric):
             result["precision_macro"] = self.zero_division
 
 
+class KeyValueExtraction(GlobalMetric):
+    prediction_type = Dict[str, str]
+    metric: Metric
+    single_reference_per_prediction = False
+    main_score = ""
+
+    def prepare(self):
+        super().prepare()
+        self.main_score = f"{self.metric.main_score}_micro"
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Dict],
+    ) -> dict:
+        references = [element[0] for element in references]
+
+        key_statistics = {}
+        all_reference_keys = set()
+        for reference in references:
+            all_reference_keys.update(list(reference.keys()))
+        for key in all_reference_keys:
+            key_statistics[key] = []
+
+        num_prediction_keys = 0
+        illegal_prediction_keys = 0
+        for reference, prediction in zip(references, predictions):
+            for key in all_reference_keys:
+                if key not in reference and key not in prediction:
+                    continue
+                if key in reference and key in prediction:
+                    multi_stream = MultiStream.from_iterables(
+                        {
+                            "test": [
+                                {
+                                    "prediction": prediction[key],
+                                    "references": [reference[key]],
+                                }
+                            ]
+                        }
+                    )
+                    output_multi_stream = self.metric(multi_stream)
+                    output_stream = output_multi_stream["test"]
+                    score = next(iter(output_stream))["score"]["global"]["score"]
+                    key_statistics[key].append(score)
+                else:
+                    key_statistics[key].append(0.0)
+
+            for key in prediction.keys():
+                num_prediction_keys += 1
+                if key not in all_reference_keys:
+                    illegal_prediction_keys += 1
+
+        result = {}
+
+        average = 0
+        total = 0
+
+        weighted_average = 0
+        for key in key_statistics:
+            mean_for_key = numpy.mean(key_statistics[key])
+            num = len(key_statistics[key])
+            total += num
+            average += mean_for_key
+            weighted_average += mean_for_key * num
+            result[f"{self.metric.main_score}_{key}"] = mean_for_key
+
+        result[f"{self.metric.main_score}_micro"] = weighted_average / total
+        result[f"{self.metric.main_score}_macro"] = average / len(key_statistics)
+        if num_prediction_keys != 0:
+            result[f"{self.metric.main_score}_legal_keys_in_predictions"] = (
+                1 - 1.0 * illegal_prediction_keys / num_prediction_keys
+            )
+        else:
+            result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 0
+
+        return result
+
+
+class ToolCallKeyValueExtraction(KeyValueExtraction):
+    """Metrics that formulate ToolCall evaluation as a Key Value Extraction task.
+
+    Each argument and each nested value are first flatten to a key value.
+
+    { arguments : {"name" : "John", "address" : { "street" : "Main St", "City" : "Smallville" } } }
+
+    becomes
+
+    argument.names = "John"
+    argument.address.street = "Main St"
+    argument.address.city = "Smallvile"
+
+    Note that by default, if a parameter is a list of dictionaries, they are flattened with indexes
+
+     { arguments : {"addresses" : [{ "street" : "Main St", "City" : "Smallville" } ,
+                                   { "street" : "Log St", "City" : "BigCity" } ] } }
+
+    argument.address.0.street = "Main St"
+    argument.address.0.city = "Smallvile"
+    argument.address.1.street = "Log St"
+    argument.address.1.city = "BigCity"
+
+    But if each dictionary  in the list has a single unique key, it is used instead.
+
+    { arguments : {"addresses" : [ { "home" : { "street" : "Main St", "City" : "Smallville" }} ,
+                                   { "work"  : {"street" : "Log St", "City" : "BigCity" } ] } }
+
+    argument.address.home.street = "Main St"
+    argument.address.home.city = "Smallvile"
+    argument.address.work.street = "Log St"
+    argument.address.work.city = "BigCity"
+
+    """
+
+    prediction_type = ToolCall
+
+    flatten_list_of_dictionaries = False
+
+    def flatten_dict(self, nested_dict, parent_key="", sep="."):
+        flat_dict = {}
+        for k, v in nested_dict.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+
+            if isoftype(v, List[Dict[Any, Any]]):
+                if all(len(d) == 1 for d in v):
+                    keys = [next(iter(d.keys())) for d in v]
+                    if len(keys) == len(set(keys)):
+                        for e in v:
+                            flat_dict.update(
+                                self.flatten_dict(e, f"{new_key}", sep=sep)
+                            )
+                        continue
+                for i, e in enumerate(v):
+                    flat_dict.update(
+                        self.flatten_dict(e, f"{new_key}{sep}{i}", sep=sep)
+                    )
+            elif isoftype(v, Dict[Any, Any]):
+                flat_dict.update(self.flatten_dict(v, new_key, sep=sep))
+            else:
+                flat_dict[new_key] = v
+        return flat_dict
+
+    def compute(
+        self,
+        references: List[List[ToolCall]],
+        predictions: List[ToolCall],
+        task_data: List[Dict],
+    ) -> dict:
+        return super().compute(
+            [[self.flatten_dict(r) for r in ref] for ref in references],
+            [self.flatten_dict(p) for p in predictions],
+            task_data,
+        )
+
+
 class NER(CustomF1):
     """F1 Metrics that receives as input a list of (Entity,EntityType) pairs."""
 
@@ -3497,18 +3700,6 @@ class NER(CustomF1):
 
     def get_element_group(self, element, additional_input):
         return element[1]
-
-    def get_element_representation(self, element, additional_input):
-        return str(element)
-
-
-class KeyValueExtraction(CustomF1):
-    """F1 Metrics that receives as input a list of (Key,Value) pairs."""
-
-    prediction_type = List[Tuple[str, str]]
-
-    def get_element_group(self, element, additional_input):
-        return element[0]
 
     def get_element_representation(self, element, additional_input):
         return str(element)
@@ -3732,6 +3923,7 @@ class Detector(BulkInstanceMetric):
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         import torch
@@ -3742,7 +3934,9 @@ class Detector(BulkInstanceMetric):
         if settings.hf_offline_models_path is not None:
             model_path = os.path.join(settings.hf_offline_models_path, model_path)
         self.pipe = pipeline(
-            "text-classification", model=model_path, device=device,
+            "text-classification",
+            model=model_path,
+            device=device,
         )
 
     def compute(
@@ -3770,6 +3964,7 @@ class RegardMetric(GlobalMetric):
 
     _requirements_list: List[str] = ["transformers", "torch", "tqdm"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -3779,7 +3974,6 @@ class RegardMetric(GlobalMetric):
             model_path = os.path.join(settings.hf_offline_models_path, model_path)
         self.regard_model = AutoModelForSequenceClassification.from_pretrained(
             model_path,
-
         )
         self.regard_tokenizer = AutoTokenizer.from_pretrained(model_path)
 
@@ -3960,6 +4154,7 @@ class SafetyMetric(MapReduceMetric[str, Tuple[float, str]], TorchDeviceMixin):
 
         return result
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import pipeline
@@ -4139,6 +4334,7 @@ class Perplexity(BulkInstanceMetric):
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def compute(
         self,
         references: List[List[Any]],
@@ -4240,9 +4436,7 @@ class Perplexity(BulkInstanceMetric):
             model_path = self.model_name
             if settings.hf_offline_models_path is not None:
                 model_path = os.path.join(settings.hf_offline_models_path, model_path)
-            self.model = (
-                self.model_class().from_pretrained(model_path).to(self.device)
-            )
+            self.model = self.model_class().from_pretrained(model_path).to(self.device)
             self.tokenizer = AutoTokenizer.from_pretrained(model_path)
             if self.tokenizer.pad_token_id is None:
                 self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
@@ -4408,12 +4602,13 @@ class FaithfulnessHHEM(BulkInstanceMetric):
     batch_size: int = 2
     model_name: str = "vectara/hallucination_evaluation_model"
     prediction_type = str
-   # single_reference_per_prediction = True
+    # single_reference_per_prediction = True
     max_context_words = 4096
     reduction_map = {"mean": [main_score]}
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         import torch
@@ -4425,6 +4620,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
         else:
             device = "cpu"
         from transformers import AutoModelForSequenceClassification
+
         model_path = self.model_name
         if settings.hf_offline_models_path is not None:
             model_path = os.path.join(settings.hf_offline_models_path, model_path)
@@ -4786,7 +4982,7 @@ class RemoteMetric(StreamOperator, Metric):
         response_json = response.json()
         return MetricResponse(**response_json)
 
-    def disable_confidence_interval_calculation(self):
+    def set_confidence_interval_calculation(self, return_confidence_interval: bool):
         """Confidence intervals are always disabled for RemoteMetric.
 
         No need to do anything.
@@ -5125,11 +5321,11 @@ class FixedGroupMeanAccuracy(Accuracy):
 
 
 # same as above, now using StringContainment
-class GroupMeanStringContainment(StringContainment):
+class GroupMeanStringContainment(StringContainmentOld):
     reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, False]}}
 
 
-class FixedGroupMeanStringContainment(StringContainment):
+class FixedGroupMeanStringContainment(StringContainmentOld):
     # the same as GroupMeanStringContainment, except the groups are fixed and are resampled together
     reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, True]}}
 
@@ -5168,7 +5364,7 @@ class FixedGroupMeanParaphraseAccuracy(Accuracy):
 
 
 # same as above but using StringContainment
-class FixedGroupMeanBaselineStringContainment(StringContainment):
+class FixedGroupMeanBaselineStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     # take mean of "original" variants only
     reduction_map = {
@@ -5184,7 +5380,7 @@ class FixedGroupMeanBaselineStringContainment(StringContainment):
     }
 
 
-class FixedGroupMeanParaphraseStringContainment(StringContainment):
+class FixedGroupMeanParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     # take mean of "paraphrase" variants only
     reduction_map = {
@@ -5218,7 +5414,7 @@ class FixedGroupPDRParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupPDRParaphraseStringContainment(StringContainment):
+class FixedGroupPDRParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5262,7 +5458,7 @@ class FixedGroupNormCohensHParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupNormCohensHParaphraseStringContainment(StringContainment):
+class FixedGroupNormCohensHParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5297,7 +5493,7 @@ class FixedGroupNormHedgesGParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupNormHedgesGParaphraseStringContainment(StringContainment):
+class FixedGroupNormHedgesGParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5334,7 +5530,7 @@ class FixedGroupAbsvalNormCohensHParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupAbsvalNormCohensHParaphraseStringContainment(StringContainment):
+class FixedGroupAbsvalNormCohensHParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5372,7 +5568,7 @@ class FixedGroupAbsvalNormHedgesGParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
+class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainmentOld):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
@@ -5788,9 +5984,9 @@ class MetricsEnsemble(InstanceMetric, ArtifactFetcherMixin):
 
     def create_ensemble_scores(self, instance):
         score = self.ensemble(instance)
-        instance["prediction"] = (
-            score  # We use here the prediction field to pass the score to the compute method.
-        )
+        instance[
+            "prediction"
+        ] = score  # We use here the prediction field to pass the score to the compute method.
         return instance
 
     def ensemble(self, instance):
@@ -6070,8 +6266,10 @@ class GraniteGuardianBase(InstanceMetric):
 
     _requirements_list: List[str] = ["torch", "transformers"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         from transformers import AutoTokenizer
+
         if not isinstance(self.risk_type, RiskType):
             self.risk_type = RiskType[self.risk_type]
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
@@ -6118,6 +6316,9 @@ class GraniteGuardianBase(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        # TODO replace with logic inside verify_granite_guardian_config and process_input_fields
+        task_data["prediction"] = prediction
+
         self.verify_granite_guardian_config(task_data)
         self.set_main_score()
 
@@ -6131,7 +6332,19 @@ class GraniteGuardianBase(InstanceMetric):
         )
         messages = self.process_input_fields(task_data)
         prompt = self.get_prompt(messages)
-        result = self.inference_engine.infer_log_probs([{"source": prompt}])
+        data_classification_policy = task_data.get("metadata", {}).get(
+            "data_classification_policy"
+        )
+
+        result = self.inference_engine.infer_log_probs(
+            [
+                {
+                    "source": prompt,
+                    "data_classification_policy": data_classification_policy,
+                }
+            ]
+        )
+
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
         confidence_score = (
@@ -6144,19 +6357,20 @@ class GraniteGuardianBase(InstanceMetric):
             f"{self.main_score}_prob_of_risk": prob_of_risk,
             f"{self.main_score}_certainty": confidence_score,
             f"{self.main_score}_label": label,
+            f"{self.main_score}_prompt": prompt,
         }
         logger.debug(f"Results are ready:\n{result}")
         return result
 
     def create_message(self, role: str, content: str) -> List[Dict[str, str]]:
-        return [{"role": role, "content": content}]
+        return [{"role": role, "content": str(content)}]
 
     def parse_output(self, generated_tokens_list):
         top_tokens_list = [
             generated_tokens["top_tokens"] for generated_tokens in generated_tokens_list
         ]
         prob = self.get_probabilities(top_tokens_list)
-        prob_of_risk = prob[1]
+        prob_of_risk = prob[1].item()
 
         res = next(iter(generated_tokens_list))["text"].strip()
 
@@ -6169,7 +6383,7 @@ class GraniteGuardianBase(InstanceMetric):
 
         return label, prob_of_risk
 
-    def get_probabilities(self, top_tokens_list):
+    def get_probabilities(self, top_tokens_list) -> Tuple[np.float32, np.float32]:
         import torch
 
         safe_token_prob = 1e-50
@@ -6280,13 +6494,19 @@ class GraniteGuardianAgenticRisk(GraniteGuardianBase):
 
     def process_input_fields(self, task_data):
         messages = []
-        messages += self.create_message(
-            "tools", json.loads(task_data[self.tools_field])
-        )
+
+        tools = task_data[self.tools_field]
+        if isinstance(tools, str):
+            tools = json.loads(tools)
+
+        messages += self.create_message("tools", tools)
         messages += self.create_message("user", task_data[self.user_message_field])
-        messages += self.create_message(
-            "assistant", task_data[self.assistant_message_field]
-        )
+
+        calls = task_data[self.assistant_message_field]
+        if isinstance(calls, str):
+            calls = json.loads(calls)
+
+        messages += self.create_message("assistant", calls)
         return messages
 
 
@@ -6363,12 +6583,12 @@ class SQLExecutionAccuracy(InstanceMetric):
     ]
 
     prediction_type = "Any"  # string representation is compared
-    sql_timeout = 100.0
+    sql_timeout = 30.0
 
     _requirements_list = ["sqlglot", "func_timeout"]
 
     @staticmethod
-    def compare_dfs_ignore_colnames(df1, df2):
+    def compare_dfs_ignore_colnames_ordered_rows(df1, df2):
         """Compares two DataFrames based on row content, ignoring column names.
 
         Args:
@@ -6376,66 +6596,120 @@ class SQLExecutionAccuracy(InstanceMetric):
             df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
 
         Returns:
-            True if the DataFrames have the same content (ignoring column names),
+            True if the DataFrames have the same ordered rows (ignoring column names),
             False otherwise.
         """
         df1.fillna(0, inplace=True)
         df2.fillna(0, inplace=True)
 
+        # Compare row counts first for a quick check
         if df1.shape != df2.shape:
             return False
 
-        # run over all columns of d11,
-        # and see if there is a columns in df2 that matches it,
-        # if not return False, if all the columns worked return tue
-        for df1_col in df1.columns:
-            col_matched = False
-            for df2_col in df2.columns:
-                if all(df1[df1_col].values == df2[df2_col].values):
-                    col_matched = True
-            if not col_matched:
-                return False
+        # Convert DataFrames to numpy arrays of strings to handle mixed types
+        df1_array = df1.values.astype(str)
+        df2_array = df2.values.astype(str)
 
-        return True
+        # Sort each row's elements (column order independence)
+        df1_sorted_rows = np.array([np.sort(row) for row in df1_array])
+        df2_sorted_rows = np.array([np.sort(row) for row in df2_array])
+
+        # Compare the sorted rows in order
+        return np.array_equal(df1_sorted_rows, df2_sorted_rows)
 
     @staticmethod
-    def is_subset_ignore_colnames(df1, df2):
-        """Checks if df1 is a subset of df2 based on row content, ignoring column names.
+    def compare_dfs_ignore_colnames_unordered_rows(df1, df2):
+        """Compares two DataFrames based on row content, ignoring row order and column names.
 
         Args:
-            df1: Pandas DataFrame 1 to compare.
-            df2: Pandas DataFrame 2 to compare.
+            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
+            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
 
         Returns:
-            True if df1 is a subset of df2 based on column values,
+            True if the DataFrames have the same content (ignoring column names and row order),
             False otherwise.
         """
-        if df1.empty or df2.empty or df1.shape[1] > df2.shape[1]:
+        # Compare shapes early on
+        if df1.shape != df2.shape:
             return False
 
-        def make_hashable(value):
-            if isinstance(value, dict):
-                return json.dumps(value, sort_keys=True)
-            if isinstance(value, list):
-                return tuple(value)
-            return value
+        # Convert DataFrames to numpy arrays of strings (to handle mixed data types)
+        df1_array = df1.values.astype(str)
+        df2_array = df2.values.astype(str)
 
-        df1_cols = [
-            tuple(make_hashable(value) for value in df1.iloc[:, i])
-            for i in range(df1.shape[1])
-        ]
-        df2_cols = [
-            tuple(make_hashable(value) for value in df2.iloc[:, j])
-            for j in range(df2.shape[1])
-        ]
-        df2_cols_count = Counter(df2_cols)
-        for col in df1_cols:
-            if df2_cols_count[col] > 0:
-                df2_cols_count[col] -= 1
-            else:
-                return False
+        # Sort columns first, then sort rows
+        df1_sorted = np.sort(np.sort(df1_array, axis=1), axis=0)
+        df2_sorted = np.sort(np.sort(df2_array, axis=1), axis=0)
 
-        return True
+        # Compare the sorted arrays
+        return np.array_equal(df1_sorted, df2_sorted)
+
+    @staticmethod
+    def compare_dfs_ignore_colnames_subset(df1, df2, ignore_row_order=True):
+        """Checks if the values of either DataFrame are a subset of the values in the other DataFrame.
+
+        Comparison is column order independent, and could optionally be row order independent.
+        We interpret "subset" as follows:
+
+        - For each row in df1, there must be a matching (or superset) row in df2, i.e. the set of values
+          in the df1 row is a subset of the set of values in that df2 row. Then do the same check in reverse.
+        - If either condition (df1 is subset of df2 OR df2 is subset of df1) is satisfied, return True.
+
+        We treat an empty dataframe as a subset of nothing, while in theory is a subset of any dataframe.
+
+        Args:
+            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
+            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
+            ignore_row_order (bool): If True, row order doesn't matter; if False, row order is respected.
+
+        Returns:
+            bool: True if df1 is a subset of df2 or vice versa, based on the specified row-order condition.
+
+        """
+        df1_array = df1.values.astype(str)
+        df2_array = df2.values.astype(str)
+
+        df1_sorted_rows = [np.sort(row) for row in df1_array]
+        df2_sorted_rows = [np.sort(row) for row in df2_array]
+
+        def row_is_subset(r_small, r_big):
+            """Check if all elements of r_small are in r_big."""
+            return set(r_small).issubset(set(r_big))
+
+        def df_is_subset_of_another(rows_small, rows_big, respect_order):
+            """Check if the rows_small is subset of rows_big under the given order condition."""
+            if not rows_small:
+                return False  # DataFrame needs to be non-empty
+
+            # If row order matters:
+            if respect_order:
+                i, j = 0, 0
+                while i < len(rows_small) and j < len(rows_big):
+                    if row_is_subset(rows_small[i], rows_big[j]):
+                        i += 1
+                    j += 1
+                return i == len(rows_small)
+            # Row order doesn't matter:
+            matched_indices = set()
+            for r_small in rows_small:
+                found_match = False
+                for idx, r_big in enumerate(rows_big):
+                    if idx not in matched_indices and row_is_subset(r_small, r_big):
+                        found_match = True
+                        matched_indices.add(idx)
+                        break
+                if not found_match:
+                    return False
+            return True
+
+        df1_sub_df2 = df_is_subset_of_another(
+            df1_sorted_rows, df2_sorted_rows, not ignore_row_order
+        )
+        df2_sub_df1 = df_is_subset_of_another(
+            df2_sorted_rows, df1_sorted_rows, not ignore_row_order
+        )
+
+        return df1_sub_df2 or df2_sub_df1
 
     def get_sql_execution_results(
         self, predicted_sql: str, gold_sql: str, connector
@@ -6451,7 +6725,7 @@ class SQLExecutionAccuracy(InstanceMetric):
         a 12-tuple of
         1. execution_result: if df responses match
         2. non_empty_execution_result: if dfs are non-empty and match
-        3. subset_non_empty_execution_result: if non-empty dfs and gt df subset of predicted df
+        3. subset_non_empty_execution_result: if non-empty dfs and one is a subset of the other
         4. non_empty_gold_df: if gt df is non-empty
         5. gold_sql_runtime: ground truth query runtime
         6. predicted_sql_runtime: predicted query runtime
@@ -6465,6 +6739,7 @@ class SQLExecutionAccuracy(InstanceMetric):
         import time
 
         from func_timeout import func_timeout
+        from func_timeout.exceptions import FunctionTimedOut
 
         from .sql_utils import sqlglot_optimized_equivalence
 
@@ -6480,6 +6755,9 @@ class SQLExecutionAccuracy(InstanceMetric):
             )
             end_time = time.perf_counter()
             gold_sql_runtime = end_time - start_time
+        except FunctionTimedOut as e:
+            pred_error = f"Timeout error executing gold SQL: {e}"
+            logger.warning(pred_error)
         except Exception as e:
             gold_error = f"Error executing gold SQL: {e}"
         if gold_error is not None:
@@ -6498,6 +6776,8 @@ class SQLExecutionAccuracy(InstanceMetric):
                 gold_error,
             )
 
+        if isinstance(gold_res, dict) and "results" in gold_res:
+            gold_res = gold_res["results"]
         gold_df = pd.DataFrame(gold_res)
         non_empty_gold_df = 0 if gold_df.empty else 1
 
@@ -6509,10 +6789,10 @@ class SQLExecutionAccuracy(InstanceMetric):
             gold_sql_runtime,
             0,
             0,
-            1,
+            0,
             0,
             gold_df.to_json(),
-            gold_df.to_json(),
+            "",
             "",
         )
         if predicted_sql.lower().strip() == gold_sql.lower().strip():
@@ -6537,6 +6817,9 @@ class SQLExecutionAccuracy(InstanceMetric):
             )
             end_time = time.perf_counter()
             pred_sql_runtime = end_time - start_time
+        except FunctionTimedOut as e:
+            pred_error = f"Timeout error executing predicted SQL: {e}"
+            logger.info(pred_error)
         except Exception as e:
             pred_error = f"Error executing predicted SQL: {e}"
             logger.info(pred_error)
@@ -6561,19 +6844,40 @@ class SQLExecutionAccuracy(InstanceMetric):
                 pred_error,
             )
 
+        if isinstance(pred_res, dict) and "results" in pred_res:
+            pred_res = pred_res["results"]
         predicted_df = pd.DataFrame(pred_res)
-
-        execution_result = (
-            1 if self.compare_dfs_ignore_colnames(predicted_df, gold_df) else 0
-        )
 
         subset_non_empty_execution_result = 0
         non_empty_execution_result = 0
-        if non_empty_gold_df:
-            if execution_result == 1:
-                non_empty_execution_result = 1
-            if self.is_subset_ignore_colnames(gold_df, predicted_df):
-                subset_non_empty_execution_result = 1
+        if "ORDER BY" in gold_sql.upper():
+            execution_result = (
+                1
+                if self.compare_dfs_ignore_colnames_ordered_rows(predicted_df, gold_df)
+                else 0
+            )
+            if non_empty_gold_df:
+                if execution_result == 1:
+                    non_empty_execution_result = 1
+                if self.compare_dfs_ignore_colnames_subset(
+                    gold_df, predicted_df, ignore_row_order=False
+                ):
+                    subset_non_empty_execution_result = 1
+        else:
+            execution_result = (
+                1
+                if self.compare_dfs_ignore_colnames_unordered_rows(
+                    predicted_df, gold_df
+                )
+                else 0
+            )
+            if non_empty_gold_df:
+                if execution_result == 1:
+                    non_empty_execution_result = 1
+                if self.compare_dfs_ignore_colnames_subset(
+                    gold_df, predicted_df, ignore_row_order=True
+                ):
+                    subset_non_empty_execution_result = 1
 
         return (
             execution_result,
@@ -6591,6 +6895,8 @@ class SQLExecutionAccuracy(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
+        from .sql_utils import get_db_connector
+
         predicted_sql = prediction
         execution_result: float = 0.0
 
@@ -6653,6 +6959,7 @@ class SQLNonExecutionAccuracy(InstanceMetric):
             "sqlglot_optimized_equivalence",
             "sqlparse_equivalence",
             "sql_exact_match",
+            "sql_syntactic_equivalence",
         ]
     }
     main_score = "sqlglot_equivalence"
@@ -6663,6 +6970,7 @@ class SQLNonExecutionAccuracy(InstanceMetric):
         "sqlglot_optimized_equivalence",
         "sqlparse_equivalence",
         "sql_exact_match",
+        "sql_syntactic_equivalence",
     ]
 
     prediction_type = "Any"  # string representation is compared
@@ -6710,6 +7018,17 @@ class SQLNonExecutionAccuracy(InstanceMetric):
             ),
             "sql_exact_match": float(sql_exact_match(predicted_sql, gold_sql)),
         }
+        result["sql_syntactic_equivalence"] = float(
+            any(
+                result[key]
+                for key in [
+                    "sqlglot_equivalence",
+                    "sqlglot_optimized_equivalence",
+                    "sqlparse_equivalence",
+                    "sql_exact_match",
+                ]
+            )
+        )
         logger.debug(f"SQL Non Execution Accuracy Result: {result}")
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score

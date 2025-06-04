@@ -22,16 +22,16 @@ if False:
     httpx_logging = logging.getLogger("httpx")
     httpx_logging.setLevel(logging.ERROR)
 with settings.context(disable_hf_datasets_cache=False):
-    max_tokens = 32
+    max_tokens = 512
     dataset = load_dataset(
-        card="cards.doc_vqa.lmms_eval",
+        card="cards.ai2d",
         format="formats.chat_api",
         split="test",
-        # max_test_instances=20,
+        max_test_instances=20,
     )
 
     inference_model = CrossProviderInferenceEngine(
-        model="llama-3-2-90b-vision-instruct",
+        model="llama-3-2-11b-vision-instruct",
         provider="watsonx",
         max_tokens=max_tokens,
         temperature=0.0,

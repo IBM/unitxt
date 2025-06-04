@@ -1,0 +1,53 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "sarvamai/boolq-indic"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "language": "kn"
+            },
+            "condition": "eq"
+        },
+        "splitters.small_no_test",
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "passage",
+                "choices": [
+                    "yes",
+                    "no"
+                ]
+            }
+        },
+        {
+            "__type__": "cast_fields",
+            "fields": {
+                "answer": "str"
+            }
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "passage": "context"
+            }
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_context",
+    "templates": "templates.qa.multiple_choice.with_context.all",
+    "__tags__": {
+        "annotations_creators": "Sarvam AI",
+        "arxiv": "1905.10044",
+        "license": "cc-by-sa-3.0",
+        "multilinguality": "multilingual",
+        "region": "in",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "translation",
+        "task_categories": "text-classification",
+        "task_ids": "natural-language-inference"
+    },
+    "__description__": "A multilingual version of the BoolQ (Boolean Questions) dataset, translated from English into 10 Indian languages. It is a question-answering dataset for yes/no questions containing ~12k naturally occurring questions."
+}

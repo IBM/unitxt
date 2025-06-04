@@ -2,7 +2,7 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "ag_news"
+        "path": "fancyzhx/ag_news"
     },
     "preprocess_steps": [
         {

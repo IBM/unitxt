@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Union
 from .dataclass import AbstractField, Field
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
-from .sql_utils import get_db_connector
 from .type_utils import isoftype, to_type_string
 from .types import (
     Conversation,
@@ -18,6 +17,8 @@ from .types import (
     Number,
     SQLDatabase,
     Table,
+    Tool,
+    ToolCall,
     Video,
 )
 
@@ -170,15 +171,36 @@ class MultiDocumentSerializer(DocumentSerializer):
         return "\n\n".join(documents)
 
 
+class ToolsSerializer(SingleTypeSerializer):
+    serialized_type = List[Tool]
+
+    def serialize(self, value: List[Tool], instance: Dict[str, Any]) -> str:
+        if "__tools__" not in instance:
+            instance["__tools__"] = []
+        tool = []
+        for tool in value:
+            instance["__tools__"].append({"type": "function", "function": tool})
+        return json.dumps(instance["__tools__"], indent=4)
+
+
+class ToolCallSerializer(SingleTypeSerializer):
+    serialized_type = ToolCall
+
+    def serialize(self, value: ToolCall, instance: Dict[str, Any]) -> str:
+        return json.dumps(value)
+
+
 class MultiTypeSerializer(Serializer):
     serializers: List[SingleTypeSerializer] = Field(
         default_factory=lambda: [
             DocumentSerializer(),
+            ToolCallSerializer(),
             DialogSerializer(),
             MultiDocumentSerializer(),
             ImageSerializer(),
             VideoSerializer(),
             TableSerializer(),
+            ToolsSerializer(),
             DialogSerializer(),
         ]
     )
@@ -211,5 +233,7 @@ class SQLDatabaseAsSchemaSerializer(SingleTypeSerializer):
     serialized_type = SQLDatabase
 
     def serialize(self, value: SQLDatabase, instance: Dict[str, Any]) -> str:
+        from .sql_utils import get_db_connector
+
         connector = get_db_connector(value["db_type"])(value)
         return connector.get_table_schema()

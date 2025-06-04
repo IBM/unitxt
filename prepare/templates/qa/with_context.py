@@ -142,6 +142,46 @@ add_to_catalog(
     overwrite=True,
 )
 
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\n{question}\nAnswer the question using a single word.",
+        references_field="answers",
+        __description__="lmms-evals default template for chartqa.",
+    ),
+    "templates.qa.with_context.chart_qa",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
+        references_field="answers",
+        __description__="lmms-evals default template for docvqa.",
+    ),
+    "templates.qa.with_context.doc_vqa",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
+        references_field="answers",
+        __description__="lmms-evals default template for docvqa.",
+    ),
+    "templates.qa.with_context.info_vqa",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\nAnswer the question using a single word or phrase.\n{question}",
+        references_field="answers",
+        __description__="lmms-evals default template for websrc.",
+    ),
+    "templates.qa.with_context.websrc",
+    overwrite=True,
+)
+
 
 add_to_catalog(
     MultiReferenceTemplate(

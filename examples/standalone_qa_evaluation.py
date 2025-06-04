@@ -55,4 +55,3 @@ print(results.instance_scores)
 
 print("Global Results:")
 print(results.global_scores.summary)
-

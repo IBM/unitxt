@@ -5,7 +5,7 @@
    To use this tutorial, you need to :ref:`install Unitxt <install_unitxt>`.
 
 =================
-Benchmarks ✨
+Benchmarks 
 =================
 
 This guide will assist you in adding or using your new benchmark in Unitxt.

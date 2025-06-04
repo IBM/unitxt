@@ -4,7 +4,7 @@ from unitxt import add_to_catalog
 from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Wrap
 from unitxt.loaders import LoadHF
-from unitxt.operators import Cast, Copy, Set
+from unitxt.operators import Cast, Copy
 from unitxt.splitters import RenameSplits
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
@@ -28,13 +28,6 @@ card = TaskCard(
             to_field="reference_context_ids",
             process_every_value=True,
         ),
-        Set(
-            fields={
-                "reference_contexts": [],
-                "is_answerable_label": True,
-                "metadata_field": "",
-            }
-        ),
         Wrap(
             field="answer",
             inside="list",
@@ -43,7 +36,10 @@ card = TaskCard(
     ],
     task="tasks.rag.end_to_end",
     templates={"default": "templates.rag.end_to_end.json_predictions"},
-    __tags__={"license": "cc-by-2.5"},
+    __tags__={
+        "license": "cc-by-2.5",
+        "url": "https://huggingface.co/datasets/enelpol/rag-mini-bioasq",
+    },
     __description__="""This dataset is a subset of a training dataset by the BioASQ Challenge, which is available here.
 
 It is derived from rag-datasets/rag-mini-bioasq.
@@ -87,12 +83,6 @@ card = TaskCard(
         Cast(field="id", to="str"),
         Copy(field="id", to_field="document_id"),
         Wrap(field="passage", inside="list", to_field="passages"),
-        Set(
-            fields={
-                "metadata_field": "",
-                "title": "",
-            }
-        ),
     ],
     task="tasks.rag.corpora",
     templates={
@@ -101,7 +91,10 @@ card = TaskCard(
             output_format="",
         ),
     },
-    __tags__={"license": "cc-by-2.5"},
+    __tags__={
+        "license": "cc-by-2.5",
+        "url": "https://huggingface.co/datasets/enelpol/rag-mini-bioasq",
+    },
     __description__="""This dataset is a subset of a training dataset by the BioASQ Challenge, which is available here.
 
 It is derived from rag-datasets/rag-mini-bioasq.
