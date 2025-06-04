@@ -67,6 +67,7 @@ def load_chat_source(chat_str):
                     )
     return chat
 
+
 def loads_batch(batch):
     if (
         "source" in batch
@@ -84,6 +85,7 @@ def loads_batch(batch):
     ):
         batch["task_data"] = [json.loads(d) for d in batch["task_data"]]
     return batch
+
 
 def loads_instance(instance):
     if (

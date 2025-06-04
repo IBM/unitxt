@@ -757,6 +757,7 @@ class LoadJson(FieldOperator):
 class ToolCallPostProcessor(FieldOperator):
     failure_value: Any = None
     allow_failure: bool = False
+
     def process_value(self, value: str) -> ToolCall:
         if self.allow_failure:
             try:
@@ -767,16 +768,18 @@ class ToolCallPostProcessor(FieldOperator):
             result = json.loads(value, strict=False)
         if isoftype(result, List[ToolCall]):
             if len(result) > 1:
-                UnitxtWarning(f"More than one tool returned from model: {result}"   )
+                UnitxtWarning(f"More than one tool returned from model: {result}")
                 return self.failure_value
             return result[0]
         if not isoftype(result, ToolCall):
             return self.failure_value
-        return result\
+        return result
+
 
 class MultipleToolCallPostProcessor(FieldOperator):
     failure_value: Any = None
     allow_failure: bool = False
+
     def process_value(self, value: str) -> List[ToolCall]:
         if self.allow_failure:
             try:
@@ -790,6 +793,7 @@ class MultipleToolCallPostProcessor(FieldOperator):
         if not isoftype(result, ToolCall):
             return self.failure_value
         return [result]
+
 
 class DumpJson(FieldOperator):
     def process_value(self, value: str) -> str:
@@ -1081,4 +1085,4 @@ class JsonStrToDict(FieldOperator):
                 f"Unable to convert input text to dictionary in JsonStrToDict. Text: {text}"
             )
             dict_value = {}
-        return  {str(k): str(v) for k, v in dict_value.items() if v is not None}
+        return {str(k): str(v) for k, v in dict_value.items() if v is not None}

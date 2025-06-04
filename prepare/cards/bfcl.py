@@ -11,25 +11,40 @@ base_path = "https://raw.githubusercontent.com/ShishirPatil/gorilla/70b6a4a21445
 with unitxt.settings.context(allow_unverified_code=True):
     card = TaskCard(
         loader=LoadJsonFile(
-            files={"questions": base_path + "BFCL_v3_simple.json", "answers": base_path + "possible_answer/BFCL_v3_simple.json"},
+            files={
+                "questions": base_path + "BFCL_v3_simple.json",
+                "answers": base_path + "possible_answer/BFCL_v3_simple.json",
+            },
             lines=True,
             data_classification_policy=["public"],
         ),
         preprocess_steps=[
-            JoinStreams(left_stream="questions", right_stream ="answers", how="inner", on="id", new_stream_name="test" ),
+            JoinStreams(
+                left_stream="questions",
+                right_stream="answers",
+                how="inner",
+                on="id",
+                new_stream_name="test",
+            ),
             Copy(field="question/0/0/content", to_field="query"),
             Copy(field="function", to_field="tools"),
-            RecursiveReplace(key="type", map_values={"dict": "object", "float": "number", "tuple": "array"}, remove_values=["any"]),
+            RecursiveReplace(
+                key="type",
+                map_values={"dict": "object", "float": "number", "tuple": "array"},
+                remove_values=["any"],
+            ),
             # Process ground truth data in this dataset, which is a provided as a list of options per field,
             # and convert it into a list of explicit tool calls
             #
-            #[{"geometry.circumference": {"radius": [3], "units": ["cm", "m"]}}]}
+            # [{"geometry.circumference": {"radius": [3], "units": ["cm", "m"]}}]}
             # becomes:
             # [{"name": "geometry.circumference", "arguments" : {"radius": 3, "units": "cm"}},
             #  {"name": "geometry.circumference", "arguments" : {"radius": 3, "units": "m"}}]
-
-            ExecuteExpression(expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]',
-                              to_field="reference_calls", imports_list=["itertools"])
+            ExecuteExpression(
+                expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]',
+                to_field="reference_calls",
+                imports_list=["itertools"],
+            ),
         ],
         task="tasks.tool_calling.supervised",
         templates=["templates.tool_calling.base"],
@@ -45,7 +60,7 @@ with unitxt.settings.context(allow_unverified_code=True):
             "task_categories": [
                 "question-answering",
                 "reading-comprehension",
-                "tool-calling"
+                "tool-calling",
             ],
             "task_ids": ["tool-calling", "reading-comprehension"],
         },
@@ -57,19 +72,35 @@ with unitxt.settings.context(allow_unverified_code=True):
 
     card = TaskCard(
         loader=LoadJsonFile(
-            files={"questions": base_path + "BFCL_v3_simple.json", "answers": base_path + "possible_answer/BFCL_v3_simple.json"},
+            files={
+                "questions": base_path + "BFCL_v3_simple.json",
+                "answers": base_path + "possible_answer/BFCL_v3_simple.json",
+            },
             lines=True,
             data_classification_policy=["public"],
         ),
         preprocess_steps=[
-            JoinStreams(left_stream="questions", right_stream ="answers", how="inner", on="id", new_stream_name="test" ),
+            JoinStreams(
+                left_stream="questions",
+                right_stream="answers",
+                how="inner",
+                on="id",
+                new_stream_name="test",
+            ),
             Copy(field="question/0/0/content", to_field="query"),
             Copy(field="function", to_field="tools"),
-            RecursiveReplace(key="type", map_values={"dict": "object", "float": "number", "tuple": "array"}, remove_values=["any"]),
-            ExecuteExpression(expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]',
-                              to_field="reference_calls", imports_list=["itertools"]),
+            RecursiveReplace(
+                key="type",
+                map_values={"dict": "object", "float": "number", "tuple": "array"},
+                remove_values=["any"],
+            ),
+            ExecuteExpression(
+                expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]',
+                to_field="reference_calls",
+                imports_list=["itertools"],
+            ),
             Set(fields={"dialog": [{"role": "user"}]}),
-            Copy(field="query", to_field="dialog/0/content")
+            Copy(field="query", to_field="dialog/0/content"),
         ],
         task="tasks.tool_calling.multi_turn",
         templates=["templates.tool_calling.multi_turn"],
@@ -86,13 +117,16 @@ with unitxt.settings.context(allow_unverified_code=True):
                 "question-answering",
                 "reading-comprehension",
                 "tool-calling",
-                "multi-turn-tool-calling"
+                "multi-turn-tool-calling",
             ],
-            "task_ids": ["tool-calling", "multi-turn-tool-calling", "reading-comprehension"],
+            "task_ids": [
+                "tool-calling",
+                "multi-turn-tool-calling",
+                "reading-comprehension",
+            ],
         },
     )
 
     # Test and add the card to the catalog
     test_card(card, strict=False)
     add_to_catalog(card, "cards.bfcl.multi_turn.simple_v3", overwrite=True)
-

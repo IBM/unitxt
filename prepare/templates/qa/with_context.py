@@ -1,4 +1,14 @@
 from unitxt.catalog import add_to_catalog
+from unitxt.serializers import (
+    ConversationSerializer,
+    DialogSerializer,
+    ImageSerializer,
+    ListSerializer,
+    MultiTypeSerializer,
+    SQLDatabaseAsSchemaSerializer,
+    TableSerializer,
+    VideoSerializer,
+)
 from unitxt.templates import MultiReferenceTemplate, TemplatesList
 
 add_to_catalog(
@@ -169,5 +179,34 @@ add_to_catalog(
         __description__="lmms-evals default template for websrc.",
     ),
     "templates.qa.with_context.websrc",
+    overwrite=True,
+)
+
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        instruction="Read the context and answer the last question in the conversation. Answer with the minimal span from the context answering the question.",
+        input_format="Context: {context}\n\nConversation:\n{conversation}",
+        references_field="answers",
+        serializer=MultiTypeSerializer(
+            serializers=[
+                ImageSerializer(),
+                VideoSerializer(),
+                TableSerializer(),
+                DialogSerializer(),
+                ConversationSerializer(),
+                ListSerializer(),
+                SQLDatabaseAsSchemaSerializer(),
+            ]
+        ),
+        postprocessors=[
+            "processors.take_first_non_empty_line",
+            "processors.lower_case",
+            "processors.remove_punctuations",
+            "processors.remove_articles",
+            "processors.fix_whitespace",
+        ],
+    ),
+    "templates.qa.multi_turn.with_context.simple",
     overwrite=True,
 )

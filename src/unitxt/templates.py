@@ -11,6 +11,7 @@ from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator, Operator
 from .random_utils import new_random_generator
 from .serializers import (
+    ConversationSerializer,
     DialogSerializer,
     ImageSerializer,
     ListSerializer,
@@ -68,6 +69,7 @@ class Template(InstanceOperator):
                 ToolCallSerializer(),
                 ToolsSerializer(),
                 DialogSerializer(),
+                ConversationSerializer(),
                 ListSerializer(),
                 SQLDatabaseAsSchemaSerializer(),
             ]
@@ -130,7 +132,8 @@ class Template(InstanceOperator):
 
         source = self.input_fields_to_source(serialized_inputs)
         instruction, target_prefix = self.input_fields_to_instruction_and_target_prefix(
-            serialized_inputs, instance.get(constants.instruction_field, self.instruction)
+            serialized_inputs,
+            instance.get(constants.instruction_field, self.instruction),
         )
 
         result = {
@@ -198,7 +201,6 @@ class Template(InstanceOperator):
             raise TemplateFormatKeyError(
                 self, data, data_type, format_str, format_name
             ) from e
-
 
 
 class ApplyTemplate(InstanceOperator):
@@ -950,6 +952,7 @@ class MultiTurnTemplate(MultiReferenceTemplate):
         turns = dict_get(instance["input_fields"], self.turns_field)
         instance["__turns__"] = turns
         return super().post_process_instance(instance)
+
 
 def escape_chars(s, chars_to_escape):
     for char in chars_to_escape:

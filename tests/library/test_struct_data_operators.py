@@ -720,7 +720,7 @@ class TestStructDataOperators(UnitxtTestCase):
             }
         ]
 
-        targets = [{"prediction": {"b": "3", "c" : "word"}}]
+        targets = [{"prediction": {"b": "3", "c": "word"}}]
 
         check_operator(
             operator=JsonStrToDict(field="prediction"),

@@ -1,9 +1,10 @@
 from functools import singledispatch
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import pandas as pd
 
 from .artifact import verbosed_fetch_artifact
+from .base_metric import Metric
 from .metric_utils import get_remote_metrics_endpoint, get_remote_metrics_names
 from .operator import SequentialOperator
 from .stream import MultiStream
@@ -11,7 +12,9 @@ from .stream import MultiStream
 
 @singledispatch
 def evaluate(
-    dataset, metric_names: List[str], compute_conf_intervals: Optional[bool] = False
+    dataset,
+    metric_names: Union[List[str], List[Metric]],
+    compute_conf_intervals: Optional[bool] = False,
 ):
     """Placeholder for overloading the function, supporting both dataframe input and list input."""
     pass
@@ -20,7 +23,7 @@ def evaluate(
 @evaluate.register
 def _(
     dataset: list,
-    metric_names: List[str],
+    metric_names: Union[List[str], List[Metric]],
     compute_conf_intervals: Optional[bool] = False,
 ):
     global_scores = {}
@@ -36,7 +39,9 @@ def _(
 
         if not compute_conf_intervals:
             first_step = metrics_operator.steps[0]
-            first_step.disable_confidence_interval_calculation()
+            first_step.set_confidence_interval_calculation(
+                return_confidence_interval=False
+            )
 
         multi_stream = MultiStream.from_iterables({"test": dataset}, copying=True)
         instances = list(metrics_operator(multi_stream)["test"])
@@ -52,7 +57,7 @@ def _(
 @evaluate.register
 def _(
     dataset: pd.DataFrame,
-    metric_names: List[str],
+    metric_names: Union[List[str], List[Metric]],
     compute_conf_intervals: Optional[bool] = False,
 ):
     results, global_scores = evaluate(

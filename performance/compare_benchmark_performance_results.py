@@ -21,11 +21,15 @@ with open(args.pr_perf_file) as openfile:
     pr_perf = json.load(openfile)
 
 print(f'dataset_query = "{main_perf["dataset_query"]}"')
-print(f'Time to fetch the needed datasets from their hubs and save them in the local file-system: {round(max(main_perf["load_data_time"], pr_perf["load_data_time"]),3)} seconds')
+print(
+    f'Time to fetch the needed datasets from their hubs and save them in the local file-system: {round(max(main_perf["load_data_time"], pr_perf["load_data_time"]),3)} seconds'
+)
 print(f"used_eager_mode in main = {main_perf['used_eager_mode']}")
 print(f"used_eager_mode in PR = {pr_perf['used_eager_mode']}")
 print(f"use Mocked inference = {os.environ['UNITXT_MOCK_INFERENCE_MODE']}")
-print("Given the raw datasets stored in the local file system, their processing through the Unitxt pipeline lasts as detailed below.")
+print(
+    "Given the raw datasets stored in the local file system, their processing through the Unitxt pipeline lasts as detailed below."
+)
 
 ratios = {}
 for k in pr_perf:

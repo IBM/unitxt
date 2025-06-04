@@ -140,7 +140,12 @@ class BaseFormat(Format):
         if "__turns__" in instance:
             instance_fields["turns"] = instance["__turns__"]
 
-        for field in "source", constants.instruction_field, constants.system_prompt_field, "target_prefix":
+        for field in (
+            "source",
+            constants.instruction_field,
+            constants.system_prompt_field,
+            "target_prefix",
+        ):
             instance_fields[field] = self._pop_field(instance, field)
 
         instance_fields["media"] = self._pop_field(instance, "media", do_pop=False)
@@ -170,7 +175,7 @@ class BaseFormat(Format):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
-        turns: Optional[List[Turn]] = None
+        turns: Optional[List[Turn]] = None,
     ) -> str:
         """Abstract method for formatting instances in different subclasses.
 
@@ -257,7 +262,7 @@ class SystemFormat(BaseFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
-        turns: Optional[List[Turn]] = None
+        turns: Optional[List[Turn]] = None,
     ) -> str:
         if turns is not None and not source:
             source = json.dumps(turns)
@@ -423,7 +428,7 @@ class ChatAPIFormat(BaseFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
-        turns: Optional[List[Turn]] = None
+        turns: Optional[List[Turn]] = None,
     ) -> List[Message]:
         messages = []
 
@@ -444,14 +449,7 @@ class ChatAPIFormat(BaseFormat):
                 messages.extend(demo_instance["__turns__"])
             else:
                 source_content = self.to_content(demo_instance["source"], media)
-                messages.extend(
-                    [
-                        {
-                            "role": "user",
-                            "content": source_content
-                        }
-                    ]
-                )
+                messages.extend([{"role": "user", "content": source_content}])
 
             assistant_content = self.to_content(
                 target_prefix + demo_instance["target"], media
@@ -481,7 +479,7 @@ class ChatAPIFormat(BaseFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
-        turns: Optional[List[Turn]] = None
+        turns: Optional[List[Turn]] = None,
     ) -> Union[str, List[Message]]:
         chat = self.to_chat(
             system_prompt,
@@ -529,7 +527,7 @@ class HFSystemFormat(ChatAPIFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
-        turns: Optional[List[Turn]] = None
+        turns: Optional[List[Turn]] = None,
     ) -> str:
         chat = self.to_chat(
             system_prompt, instruction, source, target_prefix, demos, media, turns

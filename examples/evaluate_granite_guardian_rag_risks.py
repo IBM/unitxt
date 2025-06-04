@@ -1,4 +1,3 @@
-
 from unitxt import evaluate
 from unitxt.api import create_dataset
 from unitxt.blocks import Task
@@ -20,7 +19,9 @@ dataset = create_dataset(
         reference_fields={},
         prediction_type=float,
         default_template=NullTemplate(),
-        metrics=["metrics.granite_guardian.rag_risk.answer_relevance[user_message_field=question,assistant_message_field=answer]"],
+        metrics=[
+            "metrics.granite_guardian.rag_risk.answer_relevance[user_message_field=question,assistant_message_field=answer]"
+        ],
     ),
     test_set=data,
     split="test",

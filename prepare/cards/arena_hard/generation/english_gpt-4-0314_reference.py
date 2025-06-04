@@ -22,7 +22,10 @@ model_answer_git_repo_file_path = "https://raw.githubusercontent.com/lmarena/are
 
 card = TaskCard(
     loader=LoadJsonFile(
-        files={"questions": question_git_repo_file_path, "model_answer": model_answer_git_repo_file_path},
+        files={
+            "questions": question_git_repo_file_path,
+            "model_answer": model_answer_git_repo_file_path,
+        },
         lines=True,
         data_classification_policy=["public"],
     ),

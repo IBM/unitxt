@@ -208,6 +208,7 @@ keep-runtime-typing = true
 "utils/*" = ["TID251"]
 "src/unitxt/api.py" = ["B904"]
 "src/unitxt/metrics.py" = ["C901"]
+"src/unitxt/loaders.py" = ["C901"]
 "src/unitxt/__init__.py" = ["F811", "F401"]
 "src/unitxt/metric.py" = ["F811", "F401"]
 "src/unitxt/dataset.py" = ["F811", "F401"]

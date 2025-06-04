@@ -30,6 +30,7 @@ class TestRetryDecorator(unittest.TestCase):
 
     def test_successful_function(self):
         """Test that the decorator doesn't interfere with successful function calls."""
+
         # Function that always succeeds
         @retry_connection_with_exponential_backoff()
         def successful_function():
@@ -58,6 +59,7 @@ class TestRetryDecorator(unittest.TestCase):
 
     def test_max_retries_reached(self):
         """Test that it stops retrying after max_retries and raises the exception."""
+
         @retry_connection_with_exponential_backoff(max_retries=3)
         def always_failing():
             raise TimeoutError("Timeout error")
@@ -65,7 +67,9 @@ class TestRetryDecorator(unittest.TestCase):
         with self.assertRaises(TimeoutError):
             always_failing()
 
-        self.assertEqual(self.mock_sleep.call_count, 2)  # Should sleep 2 times for 3 attempts
+        self.assertEqual(
+            self.mock_sleep.call_count, 2
+        )  # Should sleep 2 times for 3 attempts
 
     def test_chained_exception_with_cause(self):
         """Test retry with exception chained using 'raise from' (__cause__)."""
@@ -142,6 +146,7 @@ class TestRetryDecorator(unittest.TestCase):
 
     def test_non_retry_exception(self):
         """Test that non-retry exceptions are re-raised immediately."""
+
         @retry_connection_with_exponential_backoff(max_retries=3)
         def function_with_non_retry_exception():
             raise ValueError("Not a retry exception")
@@ -213,6 +218,7 @@ class TestRetryDecorator(unittest.TestCase):
 
     def test_custom_exceptions(self):
         """Test with custom exception types."""
+
         # Define custom exceptions
         class CustomErrorOne(Exception):
             """Custom exception for testing."""
@@ -223,8 +229,7 @@ class TestRetryDecorator(unittest.TestCase):
         counter = {"calls": 0}
 
         @retry_connection_with_exponential_backoff(
-            max_retries=3,
-            retry_exceptions=(CustomErrorOne, CustomErrorTwo)
+            max_retries=3, retry_exceptions=(CustomErrorOne, CustomErrorTwo)
         )
         def function_with_custom_exception():
             counter["calls"] += 1
@@ -268,7 +273,9 @@ class TestRetryDecorator(unittest.TestCase):
                             raise error3 from e2
                         except LocalEntryNotFoundErrorException as e3:
                             # Step 4: OSError (final error raised to user)
-                            error4 = OSError("We couldn't connect to 'https://huggingface.co'")
+                            error4 = OSError(
+                                "We couldn't connect to 'https://huggingface.co'"
+                            )
                             raise error4 from e3
             return "success"
 

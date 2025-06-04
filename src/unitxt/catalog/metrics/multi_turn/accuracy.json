@@ -1,0 +1,6 @@
+{
+    "__type__": "multi_turn_metric",
+    "metric": {
+        "__type__": "accuracy_fast"
+    }
+}

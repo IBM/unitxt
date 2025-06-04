@@ -16,28 +16,34 @@ Can supports multiple references."""
 )
 
 add_to_catalog(
-    ToolCallKeyValueExtraction(__description__ = """Metric that evaluates tool call predictions with reference calls.
+    ToolCallKeyValueExtraction(
+        __description__="""Metric that evaluates tool call predictions with reference calls.
 First generate unique key value pairs for the tool name, and all the parameters (including nested parameter).
 Reports average accuracy for each key, as well as micro and macro averages across all keys.
 
 Supports only a single reference call per prediction.
 
-""", metric="metrics.accuracy"),
+""",
+        metric="metrics.accuracy",
+    ),
     "metrics.tool_calling.key_value.accuracy",
     overwrite=True,
 )
 
 add_to_catalog(
-    ToolCallKeyValueExtraction(__description__ = """Metric that evaluates tool call predictions with reference calls.
+    ToolCallKeyValueExtraction(
+        __description__="""Metric that evaluates tool call predictions with reference calls.
 First generate unique key value pairs for the tool name, and all the parameters (including nested parameter).
 Supports only a single reference call per prediction.
 
 Reports average token_overlap for each key, as well as micro and macro averages across all keys.
-""", metric="metrics.token_overlap",score_prefix="token_overlap_"),
+""",
+        metric="metrics.token_overlap",
+        score_prefix="token_overlap_",
+    ),
     "metrics.tool_calling.key_value.token_overlap",
     overwrite=True,
 )
-
 
 add_to_catalog(
     MultiTurnToolCallingMetric(

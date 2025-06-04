@@ -15,7 +15,7 @@ add_to_catalog(
         prediction_type=ToolCall,
         metrics=["metrics.tool_calling"],
         default_template="templates.tool_calling.base",
-        requirements=["jsonschema-rs"]
+        requirements=["jsonschema-rs"],
     ),
     "tasks.tool_calling.supervised",
     overwrite=True,
@@ -30,9 +30,11 @@ add_to_catalog(
         input_fields={"dialog": List[Turn], "tools": List[Tool]},
         reference_fields={"reference_calls": List[ToolCall]},
         prediction_type=List[ToolCall],
-        metrics=["metrics.tool_calling.multi_turn.validity",],
+        metrics=[
+            "metrics.tool_calling.multi_turn.validity",
+        ],
         default_template="templates.tool_calling.multi_turn",
-        requirements=["jsonschema-rs"]
+        requirements=["jsonschema-rs"],
     ),
     "tasks.tool_calling.multi_turn",
     overwrite=True,

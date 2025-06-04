@@ -1,0 +1,8 @@
+{
+    "__type__": "jaccard_index_string",
+    "__description__": "JaccardIndex metric that operates on prediction and references that are strings.\n    It first splits the the string into words using space as a separator.\n\n    For each prediction, it calculates the ratio Intersect(prediction_words,reference_words)/Union(prediction_words,reference_words).\n    If multiple references exist, it takes the best ratio achieved by one of the references.\n\n    ",
+    "splitter": {
+        "__type__": "regex_split",
+        "by": "\\s+"
+    }
+}
