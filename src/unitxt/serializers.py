@@ -9,6 +9,7 @@ from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype, to_type_string
 from .types import (
+    Conversation,
     Dialog,
     Document,
     Image,
@@ -76,6 +77,13 @@ class DialogSerializer(SingleTypeSerializer):
     def serialize(self, value: Dialog, instance: Dict[str, Any]) -> str:
         # Convert the Dialog into a string representation, typically combining roles and content
         return "\n".join(f"{turn['role']}: {turn['content']}" for turn in value)
+
+
+class ConversationSerializer(DialogSerializer):
+    serialized_type = Conversation
+
+    def serialize(self, value: Conversation, instance: Dict[str, Any]) -> str:
+        return super().serialize(value["dialog"], instance)
 
 
 class NumberSerializer(SingleTypeSerializer):

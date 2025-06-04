@@ -11,6 +11,7 @@ from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator, Operator
 from .random_utils import new_random_generator
 from .serializers import (
+    ConversationSerializer,
     DialogSerializer,
     ImageSerializer,
     ListSerializer,
@@ -68,6 +69,7 @@ class Template(InstanceOperator):
                 ToolCallSerializer(),
                 ToolsSerializer(),
                 DialogSerializer(),
+                ConversationSerializer(),
                 ListSerializer(),
                 SQLDatabaseAsSchemaSerializer(),
             ]
