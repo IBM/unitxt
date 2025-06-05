@@ -6506,31 +6506,32 @@ class SQLExecutionAccuracy(InstanceMetric):
     def compare_dfs_ignore_colnames_subset(
         df1: pd.DataFrame, df2: pd.DataFrame, ignore_row_order: bool = True
     ) -> bool:
-        df1_array = df1.values.astype(str)
-        df2_array = df2.values.astype(str)
-        df1_rows = [np.sort(row) for row in df1_array]
-        df2_rows = [np.sort(row) for row in df2_array]
+        def row_to_multiset(row):
+            return Counter(str(x) for x in row)
 
-        def is_subset(rows_small, rows_big):
-            matched = set()
-            for r_small in rows_small:
-                for idx, r_big in enumerate(rows_big):
-                    if idx in matched:
-                        continue
-                    if set(r_small).issubset(set(r_big)):
-                        matched.add(idx)
-                        break
-                else:
-                    return False
-            return True
+        def normalize_and_sort(df):
+            return pd.DataFrame(
+                sorted([sorted(map(str, row)) for row in df.values.tolist()])
+            )
 
-        if not df1_rows:
+        if df1.empty or df2.empty or len(df1) != len(df2):
             return False
 
-        if not ignore_row_order:
-            return all(set(a).issubset(set(b)) for a, b in zip(df1_rows, df2_rows))
+        subset_df, superset_df = (
+            (df1, df2) if df1.shape[1] <= df2.shape[1] else (df2, df1)
+        )
 
-        return is_subset(df1_rows, df2_rows) or is_subset(df2_rows, df1_rows)
+        if ignore_row_order:
+            subset_df = normalize_and_sort(subset_df)
+            superset_df = normalize_and_sort(superset_df)
+
+        subset_rows = [row_to_multiset(row) for row in subset_df.values]
+        superset_rows = [row_to_multiset(row) for row in superset_df.values]
+
+        for r1, r2 in zip(subset_rows, superset_rows):
+            if not all(r1[k] <= r2.get(k, 0) for k in r1):
+                return False
+        return True
 
     def _run_query(
         self, sql: str, connector
