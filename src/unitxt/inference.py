@@ -1973,7 +1973,12 @@ class RITSInferenceEngine(
     label: str = "rits"
     data_classification_policy = ["public", "proprietary"]
 
-    model_names_dict = {"microsoft/phi-4": "microsoft-phi-4"}
+    model_names_dict = {
+        "microsoft/phi-4": "microsoft-phi-4",
+        "meta-llama/llama-4-maverick-17b-128e-instruct-fp8": "llama-4-mvk-17b-128e-fp8",
+        "deepseek-ai/DeepSeek-V3": "deepseek-v3-h200",
+        "meta-llama/Llama-3.1-8B-Instruct": "llama-3-1-8b-instruct",
+    }
 
     def get_default_headers(self):
         return {"RITS_API_KEY": self.credentials["api_key"]}
@@ -3436,21 +3441,22 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         },
         "rits": {
             "granite-3-8b-instruct": "ibm-granite/granite-3.0-8b-instruct",
+            "granite-3-1-8b-instruct": "ibm-granite/granite-3.1-8b-instruct",
             "granite-3-2-8b-instruct": "ibm-granite/granite-3.2-8b-instruct",
             "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
-            "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
+            "llama-3-1-8b-instruct": "meta-llama/Llama-3.1-8B-Instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
             "llama-3-1-405b-instruct": "meta-llama/llama-3-1-405b-instruct-fp8",
             "llama-3-1-405b-instruct-fp8": "meta-llama/llama-3-1-405b-instruct-fp8",
             "llama-3-2-11b-vision-instruct": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "llama-3-2-90b-vision-instruct": "meta-llama/Llama-3.2-90B-Vision-Instruct",
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
-            "llama-4-scout": "llama-4-scout-17b-16e",
-            "llama-4-maverick": "llama-4-mvk-17b-128e-fp8",
+            "llama-4-scout": "meta-llama/llama-4-scout-17b-16e",
+            "llama-4-maverick": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
             "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7B-instruct-v0.1",
-            "deepseek-v3": "deepseek-ai/deepseek-v3-h200",
+            "deepseek-v3": "deepseek-ai/DeepSeek-V3",
             "granite-guardian-3-2-3b-a800m": "ibm-granite/granite-guardian-3.2-3b-a800m",
             "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
         },
