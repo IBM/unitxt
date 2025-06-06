@@ -198,7 +198,6 @@ EVALUATORS_METADATA = [
         [
             ModelProviderEnum.WATSONX,
             ModelProviderEnum.TOGETHER_AI,
-            ModelProviderEnum.RITS,
             ModelProviderEnum.OLLAMA,
         ],
     ),
