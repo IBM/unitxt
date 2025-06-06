@@ -125,7 +125,7 @@ EVALUATOR_TO_MODEL_ID = {
     EvaluatorNameEnum.GRANITE3_1_8B: "granite-3-1-8b-instruct",
     EvaluatorNameEnum.GRANITE3_2_8B: "granite-3-2-8b-instruct",
     EvaluatorNameEnum.GRANITE3_3_8B: "granite-3-3-8b-instruct",
-    EvaluatorNameEnum.DEEPSEEK_V3: "deepseek-ai/DeepSeek-V3",
+    EvaluatorNameEnum.DEEPSEEK_V3: "deepseek-v3",
     EvaluatorNameEnum.GEMMA_2_5_PRO: "gemma-2-5-pro",
     EvaluatorNameEnum.GEMINI_2_5_FLASH: "gemini-2-5-flash",
 }
@@ -198,7 +198,6 @@ EVALUATORS_METADATA = [
         [
             ModelProviderEnum.WATSONX,
             ModelProviderEnum.TOGETHER_AI,
-            ModelProviderEnum.RITS,
             ModelProviderEnum.OLLAMA,
         ],
     ),
