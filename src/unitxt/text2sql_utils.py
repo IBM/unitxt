@@ -7,9 +7,13 @@ import re
 import sqlite3
 import time
 from abc import ABC, abstractmethod
+from collections import Counter
+from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 
+import numpy as np
+import pandas as pd
 import requests
 from huggingface_hub import snapshot_download
 from requests.exceptions import ConnectionError, ReadTimeout
@@ -539,6 +543,17 @@ def get_db_connector(db_type: str):
     return connector
 
 
+@dataclass
+class SQLNonExecutionMetricResult:
+    sqlglot_validity: int  # Whether SQL parses with sqlglot
+    sqlparse_validity: int  # Whether SQL parses with sqlparse
+    sqlglot_equivalence: int  # Semantic equivalence using sqlglot AST
+    sqlglot_optimized_equivalence: int  # Equivalence after optimization via sqlglot
+    sqlparse_equivalence: int  # Equivalence using sqlparse AST
+    sql_exact_match: int  # Exact string match of predicted and gold SQL
+    sql_syntactic_equivalence: int  # Any of the above equivalence conditions hold
+
+
 def is_sqlglot_parsable(sql: str, db_type="sqlite") -> bool:
     """Returns True if sqlglot does not encounter any error, False otherwise."""
     from sqlglot import parse
@@ -754,3 +769,224 @@ def sql_exact_match(sql1: str, sql2: str) -> bool:
         return s.upper()
 
     return normalize_sql(sql1) == normalize_sql(sql2)
+
+
+@dataclass
+class SQLExecutionResult:
+    execution_accuracy: int  # Whether the predicted and gold SQL results match exactly
+    non_empty_execution_accuracy: (
+        int  # Same as execution_accuracy but only if gold is non-empty
+    )
+    subset_non_empty_execution_accuracy: (
+        int  # Whether predicted is a subset of gold or vice versa, non-empty only
+    )
+    non_empty_gold_df: int  # Whether the gold SQL produced a non-empty dataframe
+    gold_sql_runtime: float  # Time taken to execute the gold SQL
+    predicted_sql_runtime: float  # Time taken to execute the predicted SQL
+    pred_to_gold_runtime_ratio: float  # Ratio of predicted runtime to gold runtime
+    gold_error: int  # Whether the gold SQL had an execution error
+    predicted_error: int  # Whether the predicted SQL had an execution error
+    gold_df_json: str  # JSON representation of the gold SQL result dataframe
+    predicted_df_json: str  # JSON representation of the predicted SQL result dataframe
+    error_message: str  # Error message from predicted execution if any
+
+
+def compare_dfs_ignore_colnames_ordered_rows(
+    df1: pd.DataFrame, df2: pd.DataFrame
+) -> bool:
+    df1.fillna(0, inplace=True)
+    df2.fillna(0, inplace=True)
+    if df1.shape != df2.shape:
+        return False
+    df1_sorted_rows = np.array([np.sort(row) for row in df1.values.astype(str)])
+    df2_sorted_rows = np.array([np.sort(row) for row in df2.values.astype(str)])
+    return np.array_equal(df1_sorted_rows, df2_sorted_rows)
+
+
+def compare_dfs_ignore_colnames_unordered_rows(
+    df1: pd.DataFrame, df2: pd.DataFrame
+) -> bool:
+    if df1.shape != df2.shape:
+        return False
+    df1_sorted = np.sort(np.sort(df1.values.astype(str), axis=1), axis=0)
+    df2_sorted = np.sort(np.sort(df2.values.astype(str), axis=1), axis=0)
+    return np.array_equal(df1_sorted, df2_sorted)
+
+
+def compare_dfs_ignore_colnames_subset(
+    df1: pd.DataFrame, df2: pd.DataFrame, ignore_row_order: bool = True
+) -> bool:
+    def row_to_multiset(row):
+        return Counter(str(x) for x in row)
+
+    def normalize_and_sort(df):
+        return pd.DataFrame(
+            sorted([sorted(map(str, row)) for row in df.values.tolist()])
+        )
+
+    if df1.empty or df2.empty or len(df1) != len(df2):
+        return False
+
+    subset_df, superset_df = (df1, df2) if df1.shape[1] <= df2.shape[1] else (df2, df1)
+
+    if ignore_row_order:
+        subset_df = normalize_and_sort(subset_df)
+        superset_df = normalize_and_sort(superset_df)
+
+    subset_rows = [row_to_multiset(row) for row in subset_df.values]
+    superset_rows = [row_to_multiset(row) for row in superset_df.values]
+
+    for r1, r2 in zip(subset_rows, superset_rows):
+        if not all(r1[k] <= r2.get(k, 0) for k in r1):
+            return False
+    return True
+
+
+def compare_result_dfs(
+    gold_df: pd.DataFrame, pred_df: pd.DataFrame, gold_sql: str
+) -> Tuple[int, int, int]:
+    subset_match = 0
+    non_empty_match = 0
+    if "ORDER BY" in gold_sql.upper():
+        match = int(compare_dfs_ignore_colnames_ordered_rows(pred_df, gold_df))
+        if not gold_df.empty and not pred_df.empty:
+            non_empty_match = match
+            if compare_dfs_ignore_colnames_subset(
+                gold_df, pred_df, ignore_row_order=False
+            ):
+                subset_match = 1
+    else:
+        match = int(compare_dfs_ignore_colnames_unordered_rows(pred_df, gold_df))
+        if not gold_df.empty and not pred_df.empty:
+            non_empty_match = match
+            if compare_dfs_ignore_colnames_subset(
+                gold_df, pred_df, ignore_row_order=True
+            ):
+                subset_match = 1
+    return match, non_empty_match, subset_match
+
+
+def run_query(
+    sql: str, connector, sql_timeout: float
+) -> Tuple[Optional[pd.DataFrame], float, str]:
+    import time
+
+    from func_timeout import func_timeout
+    from func_timeout.exceptions import FunctionTimedOut
+
+    try:
+        start = time.perf_counter()
+        result, error = func_timeout(sql_timeout, connector.execute_query, args=(sql,))
+        duration = time.perf_counter() - start
+        if isinstance(result, dict) and "results" in result:
+            result = result["results"]
+        if error:
+            return None, duration, error
+        return pd.DataFrame(result), duration, ""
+    except FunctionTimedOut as e:
+        return None, 0.0, f"Timeout: {e}"
+    except Exception as e:
+        return None, 0.0, f"Error: {e}"
+
+
+def get_sql_execution_results(
+    predicted_sql: str, gold_sql: str, connector, sql_timeout: float
+) -> SQLExecutionResult:
+    gold_df, gold_runtime, gold_error_msg = run_query(gold_sql, connector, sql_timeout)
+    gold_error = int(bool(gold_error_msg))
+
+    if gold_error:
+        return SQLExecutionResult(
+            execution_accuracy=0,
+            non_empty_execution_accuracy=0,
+            subset_non_empty_execution_accuracy=0,
+            non_empty_gold_df=0,
+            gold_sql_runtime=gold_runtime,
+            predicted_sql_runtime=0,
+            pred_to_gold_runtime_ratio=0,
+            gold_error=gold_error,
+            predicted_error=0,
+            gold_df_json="",
+            predicted_df_json="",
+            error_message=gold_error_msg,
+        )
+
+    non_empty_gold_df = int(not gold_df.empty)
+    if predicted_sql.strip().lower() == gold_sql.strip().lower():
+        return SQLExecutionResult(
+            execution_accuracy=1,
+            non_empty_execution_accuracy=non_empty_gold_df,
+            subset_non_empty_execution_accuracy=non_empty_gold_df,
+            non_empty_gold_df=non_empty_gold_df,
+            gold_sql_runtime=gold_runtime,
+            predicted_sql_runtime=0,
+            pred_to_gold_runtime_ratio=0,
+            gold_error=0,
+            predicted_error=0,
+            gold_df_json=gold_df.to_json(),
+            predicted_df_json="",
+            error_message="",
+        )
+
+    try:
+        if sqlglot_optimized_equivalence(gold_sql, predicted_sql):
+            return SQLExecutionResult(
+                execution_accuracy=1,
+                non_empty_execution_accuracy=non_empty_gold_df,
+                subset_non_empty_execution_accuracy=non_empty_gold_df,
+                non_empty_gold_df=non_empty_gold_df,
+                gold_sql_runtime=gold_runtime,
+                predicted_sql_runtime=0,
+                pred_to_gold_runtime_ratio=0,
+                gold_error=0,
+                predicted_error=0,
+                gold_df_json=gold_df.to_json(),
+                predicted_df_json="",
+                error_message="",
+            )
+    except Exception as e:
+        logger.info(f"Could not check SQL equivalence: {e}")
+
+    pred_df, pred_runtime, pred_error_msg = run_query(
+        predicted_sql, connector, sql_timeout
+    )
+    pred_error = 1 if pred_error_msg else 0
+
+    if pred_df is None:
+        return SQLExecutionResult(
+            execution_accuracy=0,
+            non_empty_execution_accuracy=0,
+            subset_non_empty_execution_accuracy=0,
+            non_empty_gold_df=non_empty_gold_df,
+            gold_sql_runtime=gold_runtime,
+            predicted_sql_runtime=pred_runtime,
+            pred_to_gold_runtime_ratio=(pred_runtime / gold_runtime)
+            if gold_runtime > 0
+            else 0,
+            gold_error=0,
+            predicted_error=pred_error,
+            gold_df_json=gold_df.to_json(),
+            predicted_df_json="",
+            error_message=pred_error_msg,
+        )
+
+    match, non_empty_match, subset_match = compare_result_dfs(
+        gold_df, pred_df, gold_sql
+    )
+
+    return SQLExecutionResult(
+        execution_accuracy=match,
+        non_empty_execution_accuracy=non_empty_match,
+        subset_non_empty_execution_accuracy=subset_match,
+        non_empty_gold_df=non_empty_gold_df,
+        gold_sql_runtime=gold_runtime,
+        predicted_sql_runtime=pred_runtime,
+        pred_to_gold_runtime_ratio=(pred_runtime / gold_runtime)
+        if gold_runtime > 0
+        else 0,
+        gold_error=0,
+        predicted_error=0,
+        gold_df_json=gold_df.to_json(),
+        predicted_df_json=pred_df.to_json(),
+        error_message=pred_error_msg,
+    )

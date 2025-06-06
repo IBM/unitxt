@@ -225,7 +225,7 @@ class SQLDatabaseAsSchemaSerializer(SingleTypeSerializer):
     serialized_type = SQLDatabase
 
     def serialize(self, value: SQLDatabase, instance: Dict[str, Any]) -> str:
-        from .sql_utils import get_db_connector
+        from .text2sql_utils import get_db_connector
 
         connector = get_db_connector(value["db_type"])(value)
         return connector.get_table_schema()

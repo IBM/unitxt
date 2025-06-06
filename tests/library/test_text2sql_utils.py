@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import requests
-from unitxt.sql_utils import (
+from unitxt.text2sql_utils import (
     InMemoryDatabaseConnector,
     LocalSQLiteConnector,
     RemoteDatabaseConnector,
