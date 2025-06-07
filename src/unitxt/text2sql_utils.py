@@ -874,6 +874,9 @@ def run_query(
     from func_timeout import func_timeout
     from func_timeout.exceptions import FunctionTimedOut
 
+    if not sql.strip():
+        return None, 0.0, "No SQL query found in the prediction."
+
     try:
         start = time.perf_counter()
         result, error = func_timeout(sql_timeout, connector.execute_query, args=(sql,))
@@ -924,7 +927,7 @@ def get_sql_execution_results(
             gold_error=0,
             predicted_error=0,
             gold_df_json=gold_df.to_json(),
-            predicted_df_json="",
+            predicted_df_json=gold_df.to_json(),
             error_message="",
         )
 
@@ -941,7 +944,7 @@ def get_sql_execution_results(
                 gold_error=0,
                 predicted_error=0,
                 gold_df_json=gold_df.to_json(),
-                predicted_df_json="",
+                predicted_df_json=gold_df.to_json(),
                 error_message="",
             )
     except Exception as e:
@@ -990,3 +993,115 @@ def get_sql_execution_results(
         predicted_df_json=pred_df.to_json(),
         error_message=pred_error_msg,
     )
+
+
+def replace_select_clause(
+    source_query: str, target_query: str, dialect: str = "postgres"
+) -> str:
+    """Replaces the SELECT clause of the target SQL query with the SELECT clause from the source SQL query.
+
+    Args:
+        source_query (str): SQL query whose SELECT clause will be used.
+        target_query (str): SQL query whose SELECT clause will be replaced.
+        dialect (str): SQL dialect for parsing and rendering (default: "postgres").
+
+    Returns:
+        str: A new SQL query with the SELECT clause of `target_query` replaced by that of `source_query`.
+
+    Raises:
+        ValueError: If either query is not a valid SELECT statement.
+
+    Example:
+        >>> replace_select_clause(
+        ...     "SELECT id FROM employees",
+        ...     "SELECT name FROM employees WHERE age > 30"
+        ... )
+        "SELECT id FROM employees WHERE age > 30"
+    """
+    from sqlglot import exp, parse_one
+
+    if not dialect:
+        dialect = "postgres"
+
+    # Parse queries using the specified dialect
+    source_ast = parse_one(source_query, read=dialect)
+    target_ast = parse_one(target_query, read=dialect)
+
+    if not isinstance(source_ast, exp.Select) or not isinstance(target_ast, exp.Select):
+        raise ValueError("Both queries must be valid SELECT statements.")
+
+    # Replace SELECT expressions in the target with those from the source
+    target_ast.set("expressions", source_ast.expressions)
+
+    # Return the updated SQL string using the dialect
+    return target_ast.sql(dialect=dialect)
+
+
+def extract_sql_from_text(text: str) -> str:
+    """Extracts the first SQL query from the given text.
+
+    Priority:
+    1. SQL inside fenced blocks like ```sql ... ```
+    2. SQL starting on a new line or after a colon/label
+    3. SQL without semicolon
+
+    Returns:
+        The SQL query string, or an empty string if not found.
+    """
+    # 1. Look for fenced SQL code block
+    fenced_block_pattern = re.compile(r"```sql\s+(.*?)```", re.IGNORECASE | re.DOTALL)
+    match = fenced_block_pattern.search(text)
+    if match:
+        return match.group(1).strip()
+
+    # 2. Inline SQL with semicolon
+    sql_keywords = r"(?:SELECT|INSERT|UPDATE|DELETE|WITH)\s+"
+    sql_start = (
+        r"(?:^|\n|:\s*)"  # Start of string, newline, or colon label like "Just run:"
+    )
+    sql_pattern = re.compile(
+        rf"{sql_start}({sql_keywords}.*?;)", re.IGNORECASE | re.DOTALL
+    )
+    match = sql_pattern.search(text)
+    if match:
+        return match.group(1).strip()
+
+    # 3. Inline SQL without semicolon
+    fallback_pattern = re.compile(
+        rf"{sql_start}({sql_keywords}.*)", re.IGNORECASE | re.DOTALL
+    )
+    fallback_match = fallback_pattern.search(text)
+    if fallback_match:
+        return fallback_match.group(1).strip()
+
+    return ""
+
+
+ALL_DIALECTS = [
+    "Athena",
+    "BigQuery",
+    "ClickHouse",
+    "Databricks",
+    "Doris",
+    "Drill",
+    "Druid",
+    "DuckDB",
+    "Hive",
+    "Materialize",
+    "MySQL",
+    "Oracle",
+    "Postgres",
+    "Presto",
+    "PRQL",
+    "Redshift",
+    "RisingWave",
+    "Snowflake",
+    "Spark",
+    "Spark2",
+    "SQLite",
+    "StarRocks",
+    "Tableau",
+    "Teradata",
+    "Trino",
+    "TSQL",
+]

@@ -6438,9 +6438,9 @@ RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
 }
 
 
-class SQLExecutionAccuracy(InstanceMetric):
+class SQLExecutionLogicAccuracy(InstanceMetric):
     sql_timeout: float = 60.0
-    prediction_type = "Any"  # string representation is compared
+    prediction_type = "Any"
     _requirements_list = ["sqlglot", "func_timeout"]
 
     main_score = "non_empty_execution_accuracy"
@@ -6462,20 +6462,73 @@ class SQLExecutionAccuracy(InstanceMetric):
     ]
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
-        from .text2sql_utils import get_db_connector, get_sql_execution_results
+        from .text2sql_utils import (
+            ALL_DIALECTS,
+            extract_sql_from_text,
+            get_db_connector,
+            get_sql_execution_results,
+            replace_select_clause,
+        )
 
-        predicted_sql = prediction.strip()
-        if not predicted_sql:
-            return {}
-
-        if not predicted_sql.startswith("SELECT") and "SELECT" in predicted_sql:
-            predicted_sql = predicted_sql[predicted_sql.find("SELECT") :]
-        if ";" in predicted_sql:
-            predicted_sql = predicted_sql[: predicted_sql.find(";") + 1]
+        predicted_sql = extract_sql_from_text(prediction)
+        gold_sql = references[0]
+        dialect = task_data["db"]["db_type"]
+        if dialect not in ALL_DIALECTS:
+            dialect = None
+        revised_sql = (
+            replace_select_clause(gold_sql, predicted_sql, dialect)
+            if gold_sql and predicted_sql
+            else ""
+        )
 
         db_connector = get_db_connector(task_data["db"]["db_type"])(task_data["db"])
         result_obj = get_sql_execution_results(
-            predicted_sql, references[0], db_connector, self.sql_timeout
+            revised_sql, gold_sql, db_connector, self.sql_timeout
+        )
+
+        result = asdict(result_obj)
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        logger.debug(f"SQL Execution Accuracy Result: {result}")
+        return result
+
+
+class SQLExecutionAccuracy(InstanceMetric):
+    sql_timeout: float = 60.0
+    prediction_type = "Any"
+    _requirements_list = ["sqlglot", "func_timeout"]
+
+    main_score = "non_empty_execution_accuracy"
+
+    all_metrics = [
+        f.name
+        for f in dataclasses_fields(SQLExecutionResult)
+        if isinstance(f.type, type) and f.type in (int, float)
+    ]
+
+    reduction_map = {"mean": all_metrics}
+
+    ci_scores = [
+        "execution_accuracy",
+        "non_empty_execution_accuracy",
+        "subset_non_empty_execution_accuracy",
+        "gold_sql_runtime",
+        "predicted_sql_runtime",
+    ]
+
+    def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
+        from .text2sql_utils import (
+            extract_sql_from_text,
+            get_db_connector,
+            get_sql_execution_results,
+        )
+
+        predicted_sql = extract_sql_from_text(prediction)
+        gold_sql = references[0]
+
+        db_connector = get_db_connector(task_data["db"]["db_type"])(task_data["db"])
+        result_obj = get_sql_execution_results(
+            predicted_sql, gold_sql, db_connector, self.sql_timeout
         )
 
         result = asdict(result_obj)
@@ -6501,6 +6554,7 @@ class SQLNonExecutionAccuracy(InstanceMetric):
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
         from .text2sql_utils import (
+            extract_sql_from_text,
             is_sqlglot_parsable,
             is_sqlparse_parsable,
             sql_exact_match,
@@ -6509,14 +6563,8 @@ class SQLNonExecutionAccuracy(InstanceMetric):
             sqlparse_queries_equivalent,
         )
 
-        predicted_sql = prediction
         gold_sql = references[0]
-
-        if predicted_sql and predicted_sql.strip() != "":
-            if not predicted_sql.startswith("SELECT") and "SELECT" in predicted_sql:
-                predicted_sql = predicted_sql[predicted_sql.find("SELECT") :]
-            if ";" in predicted_sql:
-                predicted_sql = predicted_sql[: predicted_sql.find(";") + 1]
+        predicted_sql = extract_sql_from_text(prediction)
 
         is_sqlglot_parsable = is_sqlglot_parsable(predicted_sql)
         is_sqlparse_parsable = is_sqlparse_parsable(predicted_sql)
