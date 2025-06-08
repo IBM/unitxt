@@ -358,7 +358,7 @@ class ChatAPIFormat(BaseFormat):
         The resulting `messages` is now a dictionary ready for sending to the OpenAI API.
     """
 
-    repeat_instruction_per_turn: bool = False
+    place_instruction_in_user_turns: bool = False
     add_target_prefix: bool = True
 
     def to_content(self, text: str, media: Dict[str, Any]) -> Union[str, List[Content]]:
@@ -425,11 +425,11 @@ class ChatAPIFormat(BaseFormat):
     ) -> List[Message]:
         messages = []
 
-        if system_prompt or (instruction and not self.repeat_instruction_per_turn):
+        if system_prompt or (instruction and not self.place_instruction_in_user_turns):
             system_content = self.to_content(
                 system_prompt
                 + ("\n" if system_prompt != "" else "")
-                + (instruction if not self.repeat_instruction_per_turn else ""),
+                + (instruction if not self.place_instruction_in_user_turns else ""),
                 media,
             )
             messages.append(
@@ -441,7 +441,7 @@ class ChatAPIFormat(BaseFormat):
 
         for demo_instance in demos:
             text = demo_instance["source"]
-            if instruction and self.repeat_instruction_per_turn:
+            if instruction and self.place_instruction_in_user_turns:
                 text = f"{instruction}\n{text}"
 
             user_content = self.to_content(text, media)
@@ -461,7 +461,7 @@ class ChatAPIFormat(BaseFormat):
             )
 
         text = source
-        if instruction and self.repeat_instruction_per_turn:
+        if instruction and self.place_instruction_in_user_turns:
             text = f"{instruction}\n{text}"
 
         last_user_content = self.to_content(text, media)
@@ -507,6 +507,7 @@ class HFSystemFormat(ChatAPIFormat):
     """
 
     model_name: str
+    chat_kwargs_dict: Dict[str, str] = {}
     _requirements_list = ["transformers", "Jinja2"]
 
     @retry_connection_with_exponential_backoff(backoff_factor=2)
@@ -530,7 +531,10 @@ class HFSystemFormat(ChatAPIFormat):
         )
         return (
             self.tokenizer.apply_chat_template(
-                chat, tokenize=False, add_generation_prompt=True
+                chat,
+                tokenize=False,
+                add_generation_prompt=True,
+                **self.chat_kwargs_dict,
             )
             + target_prefix
         )
