@@ -6,7 +6,7 @@
 
 
 =====================================
-Metrics ✨
+Metrics 
 =====================================
 
 Unitxt supports a large collection of built in metrics, from classifical ones such as
@@ -136,14 +136,14 @@ Metric Base Classes
 As described in the previous section, a metric generates a set of scores per instance (called ``instance`` scores),
 and a set of scores over all instances (called ``global`` scores).
 
-Unitxt has several base classes, subclasses of class :class:`Metric <unitxt.metric.Metric>`, that simplify the creation 
+Unitxt has several base classes, subclasses of class :class:`Metric <unitxt.metric.Metric>`, that simplify the creation
 of metrics, depending on how the scores are calculated.
 
 :class:`InstanceMetric <unitxt.metrics.InstanceMetric>` - Class for metrics in which the global scores are calculated by aggregating the instance scores.
 Typically, the global score is the average of all instance scores. :class:`InstanceMetric <unitxt.metrics.InstanceMetric>` first evaluates each instance separately,
 and then aggregates the scores of the instances. Some examples of instance metrics are ``Accuracy``, ``TokenOverlap``, ``CharEditDistance``.
 
-:class:`BulkInstanceMetric <unitxt.metrics.BulkInstanceMetric>` - Similar to :class:`InstanceMetric <unitxt.metrics.InstanceMetric>`, it is for metrics 
+:class:`BulkInstanceMetric <unitxt.metrics.BulkInstanceMetric>` - Similar to :class:`InstanceMetric <unitxt.metrics.InstanceMetric>`, it is for metrics
 in which the global score can be calculated by aggregating over the instance scores.  However,
 for the sake of efficient implementation, it's better to run them in bulks (for example, when using LLMs during score calculations).
 A ``BulkInstanceMetric`` calculates the instance scores of a batch of instances each time, but then aggregates over the scores of all the instances.

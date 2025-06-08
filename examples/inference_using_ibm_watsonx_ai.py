@@ -1,6 +1,5 @@
-
 from unitxt.api import load_dataset
-from unitxt.inference import WMLInferenceEngine
+from unitxt.inference import WMLInferenceEngineGeneration
 from unitxt.text_utils import print_dict
 
 if __name__ == "__main__":
@@ -11,7 +10,7 @@ if __name__ == "__main__":
 
     # Preparing WML inference engine:
     model_name = "google/flan-t5-xl"
-    wml_inference = WMLInferenceEngine(
+    wml_inference = WMLInferenceEngineGeneration(
         model_name=model_name,
         data_classification_policy=["public"],
         random_seed=111,

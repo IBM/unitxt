@@ -25,7 +25,6 @@ create_catalog_docs()
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "Unitxt"
-copyright = "2023, IBM Research"
 author = "IBM Research"
 release = constants.version
 html_short_title = "Unitxt"
@@ -102,6 +101,9 @@ def linkcode_resolve(domain, info):
 def autodoc_skip_member(app, what, name, obj, would_skip, options):
     if would_skip:
         return True
+
+    if callable(obj) and obj.__doc__:
+        return False
 
     if isinstance(obj, (Field, _Field, bool, int, str, float)):
         return True

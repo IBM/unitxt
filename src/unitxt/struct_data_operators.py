@@ -43,7 +43,7 @@ from .operators import FieldOperator, InstanceOperator
 from .random_utils import new_random_generator
 from .serializers import ImageSerializer, TableSerializer
 from .type_utils import isoftype
-from .types import Table
+from .types import Table, ToolCall
 from .utils import recursive_copy
 
 
@@ -754,6 +754,28 @@ class LoadJson(FieldOperator):
             return json.loads(value, strict=False)
 
 
+class ToolCallPostProcessor(FieldOperator):
+    failure_value: Any = None
+    allow_failure: bool = False
+
+    def process_value(self, value: str) -> ToolCall:
+        if self.allow_failure:
+            try:
+                result = json.loads(value)
+            except json.JSONDecodeError:
+                return self.failure_value
+        else:
+            result = json.loads(value, strict=False)
+        if isoftype(result, List[ToolCall]):
+            if len(result) > 1:
+                UnitxtWarning(f"More than one tool returned from model: {result}")
+                return self.failure_value
+            return result[0]
+        if not isoftype(result, ToolCall):
+            return self.failure_value
+        return result
+
+
 class DumpJson(FieldOperator):
     def process_value(self, value: str) -> str:
         return json.dumps(value)
@@ -1024,24 +1046,24 @@ class ShuffleColumnsNames(TypeDependentAugmentor):
         return {"header": shuffled_header, "rows": table["rows"]}
 
 
-class JsonStrToListOfKeyValuePairs(FieldOperator):
-    """Convert a Json string of representing key value as dictionary to list of key value pairs."""
+class JsonStrToDict(FieldOperator):
+    """Convert a Json string of representing key value as dictionary.
+
+    Ensure keys and values are strings, and there are no None values.
+
+    """
 
     def process_value(self, text: str) -> List[Tuple[str, str]]:
         try:
             dict_value = json.loads(text)
         except Exception as e:
             UnitxtWarning(
-                f"Unable to convert input text to json format in JsonStrToListOfKeyValuePairs due to {e}. Text: {text}"
+                f"Unable to convert input text to json format in JsonStrToDict due to {e}. Text: {text}"
             )
             dict_value = {}
         if not isoftype(dict_value, Dict[str, Any]):
             UnitxtWarning(
-                f"Unable to convert input text to dictionary in JsonStrToListOfKeyValuePairs. Text: {text}"
+                f"Unable to convert input text to dictionary in JsonStrToDict. Text: {text}"
             )
             dict_value = {}
-        return [
-            (str(key), str(value))
-            for key, value in dict_value.items()
-            if value is not None
-        ]
+        return {str(k): str(v) for k, v in dict_value.items() if v is not None}

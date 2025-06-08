@@ -95,7 +95,7 @@ class TestParsingUtils(UnitxtTestCase):
     # Additional test for handling booleans
     def test_parse_key_equals_value_string_to_dict_boolean_values(self):
         query = "is_valid=true,has_errors=false"
-        expected = {"is_valid": "true", "has_errors": "false"}
+        expected = {"is_valid": True, "has_errors": False}
         self.assertEqual(parse_key_equals_value_string_to_dict(query), expected)
 
         query = "is_valid=True,has_errors=False"

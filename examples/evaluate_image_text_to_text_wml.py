@@ -14,6 +14,7 @@ os.environ["WATSONX_PROJECT_ID"] = ""
 if False:
     os.environ["LITELLM_LOG"] = "DEBUG"
     import logging
+
     logging.basicConfig(level=logging.DEBUG)
     # additional settings for clean logs
     httpcore_logging = logging.getLogger("httpcore")
@@ -26,11 +27,15 @@ with settings.context(disable_hf_datasets_cache=False):
         card="cards.ai2d",
         format="formats.chat_api",
         split="test",
-        max_test_instances=20
+        max_test_instances=20,
     )
 
-    inference_model = CrossProviderInferenceEngine(model="llama-3-2-11b-vision-instruct", provider="watsonx",
-                                                   max_tokens=max_tokens, temperature=0.0)
+    inference_model = CrossProviderInferenceEngine(
+        model="llama-3-2-11b-vision-instruct",
+        provider="watsonx",
+        max_tokens=max_tokens,
+        temperature=0.0,
+    )
     # inference_model = WMLInferenceEngineChat(model_name="meta-llama/llama-3-2-11b-vision-instruct",
     #                                          max_tokens=max_tokens, temperature=0.0)
 

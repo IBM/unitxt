@@ -1,5 +1,5 @@
 import typing
-from typing import Literal, NewType, TypedDict
+from typing import Literal, NewType, Type, TypedDict
 
 from unitxt.type_utils import (
     UnsupportedTypeError,
@@ -352,7 +352,7 @@ class TestAssertTyping(UnitxtTestCase):
             )
         self.assertEqual(
             str(e.exception),
-            """Passed value '{'a': 'b'}' of field 'field_1' is not of required type: (Dict[str, float]) in Task ('my_task').
+            """Passed value {'a': 'b'} of field 'field_1' is not of required type: (Dict[str, float]) in Task ('my_task').
 Task description: This is my task.""",
         )
 
@@ -428,6 +428,7 @@ Task description: This is my task.""",
         self.assertTrue(is_type(int))
         self.assertTrue(is_type(list))
         self.assertTrue(is_type(dict))
+        self.assertTrue(is_type(Type))
         self.assertTrue(is_type(Literal[1, 2, 3]))
         self.assertFalse(is_type([1, 2]))
         self.assertFalse(is_type(print))
@@ -529,3 +530,14 @@ class TestToTypeString(UnitxtTestCase):
     def test_invalid_type(self):
         with self.assertRaises(ValueError):
             to_type_string(object)
+
+    def test_custom_type_validation(self):
+        class CustomValidation:
+            @classmethod
+            def __verify_type__(cls, object):
+                return len(object) == 2
+
+        register_type(CustomValidation)
+
+        self.assertTrue(isoftype([1, 2], CustomValidation))
+        self.assertFalse(isoftype([1], CustomValidation))

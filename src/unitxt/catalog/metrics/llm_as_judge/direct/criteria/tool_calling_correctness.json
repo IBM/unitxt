@@ -1,0 +1,39 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "tool_calling_correctness",
+    "description": "The response correctly uses tool calls as expected, including the right tool names and parameters, in line with the reference or user query and instructions.",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Excellent",
+            "description": "All tool calls are correct, including names and parameters, matching the reference or user expectations precisely."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Good",
+            "description": "Tool calls are mostly correct with minor errors that do not affect the functionality or intent."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Mediocre",
+            "description": "The response attempts tool calls with partial correctness, but has notable issues in tool names, structure, or parameters."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Bad",
+            "description": "The tool calling logic is largely incorrect, with significant mistakes in tool usage or missing key calls."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Very Bad",
+            "description": "The tool calls are completely incorrect, irrelevant, or missing when clearly required."
+        }
+    ],
+    "option_map": {
+        "Excellent": 1.0,
+        "Good": 0.75,
+        "Mediocre": 0.5,
+        "Bad": 0.25,
+        "Very Bad": 0.0
+    }
+}

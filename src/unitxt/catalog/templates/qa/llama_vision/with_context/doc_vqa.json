@@ -1,0 +1,5 @@
+{
+    "__type__": "multi_reference_template",
+    "input_format": "{context} Read the text in the image carefully and answer the question with the text as seen exactly in the image. For yes/no questions, just respond Yes or No. If the answer is numeric, just respond with the number and nothing else. If the answer has multiple words, just respond with the words and absolutely nothing else. Never respond in a sentence or a phrase.\n Question: {question}",
+    "references_field": "answers"
+}

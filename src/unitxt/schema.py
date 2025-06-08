@@ -68,7 +68,7 @@ def load_chat_source(chat_str):
     return chat
 
 
-def loads_instance(batch):
+def loads_batch(batch):
     if (
         "source" in batch
         and isinstance(batch["source"][0], str)
@@ -85,6 +85,25 @@ def loads_instance(batch):
     ):
         batch["task_data"] = [json.loads(d) for d in batch["task_data"]]
     return batch
+
+
+def loads_instance(instance):
+    if (
+        "source" in instance
+        and isinstance(instance["source"], str)
+        and (
+            instance["source"].startswith('[{"role":')
+            or instance["source"].startswith('[{"content":')
+        )
+    ):
+        instance["source"] = load_chat_source(instance["source"])
+    if (
+        not settings.task_data_as_text
+        and "task_data" in instance
+        and isinstance(instance["task_data"], str)
+    ):
+        instance["task_data"] = json.loads(instance["task_data"])
+    return instance
 
 
 class FinalizeDataset(InstanceOperatorValidator):
@@ -124,6 +143,9 @@ class FinalizeDataset(InstanceOperatorValidator):
         }
         if use_reference_fields:
             task_data = {**task_data, **instance["reference_fields"]}
+
+        if "__tools__" in instance:
+            task_data["__tools__"] = instance["__tools__"]
         return task_data
 
     def serialize_instance_fields(self, instance, task_data):

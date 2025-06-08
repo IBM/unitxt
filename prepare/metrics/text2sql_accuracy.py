@@ -11,6 +11,7 @@ predictions = [
     "SELECT id, name FROM employees WHERE department = 'Sales'",
     "SELECT name FROM employees WHERE department = 'Non-Existent'",
     "Garbage SELECT *",
+    "SELECT name FROM employees ORDER BY salary ASC;",
 ]  # Incorrect column name 'nme'
 references = [
     ["SELECT name FROM employees WHERE department = 'Sales';"],
@@ -19,6 +20,7 @@ references = [
     ["SELECT name FROM employees WHERE department = 'Sales';"],
     ["SELECT name FROM employees WHERE department = 'Non-Existent';"],
     ["SELECT name FROM employees WHERE department = 'Sales';"],
+    ["SELECT name FROM employees ORDER BY salary DESC;"],
 ]
 task_data = [
     {
@@ -37,7 +39,7 @@ task_data = [
             },
         }
     }
-] * 6
+] * 7
 
 instance_targets = [
     {
@@ -57,10 +59,10 @@ instance_targets = [
         "error_message": "",
         "execution_accuracy": 1.0,
         "gold_df_json": '{"0":{"0":"Alice","1":"Charlie"}}',
-        "gold_error": 1.0,
+        "gold_error": 0.0,
         "non_empty_execution_accuracy": 1.0,
         "non_empty_gold_df": 1.0,
-        "predicted_df_json": '{"0":{"0":"Alice","1":"Charlie"}}',
+        "predicted_df_json": "",
         "predicted_error": 0.0,
         "score": 1.0,
         "score_name": "non_empty_execution_accuracy",
@@ -96,10 +98,10 @@ instance_targets = [
         "error_message": "",
         "execution_accuracy": 1.0,
         "gold_df_json": "{}",
-        "gold_error": 1.0,
+        "gold_error": 0.0,
         "non_empty_execution_accuracy": 0.0,
         "non_empty_gold_df": 0.0,
-        "predicted_df_json": "{}",
+        "predicted_df_json": "",
         "predicted_error": 0.0,
         "score": 0.0,
         "score_name": "non_empty_execution_accuracy",
@@ -118,30 +120,43 @@ instance_targets = [
         "score_name": "non_empty_execution_accuracy",
         "subset_non_empty_execution_result": 0.0,
     },
+    {
+        "error_message": "None",
+        "execution_accuracy": 0.0,
+        "gold_df_json": '{"0":{"0":"Bob","1":"Charlie","2":"Alice"}}',
+        "gold_error": 0.0,
+        "non_empty_execution_accuracy": 0.0,
+        "non_empty_gold_df": 1.0,
+        "predicted_df_json": '{"0":{"0":"Alice","1":"Charlie","2":"Bob"}}',
+        "predicted_error": 0.0,
+        "score": 0.0,
+        "score_name": "non_empty_execution_accuracy",
+        "subset_non_empty_execution_result": 0.0,
+    },
 ]
 
 
 global_target = {
-    "execution_accuracy": 0.33,
-    "execution_accuracy_ci_high": 0.83,
+    "execution_accuracy": 0.29,
+    "execution_accuracy_ci_high": 0.71,
     "execution_accuracy_ci_low": 0.0,
-    "gold_error": 0.33,
+    "gold_error": 0.0,
     "gold_sql_runtime_ci_high": 0.0,
     "gold_sql_runtime_ci_low": 0.0,
-    "non_empty_execution_accuracy": 0.17,
-    "non_empty_execution_accuracy_ci_high": 0.67,
+    "non_empty_execution_accuracy": 0.14,
+    "non_empty_execution_accuracy_ci_high": 0.57,
     "non_empty_execution_accuracy_ci_low": 0.0,
-    "non_empty_gold_df": 0.5,
-    "num_of_instances": 6,
-    "predicted_error": 0.33,
+    "non_empty_gold_df": 0.57,
+    "num_of_instances": 7,
+    "predicted_error": 0.29,
     "predicted_sql_runtime_ci_high": 0.0,
     "predicted_sql_runtime_ci_low": 0.0,
-    "score": 0.17,
-    "score_ci_high": 0.67,
+    "score": 0.14,
+    "score_ci_high": 0.57,
     "score_ci_low": 0.0,
     "score_name": "non_empty_execution_accuracy",
-    "subset_non_empty_execution_result": 0.33,
-    "subset_non_empty_execution_result_ci_high": 0.83,
+    "subset_non_empty_execution_result": 0.29,
+    "subset_non_empty_execution_result_ci_high": 0.71,
     "subset_non_empty_execution_result_ci_low": 0.0,
 }
 
@@ -174,6 +189,7 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 0.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 0.0,
         "sqlparse_validity": 1.0,
     },
     {
@@ -184,6 +200,7 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 1.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 1.0,
         "sqlparse_validity": 1.0,
     },
     {
@@ -194,6 +211,7 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 0.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 0.0,
         "sqlparse_validity": 1.0,
     },
     {
@@ -204,6 +222,7 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 0.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 0.0,
         "sqlparse_validity": 1.0,
     },
     {
@@ -214,6 +233,7 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 1.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 1.0,
         "sqlparse_validity": 1.0,
     },
     {
@@ -224,25 +244,40 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 0.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 0.0,
+        "sqlparse_validity": 1.0,
+    },
+    {
+        "score": 0.0,
+        "score_name": "sqlglot_equivalence",
+        "sql_exact_match": 0.0,
+        "sqlglot_equivalence": 0.0,
+        "sqlglot_optimized_equivalence": 0.0,
+        "sqlglot_validity": 1.0,
+        "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 0.0,
         "sqlparse_validity": 1.0,
     },
 ]
 
 
 global_target = {
-    "num_of_instances": 6,
-    "score": 0.33,
-    "score_ci_high": 0.83,
+    "num_of_instances": 7,
+    "score": 0.29,
+    "score_ci_high": 0.71,
     "score_ci_low": 0.0,
     "score_name": "sqlglot_equivalence",
-    "sql_exact_match": 0.33,
-    "sql_exact_match_ci_high": 0.83,
+    "sql_exact_match": 0.29,
+    "sql_exact_match_ci_high": 0.71,
     "sql_exact_match_ci_low": 0.0,
-    "sqlglot_equivalence": 0.33,
-    "sqlglot_equivalence_ci_high": 0.83,
+    "sql_syntactic_equivalence": 0.29,
+    "sql_syntactic_equivalence_ci_high": 0.71,
+    "sql_syntactic_equivalence_ci_low": 0.0,
+    "sqlglot_equivalence": 0.29,
+    "sqlglot_equivalence_ci_high": 0.71,
     "sqlglot_equivalence_ci_low": 0.0,
-    "sqlglot_optimized_equivalence": 0.33,
-    "sqlglot_optimized_equivalence_ci_high": 0.83,
+    "sqlglot_optimized_equivalence": 0.29,
+    "sqlglot_optimized_equivalence_ci_high": 0.71,
     "sqlglot_optimized_equivalence_ci_low": 0.0,
     "sqlglot_validity": 1.0,
     "sqlparse_equivalence": 0.0,

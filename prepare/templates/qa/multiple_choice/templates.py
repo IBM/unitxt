@@ -414,7 +414,7 @@ add_to_catalog(
 
 add_to_catalog(
     MultipleChoiceTemplate(
-        input_format="Answer the following multiple choice question based on the {context_type}. Answer only and exactly with one of the following: {numerals}.\nContext:\n{context}\nQuestion:\n{question}\nChoices:\n{choices}",
+        input_format="Consider the given context and choose the appropriate answer to the question by selecting one option among {numerals}. Please provide your answer using a single letter, uppercase, without any explanations or any other characters.\nContext:\n{context}\nQuestion:\n{question}\nChoices:\n{choices}",
         target_prefix="Answer:\n",
         target_field="answer",
         choices_separator="\n",
@@ -424,8 +424,6 @@ add_to_catalog(
     "templates.qa.multiple_choice.with_context.exact_answer_instruct",
     overwrite=True,
 )
-
-
 
 
 def remove_duplicates(input_list):
@@ -526,6 +524,7 @@ add_to_catalog(
     "templates.qa.multiple_choice.open.bluebench",
     overwrite=True,
 )
+
 add_to_catalog(
     TemplatesList(
         [
@@ -535,5 +534,16 @@ add_to_catalog(
         ]
     ),
     "templates.qa.multiple_choice.with_context.bluebench",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format="{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
+        choices_separator="\n",
+        target_field="answer",
+        enumerator="capitals",
+    ),
+    "templates.qa.multiple_choice.with_context.ai2d",
     overwrite=True,
 )

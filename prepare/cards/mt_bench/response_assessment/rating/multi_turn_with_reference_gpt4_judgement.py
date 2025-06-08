@@ -20,7 +20,7 @@ card = TaskCard(
             "model_answer": "data/mt_bench/model_answer/*.jsonl",
             "judgment": "data/mt_bench/model_judgment/gpt-4_single.jsonl",
         },
-        data_classification_policy = ["public"]
+        data_classification_policy=["public"],
     ),
     preprocess_steps=[
         "operators.mt_bench.rating_hf_space_processing_steps",

@@ -18,6 +18,7 @@ from .image_operators import image_to_data_url
 from .operator import InstanceOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype
+from .utils import retry_connection_with_exponential_backoff
 
 constants = get_constants()
 
@@ -33,6 +34,7 @@ class GraniteDocumentsFormat(Format):
 
     _requirements_list = ["transformers"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer
@@ -133,7 +135,12 @@ class BaseFormat(Format):
     def _prepare_instance_fields(self, instance) -> Tuple[str]:
         instance_fields = {}
 
-        for field in "source", constants.instruction_field, constants.system_prompt_field, "target_prefix":
+        for field in (
+            "source",
+            constants.instruction_field,
+            constants.system_prompt_field,
+            "target_prefix",
+        ):
             instance_fields[field] = self._pop_field(instance, field)
 
         instance_fields["media"] = self._pop_field(instance, "media", do_pop=False)
@@ -352,8 +359,7 @@ class ChatAPIFormat(BaseFormat):
     """
 
     repeat_instruction_per_turn: bool = False
-    add_target_prefix : bool = True
-
+    add_target_prefix: bool = True
 
     def to_content(self, text: str, media: Dict[str, Any]) -> Union[str, List[Content]]:
         # Regular expression to find <img> tags with src attribute
@@ -421,8 +427,9 @@ class ChatAPIFormat(BaseFormat):
 
         if system_prompt or (instruction and not self.repeat_instruction_per_turn):
             system_content = self.to_content(
-                system_prompt + ("\n" if system_prompt != "" else "") +
-                    (instruction if not self.repeat_instruction_per_turn else ""),
+                system_prompt
+                + ("\n" if system_prompt != "" else "")
+                + (instruction if not self.repeat_instruction_per_turn else ""),
                 media,
             )
             messages.append(
@@ -434,12 +441,14 @@ class ChatAPIFormat(BaseFormat):
 
         for demo_instance in demos:
             text = demo_instance["source"]
-            if (instruction and self.repeat_instruction_per_turn):
+            if instruction and self.repeat_instruction_per_turn:
                 text = f"{instruction}\n{text}"
 
             user_content = self.to_content(text, media)
             assistant_content = self.to_content(
-                (target_prefix if self.add_target_prefix else "") + demo_instance["target"], media
+                (target_prefix if self.add_target_prefix else "")
+                + demo_instance["target"],
+                media,
             )
             messages.extend(
                 [
@@ -452,10 +461,10 @@ class ChatAPIFormat(BaseFormat):
             )
 
         text = source
-        if (instruction and self.repeat_instruction_per_turn):
+        if instruction and self.repeat_instruction_per_turn:
             text = f"{instruction}\n{text}"
 
-        last_user_content = self.to_content(text    , media)
+        last_user_content = self.to_content(text, media)
 
         messages.extend([{"role": "user", "content": last_user_content}])
 
@@ -500,6 +509,7 @@ class HFSystemFormat(ChatAPIFormat):
     model_name: str
     _requirements_list = ["transformers", "Jinja2"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer

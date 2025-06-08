@@ -14,7 +14,11 @@ card = TaskCard(
         SplitRandomMix(
             {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}
         ),
-        MapInstanceValues(mappers={"label": {"0": "World", "1": "Sports", "2": "Business", "3": "Sci/Tech"}}),
+        MapInstanceValues(
+            mappers={
+                "label": {"0": "World", "1": "Sports", "2": "Business", "3": "Sci/Tech"}
+            }
+        ),
         Set(
             fields={
                 "classes": ["World", "Sports", "Business", "Sci/Tech"],

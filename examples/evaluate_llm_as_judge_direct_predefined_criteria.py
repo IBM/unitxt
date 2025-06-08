@@ -11,7 +11,7 @@ data = [
 
 criterion = "metrics.llm_as_judge.direct.criteria.answer_relevance"
 metrics = [
-    f"metrics.llm_as_judge.direct.rits.llama3_1_70b[criteria={criterion}, context_fields=[question]]"
+    f"metrics.llm_as_judge.direct.rits.llama3_3_70b[criteria={criterion}, context_fields=[question]]"
 ]
 
 dataset = create_dataset(

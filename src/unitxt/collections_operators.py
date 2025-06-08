@@ -1,4 +1,4 @@
-from typing import Any, Generator, List, Optional
+from typing import Any, Dict, Generator, List, Optional
 
 from .dict_utils import dict_get, dict_set
 from .operators import FieldOperator, StreamOperator
@@ -11,6 +11,11 @@ class Dictify(FieldOperator):
 
     def process_value(self, tup: Any) -> Any:
         return dict(zip(self.with_keys, tup))
+
+
+class DictToTuplesList(FieldOperator):
+    def process_value(self, dic: Dict) -> Any:
+        return list(dic.items())
 
 
 class Wrap(FieldOperator):
@@ -57,6 +62,13 @@ class Get(FieldOperator):
 
     def process_value(self, collection: Any) -> Any:
         return collection[self.item]
+
+
+class Pop(FieldOperator):
+    item: Any = None
+
+    def process_value(self, collection: Any) -> Any:
+        return collection.pop(self.item)
 
 
 class DuplicateByList(StreamOperator):
