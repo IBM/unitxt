@@ -2,7 +2,6 @@ import copy
 import functools
 import importlib.util
 import json
-import logging
 import os
 import random
 import re
@@ -16,14 +15,25 @@ from urllib.error import HTTPError as UrllibHTTPError
 from requests.exceptions import ConnectionError, HTTPError
 from requests.exceptions import Timeout as TimeoutError
 
+from .logging_utils import get_logger
 from .settings_utils import get_settings
 from .text_utils import is_made_of_sub_strings
 
+logger = get_logger()
 settings = get_settings()
 
-def retry_connection_with_exponential_backoff(max_retries=None,
-                                  retry_exceptions=(ConnectionError, TimeoutError, HTTPError, FileNotFoundError, UrllibHTTPError),
-                                  backoff_factor=1):
+
+def retry_connection_with_exponential_backoff(
+    max_retries=None,
+    retry_exceptions=(
+        ConnectionError,
+        TimeoutError,
+        HTTPError,
+        FileNotFoundError,
+        UrllibHTTPError,
+    ),
+    backoff_factor=1,
+):
     """Decorator that implements retry with exponential backoff for network operations.
 
     Also handles errors that were triggered by the specified retry exceptions,
@@ -37,11 +47,16 @@ def retry_connection_with_exponential_backoff(max_retries=None,
     Returns:
         The decorated function with retry logic
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # Get max_retries from settings if not provided
-            retries = max_retries if max_retries is not None else settings.max_connection_retries
+            retries = (
+                max_retries
+                if max_retries is not None
+                else settings.max_connection_retries
+            )
 
             for attempt in range(retries):
                 try:
@@ -52,9 +67,14 @@ def retry_connection_with_exponential_backoff(max_retries=None,
                     current_exc = e
 
                     # Check the exception chain for both __cause__ (explicit) and __context__ (implicit)
-                    visited_exceptions = set()  # To prevent infinite loops in rare cyclic exception references
+                    visited_exceptions = (
+                        set()
+                    )  # To prevent infinite loops in rare cyclic exception references
 
-                    while current_exc is not None and id(current_exc) not in visited_exceptions:
+                    while (
+                        current_exc is not None
+                        and id(current_exc) not in visited_exceptions
+                    ):
                         visited_exceptions.add(id(current_exc))
 
                         if isinstance(current_exc, retry_exceptions):
@@ -79,14 +99,19 @@ def retry_connection_with_exponential_backoff(max_retries=None,
                         raise  # Re-raise the last exception
 
                     # Calculate exponential backoff with jitter
-                    wait_time = backoff_factor * (2 ** attempt) + random.uniform(0, 1)
-                    logging.warning(f"{func.__name__} failed (attempt {attempt+1}/{retries}). "
-                                  f"Retrying in {wait_time:.2f}s. Error: {e!s}")
+                    wait_time = backoff_factor * (2**attempt) + random.uniform(0, 1)
+                    logger.warning(
+                        f"{func.__name__} failed (attempt {attempt+1}/{retries}). "
+                        f"Retrying in {wait_time:.2f}s. Error: {e!s}"
+                    )
                     time.sleep(wait_time)
 
             raise ValueError("there was a problem") from None
+
         return wrapper
+
     return decorator
+
 
 class Singleton(type):
     _instances = {}

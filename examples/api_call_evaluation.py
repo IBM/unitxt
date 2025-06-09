@@ -234,7 +234,7 @@ class CurlStrToListOfKeyValuePairs(FieldOperator):
             (key, value) = key_value_splits
             value_splits = value.split(",")
             if len(value_splits) == 1:
-                result[f"query_param_{key}"]= f"{value}"
+                result[f"query_param_{key}"] = f"{value}"
 
         return result
 
@@ -249,9 +249,10 @@ template = InputOutputTemplate(
 task = Task(
     input_fields={"user_request": str, "api_spec": str},
     reference_fields={"reference_query": str},
-    prediction_type=Dict[str,str],
+    prediction_type=Dict[str, str],
     metrics=[
-        "metrics.key_value_extraction.accuracy","metrics.key_value_extraction.token_overlap",
+        "metrics.key_value_extraction.accuracy",
+        "metrics.key_value_extraction.token_overlap",
     ],
 )
 

@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import logging
+import math
 import os
 import re
 import sys
@@ -35,6 +36,7 @@ from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
 from .artifact import Artifact
+from .base_metric import Metric
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
 from .error_utils import UnitxtError, UnitxtWarning
@@ -187,7 +189,10 @@ class InferenceEngine(Artifact):
             self.prepare_engine()
             if self.use_cache:
                 from diskcache import Cache
-                self._cache = Cache(settings.inference_engine_cache_path + self.__class__.__name__)
+
+                self._cache = Cache(
+                    settings.inference_engine_cache_path + self.__class__.__name__
+                )
 
     def __call__(
         self,
@@ -238,7 +243,7 @@ class InferenceEngine(Artifact):
             result = self._mock_infer(dataset)
         else:
             if self.use_cache:
-                number_of_batches = len(dataset) // self.cache_batch_size + 1
+                number_of_batches = math.ceil(len(dataset) / self.cache_batch_size)
                 result = []
                 for batch_index, batch in enumerate(
                     batched(dataset, self.cache_batch_size)
@@ -344,6 +349,8 @@ class InferenceEngine(Artifact):
 
     def to_tools(self, instance):
         task_data = instance.get("task_data")
+        if task_data is None:
+            return None
         if isinstance(task_data, str):
             task_data = json.loads(task_data)
         if "__tools__" in task_data:
@@ -445,6 +452,8 @@ class HFInferenceEngineBase(
     model: Any = InternalField(default=None, name="Inference object")
     processor: Any = InternalField(default=None, name="Input processor (tokenizer)")
 
+    chat_kwargs_dict: dict = {}
+
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers",
         "torch": "Install torch, go on PyTorch website for mode details.",
@@ -513,10 +522,7 @@ class HFInferenceEngineBase(
         return get_model_and_label_id(self.model_name, self.label)
 
     def decode_tokens(self, tokens: Sequence, inp_length: int) -> List[str]:
-        return [
-            self.processor.decode(token, skip_special_tokens=True)
-            for token in tokens[inp_length:]
-        ]
+        return self.processor.decode(tokens[inp_length:], skip_special_tokens=True)
 
     @staticmethod
     def create_string_from_tokens(string_tokens: List[str]) -> str:
@@ -655,8 +661,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
     truncation: bool = True
     padding_side: str = "left"  # for decoder only models
 
-    chat_kwargs_dict: dict = {}
-
     def _init_processor(self):
         from transformers import AutoTokenizer
 
@@ -712,10 +716,9 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             trust_remote_code=True,
             **model_args,
         )
-        if self.device_map is None:
-            self.model.to(self.device)
 
     def prepare_inputs(self, data: Iterable) -> Mapping:
+        tokenizer_kargs = {}
         if isinstance(data[0], list):
             data = self.processor.apply_chat_template(
                 data,
@@ -723,6 +726,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
                 add_generation_prompt=True,
                 **self.chat_kwargs_dict,
             )
+            tokenizer_kargs["add_special_tokens"] = False
 
         if self.processor.pad_token is None:
             self.processor.pad_token_id = self.model.config.eos_token_id[0]
@@ -733,6 +737,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             padding=self.padding,
             truncation=self.truncation,
             padding_side=self.padding_side,
+            **tokenizer_kargs,
         ).to(self.device or self.device_map)
 
     def _infer_fn(
@@ -755,13 +760,13 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         """
         all_final_outputs = []  # List to store results from all batches
 
-        for i in tqdm(
-            range(0, len(dataset), self.batch_size),
+        for batch in tqdm(
+            batched(dataset, self.batch_size),
             desc=f"Running inference in batches of {self.batch_size}",
+            total=len(dataset) // self.batch_size,
         ):
             # Get the current batch
-            batch_data = dataset[i : i + self.batch_size]
-            batch_sources = [instance["source"] for instance in batch_data]
+            batch_sources = [instance["source"] for instance in batch]
 
             # --- Process the current batch ---
             # 1. Tokenize inputs for the batch
@@ -800,7 +805,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
                         j
                     ],  # Output for the j-th item in the batch
                     output_tokens=len(string_tokens_batch[j]),
-                    inp=batch_data[j]["source"],  # Original input for the j-th item
+                    inp=batch[j]["source"],  # Original input for the j-th item
                     inp_tokens=len(tokenized_inputs.encodings[j].tokens)
                     if tokenized_inputs.encodings is not None
                     else None,
@@ -999,7 +1004,9 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
 
         model_class = (
             AutoPeftModelForSeq2SeqLM
-            if AutoConfig.from_pretrained(self.peft_config.base_model_name_or_path).is_encoder_decoder
+            if AutoConfig.from_pretrained(
+                self.peft_config.base_model_name_or_path
+            ).is_encoder_decoder
             else AutoPeftModelForCausalLM
         )
         path = self.model_name
@@ -1013,7 +1020,9 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
             low_cpu_mem_usage=self.low_cpu_mem_usage,
             torch_dtype=self._get_torch_dtype(),
         )
-        self.model = self.model.to(dtype=self._get_torch_dtype()) # Make sure that base model and adapter use same dtype
+        self.model = self.model.to(
+            dtype=self._get_torch_dtype()
+        )  # Make sure that base model and adapter use same dtype
         if self.device_map is None:
             self.model.to(self.device)
 
@@ -1429,9 +1438,9 @@ class OptionSelectingByLogProbsInferenceEngine:
             for option in instance["task_data"]["options"]
         ]
 
-        dataset_with_options_logprobs: List[List[Dict[str, Union[float, str]]]] = (
-            self.get_options_log_probs(dataset_with_options)
-        )
+        dataset_with_options_logprobs: List[
+            List[Dict[str, Union[float, str]]]
+        ] = self.get_options_log_probs(dataset_with_options)
 
         dataset_iterator = iter(dataset_with_options_logprobs)
 
@@ -1590,9 +1599,9 @@ class IbmGenAiInferenceEngine(
         predict_results = []
         for prediction in predictions:
             result: TextGenerationResult = prediction.results[0]
-            assert isinstance(result.generated_tokens, list), (
-                "result.generated_tokens should be a list"
-            )
+            assert isinstance(
+                result.generated_tokens, list
+            ), "result.generated_tokens should be a list"
 
             predict_result = []
             for base_token in result.generated_tokens:
@@ -1841,14 +1850,26 @@ class OpenAiInferenceEngine(
     def _get_chat_completion(self, instance, return_meta_data):
         import openai
 
+        tools = self.to_tools(instance)
         messages = self.to_messages(instance)
         try:
             response = self.client.chat.completions.create(
                 messages=messages,
+                tools=tools,
                 model=self.get_client_model_name(),
                 **self._get_completion_kwargs(),
+                #                tool_choice="auto"
             )
-            prediction = response.choices[0].message.content
+
+            if tools is None:
+                prediction = response.choices[0].message.content
+            else:
+                try:
+                    func_call = response.choices[0].message.tool_calls[0].function
+                    prediction = f'{{"name": "{func_call.name}", "arguments": {func_call.arguments}}}'
+                except:
+                    prediction = response.choices[0].message.content or ""
+
             return self.get_return_object(prediction, response, return_meta_data)
         # catch in case of content_filtering failure
         except openai.BadRequestError as e:
@@ -1923,9 +1944,9 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
         api_version = self.credentials.get(
             "api_version", os.environ.get("OPENAI_API_VERSION", None)
         )
-        assert api_version and azure_openai_host, (
-            "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
-        )
+        assert (
+            api_version and azure_openai_host
+        ), "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
         api_url = f"{azure_openai_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
 
         return {"api_key": api_key, "api_url": api_url, "api_version": api_version}
@@ -1968,7 +1989,9 @@ class RITSInferenceEngine(
     def get_client_model_name(self):
         if self.model_name.startswith("byom-"):
             # Remove "byom-xyz/" initial part of model name, since that's part of the endpoint.
-            return "/".join(self.model_name.split("/")[1:])  # This is wrong. since in next iteration
+            return "/".join(
+                self.model_name.split("/")[1:]
+            )  # This is wrong. since in next iteration
         return self.model_name
 
     @staticmethod
@@ -1986,10 +2009,12 @@ class RITSInferenceEngine(
             return cls.model_names_dict[model_name]
         if model_name.startswith("byom-"):
             model_name_for_endpoint = model_name.split("/")[0]
-            logger.info(f"Using BYOM model: {model_name_for_endpoint}") # For RITS BYOM the model name has the following convention:
-                                                  # <byom endpoint>/<actual model name>. e.g.
-                                                  # byom-gb-iqk-lora/ibm-granite/granite-3.1-8b-instruct
-                                                  # at this case we should use https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/byom-gb-iqk-lora/v1/chat/completions
+            logger.info(
+                f"Using BYOM model: {model_name_for_endpoint}"
+            )  # For RITS BYOM the model name has the following convention:
+            # <byom endpoint>/<actual model name>. e.g.
+            # byom-gb-iqk-lora/ibm-granite/granite-3.1-8b-instruct
+            # at this case we should use https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/byom-gb-iqk-lora/v1/chat/completions
             return model_name_for_endpoint
         return (
             model_name.split("/")[-1]
@@ -2048,9 +2073,9 @@ class TogetherAiInferenceEngine(
             together_model.id: together_model.type for together_model in together_models
         }
         model_type = together_model_id_to_type.get(self.model_name)
-        assert model_type is not None, (
-            f"Could not find model {self.model_name} in Together AI model list"
-        )
+        assert (
+            model_type is not None
+        ), f"Could not find model {self.model_name} in Together AI model list"
         assert model_type in [ModelType.CHAT, ModelType.LANGUAGE, ModelType.CODE], (
             f"Together AI model type {model_type} is not supported; "
             "supported types are 'chat', 'language' and 'code'."
@@ -2171,7 +2196,16 @@ class WMLChatParamsMixin(Artifact):
 
 
 CredentialsWML = Dict[
-    Literal["url", "username", "password", "api_key", "project_id", "space_id", "instance_id"], str
+    Literal[
+        "url",
+        "username",
+        "password",
+        "api_key",
+        "project_id",
+        "space_id",
+        "instance_id",
+    ],
+    str,
 ]
 
 
@@ -2220,8 +2254,14 @@ class WMLInferenceEngineBase(
         Union[WMLInferenceEngineParams, WMLGenerationParamsMixin, WMLChatParamsMixin]
     ] = None
 
+    external_client: Any = None
     _client: Any = InternalField(default=None, name="WML client")
     _model: Any = InternalField(default=None, name="WML model")
+
+    def process_data_before_dump(self, data):
+        data = super().process_data_before_dump(data)
+        data.pop("external_client", None)
+        return data
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name or self.deployment_id, self.label)
@@ -2229,11 +2269,10 @@ class WMLInferenceEngineBase(
     def verify(self):
         super().verify()
 
-        assert self.model_name or (
-            self.deployment_id and not (self.model_name and self.deployment_id)
-        ), (
-            "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
-        )
+        assert (
+            self.model_name
+            or (self.deployment_id and not (self.model_name and self.deployment_id))
+        ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
 
     # def process_data_before_dump(self, data):
     #     if "credentials" in data:
@@ -2245,6 +2284,9 @@ class WMLInferenceEngineBase(
     #     return data
 
     def _initialize_wml_client(self):
+        if self.external_client:
+            return self.external_client
+
         from ibm_watsonx_ai.client import APIClient, Credentials
 
         if self.credentials is None or len(self.credentials) == 0:  # TODO: change
@@ -2328,9 +2370,9 @@ class WMLInferenceEngineBase(
             "['url', 'api_key', 'username', 'password']."
         )
 
-        assert credentials.get("url"), (
-            "'url' is a mandatory key for WML credentials dict."
-        )
+        assert credentials.get(
+            "url"
+        ), "'url' is a mandatory key for WML credentials dict."
         assert "space_id" in credentials or "project_id" in credentials, (
             "Either 'space_id' or 'project_id' must be provided "
             "as keys for WML credentials dict."
@@ -2742,14 +2784,36 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
         # images as SDK allows sending only one image per message.
         return [messages]
 
+    def to_tools(
+        self, instance: Dict[str, Any]
+    ) -> Dict[str, Union[Optional[List[Dict[str, str]]], Optional[Dict[str, str]]]]:
+        """watsonx.ai chat also allows specifying which tools models must use."""
+        task_data = instance.get("task_data")
+        if task_data is None:
+            return {"tools": None, "tool_choice": None}
+
+        if isinstance(task_data, str):
+            task_data = json.loads(task_data)
+        if "__tools__" in task_data:
+            tools: List[Dict[str, str]] = task_data["__tools__"]
+            tool_choice: Optional[Dict[str, str]] = task_data.get("__tool_choice__")
+            return {"tools": tools, "tool_choice": tool_choice}
+
+        return {"tools": None, "tool_choice": None}
+
     def _handle_async_requests(
         self,
-        messages: List[List[Dict[str, Any]]],
+        data: List[Dict[str, Any]],
         params: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         async def handle_async_requests(start_idx, end_idx):
             coroutines = [
-                self._model.achat(messages=messages[idx], params=params)
+                self._model.achat(
+                    messages=data[idx]["msg"],
+                    params=params,
+                    tools=data[idx]["tools"]["tools"],
+                    tool_choice=data[idx]["tools"]["tool_choice"],
+                )
                 for idx in range(start_idx, end_idx)
             ]
             batch_results = await asyncio.gather(*coroutines)
@@ -2758,10 +2822,10 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
         loop = asyncio.get_event_loop()
         results = []
 
-        for batch_idx in range(0, len(messages), self.concurrency_limit):
+        for batch_idx in range(0, len(data), self.concurrency_limit):
             batch_results = loop.run_until_complete(
                 handle_async_requests(
-                    batch_idx, min(batch_idx + self.concurrency_limit, len(messages))
+                    batch_idx, min(batch_idx + self.concurrency_limit, len(data))
                 )
             )
             results.extend(batch_results)
@@ -2783,25 +2847,43 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             output_type = "message"
             params["logprobs"] = False
 
-        indexed_messages = [
-            (i, message)
+        data = [
+            {
+                "idx": i,
+                "msg": message,
+                "tools": self.to_tools(dataset[i]),
+            }
             for i in range(len(dataset))
             for message in self.to_messages(dataset[i])
         ]
 
-        results = self._handle_async_requests(
-            [msg[1] for msg in indexed_messages], params
-        )
+        responses = self._handle_async_requests(data, params)
 
-        return [
-            self.get_return_object(
-                result["choices"][0][output_type]["content"],
-                result,
-                dataset[idx[0]]["source"],
-                return_meta_data,
+        results = []
+        for inp, response in zip(data, responses):
+            idx = inp["idx"]
+            tool_call = data[idx]["tools"]["tools"] is not None
+
+            output = response["choices"][0][output_type]
+            if tool_call:
+                if "tool_calls" in output:
+                    func = output["tool_calls"][0]["function"]
+                    prediction = f'{{"name": "{func["name"]}", "arguments": {func["arguments"]}}}'
+                else:
+                    prediction = output["content"]
+            else:
+                prediction = output["content"]
+
+            results.append(
+                self.get_return_object(
+                    prediction,
+                    response,
+                    str(inp),
+                    return_meta_data,
+                )
             )
-            for result, idx in zip(results, indexed_messages)
-        ]
+
+        return results
 
     def get_return_object(self, predict_result, result, input_text, return_meta_data):
         if return_meta_data:
@@ -3196,7 +3278,9 @@ class LiteLLMInferenceEngine(
                 prediction = response["choices"][0]["message"]["content"]
             else:
                 try:
-                    func_call = response["choices"][0]["message"]["tool_calls"][0]["function"]
+                    func_call = response["choices"][0]["message"]["tool_calls"][0][
+                        "function"
+                    ]
                     prediction = f'{{"name": "{func_call.name}", "arguments": {func_call.arguments}}}'
                 except:
                     prediction = response["choices"][0]["message"]["content"] or ""
@@ -3285,10 +3369,12 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     provider_model_map: Dict[_supported_apis, Dict[str, str]] = {
         "watsonx-sdk": {  # checked from ibm_watsonx_ai.APIClient().foundation_models.ChatModels
             "granite-20b-code-instruct": "ibm/granite-20b-code-instruct",
-            "granite-3-2-8b-instruct": "ibm/granite-3-2-8b-instruct",
-            "granite-3-3-8b-instruct": "ibm/granite-3-3-8b-instruct",
             "granite-3-2b-instruct": "ibm/granite-3-2b-instruct",
             "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",
+            "granite-3-2-2b-instruct": "ibm/granite-3-2-2b-instruct",
+            "granite-3-2-8b-instruct": "ibm/granite-3-2-8b-instruct",
+            "granite-3-3-2b-instruct": "ibm/granite-3-3-2b-instruct",
+            "granite-3-3-8b-instruct": "ibm/granite-3-3-8b-instruct",
             "granite-34b-code-instruct": "ibm/granite-34b-code-instruct",
             "granite-guardian-3-8b": "ibm/granite-guardian-3-8b",
             "granite-vision-3-2-2b": "ibm/granite-vision-3-2-2b",
@@ -3304,7 +3390,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mistral-large-instruct": "mistralai/mistral-large",
             "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7b-instruct-v01",
         },
-        "together-ai": {
+        "together-ai": {  # checked from https://www.together.ai/models
             "llama-3-8b-instruct": "together_ai/meta-llama/Llama-3-8b-chat-hf",
             "llama-3-70b-instruct": "together_ai/meta-llama/Llama-3-70b-chat-hf",
             "llama-3-1-8b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
@@ -3312,10 +3398,23 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-1-405b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
             "llama-3-2-1b-instruct": "together_ai/togethercomputer/llama-3-2-1b-instruct",
             "llama-3-3-70b-instruct": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo",
+            "llama-4-maverick": "together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",  # pragma: allowlist secret
+            "llama-4-scout": "together_ai/meta-llama/Llama-4-Scout-17B-16E-Instruct",
+            "deepseek-v3": "together_ai/deepseek-ai/DeepSeek-V3",
+            "llama-3-3-70b-instruct-free": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+            "deepseek-r1-distilled-llama-70b-free": "together_ai/deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free",
         },
-        "aws": {
+        "aws": {  # checked from https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
             "llama-3-8b-instruct": "bedrock/meta.llama3-8b-instruct-v1:0",
             "llama-3-70b-instruct": "bedrock/meta.llama3-70b-instruct-v1:0",
+            "llama-3-1-70b-instruct": "bedrock/meta.llama3-1-70b-instruct-v1:0",
+            "llama-3-1-405b-instruct": "bedrock/meta.llama3-1-405b-instruct-v1:0",
+            "llama-3-3-70b-instruct": "bedrock/meta.llama3-3-70b-instruct-v1:0",
+            "llama-4-maverick": "bedrock/meta.llama4-maverick-17b-instruct-v1:0",  # pragma: allowlist secret
+            "llama-4-scout": "bedrock/meta.llama4-scout-17b-instruct-v1:0",
+            "mistral-large-instruct": "bedrock/mistral.mistral-large-2407-v1:0",
+            "deepseek-r1": "bedrock/deepseek.r1-v1:0",
+            "claude-3-7-sonnet": "bedrock/anthropic.claude-3-7-sonnet-20250219-v1:0",
         },
         "ollama": {
             "llama-3-8b-instruct": "llama3:8b",
@@ -3326,6 +3425,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-1b-instruct": "llama3.2:1b",
             "llama-3-2-3b-instruct": "llama3.2:3b",
             "llama-3-3-70b-instruct": "llama3.3",
+            "granite-3-3-2b-instruct": "granite3.3:2b",
+            "granite-3-3-8b-instruct": "granite3.3:8b",
         },
         "bam": {
             "granite-3-8b-instruct": "ibm/granite-8b-instruct-preview-4k",
@@ -3344,9 +3445,12 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-11b-vision-instruct": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "llama-3-2-90b-vision-instruct": "meta-llama/Llama-3.2-90B-Vision-Instruct",
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
+            "llama-4-scout": "llama-4-scout-17b-16e",
+            "llama-4-maverick": "llama-4-mvk-17b-128e-fp8",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
-            "deepseek-v3": "deepseek-ai/DeepSeek-V3",
+            "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7B-instruct-v0.1",
+            "deepseek-v3": "deepseek-ai/deepseek-v3-h200",
             "granite-guardian-3-2-3b-a800m": "ibm-granite/granite-guardian-3.2-3b-a800m",
             "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
         },
@@ -3375,6 +3479,12 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "gpt-4-32k-0314": "gpt-4-32k-0314",
             "gpt-4-32k-0613": "gpt-4-32k-0613",
             "gpt-4-vision-preview": "gpt-4-vision-preview",
+            "gpt-4-1": "gpt-4.1",
+            "gpt-4-1-2025-04-14": "gpt-4.1-2025-04-14",
+            "gpt-4-1-nano": "gpt-4.1-nano",
+            "gpt-4-1-nano-2025-04-14": "gpt-4.1-nano-2025-04-14",
+            "gpt-4-1-mini": "gpt-4.1-mini",
+            "gpt-4-1-mini-2025-04-14": "gpt-4.1-mini-2025-04-14",
         },
         "azure": {
             "o1-mini": "azure/o1-mini",
@@ -3397,11 +3507,23 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "gpt-3.5-turbo-16k": "azure/gpt-3.5-turbo-16k",
             "gpt-3.5-turbo-16k-0613": "azure/gpt-3.5-turbo-16k-0613",
             "gpt-4-vision": "azure/gpt-4-vision",
+            "gpt-4-1": "azure/gpt-4.1",
+            "gpt-4-1-nano": "azure/gpt-4.1-nano",
+            "gpt-4-1-mini": "azure/gpt-4.1-mini",
+            "gpt-4-1-mini-2025-04-14": "azure/gpt-4.1-mini-2025-04-14",
+            "llama-3-1-405b-instruct": "azure/Meta-Llama-3.1-405B-Instruct",
+            "llama-3-3-70b-instruct": "azure/Llama-3.3-70B-Instruct",
+            "llama-4-maverick": "azure/Llama-4-Maverick-17B-128E-Instruct-FP8",  # pragma: allowlist secret
+            "llama-4-scout": "azure/Llama-4-Scout-17B-16E-Instruct",
         },
         "vertex-ai": {
             "llama-3-1-8b-instruct": "vertex_ai/meta/llama-3.1-8b-instruct-maas",
             "llama-3-1-70b-instruct": "vertex_ai/meta/llama-3.1-70b-instruct-maas",
             "llama-3-1-405b-instruct": "vertex_ai/meta/llama-3.1-405b-instruct-maas",
+            "gemini-2-5-pro": "vertex_ai/gemini-2.5-pro-preview-05-06",
+            "gemini-2-5-pro-preview-05-06": "vertex_ai/gemini-2.5-pro-preview-05-06",
+            "gemini-2.5-flash": "gemini-2.5-flash-preview-05-20",
+            "gemini-2.5-flash-preview-05-20": "gemini-2.5-flash-preview-05-20",
         },
         "replicate": {
             "granite-3-2-8b-instruct": "replicate/ibm-granite/granite-3.2-8b-instruct",
@@ -3423,9 +3545,13 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-70b-instruct": "replicate/meta/meta-llama-3-70b-instruct",
             "llama-3-8b": "replicate/meta/meta-llama-3-8b",
             "llama-3-8b-instruct": "replicate/meta/meta-llama-3-8b-instruct",
+            "llama-3-3-70b-instruct": "replicate/meta/meta-llama-3.3-70b-instruct",
+            "llama-4-maverick": "replicate/meta/llama-4-maverick-instruct",
+            "llama-4-scout": "replicate/meta/llama-4-scout-instruct",
             "mistral-7b-instruct-v0.2": "replicate/mistralai/mistral-7b-instruct-v0.2",
             "mistral-7b-v0.1": "replicate/mistralai/mistral-7b-v0.1",
             "mixtral-8x7b-instruct-v0.1": "replicate/mistralai/mixtral-8x7b-instruct-v0.1",
+            "gpt-4-1": "replicate/openai/gpt-4.1",
         },
     }
     provider_model_map["watsonx"] = {
@@ -3439,7 +3565,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "aws": LiteLLMInferenceEngine,
         "ollama": OllamaInferenceEngine,
         "bam": IbmGenAiInferenceEngine,
-        "watsonx-sdk": WMLInferenceEngine,
+        "watsonx-sdk": WMLInferenceEngineChat,
         "rits": RITSInferenceEngine,
         "azure": LiteLLMInferenceEngine,
         "vertex-ai": LiteLLMInferenceEngine,
@@ -3459,6 +3585,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         return self.provider if self.provider is not None else settings.default_provider
 
     def prepare_engine(self):
+        # print("provider", self.provider)
         provider = self.get_provider_name()
         if provider not in self._provider_to_base_class:
             raise UnitxtError(
@@ -3618,3 +3745,37 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
             predictions.append(options_scores.most_common(1)[0][0])
 
         return predictions
+
+
+class MetricInferenceEngine(InferenceEngine):
+    """An inference engine that uses the output of a metric as its prediction. Used to evaluate metrics like LLM as Judge or Granite Guardian.
+
+    Args:
+        InferenceEngine (_type_): _description_
+    """
+
+    metric: Metric
+    prediction_field: str
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        task_data = [
+            json.loads(instance["task_data"]) if "task_data" in instance else {}
+            for instance in dataset
+        ]
+        predictions = [td[self.prediction_field] for td in task_data]
+        references = [instance["references"] for instance in dataset]
+        return self.metric.compute(
+            task_data=task_data,
+            predictions=predictions,
+            references=references,
+        )
+
+    def prepare_engine(self):
+        pass
+
+    def get_engine_id(self):
+        return "metric_inference_engine"

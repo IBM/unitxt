@@ -25,14 +25,10 @@ Unitxt uses specific typed structures for tool calling:
 
 .. code-block:: python
 
-    class Parameter(TypedDict):
-        name: str
-        type: Optional[Type]  # Using actual Python type objects
-
     class Tool(TypedDict):
         name: str
         description: str
-        parameters: List[Parameter]
+        parameters: JsonSchema # a well defined json schema
 
     class ToolCall(TypedDict):
         name: str
@@ -45,7 +41,7 @@ The task schema for supervised tool calling is defined as:
     Task(
         __description__="""Task to test tool calling capabilities.""",
         input_fields={"query": str, "tools": List[Tool]},
-        reference_fields={"call": ToolCall},
+        reference_fields={"reference_calls": List[ToolCall]},
         prediction_type=ToolCall,
         metrics=["metrics.tool_calling"],
         default_template="templates.tool_calling.base",
@@ -104,15 +100,19 @@ Create a Python file named ``bfcl.py`` and implement the DataCard as follows:
                 JoinStreams(left_stream="questions", right_stream="answers", how="inner", on="id", new_stream_name="test"),
                 # Extract the query from the question content
                 Copy(field="question/0/0/content", to_field="query"),
-                # Convert function data to a tool format
-                ToTool(field="function/0", to_field="tool"),
-                # Wrap the tool in a list for compatibility
-                Wrap(field="tool", inside="list", to_field="tools"),
-                # Process ground truth data
-                DictToTuplesList(field="ground_truth/0", to_field="call_tuples"),
-                # Extract tool name and arguments from ground truth
-                Copy(field="call_tuples/0/0", to_field="call/name"),
-                Copy(field="call_tuples/0/1", to_field="call/arguments"),
+                # Starting to build the tools field as List[Tool]
+                Copy(field="function", to_field="tools"),
+                # Make Sure the json schema of the parameters is well defined
+                RecursiveReplace(key="type", map_values={"dict": "object", "float": "number", "tuple": "array"}, remove_values=["any"]),
+                # Process ground truth data in this dataset, which is a provided as a list of options per field,
+                # and convert it into a list of explicit tool calls
+                #
+                #[{"geometry.circumference": {"radius": [3], "units": ["cm", "m"]}}]}
+                # becomes:
+                # [{"name": "geometry.circumference", "arguments" : {"radius": 3, "units": "cm"}}, 
+                #  {"name": "geometry.circumference", "arguments" : {"radius": 3, "units": "m"}}]
+                ExecuteExpression(expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]',
+                              to_field="reference_calls", imports_list=["itertools"])
             ],
             task="tasks.tool_calling.supervised",
             templates=["templates.tool_calling.base"],
@@ -132,19 +132,14 @@ Each preprocessing step serves a specific purpose in transforming the raw data i
 
 1. ``JoinStreams``: Combines question and answer data based on ID
 2. ``Copy(field="question/0/0/content", to_field="query")``: Creates the ``query`` input field
-3. ``ToTool(field="function/0", to_field="tool")``: Converts function definitions to the ``Tool`` structure
-4. ``Wrap(field="tool", inside="list", to_field="tools")``: Creates the ``tools`` list input field
+3. ``Copy(field="function", to_field="tools")``: Creates the ``tools`` list input field
+4. ``RecursiveReplace(key="type", map_values={"dict": "object", "float": "number", "tuple": "array"}, remove_values=["any"])``: Converts parameters definitions to the ``JsonSchema`` structure
 5. ``DictToTuplesList`` and subsequent ``Copy`` operations: Create the reference ``call`` field with the proper ``ToolCall`` structure
 
 After preprocessing, each example will have:
 - A ``query`` that the model should respond to
 - Available ``tools`` that the model can choose from
 - A reference ``call`` showing which tool should be called with what arguments
-
-The ToTool Operator
-^^^^^^^^^^^^^^^^^
-
-The ``ToTool`` operator is a key component that converts function definitions into the ``Tool`` format expected by the task schema. This allows inference engines to understand the available tools and their parameters.
 
 Part 3: Inference and Evaluation
 -------------------------------
@@ -190,12 +185,13 @@ Run the model and evaluate the results:
     # Evaluate the predictions
     results = evaluate(predictions=predictions, data=dataset)
 
+    print("Instance Results:")
+    print(results.instance_scores)
+
     # Print the results
     print("Global Results:")
     print(results.global_scores.summary)
 
-    print("Instance Results:")
-    print(results.instance_scores.summary)
 
 Part 4: Understanding the Tool Calling Metrics
 --------------------------------------------
@@ -215,19 +211,21 @@ The ToolCallingMetric in Unitxt provides several useful scores:
             # Implementation details...
             return {
                 self.main_score: exact_match,
-                "tool_choice": tool_choice,
-                "parameter_choice": parameter_choice,
-                "parameters_types": parameters_types,
-                "parameter_values": parameter_values
+                    "tool_name_accuracy": tool_choice,
+                    "argument_name_recall": parameter_recall,
+                    "argument_name_precision": parameter_precision,            
+                    "argument_value_precision": parameter_value_precision,
+                    "argument_schema_validation": parameter_schema_validation,
             }
 
 The metrics evaluate different aspects of tool calling accuracy:
 
 1. **exact_match**: Measures if the tool call exactly matches a reference
-2. **tool_choice**: Evaluates if the correct tool was selected
-3. **parameter_choice**: Checks if the correct parameters were identified
-4. **parameter_values**: Assesses if the parameter values are correct
-5. **parameters_types**: Verifies if parameter types match the tool definition
+2. **tool_choice_accuracy**: Evaluates if the correct tool was selected
+3. **parameter_name_recall**: Assesses if all relevant parameters were set
+4. **parameter_name_precision**: Assesses if the parameter names are correct
+5. **parameter_value_precision**: Assesses if the parameter values are correct
+6. **parameter_schema_validation**: Verifies if parameter types match the tool definition
 
 Custom Evaluation
 ^^^^^^^^^^^^^^^
@@ -260,7 +258,7 @@ To better understand your model's performance, analyze individual instances:
         print(f"\nInstance {i+1}:")
         print(f"Query: {dataset[i]['query']}")
         print(f"Available tools: {dataset[i]['tools']}")
-        print(f"Expected tool call: {dataset[i]['call']}")
+        print(f"Expected tool calls: {dataset[i]['reference_calls']}")
         print(f"Model prediction: {predictions[i]}")
         print(f"Scores: {instance}")
 

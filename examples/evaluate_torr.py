@@ -12,7 +12,7 @@ with settings.context(
         use_cache=True,
     )
     # Infer
-    model = CrossProviderInferenceEngine(   # We used Together AI as inference engine
+    model = CrossProviderInferenceEngine(  # We used Together AI as inference engine
         model="llama-3-8b-instruct",
         max_tokens=512,
     )

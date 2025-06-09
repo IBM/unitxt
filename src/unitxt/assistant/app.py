@@ -146,7 +146,11 @@ class App:
                 "Model", ["watsonx/meta-llama/llama-3-3-70b-instruct"]
             )
             self.max_tokens = st.number_input(
-                "Context Tokens", min_value=5000, max_value=100000, value=10000, step=5000
+                "Context Tokens",
+                min_value=5000,
+                max_value=100000,
+                value=10000,
+                step=5000,
             )
             st.markdown("---")
             with st.popover("What do you think?"):

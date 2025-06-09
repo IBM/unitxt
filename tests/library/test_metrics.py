@@ -47,10 +47,13 @@ from unitxt.metrics import (
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
     HuggingfaceMetric,
+    JaccardIndex,
+    JaccardIndexString,
     KendallTauMetric,
     KeyValueExtraction,
     LlamaIndexCorrectness,
     MaxAccuracy,
+    MeanSquaredError,
     MeteorFast,
     MetricsEnsemble,
     NormalizedSacrebleu,
@@ -66,6 +69,7 @@ from unitxt.metrics import (
     StringContainmentRatio,
     TokenOverlap,
     ToolCallingMetric,
+    ToolCallKeyValueExtraction,
     UnsortedListExactMatch,
     WebsrcSquadF1,
 )
@@ -340,6 +344,100 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("f1_micro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_micro", outputs[0]["score"]["instance"]["score_name"])
+
+    def test_mean_squared_error(self):
+        metric = MeanSquaredError()
+        predictions = [1.0, 2.0, 1.0]
+        references = [[-1.0], [1.0], [0.0]]
+
+        instance_targets = [
+            {
+                "mean_squared_error": 4.0,
+                "score": 4.0,
+                "score_name": "mean_squared_error",
+            },
+            {
+                "mean_squared_error": 1.0,
+                "score": 1.0,
+                "score_name": "mean_squared_error",
+            },
+            {
+                "mean_squared_error": 1.0,
+                "score": 1.0,
+                "score_name": "mean_squared_error",
+            },
+        ]
+
+        global_target = {
+            "mean_squared_error": 2.0,
+            "score": 2.0,
+            "score_name": "mean_squared_error",
+            "mean_squared_error_ci_low": 1.0,
+            "mean_squared_error_ci_high": 4.0,
+            "score_ci_low": 1.0,
+            "score_ci_high": 4.0,
+            "num_of_instances": 3,
+        }
+
+        self.assertTrue(
+            test_metric(
+                metric=metric,
+                predictions=predictions,
+                references=references,
+                instance_targets=instance_targets,
+                global_target=global_target,
+            )
+        )
+
+    def test_jaccard_metric(self):
+        metric = JaccardIndex()
+        from unitxt.string_operators import RegexSplit
+
+        predictions = [["Apple", "Boy", "Cat"]]
+        references = [[["Boy", "Apple", "Dog"]]]
+
+        instance_targets = [
+            {"jaccard_index": 0.5, "score": 0.5, "score_name": "jaccard_index"},
+        ]
+
+        global_target = {
+            "jaccard_index": 0.5,
+            "score": 0.5,
+            "score_name": "jaccard_index",
+            "num_of_instances": 1,
+        }
+
+        self.assertTrue(
+            test_metric(
+                metric=metric,
+                predictions=predictions,
+                references=references,
+                instance_targets=instance_targets,
+                global_target=global_target,
+            )
+        )
+
+        metric = JaccardIndexString(splitter=RegexSplit(by=r"\s+"))
+
+        predictions = ["Apple Boy Cat"]
+        references = [["Boy    Apple Dog"]]
+
+        global_target = {
+            "jaccard_index": 0.5,
+            "score": 0.5,
+            "score_name": "jaccard_index",
+            "num_of_instances": 1,
+        }
+
+        self.assertTrue(
+            test_metric(
+                metric=metric,
+                predictions=predictions,
+                references=references,
+                instance_targets=instance_targets,
+                global_target=global_target,
+            )
+        )
 
     def test_f1_strings(self):
         metric = F1Strings()
@@ -951,44 +1049,65 @@ class TestMetrics(UnitxtTestCase):
         # key2 - 1 correct of 2
         # key3 - 0 correct of 1
         # legal keys - 4 out of 5
-        references = [ [{"key1": "value1" , "key2" :  "values2"    , "key3": "value3"}], [{"key1": "value3" , "key2" :  "value4"}]]
-        predictions = [ {"key1": "value1" , "key2" :  "wrong-value", "wrong-key" : "values3" },{"key1": "value3",  "key2" : "value4", "key3" : "value9"}]
+        references = [
+            [{"key1": "value1", "key2": "values2", "key3": "value3"}],
+            [{"key1": "value3", "key2": "value4"}],
+        ]
+        predictions = [
+            {"key1": "value1", "key2": "wrong-value", "wrong-key": "values3"},
+            {"key1": "value3", "key2": "value4", "key3": "value9"},
+        ]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
-        self.assertAlmostEqual((2+1+0)/(2 + 2 + 2), outputs[0]["score"]["global"]["accuracy_micro"])
-        self.assertAlmostEqual((2/2 + 1/2 + 0/2)/3, outputs[0]["score"]["global"]["accuracy_macro"])
-        self.assertAlmostEqual(2/2, outputs[0]["score"]["global"]["accuracy_key1"])
-        self.assertAlmostEqual(1/2, outputs[0]["score"]["global"]["accuracy_key2"])
-        self.assertAlmostEqual(0/2, outputs[0]["score"]["global"]["accuracy_key3"])
-        self.assertAlmostEqual(5/6, outputs[0]["score"]["global"]["accuracy_legal_keys_in_predictions"])
+        self.assertAlmostEqual(
+            (2 + 1 + 0) / (2 + 2 + 2), outputs[0]["score"]["global"]["accuracy_micro"]
+        )
+        self.assertAlmostEqual(
+            (2 / 2 + 1 / 2 + 0 / 2) / 3, outputs[0]["score"]["global"]["accuracy_macro"]
+        )
+        self.assertAlmostEqual(2 / 2, outputs[0]["score"]["global"]["accuracy_key1"])
+        self.assertAlmostEqual(1 / 2, outputs[0]["score"]["global"]["accuracy_key2"])
+        self.assertAlmostEqual(0 / 2, outputs[0]["score"]["global"]["accuracy_key3"])
+        self.assertAlmostEqual(
+            5 / 6, outputs[0]["score"]["global"]["accuracy_legal_keys_in_predictions"]
+        )
 
-
-        references = [ [{"key1": "value1" , "key2" :  "values2"    , "key3": "value3"}] ]
-        predictions = [ {} ]
+        references = [[{"key1": "value1", "key2": "values2", "key3": "value3"}]]
+        predictions = [{}]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
-        self.assertAlmostEqual(0, outputs[0]["score"]["global"]["accuracy_legal_keys_in_predictions"])
+        self.assertAlmostEqual(
+            0, outputs[0]["score"]["global"]["accuracy_legal_keys_in_predictions"]
+        )
 
     def test_key_value_extraction_token_overlap(self):
-        metric = KeyValueExtraction(metric="metrics.token_overlap",score_prefix="token_overlap_")
+        metric = KeyValueExtraction(
+            metric="metrics.token_overlap", score_prefix="token_overlap_"
+        )
         # key1 - recall 1/2, precision 1 , f1 = 2/3
         # key2 - recall 1, precision 0 , f1 = 1
         # legal keys - 2 out of 3
-        references = [ [{"address": "IBM" , "zip" :  "32312"} ] ]
-        predictions = [ {"address": "IBM Corp", "zip" : "32312", "user" : "george"} ]
+        references = [[{"address": "IBM", "zip": "32312"}]]
+        predictions = [{"address": "IBM Corp", "zip": "32312", "user": "george"}]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
-        self.assertAlmostEqual(2/3, outputs[0]["score"]["global"]["token_overlap_f1_address"])
+        self.assertAlmostEqual(
+            2 / 3, outputs[0]["score"]["global"]["token_overlap_f1_address"]
+        )
         self.assertAlmostEqual(1, outputs[0]["score"]["global"]["token_overlap_f1_zip"])
-        self.assertAlmostEqual(2/3, outputs[0]["score"]["global"]["token_overlap_f1_legal_keys_in_predictions"])
-        self.assertAlmostEqual((2/3 + 1)/2, outputs[0]["score"]["global"]["token_overlap_f1_micro"])
-        self.assertAlmostEqual((2/3 + 1)/2, outputs[0]["score"]["global"]["token_overlap_f1_macro"])
-
-
-
+        self.assertAlmostEqual(
+            2 / 3,
+            outputs[0]["score"]["global"]["token_overlap_f1_legal_keys_in_predictions"],
+        )
+        self.assertAlmostEqual(
+            (2 / 3 + 1) / 2, outputs[0]["score"]["global"]["token_overlap_f1_micro"]
+        )
+        self.assertAlmostEqual(
+            (2 / 3 + 1) / 2, outputs[0]["score"]["global"]["token_overlap_f1_macro"]
+        )
 
     def test_rouge(self):
         metric = Rouge()
@@ -1250,9 +1369,7 @@ class TestMetrics(UnitxtTestCase):
                         score_prefix,
                         metric.main_score,
                     ]
-                ).replace(
-                    "__", "_"
-                )  # for the case of empty score_prefix
+                ).replace("__", "_")  # for the case of empty score_prefix
 
                 self.assertTrue(
                     any(
@@ -1345,18 +1462,20 @@ class TestMetrics(UnitxtTestCase):
 
     def test_tool_calling_metric(self):
         tools_data = {
-            "__tools__": [{
-                "type": "function",
-                "function": {
-                    "name": "test_tool",
-                    "parameters": {
-                        "properties": {
-                            "param1": {"type": "string"},
-                            "param2": {"type": "integer"}
-                        }
-                    }
+            "__tools__": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "test_tool",
+                        "parameters": {
+                            "properties": {
+                                "param1": {"type": "string"},
+                                "param2": {"type": "integer"},
+                            }
+                        },
+                    },
                 }
-            }]
+            ]
         }
 
         # Test case 1: Exact match
@@ -1367,14 +1486,15 @@ class TestMetrics(UnitxtTestCase):
             metric=ToolCallingMetric(),
             predictions=[prediction],
             references=[[reference]],
-            task_data=[tools_data]
+            task_data=[tools_data],
         )
 
         # Exact match should be 1.0 when prediction and reference are identical
         self.assertEqual(outputs[0]["score"]["global"]["exact_match"], 1.0)
-        self.assertEqual(outputs[0]["score"]["global"]["tool_choice"], 1.0)
-        self.assertEqual(outputs[0]["score"]["global"]["parameter_choice"], 1.0)
-        self.assertEqual(outputs[0]["score"]["global"]["parameter_values"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["tool_name_accuracy"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_name_recall"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_name_precision"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_value_precision"], 1.0)
 
         # Test case 2: Different tool name
         prediction = {"name": "different_tool", "arguments": {"param1": "value1"}}
@@ -1384,47 +1504,63 @@ class TestMetrics(UnitxtTestCase):
             metric=ToolCallingMetric(),
             predictions=[prediction],
             references=[[reference]],
-            task_data=[tools_data]
+            task_data=[tools_data],
         )
 
         # Exact match and tool choice should be 0.0, but parameter choice can still match
         self.assertEqual(outputs[0]["score"]["global"]["exact_match"], 0.0)
-        self.assertEqual(outputs[0]["score"]["global"]["tool_choice"], 0.0)
-        self.assertEqual(outputs[0]["score"]["global"]["parameter_choice"], 1.0)
-
+        self.assertEqual(outputs[0]["score"]["global"]["tool_name_accuracy"], 0.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_name_recall"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_name_precision"], 1.0)
         # Test case 3: Different parameter names
-        prediction = {"name": "test_tool", "arguments": {"param1": "value1", "wrongParam": "value2"}}
-        reference = {"name": "test_tool", "arguments": {"param1": "value1", "param2": 42}}
+        prediction = {
+            "name": "test_tool",
+            "arguments": {"param1": "value1", "wrongParam": "value2"},
+        }
+        reference = {
+            "name": "test_tool",
+            "arguments": {"param1": "value1", "param2": 42, "param3": 24},
+        }
 
         outputs = apply_metric(
             metric=ToolCallingMetric(),
             predictions=[prediction],
             references=[[reference]],
-            task_data=[tools_data]
+            task_data=[tools_data],
         )
 
-        # Exact match should be 0.0, tool choice 1.0, parameter choice 0.5 (half match)
+        # Exact match should be 0.0, tool choice 1.0,  but recall of parameters should be smaller
         self.assertEqual(outputs[0]["score"]["global"]["exact_match"], 0.0)
-        self.assertEqual(outputs[0]["score"]["global"]["tool_choice"], 1.0)
-        self.assertEqual(outputs[0]["score"]["global"]["parameter_choice"], 0.5)
+        self.assertEqual(outputs[0]["score"]["global"]["tool_name_accuracy"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_name_recall"], 1 / 3)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_name_precision"], 0.5)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_value_precision"], 0.5)
 
         # Test case 4: Different parameter values
-        prediction = {"name": "test_tool", "arguments": {"param1": "different", "param2": 42}}
-        reference = {"name": "test_tool", "arguments": {"param1": "value1", "param2": 123}}
+        prediction = {
+            "name": "test_tool",
+            "arguments": {"param1": "different", "param2": 42},
+        }
+        reference = {
+            "name": "test_tool",
+            "arguments": {"param1": "value1", "param2": 42},
+        }
 
         outputs = apply_metric(
             metric=ToolCallingMetric(),
             predictions=[prediction],
             references=[[reference]],
-            task_data=[tools_data]
+            task_data=[tools_data],
         )
 
         # Parameter choice should be 1.0 (all names match), but parameter values 0.5 (one match)
-        self.assertEqual(outputs[0]["score"]["global"]["tool_choice"], 1.0)
-        self.assertEqual(outputs[0]["score"]["global"]["parameter_choice"], 1.0)
-        self.assertEqual(outputs[0]["score"]["global"]["parameter_values"], 0.0)
+        self.assertEqual(outputs[0]["score"]["global"]["exact_match"], 0.0)
+        self.assertEqual(outputs[0]["score"]["global"]["tool_name_accuracy"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_name_recall"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_name_precision"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_value_precision"], 0.5)
 
-        # Test case 5: Empty arguments
+        # Test case 5a: Empty arguments
         prediction = {"name": "test_tool", "arguments": {}}
         reference = {"name": "test_tool", "arguments": {"param1": "value1"}}
 
@@ -1432,56 +1568,151 @@ class TestMetrics(UnitxtTestCase):
             metric=ToolCallingMetric(),
             predictions=[prediction],
             references=[[reference]],
-            task_data=[tools_data]
+            task_data=[tools_data],
         )
 
-        # Parameter choice should be 1.0 for empty arguments
-        self.assertEqual(outputs[0]["score"]["global"]["parameter_choice"], 1.0)
-        self.assertEqual(outputs[0]["score"]["global"]["parameter_values"], 1.0)
+        # Recall should be 0 and precision 0 for empty arguments
+        self.assertEqual(outputs[0]["score"]["global"]["argument_name_recall"], 0.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_name_precision"], 0.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_value_precision"], 0.0)
+
+        prediction = {"name": "test_tool", "arguments": {}}
+        reference = {"name": "test_tool", "arguments": {}}
+
+        # Test case 5a: Empty arguments (references too)
+        outputs = apply_metric(
+            metric=ToolCallingMetric(),
+            predictions=[prediction],
+            references=[[reference]],
+            task_data=[tools_data],
+        )
+
+        # Recall should be 1 and precision 1 for empty arguments if tempty
+        self.assertEqual(outputs[0]["score"]["global"]["argument_name_recall"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_name_precision"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["argument_value_precision"], 1.0)
 
         # Test case 6: Multiple references with one match
         prediction = {"name": "test_tool", "arguments": {"param1": "value1"}}
         references = [
             {"name": "wrong_tool", "arguments": {"param1": "value1"}},
-            {"name": "test_tool", "arguments": {"param1": "value1"}}
+            {"name": "test_tool", "arguments": {"param1": "value1"}},
         ]
 
         outputs = apply_metric(
             metric=ToolCallingMetric(),
             predictions=[prediction],
             references=[references],
-            task_data=[tools_data]
+            task_data=[tools_data],
         )
 
         # Should match the exact reference
         self.assertEqual(outputs[0]["score"]["global"]["exact_match"], 1.0)
-        self.assertEqual(outputs[0]["score"]["global"]["tool_choice"], 1.0)
+        self.assertEqual(outputs[0]["score"]["global"]["tool_name_accuracy"], 1.0)
 
         # Test case 7: Parameter types
-        prediction = {"name": "test_tool", "arguments": {"param1": "string", "param2": 42}}
+        prediction = {
+            "name": "test_tool",
+            "arguments": {"param1": "string", "param2": 42},
+        }
 
         outputs = apply_metric(
             metric=ToolCallingMetric(),
             predictions=[prediction],
             references=[[]],  # Empty references
-            task_data=[tools_data]
+            task_data=[tools_data],
         )
 
         # Parameters should have correct types
-        self.assertEqual(outputs[0]["score"]["global"]["parameters_types"], 1.0)
+        self.assertEqual(
+            outputs[0]["score"]["global"]["argument_schema_validation"], 1.0
+        )
 
         # Test case 8: Wrong parameter types
-        prediction = {"name": "test_tool", "arguments": {"param1": "string", "param2": "not_an_integer"}}
+        prediction = {
+            "name": "test_tool",
+            "arguments": {"param1": "string", "param2": "not_an_integer"},
+        }
 
         outputs = apply_metric(
             metric=ToolCallingMetric(),
             predictions=[prediction],
             references=[[]],
-            task_data=[tools_data]
+            task_data=[tools_data],
         )
 
         # Only half of parameters have correct types
-        self.assertEqual(outputs[0]["score"]["global"]["parameters_types"], 0.5)
+        self.assertEqual(
+            outputs[0]["score"]["global"]["argument_schema_validation"], 0.0
+        )
+
+    def test_tool_calling_key_value_metric(self):
+        metric = ToolCallKeyValueExtraction(metric="metrics.accuracy")
+        assert metric.flatten_dict({}) == {}
+
+        input_dict = {"a": 1, "b": 2}
+        expected_output = {"a": 1, "b": 2}
+        assert metric.flatten_dict(input_dict) == expected_output
+
+        input_dict = {"a": {"b": 1, "c": 2}}
+        expected_output = {"a.b": 1, "a.c": 2}
+        assert metric.flatten_dict(input_dict) == expected_output
+
+        input_dict = {"a": {"b": [1, 2], "c": 3}}
+        expected_output = {"a.b": [1, 2], "a.c": 3}
+        assert metric.flatten_dict(input_dict) == expected_output
+
+        input_dict = {
+            "a": {
+                "b": {
+                    "c": 1,
+                    "d": [2, 3],
+                },
+                "e": 4,
+            }
+        }
+        expected_output = {
+            "a.b.c": 1,
+            "a.b.d": [2, 3],
+            "a.e": 4,
+        }
+        assert metric.flatten_dict(input_dict) == expected_output
+
+        input_dict = {
+            "a": [
+                {
+                    "c": {"e": 1, "f": 2},
+                },
+                {
+                    "d": {"e": 3, "f": 4},
+                },
+            ],
+            "b": 4,
+        }
+
+        expected_output = {"a.c.e": 1, "a.c.f": 2, "a.d.e": 3, "a.d.f": 4, "b": 4}
+        assert metric.flatten_dict(input_dict) == expected_output
+
+        input_dict = {
+            "a": [
+                {
+                    "c": 1,
+                    "d": 2,
+                },
+                {
+                    "c": 3,
+                    "d": 4,
+                },
+            ],
+            "b": 4,
+        }
+
+        expected_output = {"a.0.c": 1, "a.0.d": 2, "a.1.c": 3, "a.1.d": 4, "b": 4}
+        assert metric.flatten_dict(input_dict) == expected_output
+
+        input_dict = {"a": {"b": 1, "c": 2}}
+        expected_output = {"a_b": 1, "a_c": 2}
+        assert metric.flatten_dict(input_dict, sep="_") == expected_output
 
     def test_perplexity(self):
         prediction = ["who are we?"]
@@ -1808,7 +2039,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
         """Test that when metric.n_resamples is set to None, no confidence intervals are computed."""
         # Test one GlobalMetric and one InstanceMetric
         for metric in [Accuracy(), F1Macro()]:
-            metric.disable_confidence_interval_calculation()
+            metric.set_confidence_interval_calculation(return_confidence_interval=False)
             outputs = apply_metric(metric=metric, predictions=["A"], references=[["A"]])
 
             global_result = outputs[0]["score"]["global"]
@@ -2084,9 +2315,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
                     score_prefix,
                     metric.main_score,
                 ]
-            ).replace(
-                "__", "_"
-            )  # for the case of empty score_prefix
+            ).replace("__", "_")  # for the case of empty score_prefix
 
             if input_expected_global_result_is_none:
                 expected_global_result = {
@@ -2158,15 +2387,13 @@ class TestConfidenceIntervals(UnitxtTestCase):
         )
         actual_scores = [output["score"] for output in outputs]
         main_score = f"{model_label}_{metric_label}"
-        instance_targets = (
-            [
-                {
-                    main_score: 0.0,
-                    "score": 0.0,
-                    "score_name": main_score,
-                    main_score + "_judge_raw_output": "no",
-                    main_score
-                    + "_judge_raw_input": """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+        instance_targets = [
+            {
+                main_score: 0.0,
+                "score": 0.0,
+                "score_name": main_score,
+                main_score + "_judge_raw_output": "no",
+                main_score + "_judge_raw_input": """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
 You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction correctly answers the question.
 There should be no contradicting statements in the prediction. The prediction may contain extra information. If the prediction states something as a possibility, treat it as a definitive answer.
@@ -2182,10 +2409,8 @@ Prediction: Watsonx.ai supports no foundation models
 <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 Answer: """,
-                }
-            ]
-            * 2
-        )
+            }
+        ] * 2
         global_target = {
             main_score: 0.0,
             "score": 0.0,

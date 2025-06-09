@@ -35,7 +35,6 @@ if __name__ == "__main__":
     # Tokenizer for chunking content
     tokenizer = AutoTokenizer.from_pretrained("intfloat/multilingual-e5-large")
 
-
     # Function to split text into chunks
     def split_into_chunks(text, max_tokens=500, stride=250):
         tokens = tokenizer.tokenize(text)
@@ -55,7 +54,6 @@ if __name__ == "__main__":
 
         return chunks
 
-
     # Directory where Sphinx `.doctree` files are located
     doctree_dir = "docs/_build/doctrees"
 
@@ -69,7 +67,9 @@ if __name__ == "__main__":
     all_chunks = []
 
     # Process all `.doctree` files recursively
-    for root, _, files in os.walk(doctree_dir):  # Recursively traverse all subdirectories
+    for root, _, files in os.walk(
+        doctree_dir
+    ):  # Recursively traverse all subdirectories
         for filename in files:
             if filename.endswith(".doctree"):
                 file_path = os.path.join(root, filename)
@@ -99,7 +99,6 @@ if __name__ == "__main__":
                             "chunk_index": i,
                         }
                     )
-
 
     # Assuming `all_chunks` is a list of chunks containing text entries
     batch_size = 50
@@ -138,7 +137,9 @@ if __name__ == "__main__":
     embeddings = []
 
     for chunk in all_chunks:
-        metadata.append({key: value for key, value in chunk.items() if key != "embedding"})
+        metadata.append(
+            {key: value for key, value in chunk.items() if key != "embedding"}
+        )
         embeddings.append(chunk.get("embedding", []))
 
     current_file_dir = os.path.dirname(os.path.abspath(__file__))

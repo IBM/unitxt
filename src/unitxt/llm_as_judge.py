@@ -49,6 +49,7 @@ from .templates import Template
 
 logger = get_logger(__name__)
 
+
 class LLMJudge(BulkInstanceMetric):
     """A metric class to evaluate instances using LLM as a Judge.
 
@@ -81,7 +82,6 @@ class LLMJudge(BulkInstanceMetric):
 
     criteria: Criteria = None
     """The criteria used for evaluation. If the `criteria_field` is provided, it will take precedence."""
-
 
     def prepare(self):
         """Prepares the `LLMJudge` instance by setting up context fields and evaluator name."""
@@ -251,7 +251,7 @@ class LLMJudgeDirect(LLMJudge):
         self.assessment_task = Task(
             input_fields={
                 "context_variables": str,
-                "response": str,
+                "response": Any,
                 "criteria_description": str,
                 "display_options_instruction": str,
             },
@@ -601,7 +601,7 @@ class LLMJudgeDirect(LLMJudge):
             for (
                 criteria_description,
                 display_options_instruction,
-                criteria_option_names
+                criteria_option_names,
             ) in zip(
                 criteria_description_list,
                 display_options_instruction_list,
@@ -644,6 +644,7 @@ class LLMJudgeDirect(LLMJudge):
 
 class LLMJudgePairwise(LLMJudge):
     """A judge for pairwise comparison evaluations, where two or more responses are compared to determine which one is preferred based on a criterion."""
+
     main_score = "1_winrate"
     """The main score metric for pairwise evaluation. By default, its value is `1_winrate`, and will take the value of the winrate of the first system."""
     reduction_map = {"mean": ["score"]}
@@ -918,7 +919,9 @@ class LLMJudgePairwise(LLMJudge):
         Returns:
             List[dict]: A list of predictions in dictionary format.
         """
-        return [self.__parse_prediction_to_dict(prediction) for prediction in predictions]
+        return [
+            self.__parse_prediction_to_dict(prediction) for prediction in predictions
+        ]
 
     def __set_main_score(self, predictions: List[Dict[str, str]]):
         self.main_score = f"{next(iter(predictions[0].keys()))}_winrate"

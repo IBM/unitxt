@@ -23,14 +23,19 @@ def get_evaluator(
     provider: ModelProviderEnum,
 ) -> Union[LLMJudgeDirect, LLMJudgePairwise]:
     evaluator_metadata = get_evaluator_metadata(name)
-    inference_params = {"max_tokens": 1024, "seed": 42, "temperature": 0, "provider": provider.value}
+    inference_params = {
+        "max_tokens": 1024,
+        "seed": 42,
+        "temperature": 0,
+        "provider": provider.value,
+    }
     model_name = EVALUATOR_TO_MODEL_ID[name]
 
-    if provider == ModelProviderEnum.AZURE_OPENAI:
+    if provider == ModelProviderEnum.AZURE:
         inference_params["credentials"] = {}
-        inference_params["credentials"]["api_base"] = (
-            f"https://eteopenai.azure-api.net/openai/deployments/{model_name}/chat/completions?api-version=2024-08-01-preview"
-        )
+        inference_params["credentials"][
+            "api_base"
+        ] = f"https://eteopenai.azure-api.net/openai/deployments/{model_name}/chat/completions?api-version=2024-08-01-preview"
 
     inference_params["model"] = model_name
 
@@ -88,12 +93,12 @@ for evaluator_metadata in EVALUATORS_METADATA:
             )
             provider_name = ""
             # for backward compatibility, ideally we would use cross inference engines provider ids
-            if provider == ModelProviderEnum.AZURE_OPENAI:
+            if provider == ModelProviderEnum.AZURE:
                 provider_name = "azure_openai"
             elif provider == ModelProviderEnum.OPENAI:
                 provider_name = "openai"
             else:
-                provider_name = provider.value.lower()
+                provider_name = provider.value.lower().replace("-", "_")
 
             add_to_catalog(
                 evaluator,

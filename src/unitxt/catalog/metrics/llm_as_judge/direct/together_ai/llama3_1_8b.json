@@ -1,0 +1,13 @@
+{
+    "__type__": "llm_judge_direct",
+    "inference_engine": {
+        "__type__": "cross_provider_inference_engine",
+        "max_tokens": 1024,
+        "seed": 42,
+        "temperature": 0,
+        "provider": "together-ai",
+        "model": "llama-3-1-8b-instruct"
+    },
+    "evaluator_name": "LLAMA3_1_8B",
+    "generate_summaries": false
+}

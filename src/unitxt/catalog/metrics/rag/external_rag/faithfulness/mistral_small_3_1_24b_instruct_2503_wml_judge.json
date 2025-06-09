@@ -1,0 +1,11 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": "engines.classification.mistral_small_3_1_24b_instruct_2503_wml",
+    "template": "templates.rag_eval.faithfulness.judge_with_question_simplified_verbal",
+    "task": "tasks.rag_eval.faithfulness.binary",
+    "format": null,
+    "main_score": "faithfulness_judge",
+    "prediction_field": "answer",
+    "infer_log_probs": false,
+    "judge_to_generator_fields_mapping": {}
+}

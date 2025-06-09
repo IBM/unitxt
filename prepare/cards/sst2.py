@@ -13,7 +13,7 @@ card = TaskCard(
             fields={
                 "text_type": "sentence",
                 "type_of_class": "sentiment",
-                "classes": ["negative", "positive"]
+                "classes": ["negative", "positive"],
             }
         ),
     ],

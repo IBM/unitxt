@@ -30,6 +30,9 @@ class Benchmark(BaseBenchmark):
 
     max_total_samples: int = None
     max_samples_per_subset: int = None
+    max_train_instances: int = None
+    max_validation_instances: int = None
+    max_test_instances: int = None
 
     def verify(self):
         super().verify()
@@ -73,10 +76,22 @@ class Benchmark(BaseBenchmark):
             subsets = {self.subset: self.subsets[self.subset]}
         else:
             subsets = self.subsets
+
+        max_instances_per_split = {}
+        if self.max_train_instances is not None:
+            max_instances_per_split["train"] = self.max_train_instances
+        if self.max_validation_instances is not None:
+            max_instances_per_split["validation"] = self.max_validation_instances
+        if self.max_test_instances is not None:
+            max_instances_per_split["test"] = self.max_test_instances
+        if len(max_instances_per_split) == 0:
+            max_instances_per_split = None
+
         if self.max_total_samples is None:
             operator = FixedFusion(
                 subsets=subsets,
                 max_instances_per_subset=self.max_samples_per_subset,
+                max_instances_per_split=max_instances_per_split,
                 include_splits=self.splits,
             )
         else:

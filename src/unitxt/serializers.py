@@ -7,9 +7,9 @@ from typing import Any, Dict, List, Union
 from .dataclass import AbstractField, Field
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
-from .tool_calling import convert_to_chat_api_format
 from .type_utils import isoftype, to_type_string
 from .types import (
+    Conversation,
     Dialog,
     Document,
     Image,
@@ -77,6 +77,13 @@ class DialogSerializer(SingleTypeSerializer):
     def serialize(self, value: Dialog, instance: Dict[str, Any]) -> str:
         # Convert the Dialog into a string representation, typically combining roles and content
         return "\n".join(f"{turn['role']}: {turn['content']}" for turn in value)
+
+
+class ConversationSerializer(DialogSerializer):
+    serialized_type = Conversation
+
+    def serialize(self, value: Conversation, instance: Dict[str, Any]) -> str:
+        return super().serialize(value["dialog"], instance)
 
 
 class NumberSerializer(SingleTypeSerializer):
@@ -164,31 +171,24 @@ class MultiDocumentSerializer(DocumentSerializer):
         return "\n\n".join(documents)
 
 
-
 class ToolsSerializer(SingleTypeSerializer):
-
     serialized_type = List[Tool]
-    _requirements_list: List[str] = ["pydantic"]
 
     def serialize(self, value: List[Tool], instance: Dict[str, Any]) -> str:
         if "__tools__" not in instance:
             instance["__tools__"] = []
         tool = []
         for tool in value:
-            chat_api_tool = convert_to_chat_api_format(tool=tool)
-            instance["__tools__"].append(
-                chat_api_tool
-            )
-            tool["parameters"] = chat_api_tool["function"]["parameters"]
+            instance["__tools__"].append({"type": "function", "function": tool})
         return json.dumps(instance["__tools__"], indent=4)
 
-class ToolCallSerializer(SingleTypeSerializer):
 
+class ToolCallSerializer(SingleTypeSerializer):
     serialized_type = ToolCall
-    _requirements_list: List[str] = ["pydantic"]
 
     def serialize(self, value: ToolCall, instance: Dict[str, Any]) -> str:
         return json.dumps(value)
+
 
 class MultiTypeSerializer(Serializer):
     serializers: List[SingleTypeSerializer] = Field(

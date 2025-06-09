@@ -2,7 +2,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.loaders import LoadCSV
+from unitxt.loaders import LoadJsonFile
 from unitxt.operators import (
     Apply,
     Copy,
@@ -21,12 +21,14 @@ question_git_repo_file_path = "https://raw.githubusercontent.com/lmarena/arena-h
 model_answer_git_repo_file_path = "https://raw.githubusercontent.com/lmarena/arena-hard-auto/57451f35d2be7fef9f05d5567f36e4c959bb6630/data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl"
 
 card = TaskCard(
-    loader=LoadCSV(
-        files={"questions": question_git_repo_file_path, "model_answer": model_answer_git_repo_file_path},
-            file_type="json",
-            lines=True,
-            data_classification_policy=["public"],
-        ),
+    loader=LoadJsonFile(
+        files={
+            "questions": question_git_repo_file_path,
+            "model_answer": model_answer_git_repo_file_path,
+        },
+        lines=True,
+        data_classification_policy=["public"],
+    ),
     preprocess_steps=[
         # region Question file
         Rename(field_to_field={"cluster": "group"}, apply_to_streams=["questions"]),

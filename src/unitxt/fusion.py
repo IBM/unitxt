@@ -10,6 +10,7 @@ from .type_utils import isoftype
 
 logger = get_logger()
 
+
 class BaseFusion(SourceOperator):
     """BaseFusion operator that combines multiple multistreams into one.
 
@@ -67,6 +68,7 @@ class FixedFusion(BaseFusion):
     """
 
     max_instances_per_subset: Optional[int] = None
+    max_instances_per_split: Optional[Dict[str, int]] = None
 
     def prepare(self):
         super().prepare()
@@ -78,12 +80,23 @@ class FixedFusion(BaseFusion):
             if split not in multi_stream:
                 continue
             emitted_from_this_split = 0
+            max_from_this_split = None
+            if self.max_instances_per_subset is not None:
+                max_from_this_split = self.max_instances_per_subset
+            if self.max_instances_per_split is not None:
+                max_per_this_split = self.max_instances_per_split.get(split)
+                if max_per_this_split is not None:
+                    if max_from_this_split is None:
+                        max_from_this_split = max_per_this_split
+                    elif max_per_this_split < max_from_this_split:
+                        max_from_this_split = max_per_this_split
+
             logger.info(f"Processing {split} from {origin_name}...")
             try:
                 for instance in multi_stream[split]:
                     if (
-                        self.max_instances_per_subset is not None
-                        and emitted_from_this_split >= self.max_instances_per_subset
+                        max_from_this_split is not None
+                        and emitted_from_this_split >= max_from_this_split
                     ):
                         break
                     if isinstance(origin_name, str):

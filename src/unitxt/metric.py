@@ -5,6 +5,7 @@ import evaluate
 from .api import __file__ as _
 from .artifact import __file__ as _
 from .augmentors import __file__ as _
+from .base_metric import __file__ as _
 from .benchmark import __file__ as _
 from .blocks import __file__ as _
 from .card import __file__ as _
@@ -60,7 +61,6 @@ from .system_prompts import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
 from .text_utils import __file__ as _
-from .tool_calling import __file__ as _
 from .type_utils import __file__ as _
 from .types import __file__ as _
 from .utils import is_package_installed

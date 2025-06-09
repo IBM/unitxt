@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from datasets import Dataset as HFDataset
 
-from .api import evaluate, load_dataset
+from .api import _source_to_dataset, evaluate, load_recipe
 from .artifact import UnitxtArtifactNotFoundError
 from .benchmark import Benchmark
 
@@ -27,7 +27,6 @@ from .logging_utils import get_logger
 from .metric_utils import EvaluationResults
 from .parsing_utils import parse_key_equals_value_string_to_dict
 from .settings_utils import settings
-from .standard import DatasetRecipe
 
 # Define logger early so it can be used in initial error handling
 # Basic config for initial messages, will be reconfigured in main()
@@ -294,26 +293,27 @@ def cli_load_dataset(args: argparse.Namespace) -> HFDataset:
 
     benchmark_subsets = {}
     for task_str in args.tasks:
-        dataset_args = task_str_to_dataset_args(task_str, args)
-
-        benchmark_subsets[task_str] = DatasetRecipe(**dataset_args)
+        overwrite_args = extract_overwrite_args(args)
+        benchmark_subsets[task_str] = load_recipe(
+            dataset_query=task_str, **overwrite_args
+        )
 
     benchmark = Benchmark(subsets=benchmark_subsets)
 
-    test_dataset = load_dataset(benchmark, split=args.split)
+    test_dataset = _source_to_dataset(benchmark, split=args.split)
     logger.info(
         f"Dataset loaded successfully. Number of instances: {len(test_dataset)}"
     )
     return test_dataset
 
 
-def task_str_to_dataset_args(task_str, args):
-    dataset_args = parse_key_equals_value_string_to_dict(task_str)
+def extract_overwrite_args(args):
+    dataset_args = {}
 
     if args.limit is not None:
-        assert f"max_{args.split}_instances" not in dataset_args, (
-            "limit was inputted both as an arg and as a task parameter"
-        )
+        assert (
+            f"max_{args.split}_instances" not in dataset_args
+        ), "limit was inputted both as an arg and as a task parameter"
         # Check if limit or loader_limit is already present
         # dataset_args[f"max_{args.split}_instances"] = args.limit
         dataset_args[f"max_{args.split}_instances"] = args.limit
@@ -323,9 +323,9 @@ def task_str_to_dataset_args(task_str, args):
         )
 
     if args.num_fewshots:
-        assert "num_demos" not in dataset_args, (
-            "num_demos was inputted both as an arg and as a task parameter"
-        )
+        assert (
+            "num_demos" not in dataset_args
+        ), "num_demos was inputted both as an arg and as a task parameter"
         dataset_args["num_demos"] = args.num_fewshots
         dataset_args.update(
             {
@@ -339,9 +339,9 @@ def task_str_to_dataset_args(task_str, args):
         )
 
     if args.apply_chat_template:
-        assert "format" not in dataset_args, (
-            "format was inputted as a task parameter, but chat_api was requested"
-        )
+        assert (
+            "format" not in dataset_args
+        ), "format was inputted as a task parameter, but chat_api was requested"
         dataset_args["format"] = "formats.chat_api"
         logger.info(
             "Applying chat template from --apply_chat_template argument: format=formats.chat_api"
@@ -653,9 +653,9 @@ def _save_results_to_disk(
                 config_to_save[k] = repr(v)
             except Exception:
                 # Fallback if repr fails
-                config_to_save[k] = (
-                    f"<Object of type {type(v).__name__} could not be represented>"
-                )
+                config_to_save[
+                    k
+                ] = f"<Object of type {type(v).__name__} could not be represented>"
 
     # --- Gather Environment Info ---
     unitxt_commit = _get_unitxt_commit_hash()

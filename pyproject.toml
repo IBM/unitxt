@@ -107,7 +107,8 @@ tests = [
     "sqlglot",
     "sqlparse",
     "diskcache",
-    "pydantic"
+    "pydantic",
+    "jsonschema_rs"
 ]
 ui = [
     "gradio",
@@ -207,6 +208,7 @@ keep-runtime-typing = true
 "utils/*" = ["TID251"]
 "src/unitxt/api.py" = ["B904"]
 "src/unitxt/metrics.py" = ["C901"]
+"src/unitxt/loaders.py" = ["C901"]
 "src/unitxt/__init__.py" = ["F811", "F401"]
 "src/unitxt/metric.py" = ["F811", "F401"]
 "src/unitxt/dataset.py" = ["F811", "F401"]
@@ -230,6 +232,7 @@ keep-runtime-typing = true
 "src/unitxt/llm_as_judge.py" = ["F401", "C901"]
 "examples/*.py" = ["T201"]
 "tests/library/test_retry.py" = ["B904", "N818"]
+"src/unitxt/tool_calling.py" = ["C901"]
 
 [tool.ruff.lint]
 extend-select = [
