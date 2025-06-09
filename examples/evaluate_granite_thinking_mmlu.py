@@ -46,11 +46,12 @@ for thinking in [True, False]:
     results = evaluate(predictions=predictions, data=dataset)
 
     print("Instance Results when Thinking=", thinking)
-    print(
-        "Problematic prediction (could not be parsed to a acceptable single letter answer)"
-    )
+
     for instance in results.instance_scores:
         if instance["processed_prediction"] not in ["A", "B", "C", "D"]:
+            print(
+                "Problematic prediction (could not be parsed to a acceptable single letter answer):"
+            )
             print(instance["prediction"])
 
     print("Global Results when Thinking=", thinking)
