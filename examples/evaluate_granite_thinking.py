@@ -41,7 +41,7 @@ for thinking in [True, False]:
         )
 
     template = InputOutputTemplate(
-        instruction="Answer the following question with the single numeric answer.",
+        instruction="Answer the following question with the single numeric answer.  Do not answer in complete sentences.  Just return the answer.",
         input_format="{question}",
         output_format="{answer}",
         postprocessors=postprocessors,

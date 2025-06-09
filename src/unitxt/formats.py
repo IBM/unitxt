@@ -356,10 +356,17 @@ class ChatAPIFormat(BaseFormat):
             )
 
         The resulting `messages` is now a dictionary ready for sending to the OpenAI API.
+
+        By default, the instruction in the template is placed in a turn with a 'system' role.
+        However, some chat tokenizers, will not place the default system prompt for the model,
+        if there is turn with an explicit 'system' role.   To keep the default system prompt,
+        set 'place_instruction_in_user_turns=True'.  This will cause the instruction of the template
+        to be placed in a turn with a 'user' role.  Note the instruction will also be placed
+        in every demo turn (if demos are generated.)
+
     """
 
     place_instruction_in_user_turns: bool = False
-    add_target_prefix: bool = True
 
     def to_content(self, text: str, media: Dict[str, Any]) -> Union[str, List[Content]]:
         # Regular expression to find <img> tags with src attribute
@@ -446,8 +453,7 @@ class ChatAPIFormat(BaseFormat):
 
             user_content = self.to_content(text, media)
             assistant_content = self.to_content(
-                (target_prefix if self.add_target_prefix else "")
-                + demo_instance["target"],
+                target_prefix + demo_instance["target"],
                 media,
             )
             messages.extend(
