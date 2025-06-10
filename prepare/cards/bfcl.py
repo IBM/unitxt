@@ -6,6 +6,7 @@ from unitxt.operators import (
     Copy,
     ExecuteExpression,
     RecursiveReplace,
+    Set,
 )
 from unitxt.stream_operators import JoinStreams
 from unitxt.test_utils.card import test_card
@@ -82,6 +83,10 @@ with unitxt.settings.context(allow_unverified_code=True):
         "live_simple",
         "java",
         "javascript",
+        "parallel",
+        "parallel_multiple",
+        "live_parallel",
+        "live_parallel_multiple",
     ]:
         card = TaskCard(
             loader=LoadJsonFile(
@@ -164,6 +169,80 @@ with unitxt.settings.context(allow_unverified_code=True):
         # Test and add the card to the catalog
         test_card(card, strict=False)
         add_to_catalog(card, f"cards.bfcl.multi_turn.{subset}_v3", overwrite=True)
+
+        for subset in [
+            "live_relevance",
+            "live_irrelevance",
+        ]:
+            card = TaskCard(
+                loader=LoadJsonFile(
+                    files={
+                        "test": base_path + f"BFCL_v3_{subset}.json",
+                    },
+                    lines=True,
+                    data_classification_policy=["public"],
+                ),
+                preprocess_steps=[
+                    Copy(field="question/*/0", to_field="dialog"),
+                    Copy(field="function", to_field="tools"),
+                    RecursiveReplace(
+                        key="type",
+                        map_values={
+                            "dict": "object",
+                            "float": "number",
+                            "tuple": "array",
+                            "HashMap": "object",
+                            "bool": "boolean",
+                            "list": "array",
+                            "any": "string",
+                            "byte": "integer",
+                            "short": "integer",
+                            "long": "integer",
+                            "double": "number",
+                            "char": "string",
+                            "ArrayList": "array",
+                            "Array": "array",
+                            "Hashtable": "object",
+                            "Queue": "array",
+                            "Stack": "array",
+                            "Any": "string",
+                            "String": "string",
+                            "Bigint": "integer",
+                            "Set": "array",
+                            "Boolean": "boolean",
+                        },
+                        remove_values=["any"],
+                    ),
+                    Set(fields={"reference_calls": []}),
+                ],
+                task="tasks.tool_calling.multi_turn",
+                templates=["templates.tool_calling.multi_turn"],
+                __description__=(
+                    """The Berkeley function calling leaderboard is a live leaderboard to evaluate the ability of different LLMs to call functions (also referred to as tools). We built this dataset from our learnings to be representative of most users' function calling use-cases, for example, in agents, as a part of enterprise workflows, etc. To this end, our evaluation dataset spans diverse categories, and across multiple languages."""
+                ),
+                __title__=f"""Berkeley Function Calling Leaderboard (Multi Turn Setup) - {subset.replace("_", " ").title()} V3""",
+                __tags__={
+                    "annotations_creators": "expert-generated",
+                    "language": ["en"],
+                    "license": "apache-2.0",
+                    "size_categories": ["10K<n<100K"],
+                    "task_categories": [
+                        "question-answering",
+                        "reading-comprehension",
+                        "tool-calling",
+                        "multi-turn-tool-calling",
+                    ],
+                    "task_ids": [
+                        "tool-calling",
+                        "multi-turn-tool-calling",
+                        "reading-comprehension",
+                    ],
+                },
+            )
+
+            # Test and add the card to the catalog
+            test_card(card, strict=False)
+            add_to_catalog(card, f"cards.bfcl.multi_turn.{subset}_v3", overwrite=True)
 
     # card = TaskCard(
     #     loader=LoadJsonFile(
