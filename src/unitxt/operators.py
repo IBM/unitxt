@@ -309,7 +309,9 @@ def recursive_key_value_replace(data, target_key, value_map, value_remove=None):
                         if not isinstance(item, dict) and item not in value_remove
                     ]
                 elif isinstance(value, dict):
-                    pass  # Skip or handle dict values if needed
+                    recursive_key_value_replace(
+                        value, target_key, value_map, value_remove
+                    )
                 elif value in value_remove:
                     keys_to_delete.append(key)
                 elif value in value_map:
@@ -610,6 +612,19 @@ class Rename(FieldOperator):
                 dict_delete(res, from_field, remove_empty_ancestors=True)
 
         return res
+
+
+class Move(InstanceOperator):
+    field: str
+    to_field: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: str | None = None
+    ) -> Dict[str, Any]:
+        value = dict_get(instance, self.field)
+        dict_delete(instance, self.field)
+        dict_set(instance, self.to_field, value=value)
+        return instance
 
 
 @deprecation(version="2.0.0", alternative=Rename)
