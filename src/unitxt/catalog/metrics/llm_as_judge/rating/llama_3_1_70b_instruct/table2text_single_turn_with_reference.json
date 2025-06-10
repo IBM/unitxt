@@ -9,6 +9,6 @@
     "template": "templates.response_assessment.rating.table2text_single_turn_with_reference",
     "task": "rating.single_turn_with_reference",
     "format": "formats.chat_api",
-    "main_score": "llama_3_1_70b_instruct_cross_provider_template_table2text_single_turn_with_reference",
+    "main_score": "llama_3_1_70b_instruct_template_table2text_single_turn_with_reference",
     "prediction_type": "str"
 }
