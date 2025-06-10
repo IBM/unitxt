@@ -5,7 +5,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import Apply, FilterByCondition, Set
+from unitxt.operators import Apply, FilterByCondition, RemoveFields, Set
 from unitxt.splitters import SplitRandomMix
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
@@ -14,7 +14,9 @@ from unitxt.types import Table
 card = TaskCard(
     loader=LoadHF(
         path="Multilingual-Multimodal-NLP/TableBench",
+        revision="90593ad8af90f027f6f478b8c4c1981d9f073a83",  # pragma: allowlist secret
         data_classification_policy=["public"],
+        splits=["test"],
     ),
     preprocess_steps=[
         SplitRandomMix(
@@ -36,6 +38,7 @@ card = TaskCard(
         ),
         Set({"context_type": "Table"}),
         Rename(field_to_field={"table": "context", "answer": "answers"}),
+        RemoveFields(fields=["instruction"]),
     ],
     task=Task(
         input_fields={
@@ -51,11 +54,14 @@ card = TaskCard(
     ),
     templates=[
         InputOutputTemplate(
-            instruction="You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter}",
+            instruction="You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter}"
+            + "\nOutput only the final answer without any explanations, extra information, or introductory text."
+            + "\nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.",
             input_format="{context_type}: {context} \nQuestion: {question}",
             target_prefix="Final Answer: ",
             output_format="{answers}",
             postprocessors=[
+                "processors.take_first_non_empty_line",
                 "processors.lower_case",
                 "processors.remove_punctuations",
                 "processors.remove_articles",

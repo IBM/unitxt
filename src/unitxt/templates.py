@@ -11,6 +11,7 @@ from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator, Operator
 from .random_utils import new_random_generator
 from .serializers import (
+    ConversationSerializer,
     DialogSerializer,
     ImageSerializer,
     ListSerializer,
@@ -19,6 +20,8 @@ from .serializers import (
     Serializer,
     SQLDatabaseAsSchemaSerializer,
     TableSerializer,
+    ToolCallSerializer,
+    ToolsSerializer,
     VideoSerializer,
 )
 from .settings_utils import get_constants
@@ -63,7 +66,10 @@ class Template(InstanceOperator):
                 ImageSerializer(),
                 VideoSerializer(),
                 TableSerializer(),
+                ToolCallSerializer(),
+                ToolsSerializer(),
                 DialogSerializer(),
+                ConversationSerializer(),
                 ListSerializer(),
                 SQLDatabaseAsSchemaSerializer(),
             ]
@@ -76,9 +82,9 @@ class Template(InstanceOperator):
             self.postprocessors, List[Union[Operator, str]]
         ), f"The template post processors field '{self.postprocessors}' is not a list of processors. Instead it is of type '{to_type_string(type(self.postprocessors))}'."
 
-    def input_fields_to_instruction_and_target_prefix(self, input_fields):
+    def input_fields_to_instruction_and_target_prefix(self, input_fields, instruction):
         instruction = self.apply_formatting(
-            input_fields, "input field", self.instruction, "instruction"
+            input_fields, "input field", instruction, "instruction"
         )
         target_prefix = self.apply_formatting(
             input_fields,
@@ -126,13 +132,14 @@ class Template(InstanceOperator):
 
         source = self.input_fields_to_source(serialized_inputs)
         instruction, target_prefix = self.input_fields_to_instruction_and_target_prefix(
-            serialized_inputs
+            serialized_inputs,
+            instance.get(constants.instruction_field, self.instruction),
         )
 
         result = {
             **instance,
             "source": source,
-            "instruction": instruction,
+            constants.instruction_field: instruction,
             "target_prefix": target_prefix,
             "postprocessors": self.postprocessors,
         }
@@ -533,7 +540,8 @@ class MultipleChoiceTemplate(InputFormatTemplate):
             input and reference dictionaries.
         target_field (str): The key under which the correct choice is stored in the
             reference dictionary (can be integer index or textual label).
-        choices_separator (str): A string used to join formatted choices (e.g. ", ").
+        choices_separator (str): A string used to join formatted
+            choices (e.g. ", ").
         source_choice_format (str): A Python format string used for displaying each choice
             in the input fields (e.g. "{choice_numeral}. {choice_text}").
         target_choice_format (str): A Python format string used for displaying each choice
@@ -544,8 +552,10 @@ class MultipleChoiceTemplate(InputFormatTemplate):
             set with `shuffle_choices_seed`.
         shuffle_choices_seed (int, optional): If provided, the choices are shuffled with
             this fixed integer seed for reproducibility.
-        sort_choices_by_length (bool): If True, sorts choices by their length (ascending).
-        sort_choices_alphabetically (bool): If True, sorts choices in alphabetical order.
+        sort_choices_by_length (bool): If True, sorts choices
+            by their length (ascending).
+        sort_choices_alphabetically (bool): If True, sorts choices
+            in alphabetical order.
         reverse_choices (bool): If True, reverses the order of the choices after any
             sorting has been applied. Defaults to False to preserve backward compatibility.
     """

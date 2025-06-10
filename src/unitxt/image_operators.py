@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import io
 import re
 from abc import abstractmethod
@@ -41,7 +42,9 @@ def image_to_data_url(image: Image, default_format="JPEG"):
     https://developer.mozilla.org/en-US/docs/Web/URI/Schemes/data
     """
     image_format = image["format"] if image["format"] else default_format
-    base64_image = _image_to_bytes(image["image"], format=image_format.upper())
+    base64_image = _image_to_bytes(
+        image["image"].convert("RGB"), format=image_format.upper()
+    )
     return ImageDataString(f"data:image/{image_format.lower()};base64,{base64_image}")
 
 
@@ -110,6 +113,11 @@ class EncodeImageToString(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         return {"image": self.encode_image_to_base64(value)}
+
+
+class HashImage(FieldOperator, PillowMixin):
+    def process_value(self, value: Any) -> Any:
+        return hashlib.md5(value.tobytes()).hexdigest()
 
 
 class DecodeImage(FieldOperator, PillowMixin):

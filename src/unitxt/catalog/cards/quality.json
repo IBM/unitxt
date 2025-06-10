@@ -1,0 +1,90 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_json_file",
+        "files": {
+            "train": "https://raw.githubusercontent.com/nyu-mll/quality/05e85750d4c5444d2a0a4ad299f6df5f4df06068/data/v1.0.1/QuALITY.v1.0.1.htmlstripped.train",
+            "validation": "https://raw.githubusercontent.com/nyu-mll/quality/05e85750d4c5444d2a0a4ad299f6df5f4df06068/data/v1.0.1/QuALITY.v1.0.1.htmlstripped.dev"
+        },
+        "lines": true,
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "train": "train[80%]",
+                "validation": "train[20%]",
+                "test": "validation"
+            }
+        },
+        {
+            "__type__": "copy",
+            "field": "article",
+            "to_field": "context"
+        },
+        {
+            "__type__": "explode",
+            "field": "questions",
+            "to_field": "data"
+        },
+        {
+            "__type__": "copy",
+            "field": "data/question",
+            "to_field": "question"
+        },
+        {
+            "__type__": "copy",
+            "field": "data/options",
+            "to_field": "choices"
+        },
+        {
+            "__type__": "copy",
+            "field": "data/gold_label",
+            "to_field": "answer"
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "answer": {
+                    "1": 0,
+                    "2": 1,
+                    "3": 2,
+                    "4": 3,
+                    "5": 4
+                }
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "document"
+            }
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_context",
+    "templates": "templates.qa.multiple_choice.with_context.all",
+    "__description__": "QuALITY (Question Answering with Long Input Texts, Yes!) is a multiple-choice reading comprehension dataset with long documents. The dataset comprises of documents from Project Gutenberg and questions written by human annotators. Each question has 4-5 answer choices, and requires understanding of the entire document to answer correctly. Questions are designed to test comprehensive understanding of the entire document, with various difficulty levels.",
+    "__tags__": {
+        "annotations_creators": "expert-generated",
+        "language": [
+            "en"
+        ],
+        "license": "cc-by-4.0",
+        "size_categories": [
+            "10K<n<100K"
+        ],
+        "task_categories": [
+            "question-answering",
+            "multiple-choice",
+            "reading-comprehension"
+        ],
+        "multilinguality": "monolingual",
+        "task_ids": [
+            "extractive-qa",
+            "reading-comprehension"
+        ]
+    }
+}

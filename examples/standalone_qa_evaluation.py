@@ -37,21 +37,21 @@ dataset = create_dataset(
 )
 
 
-# Infer using Llama-3.2-1B base using HF API
+# Infer using SmolLM2 using HF API
 model = HFPipelineBasedInferenceEngine(
-    model_name="Qwen/Qwen1.5-0.5B-Chat", max_new_tokens=32
+    model_name="HuggingFaceTB/SmolLM2-1.7B-Instruct", max_new_tokens=32
 )
 # Change to this to infer with external APIs:
 # from unitxt.inference import CrossProviderInferenceEngine
-# engine = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+# model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
 # The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam". "rits"]
 
 
 predictions = model(dataset)
 results = evaluate(predictions=predictions, data=dataset)
 
+print("Instance Results:")
+print(results.instance_scores)
+
 print("Global Results:")
 print(results.global_scores.summary)
-
-print("Instance Results:")
-print(results.instance_scores.summary)

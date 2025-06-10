@@ -1,0 +1,18 @@
+{
+    "__type__": "task",
+    "input_fields": {
+        "id": "str",
+        "utterance": "str",
+        "hint": "str",
+        "schema": "List[str]"
+    },
+    "reference_fields": {
+        "linked_schema": "List[str]"
+    },
+    "prediction_type": "List[str]",
+    "metrics": [
+        "metrics.f1_macro_multi_label",
+        "metrics.recall_macro_multi_label",
+        "metrics.precision_macro_multi_label"
+    ]
+}

@@ -25,7 +25,7 @@ Some operators are specialized in specific data or specific operations such as:
 - :class:`collections_operators<unitxt.collections_operators>` for handling collections such as lists and dictionaries.
 - :class:`dialog_operators<unitxt.dialog_operators>` for handling dialogs.
 - :class:`string_operators<unitxt.string_operators>` for handling strings.
-- :class:`span_labeling_operators<unitxt.span_labeling_operators>` for handling strings.
+- :class:`span_labeling_operators<unitxt.span_lableing_operators>` for handling strings.
 - :class:`fusion<unitxt.fusion>` for fusing and mixing datasets.
 
 Other specialized operators are used by unitxt internally:
@@ -67,6 +67,7 @@ from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .error_utils import UnitxtError
 from .generator_utils import ReusableGenerator
 from .operator import (
     InstanceOperator,
@@ -75,7 +76,6 @@ from .operator import (
     PagedStreamOperator,
     SequentialOperator,
     SideEffectOperator,
-    SingleStreamReducer,
     SourceOperator,
     StreamingOperator,
     StreamInitializerOperator,
@@ -84,7 +84,7 @@ from .operator import (
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
 from .stream import DynamicStream, Stream
-from .text_utils import nested_tuple_to_string
+from .text_utils import to_pretty_string
 from .type_utils import isoftype
 from .utils import (
     LRUCache,
@@ -281,6 +281,76 @@ class Set(InstanceOperator):
                 value = deep_copy(value)
             dict_set(instance, key, value)
         return instance
+
+
+def recursive_key_value_replace(data, target_key, value_map, value_remove=None):
+    """Recursively traverses a data structure (dicts and lists), replaces values of target_key using value_map, and removes values listed in value_remove.
+
+    Args:
+        data: The data structure (dict or list) to traverse.
+        target_key: The specific key whose value needs to be checked and replaced or removed.
+        value_map: A dictionary mapping old values to new values.
+        value_remove: A list of values to completely remove if found as values of target_key.
+
+    Returns:
+        The modified data structure. Modification is done in-place.
+    """
+    if value_remove is None:
+        value_remove = []
+
+    if isinstance(data, dict):
+        keys_to_delete = []
+        for key, value in data.items():
+            if key == target_key:
+                if isinstance(value, list):
+                    data[key] = [
+                        value_map.get(item, item)
+                        for item in value
+                        if not isinstance(item, dict) and item not in value_remove
+                    ]
+                elif isinstance(value, dict):
+                    pass  # Skip or handle dict values if needed
+                elif value in value_remove:
+                    keys_to_delete.append(key)
+                elif value in value_map:
+                    data[key] = value_map[value]
+            else:
+                recursive_key_value_replace(value, target_key, value_map, value_remove)
+        for key in keys_to_delete:
+            del data[key]
+    elif isinstance(data, list):
+        for item in data:
+            recursive_key_value_replace(item, target_key, value_map, value_remove)
+    return data
+
+
+class RecursiveReplace(InstanceOperator):
+    # Assisted by watsonx Code Assistant
+    """An operator to recursively replace values in dictionary fields of instances based on a key and a mapping of values.
+
+    Attributes:
+        key (str): The key in the dictionary to start the replacement process.
+        map_values (dict): A dictionary containing the key-value pairs to replace the original values.
+        remove_values (Optional[list]): An optional list of values to remove from the dictionary. Defaults to None.
+
+    Example:
+    RecursiveReplace(key="a", map_values={"1": "hi", "2": "bye" }, remove_values=["3"])
+        replaces the value of key "a" in all instances of all streams:
+        instance ``{"field" : [{"a": "1", "b" : "2"}, {"a" : "3", "b:" "4"}}` becomes ``{"field" : [{"a": "hi", "b" : "2"}, {"b": "4"}}``
+
+        Notice how the value of field ``"a"`` in the first instance is replaced with ``"hi"`` and the value of field ``"a"`` in the second instance is removed.
+    """
+
+    key: str
+    map_values: dict
+    remove_values: Optional[list] = None
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        return recursive_key_value_replace(
+            instance, self.key, self.map_values, self.remove_values
+        )
 
 
 @deprecation(version="2.0.0", alternative=Set)
@@ -559,7 +629,26 @@ class AddConstant(FieldOperator):
 
 
 class ShuffleFieldValues(FieldOperator):
-    """Shuffles a list of values found in a field."""
+    # Assisted by watsonx Code Assistant
+    """An operator that shuffles the values of a list field.
+
+    the seed for shuffling in the is determined by the elements of the input field,
+    ensuring that the shuffling operation produces different results for different input lists,
+    but also that it is deterministic and reproducible.
+
+    Attributes:
+        None
+
+    Methods:
+        process_value(value: Any) -> Any:
+            Shuffles the elements of the input list and returns the shuffled list.
+
+            Parameters:
+                value (Any): The input list to be shuffled.
+
+    Returns:
+                Any: The shuffled list.
+    """
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
@@ -897,7 +986,14 @@ class CopyFields(Copy):
 
 
 class GetItemByIndex(FieldOperator):
-    """Get from the item list by the index in the field."""
+    """Get the element from the fixed list by the index in the given field and store in another field.
+
+    Example:
+        GetItemByIndex(items_list=["dog",cat"],field="animal_index",to_field="animal")
+
+    on instance {"animal_index" : 1}  will change the instance to {"animal_index" : 1, "animal" : "cat"}
+
+    """
 
     items_list: List[Any]
 
@@ -929,7 +1025,13 @@ class Cast(FieldOperator):
     failure_default: Optional[Any] = "__UNDEFINED__"
 
     def prepare(self):
-        self.types = {"int": int, "float": float, "str": str, "bool": bool}
+        self.types = {
+            "int": int,
+            "float": float,
+            "str": str,
+            "bool": bool,
+            "tuple": tuple,
+        }
 
     def process_value(self, value):
         try:
@@ -1476,6 +1578,117 @@ class Intersect(FieldOperator):
         return [e for e in value if e in self.allowed_values]
 
 
+class IntersectCorrespondingFields(InstanceOperator):
+    """Intersects the value of a field, which must be a list, with a given list , and removes corresponding elements from other list fields.
+
+    For example:
+
+    Assume the instances contain a field of 'labels' and a field with the labels' corresponding 'positions' in the text.
+
+    .. code-block:: text
+
+        IntersectCorrespondingFields(field="label",
+                                    allowed_values=["b", "f"],
+                                    corresponding_fields_to_intersect=["position"])
+
+    would keep only "b" and "f" values in 'labels' field and
+    their respective values in the 'position' field.
+    (All other fields are not effected)
+
+    .. code-block:: text
+
+        Given this input:
+
+        [
+            {"label": ["a", "b"],"position": [0,1],"other" : "not"},
+            {"label": ["a", "c", "d"], "position": [0,1,2], "other" : "relevant"},
+            {"label": ["a", "b", "f"], "position": [0,1,2], "other" : "field"}
+        ]
+
+        So the output would be:
+        [
+                {"label": ["b"], "position":[1],"other" : "not"},
+                {"label": [], "position": [], "other" : "relevant"},
+                {"label": ["b", "f"],"position": [1,2], "other" : "field"},
+        ]
+
+    Args:
+        field - the field to intersected (must contain list values)
+        allowed_values (list) - list of values to keep
+        corresponding_fields_to_intersect (list) - additional list fields from which values
+        are removed based the corresponding indices of values removed from the 'field'
+    """
+
+    field: str
+    allowed_values: List[str]
+    corresponding_fields_to_intersect: List[str]
+
+    def verify(self):
+        super().verify()
+
+        if not isinstance(self.allowed_values, list):
+            raise ValueError(
+                f"The allowed_values is not a type list but '{type(self.allowed_values)}'"
+            )
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if self.field not in instance:
+            raise ValueError(
+                f"Field '{self.field}' is not in provided instance.\n"
+                + to_pretty_string(instance)
+            )
+
+        for corresponding_field in self.corresponding_fields_to_intersect:
+            if corresponding_field not in instance:
+                raise ValueError(
+                    f"Field '{corresponding_field}' is not in provided instance.\n"
+                    + to_pretty_string(instance)
+                )
+
+        if not isinstance(instance[self.field], list):
+            raise ValueError(
+                f"Value of field '{self.field}' is not a list, so IntersectCorrespondingFields can not intersect with allowed values. Field value:\n"
+                + to_pretty_string(instance, keys=[self.field])
+            )
+
+        num_values_in_field = len(instance[self.field])
+
+        if set(self.allowed_values) == set(instance[self.field]):
+            return instance
+
+        indices_to_keep = [
+            i
+            for i, value in enumerate(instance[self.field])
+            if value in set(self.allowed_values)
+        ]
+
+        result_instance = {}
+        for field_name, field_value in instance.items():
+            if (
+                field_name in self.corresponding_fields_to_intersect
+                or field_name == self.field
+            ):
+                if not isinstance(field_value, list):
+                    raise ValueError(
+                        f"Value of field '{field_name}' is not a list, IntersectCorrespondingFields can not intersect with allowed values."
+                    )
+                if len(field_value) != num_values_in_field:
+                    raise ValueError(
+                        f"Number of elements in field '{field_name}' is not the same as the number of elements in field '{self.field}' so the IntersectCorrespondingFields can not remove corresponding values.\n"
+                        + to_pretty_string(instance, keys=[self.field, field_name])
+                    )
+                result_instance[field_name] = [
+                    value
+                    for index, value in enumerate(field_value)
+                    if index in indices_to_keep
+                ]
+            else:
+                result_instance[field_name] = field_value
+        return result_instance
+
+
 class RemoveValues(FieldOperator):
     """Removes elements in a field, which must be a list, using a given list of unallowed.
 
@@ -1497,63 +1710,6 @@ class RemoveValues(FieldOperator):
         if not isinstance(value, list):
             raise ValueError(f"The value in field is not a list but '{value}'")
         return [e for e in value if e not in self.unallowed_values]
-
-
-class Unique(SingleStreamReducer):
-    """Reduces a stream to unique instances based on specified fields.
-
-    Args:
-        fields (List[str]): The fields that should be unique in each instance.
-    """
-
-    fields: List[str] = field(default_factory=list)
-
-    @staticmethod
-    def to_tuple(instance: dict, fields: List[str]) -> tuple:
-        result = []
-        for field_name in fields:
-            value = instance[field_name]
-            if isinstance(value, list):
-                value = tuple(value)
-            result.append(value)
-        return tuple(result)
-
-    def process(self, stream: Stream) -> Stream:
-        seen = set()
-        for instance in stream:
-            values = self.to_tuple(instance, self.fields)
-            if values not in seen:
-                seen.add(values)
-        return list(seen)
-
-
-class SplitByValue(MultiStreamOperator):
-    """Splits a MultiStream into multiple streams based on unique values in specified fields.
-
-    Args:
-        fields (List[str]): The fields to use when splitting the MultiStream.
-    """
-
-    fields: List[str] = field(default_factory=list)
-
-    def process(self, multi_stream: MultiStream) -> MultiStream:
-        uniques = Unique(fields=self.fields)(multi_stream)
-
-        result = {}
-
-        for stream_name, stream in multi_stream.items():
-            stream_unique_values = uniques[stream_name]
-            for unique_values in stream_unique_values:
-                filtering_values = dict(zip(self.fields, unique_values))
-                filtered_streams = FilterByCondition(
-                    values=filtering_values, condition="eq"
-                )._process_single_stream(stream)
-                filtered_stream_name = (
-                    stream_name + "_" + nested_tuple_to_string(unique_values)
-                )
-                result[filtered_stream_name] = filtered_streams
-
-        return MultiStream(result)
 
 
 class SplitByNestedGroup(MultiStreamOperator):
@@ -1600,6 +1756,15 @@ class SplitByNestedGroup(MultiStreamOperator):
                 result[signature].append(instance)
 
         return MultiStream.from_iterables(result)
+
+
+class AddIncrementalId(StreamOperator):
+    to_field: str
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        for i, instance in enumerate(stream):
+            instance[self.to_field] = i
+            yield instance
 
 
 class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
@@ -1681,8 +1846,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
                 )
 
         for metric in metrics_list:
-            if not self.calc_confidence_intervals:
-                metric.disable_confidence_interval_calculation()
+            metric.set_confidence_interval_calculation(self.calc_confidence_intervals)
         # Each metric operator computes its score and then sets the main score, overwriting
         # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
         # This will cause the first listed metric to run last, and the main score will be set
@@ -2243,6 +2407,104 @@ class CollateInstances(StreamOperator):
             )
 
 
+class CollateInstancesByField(StreamOperator):
+    """Groups a list of instances by a specified field, aggregates specified fields into lists, and ensures consistency for all other non-aggregated fields.
+
+    Args:
+        by_field str: the name of the field to group data by.
+        aggregate_fields list(str): the field names to aggregate into lists.
+
+    Returns:
+        A stream of instances grouped and aggregated by the specified field.
+
+    Raises:
+        UnitxtError: If non-aggregate fields have inconsistent values.
+
+    Example:
+        Collate the instances based on field "category" and aggregate fields "value" and "id".
+
+        .. code-block:: text
+
+            CollateInstancesByField(by_field="category", aggregate_fields=["value", "id"])
+
+            given input:
+            [
+                {"id": 1, "category": "A", "value": 10", "flag" : True},
+                {"id": 2, "category": "B", "value": 20", "flag" : False},
+                {"id": 3, "category": "A", "value": 30", "flag" : True},
+                {"id": 4, "category": "B", "value": 40", "flag" : False}
+            ]
+
+            the output is:
+            [
+                {"category": "A", "id": [1, 3], "value": [10, 30], "info": True},
+                {"category": "B", "id": [2, 4], "value": [20, 40], "info": False}
+            ]
+
+        Note that the "flag" field is not aggregated, and must be the same
+        in all instances in the same category, or an error is raised.
+    """
+
+    by_field: str = NonPositionalField(required=True)
+    aggregate_fields: List[str] = NonPositionalField(required=True)
+
+    def prepare(self):
+        super().prepare()
+
+    def verify(self):
+        super().verify()
+        if not isinstance(self.by_field, str):
+            raise UnitxtError(
+                f"The 'by_field' value is not a string but '{type(self.by_field)}'"
+            )
+
+        if not isinstance(self.aggregate_fields, list):
+            raise UnitxtError(
+                f"The 'allowed_field_values' is not a list but '{type(self.aggregate_fields)}'"
+            )
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None):
+        grouped_data = {}
+
+        for instance in stream:
+            if self.by_field not in instance:
+                raise UnitxtError(
+                    f"The field '{self.by_field}' specified by CollateInstancesByField's 'by_field' argument is not found in instance."
+                )
+            for k in self.aggregate_fields:
+                if k not in instance:
+                    raise UnitxtError(
+                        f"The field '{k}' specified in CollateInstancesByField's 'aggregate_fields' argument is not found in instance."
+                    )
+            key = instance[self.by_field]
+
+            if key not in grouped_data:
+                grouped_data[key] = {
+                    k: v for k, v in instance.items() if k not in self.aggregate_fields
+                }
+                # Add empty lists for fields to aggregate
+                for agg_field in self.aggregate_fields:
+                    if agg_field in instance:
+                        grouped_data[key][agg_field] = []
+
+            for k, v in instance.items():
+                # Merge classification policy list across instance with same key
+                if k == "data_classification_policy" and instance[k]:
+                    grouped_data[key][k] = sorted(set(grouped_data[key][k] + v))
+                # Check consistency for all non-aggregate fields
+                elif k != self.by_field and k not in self.aggregate_fields:
+                    if k in grouped_data[key] and grouped_data[key][k] != v:
+                        raise ValueError(
+                            f"Inconsistent value for field '{k}' in group '{key}': "
+                            f"'{grouped_data[key][k]}' vs '{v}'. Ensure that all non-aggregated fields in CollateInstancesByField are consistent across all instances."
+                        )
+                # Aggregate fields
+                elif k in self.aggregate_fields:
+                    grouped_data[key][k].append(instance[k])
+
+        yield from grouped_data.values()
+
+
 class WikipediaFetcher(FieldOperator):
     mode: Literal["summary", "text"] = "text"
     _requirements_list = ["Wikipedia-API"]
@@ -2258,3 +2520,17 @@ class WikipediaFetcher(FieldOperator):
         page = self.wikipedia.page(title)
 
         return {"title": page.title, "body": getattr(page, self.mode)}
+
+
+class Fillna(FieldOperator):
+    value: Any
+
+    def process_value(self, value: Any) -> Any:
+        import numpy as np
+
+        try:
+            if np.isnan(value):
+                return self.value
+        except TypeError:
+            return value
+        return value

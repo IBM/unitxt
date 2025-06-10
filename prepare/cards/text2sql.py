@@ -4,9 +4,10 @@ from unitxt import add_to_catalog
 from unitxt.blocks import Copy, Rename, Set, TaskCard
 from unitxt.loaders import LoadHF
 from unitxt.operators import ExecuteExpression, Shuffle
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="premai-io/birdbench", split="validation"),
+    loader=LoadHF(path="premai-io/birdbench", split="validation", streaming=True),
     preprocess_steps=[
         Shuffle(page_size=sys.maxsize),
         Rename(
@@ -45,9 +46,15 @@ card = TaskCard(
 )
 
 
-# test_card(
-#     card, num_demos=0, demos_pool_size=0, demos_taken_from="test"
-# )
+test_card(
+    card,
+    num_demos=0,
+    demos_pool_size=0,
+    demos_taken_from="validation",
+    loader_limit=10,
+    test_exact_match_score_when_predictions_equal_references=False,
+    test_full_mismatch_score_with_full_mismatch_prediction_values=False,
+)
 
 add_to_catalog(
     card,

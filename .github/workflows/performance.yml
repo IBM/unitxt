@@ -1,8 +1,6 @@
 name: Test Performance
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -14,6 +12,7 @@ jobs:
   performance:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       OS: ubuntu-latest
       UNITXT_DEFAULT_VERBOSITY: error
@@ -21,6 +20,8 @@ jobs:
       DATASETS_VERBOSITY: error
       HF_HUB_VERBOSITY: error
       HF_DATASETS_DISABLE_PROGRESS_BARS: "True"
+      HF_HUB_DOWNLOAD_TIMEOUT: 60
+      HF_HUB_ETAG_TIMEOUT: 60
       TQDM_DISABLE: "True"
     steps:
     - uses: actions/checkout@v4
@@ -35,17 +36,17 @@ jobs:
         uv pip install --system ".[tests,watsonx,inference-tests]"
         uv pip install --system litellm
         uv pip install --system diskcache
-        huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
-
+        
+    - name:  Hugging Face Login
+      run: |
+        for i in {1..5}; do
+          huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} && break || sleep $((2 ** i));
+        done
     - name: Prepare the dirs for performance evaluation in main
       run: |
         mkdir -p performance_action
         cp performance/bluebench_profiler.py performance_action/bluebench_profiler.py
         cp performance/compare_benchmark_performance_results.py performance_action/compare_benchmark_performance_results.py
-
-    - name: Run performance on PR just to warm the cache, output will be overwritten
-      run : |
-        python performance_action/bluebench_profiler.py --output_file performance_action/pr_results.json
 
     - name: Checkout main branch
       uses: actions/checkout@v4

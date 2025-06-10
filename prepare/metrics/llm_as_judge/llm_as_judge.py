@@ -1,18 +1,18 @@
 from typing import Union
 
 from unitxt import add_to_catalog, get_logger
+from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.llm_as_judge import LLMJudgeDirect, LLMJudgePairwise
 from unitxt.llm_as_judge_constants import (
     DIRECT_CRITERIA,
     EVALUATOR_TO_MODEL_ID,
     EVALUATORS_METADATA,
-    INFERENCE_ENGINE_NAME_TO_CLASS,
     PAIRWISE_CRITERIA,
     EvaluatorNameEnum,
     EvaluatorTypeEnum,
     ModelProviderEnum,
 )
-from unitxt.llm_as_judge_utils import get_evaluator_metadata, rename_model_if_required
+from unitxt.llm_as_judge_utils import get_evaluator_metadata
 
 logger = get_logger()
 
@@ -23,20 +23,23 @@ def get_evaluator(
     provider: ModelProviderEnum,
 ) -> Union[LLMJudgeDirect, LLMJudgePairwise]:
     evaluator_metadata = get_evaluator_metadata(name)
-
-    inference_params = {"max_tokens": 1024, "seed": 42}
-    model_name = rename_model_if_required(EVALUATOR_TO_MODEL_ID[name], provider)
-    if provider == ModelProviderEnum.WATSONX:
-        model_name = f"watsonx/{model_name}"
-    elif provider == ModelProviderEnum.OPENAI:
-        model_name = f"openai/{model_name}"
-
-    params = {
-        f"{'model' if provider != ModelProviderEnum.RITS else 'model_name'}": model_name,
-        **inference_params,
+    inference_params = {
+        "max_tokens": 1024,
+        "seed": 42,
+        "temperature": 0,
+        "provider": provider.value,
     }
+    model_name = EVALUATOR_TO_MODEL_ID[name]
 
-    inference_engine = INFERENCE_ENGINE_NAME_TO_CLASS[provider](**params)
+    if provider == ModelProviderEnum.AZURE:
+        inference_params["credentials"] = {}
+        inference_params["credentials"][
+            "api_base"
+        ] = f"https://eteopenai.azure-api.net/openai/deployments/{model_name}/chat/completions?api-version=2024-08-01-preview"
+
+    inference_params["model"] = model_name
+
+    inference_engine = CrossProviderInferenceEngine(**inference_params)
 
     params = {
         "inference_engine": inference_engine,
@@ -71,29 +74,34 @@ for criteria in PAIRWISE_CRITERIA:
 
 logger.debug("Registering evaluators...")
 for evaluator_metadata in EVALUATORS_METADATA:
-    if evaluator_metadata.name not in [
-        EvaluatorNameEnum.GRANITE_GUARDIAN_2B,
-        EvaluatorNameEnum.GRANITE_GUARDIAN_8B,
-    ]:
-        for provider in evaluator_metadata.providers:
-            for evaluator_type in [
-                EvaluatorTypeEnum.DIRECT,
-                EvaluatorTypeEnum.PAIRWISE,
-            ]:
-                evaluator = get_evaluator(
-                    name=evaluator_metadata.name,
-                    evaluator_type=evaluator_type,
-                    provider=provider,
-                )
+    for provider in evaluator_metadata.providers:
+        for evaluator_type in [
+            EvaluatorTypeEnum.DIRECT,
+            EvaluatorTypeEnum.PAIRWISE,
+        ]:
+            evaluator = get_evaluator(
+                name=evaluator_metadata.name,
+                evaluator_type=evaluator_type,
+                provider=provider,
+            )
 
-                metric_name = (
-                    evaluator_metadata.name.value.lower()
-                    .replace("-", "_")
-                    .replace(".", "_")
-                    .replace(" ", "_")
-                )
-                add_to_catalog(
-                    evaluator,
-                    f"metrics.llm_as_judge.{evaluator_type.value}.{provider.value.lower()}.{metric_name}",
-                    overwrite=True,
-                )
+            metric_name = (
+                evaluator_metadata.name.value.lower()
+                .replace("-", "_")
+                .replace(".", "_")
+                .replace(" ", "_")
+            )
+            provider_name = ""
+            # for backward compatibility, ideally we would use cross inference engines provider ids
+            if provider == ModelProviderEnum.AZURE:
+                provider_name = "azure_openai"
+            elif provider == ModelProviderEnum.OPENAI:
+                provider_name = "openai"
+            else:
+                provider_name = provider.value.lower().replace("-", "_")
+
+            add_to_catalog(
+                evaluator,
+                f"metrics.llm_as_judge.{evaluator_type.value}.{provider_name}.{metric_name}",
+                overwrite=True,
+            )

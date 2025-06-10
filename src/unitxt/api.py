@@ -1,3 +1,4 @@
+import hashlib
 import inspect
 import json
 from datetime import datetime
@@ -5,8 +6,10 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
+from datasets.exceptions import DatasetGenerationError
 
 from .artifact import fetch_artifact
+from .benchmark import Benchmark
 from .card import TaskCard
 from .dataset_utils import get_dataset_artifact
 from .error_utils import UnitxtError
@@ -19,7 +22,7 @@ from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
 from .metric_utils import EvaluationResults, _compute, _inference_post_process
 from .operator import SourceOperator
-from .schema import UNITXT_DATASET_SCHEMA, loads_instance
+from .schema import loads_batch
 from .settings_utils import get_constants, get_settings
 from .standard import DatasetRecipe
 from .task import Task
@@ -29,21 +32,22 @@ constants = get_constants()
 settings = get_settings()
 
 
-def load(source: Union[SourceOperator, str]):
-    assert isinstance(
-        source, (SourceOperator, str)
-    ), "source must be a SourceOperator or a string"
-    if isinstance(source, str):
-        source, _ = fetch_artifact(source)
-    return source().to_dataset()
+def short_hex_hash(value, length=8):
+    h = hashlib.sha256(value.encode()).hexdigest()  # Full 64-character hex
+    return h[:length]
 
 
-def _get_recipe_from_query(dataset_query: str) -> DatasetRecipe:
-    dataset_query = dataset_query.replace("sys_prompt", "instruction")
+def _get_recipe_from_query(
+    dataset_query: str, overwrite_kwargs: Optional[Dict[str, Any]] = None
+) -> DatasetRecipe:
     try:
-        dataset_stream, _ = fetch_artifact(dataset_query)
+        dataset_stream, _ = fetch_artifact(
+            dataset_query, overwrite_kwargs=overwrite_kwargs
+        )
     except:
-        dataset_stream = get_dataset_artifact(dataset_query)
+        dataset_stream = get_dataset_artifact(
+            dataset_query, overwrite_kwargs=overwrite_kwargs
+        )
     return dataset_stream
 
 
@@ -80,16 +84,19 @@ def _verify_dataset_args(dataset_query: Optional[str] = None, dataset_args=None)
 
 
 def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> DatasetRecipe:
-    if isinstance(dataset_query, DatasetRecipe):
+    if isinstance(dataset_query, (DatasetRecipe, Benchmark)):
         return dataset_query
 
-    _verify_dataset_args(dataset_query, kwargs)
-
     if dataset_query:
-        recipe = _get_recipe_from_query(dataset_query)
+        recipe = _get_recipe_from_query(dataset_query, kwargs)
 
-    if kwargs:
+    elif kwargs:
         recipe = _get_recipe_from_dict(kwargs)
+
+    else:
+        raise UnitxtError(
+            "Specify either dataset recipe string artifact name or recipe args."
+        )
 
     return recipe
 
@@ -100,6 +107,7 @@ def create_dataset(
     train_set: Optional[List[Dict[Any, Any]]] = None,
     validation_set: Optional[List[Dict[Any, Any]]] = None,
     split: Optional[str] = None,
+    data_classification_policy: Optional[List[str]] = None,
     **kwargs,
 ) -> Union[DatasetDict, IterableDatasetDict, Dataset, IterableDataset]:
     """Creates dataset from input data based on a specific task.
@@ -110,6 +118,7 @@ def create_dataset(
         train_set : optional train_set
         validation_set: optional validation set
         split: optional one split to choose
+        data_classification_policy: data_classification_policy
         **kwargs: Arguments used to load dataset from provided datasets (see load_dataset())
 
     Returns:
@@ -131,15 +140,56 @@ def create_dataset(
             f"No 'template' was passed to the create_dataset() and the given task ('{task.__id__}') has no 'default_template' field."
         )
 
-    card = TaskCard(loader=LoadFromDictionary(data=data), task=task)
+    card = TaskCard(
+        loader=LoadFromDictionary(
+            data=data, data_classification_policy=data_classification_policy
+        ),
+        task=task,
+    )
     return load_dataset(card=card, split=split, **kwargs)
+
+
+def _source_to_dataset(
+    source: SourceOperator,
+    split=None,
+    use_cache=False,
+    streaming=False,
+):
+    from .dataset import Dataset as UnitxtDataset
+
+    stream = source()
+
+    try:
+        ds_builder = UnitxtDataset(
+            dataset_name="unitxt",
+            config_name="recipe-" + short_hex_hash(repr(source)),
+            version=constants.version,
+        )
+        if split is not None:
+            stream = {split: stream[split]}
+        ds_builder._generators = stream
+
+        ds_builder.download_and_prepare(
+            verification_mode="no_checks",
+            download_mode=None if use_cache else "force_redownload",
+        )
+
+        if streaming:
+            return ds_builder.as_streaming_dataset(split=split)
+
+        return ds_builder.as_dataset(
+            split=split, run_post_process=False, verification_mode="no_checks"
+        )
+
+    except DatasetGenerationError as e:
+        raise e.__cause__
 
 
 def load_dataset(
     dataset_query: Optional[str] = None,
     split: Optional[str] = None,
     streaming: bool = False,
-    disable_cache: Optional[bool] = None,
+    use_cache: Optional[bool] = False,
     **kwargs,
 ) -> Union[DatasetDict, IterableDatasetDict, Dataset, IterableDataset]:
     """Loads dataset.
@@ -150,17 +200,24 @@ def load_dataset(
     Alternatively, dataset is loaded from a provided card based on explicitly
     given parameters.
 
+    If both are given, then the textual recipe is loaded with the key word args overriding the textual recipe args.
+
     Args:
         dataset_query (str, optional):
             A string query which specifies a dataset to load from
             local catalog or name of specific recipe or benchmark in the catalog. For
             example, ``"card=cards.wnli,template=templates.classification.multi_class.relation.default"``.
         streaming (bool, False):
-            When True yields the data as Unitxt streams dictionary
+            When True yields the data as a stream.
+            This is useful when loading very large datasets.
+            Loading datasets as streams avoid loading all the data to memory, but requires the dataset's loader to support streaming.
         split (str, optional):
             The split of the data to load
-        disable_cache (str, optional):
-            Disable caching process of the data
+        use_cache (bool, optional):
+            If set to True, the returned Huggingface dataset is cached on local disk such that if the same dataset is loaded again, it will be loaded from local disk, resulting in faster runs.
+            If set to False (default), the returned dataset is not cached.
+            Note that if caching is enabled and the dataset card definition is changed, the old version in the cache may be returned.
+            Enable caching only if you are sure you are working with fixed Unitxt datasets and definitions (e.g. running using predefined datasets from the Unitxt catalog).
         **kwargs:
             Arguments used to load dataset from provided card, which is not present in local catalog.
 
@@ -184,21 +241,9 @@ def load_dataset(
     """
     recipe = load_recipe(dataset_query, **kwargs)
 
-    stream = recipe()
-    if split is not None:
-        stream = stream[split]
-
-    if disable_cache is None:
-        disable_cache = settings.disable_hf_datasets_cache
-
-    if streaming:
-        dataset = stream.to_iterable_dataset(
-            features=UNITXT_DATASET_SCHEMA,
-        ).map(loads_instance, batched=True)
-    else:
-        dataset = stream.to_dataset(
-            features=UNITXT_DATASET_SCHEMA, disable_cache=disable_cache
-        ).with_transform(loads_instance)
+    dataset = _source_to_dataset(
+        source=recipe, split=split, use_cache=use_cache, streaming=streaming
+    )
 
     frame = inspect.currentframe()
     args, _, _, values = inspect.getargvalues(frame)
@@ -221,13 +266,20 @@ def fill_metadata(**kwargs):
 
 
 def evaluate(
-    predictions, dataset: Union[Dataset, IterableDataset] = None, data=None
+    predictions,
+    dataset: Union[Dataset, IterableDataset] = None,
+    data=None,
+    calc_confidence_intervals: bool = True,
 ) -> EvaluationResults:
     if dataset is None and data is None:
         raise UnitxtError(message="Specify 'dataset' in evaluate")
     if data is not None:
         dataset = data  # for backward compatibility
-    evaluation_result = _compute(predictions=predictions, references=dataset)
+    evaluation_result = _compute(
+        predictions=predictions,
+        references=dataset,
+        calc_confidence_intervals=calc_confidence_intervals,
+    )
     if hasattr(dataset, "info") and hasattr(dataset.info, "description"):
         evaluation_result.metadata["dataset"] = dataset.info.description
     if hasattr(predictions, "metadata"):
@@ -256,7 +308,7 @@ def produce(
     result = _get_produce_with_cache(dataset_query, **kwargs)(instance_or_instances)
     if not is_list:
         return result[0]
-    return Dataset.from_list(result).with_transform(loads_instance)
+    return Dataset.from_list(result).with_transform(loads_batch)
 
 
 def infer(

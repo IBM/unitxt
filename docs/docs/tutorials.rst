@@ -1,7 +1,7 @@
 .. _tutorials:
 
 ------------
-Tutorials ✨
+Guides ✨
 ------------
 
 .. toctree::
@@ -14,10 +14,12 @@ Tutorials ✨
    adding_format
    adding_operator
    adding_metric
+   cli
    data_classification_policy
    ../modules
    rag_support
    multimodality
+   tool_calling
    operators
    saving_and_loading_from_catalog
    inference
@@ -31,4 +33,6 @@ Tutorials ✨
    tags_and_descriptions
    types_and_serializers
    contributors_guide
+   demo
+   settings
 

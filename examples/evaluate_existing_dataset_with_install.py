@@ -23,8 +23,9 @@ predictions = model(dataset)
 
 results = evaluate(predictions=predictions, data=dataset)
 
-print("Global Results:")
-print(results.global_scores.summary)
 
 print("Instance Results:")
-print(results.instance_scores.summary)
+print(results.instance_scores)
+
+print("Global Results:")
+print(results.global_scores.summary)

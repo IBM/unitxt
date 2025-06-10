@@ -1,0 +1,12 @@
+{
+    "__type__": "dataset_recipe",
+    "card": "cards.fin_qa",
+    "serializer": "serializers.table.df",
+    "num_demos": 5,
+    "demos_pool_size": -1,
+    "loader_limit": 10000,
+    "template_card_index": 0,
+    "augmentor": [
+        "augmentors.table.shuffle_rows"
+    ]
+}

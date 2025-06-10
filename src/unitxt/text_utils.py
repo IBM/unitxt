@@ -191,17 +191,12 @@ def construct_dict_as_yaml_lines(d, indent_delta=2) -> List[str]:
         d: The element to be formatted.
         indent_delta (int, optional): The amount of spaces to add for each level of indentation. Defaults to 2.
     """
-
-    def is_simple(val) -> bool:
-        # if can show in same line as dictionary's key
-        return not isinstance(val, (dict, list)) or (len(val) == 0)
-
     indent_delta_str = " " * indent_delta
     ticked_indent_delta_str = indent_delta_str[:-2] + "- "
     assert (
         indent_delta >= 2
     ), f"Needs at least 2 position indentations, for the case of list elements, that are to be preceded each by ' -'. Got indent_delta={indent_delta}."
-    res = []  # conputed hereunder as a list of lines, that are indented only at the end
+    res = []  # computed hereunder as a list of lines, that are indented only at the end
 
     if isinstance(d, dict):
         if len(d) == 0:
@@ -211,8 +206,7 @@ def construct_dict_as_yaml_lines(d, indent_delta=2) -> List[str]:
             res.append(printable_key + ": ")
             yaml_for_val = construct_dict_as_yaml_lines(val, indent_delta=indent_delta)
             assert len(yaml_for_val) > 0
-            if is_simple(val):
-                assert len(yaml_for_val) == 1
+            if len(yaml_for_val) == 1:
                 res[-1] += yaml_for_val[0]
             else:
                 for line in yaml_for_val:
@@ -232,9 +226,76 @@ def construct_dict_as_yaml_lines(d, indent_delta=2) -> List[str]:
 
     # d1 = re.sub(r"(\n+)", r'"\1"', str(d))
     d1 = str(d).replace("\n", "\\n").replace('"', '\\"')
-    if "\\n" in d1:
+    if "\\n" in d1 or d1 == "":
         d1 = f'"{d1}"'
     return [d1]
+
+
+def construct_dict_as_python_lines(d, indent_delta=4) -> List[str]:
+    """Constructs the lines of a dictionary formatted as a piece of python code.
+
+    Args:
+        d: The element to be formatted.
+        indent_delta (int, optional): The amount of spaces to add for each level of indentation. Defaults to 2.
+    """
+    indent_delta_str = " " * indent_delta
+    res = []  # computed hereunder as a list of lines, that are indented only at the end
+
+    if isinstance(d, dict):
+        istype = False
+        if len(d) == 0:
+            return ["{}"]
+        if "__type__" in d:
+            istype = True
+            res = ["__type__" + d["__type__"] + "("]
+            if len(d) == 1:
+                res[0] += ")"
+                return res
+        else:
+            res = ["{"]
+        for key, val in d.items():
+            if key == "__type__":
+                continue
+            printable_key = f'"{key}"' if not istype else key
+            res.append(printable_key + ("=" if istype else ": "))
+            py_for_val = construct_dict_as_python_lines(val, indent_delta=indent_delta)
+            assert len(py_for_val) > 0
+            if len(py_for_val) == 1:
+                res[-1] += py_for_val[0] + ","
+            else:
+                res[-1] += py_for_val[0]
+                if py_for_val[0].startswith("{") or py_for_val[0].startswith("["):
+                    for line in py_for_val[1:-1]:
+                        res.append(indent_delta_str + line)
+                else:
+                    # val is type, its inner lines are already indented
+                    res.extend(py_for_val[1:-1])
+                res.append(py_for_val[-1] + ",")
+        res.append(")" if istype else "}")
+        if istype:
+            for i in range(1, len(res) - 1):
+                res[i] = indent_delta_str + res[i]
+        return res
+
+    if isinstance(d, list):
+        if len(d) == 0:
+            return ["[]"]
+        res = ["["]
+        for val in d:
+            py_for_val = construct_dict_as_python_lines(val, indent_delta=indent_delta)
+            assert len(py_for_val) > 0
+            for line in py_for_val[:-1]:
+                res.append(line)
+            res.append(py_for_val[-1] + ",")
+        res.append("]")
+        return res
+
+    # d1 = re.sub(r"(\n+)", r'"\1"', str(d))
+    if isinstance(d, str):
+        return [f'"{d}"']
+    if d is None or isinstance(d, (int, float, bool)):
+        return [f"{d}"]
+    raise RuntimeError(f"unrecognized value to print as python: {d}")
 
 
 def print_dict(
@@ -246,10 +307,16 @@ def print_dict(
 
 
 def print_dict_as_yaml(d: dict, indent_delta=2) -> str:
-    yaml_lines = construct_dict_as_yaml_lines(d)
+    yaml_lines = construct_dict_as_yaml_lines(d, indent_delta=indent_delta)
     # yaml_lines = [re.sub(r"(\n+)", r'"\1"', line) for line in yaml_lines]
     # yaml_lines = [line.replace("\n", "\\n") for line in yaml_lines]
     return "\n".join(yaml_lines)
+
+
+def print_dict_as_python(d: dict, indent_delta=4) -> str:
+    py_lines = construct_dict_as_python_lines(d, indent_delta=indent_delta)
+    assert len(py_lines) > 0
+    return "\n".join(py_lines)
 
 
 def nested_tuple_to_string(nested_tuple: tuple) -> str:

@@ -2,8 +2,10 @@ import json
 from collections import Counter
 from typing import Any
 
+from unitxt.error_utils import UnitxtError
 from unitxt.formats import SystemFormat
 from unitxt.metrics import MetricsList
+from unitxt.normalizers import NormalizeListFields
 from unitxt.operators import (
     AddConstant,
     Apply,
@@ -12,6 +14,7 @@ from unitxt.operators import (
     ApplyStreamOperatorsField,
     CastFields,
     CollateInstances,
+    CollateInstancesByField,
     Copy,
     Deduplicate,
     DeterministicBalancer,
@@ -30,6 +33,7 @@ from unitxt.operators import (
     FromIterables,
     IndexOf,
     Intersect,
+    IntersectCorrespondingFields,
     IterableSource,
     JoinStr,
     LengthBalancer,
@@ -38,6 +42,7 @@ from unitxt.operators import (
     MergeStreams,
     MinimumOneExamplePerLabelRefiner,
     Perturb,
+    RecursiveReplace,
     RemoveFields,
     RemoveValues,
     Rename,
@@ -45,10 +50,8 @@ from unitxt.operators import (
     Set,
     Shuffle,
     ShuffleFieldValues,
-    SplitByValue,
     StreamRefiner,
     TakeByField,
-    Unique,
     ZipFieldValues,
 )
 from unitxt.stream import MultiStream
@@ -657,6 +660,134 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
+    def test_intersect_corresponding_fields(self):
+        inputs = [
+            {"label": ["a", "b"], "position": [0, 1], "other": "not"},
+            {"label": ["a", "c", "d"], "position": [0, 1, 2], "other": "relevant"},
+            {"label": ["a", "b", "f"], "position": [0, 1, 2], "other": "field"},
+        ]
+
+        targets = [
+            {"label": ["b"], "position": [1], "other": "not"},
+            {"label": [], "position": [], "other": "relevant"},
+            {"label": ["b", "f"], "position": [1, 2], "other": "field"},
+        ]
+
+        check_operator(
+            operator=IntersectCorrespondingFields(
+                field="label",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["position"],
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            """Field 'acme_field' is not in provided instance.
+label (list):
+    [0] (str):
+        a
+    [1] (str):
+        b
+position (list):
+    [0] (int):
+        0
+    [1] (int):
+        1
+other (str):
+    not
+""",
+        ]
+        check_operator_exception(
+            operator=IntersectCorrespondingFields(
+                field="acme_field",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["other"],
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            """Field 'acme_field' is not in provided instance.
+label (list):
+    [0] (str):
+        a
+    [1] (str):
+        b
+position (list):
+    [0] (int):
+        0
+    [1] (int):
+        1
+other (str):
+    not
+""",
+        ]
+        check_operator_exception(
+            operator=IntersectCorrespondingFields(
+                field="label",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["acme_field"],
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            "Value of field 'other' is not a list, so IntersectCorrespondingFields can not intersect with allowed values. Field value:\nother (str):\n    not\n",
+        ]
+        check_operator_exception(
+            operator=IntersectCorrespondingFields(
+                field="other",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["other"],
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        inputs = [
+            {"label": ["a", "b"], "position": [0, 1, 2], "other": "not"},
+            {"label": ["a", "c", "d"], "position": [0, 1, 2], "other": "relevant"},
+            {"label": ["a", "b", "f"], "position": [0, 1, 2], "other": "field"},
+        ]
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            """Number of elements in field 'position' is not the same as the number of elements in field 'label' so the IntersectCorrespondingFields can not remove corresponding values.
+label (list):
+    [0] (str):
+        a
+    [1] (str):
+        b
+position (list):
+    [0] (int):
+        0
+    [1] (int):
+        1
+    [2] (int):
+        2
+""",
+        ]
+        check_operator_exception(
+            operator=IntersectCorrespondingFields(
+                field="label",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["position"],
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
     def test_remove_none(self):
         inputs = [
             {"references": [["none"], ["none"]]},
@@ -929,22 +1060,6 @@ label (str):
             tester=self,
         )
 
-    def test_unique_on_single_field(self):
-        inputs = [
-            {"a": [1, 5], "b": 2},
-            {"a": [2, 5], "b": 3},
-            {"a": [2, 5], "b": 4},
-        ]
-
-        targets = {((1, 5),), ((2, 5),)}
-
-        outputs = apply_operator(
-            operator=Unique(fields=["a"]),
-            inputs=inputs,
-        )
-
-        self.assertSetEqual(set(outputs), targets)
-
     def test_apply_stream_operators_field(self):
         inputs = [
             {
@@ -973,48 +1088,6 @@ label (str):
             ],
             outputs,
         )
-
-    def test_unique_on_multiple_fields(self):
-        inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
-            {"a": 2, "b": 4},
-            {"a": 1, "b": 2},
-        ]
-        fields = ["a", "b"]
-        targets = {(1, 2), (2, 3), (2, 4)}
-
-        outputs = apply_operator(
-            operator=Unique(fields=fields),
-            inputs=inputs,
-        )
-
-        self.assertSetEqual(set(outputs), targets)
-
-    def test_split_by_value(self):
-        inputs = [
-            {"a": 1, "b": 4},
-            {"a": 2, "b": 3},
-            {"a": 2, "b": 4},
-        ]
-
-        outputs = apply_operator(
-            operator=SplitByValue(fields="a"), inputs=inputs, return_multi_stream=True
-        )
-
-        self.assertSetEqual(set(outputs.keys()), {"test_1", "test_2"})
-
-        outputs_1 = list(outputs["test_1"])
-        self.assertEqual(len(outputs_1), 1)
-
-        outputs_2 = list(outputs["test_2"])
-        self.assertEqual(len(outputs_2), 2)
-
-        for input_dict, output_dict in zip(inputs, outputs_1):
-            self.assertDictEqual(input_dict, output_dict)
-
-        for input_dict, output_dict in zip(inputs[1:], outputs_2):
-            self.assertDictEqual(input_dict, output_dict)
 
     def test_merge(self):
         # Test with default params
@@ -2117,7 +2190,6 @@ label (str):
                 fields={"a/d": "float", "b": "int"},
                 failure_defaults={"a/d": 0.0, "b": 0},
                 process_every_value=True,
-                use_nested_query=True,
             ),
             inputs=[{"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}],
             targets=[{"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}],
@@ -2653,6 +2725,115 @@ references (str):
             tester=self,
         )
 
+    def test_collate_instances_by_field(self):
+        inputs = [
+            {"id": 1, "category": "A", "value": 10},
+            {"id": 1, "category": "A", "value": 20},
+            {"id": 2, "category": "B", "value": 30},
+            {"id": 2, "category": "B", "value": 40},
+        ]
+
+        targets = [
+            {"category": "A", "id": 1, "value": [10, 20]},
+            {"category": "B", "id": 2, "value": [30, 40]},
+        ]
+
+        check_operator(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["value"]
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        inputs = [
+            {
+                "id": 1,
+                "category": "A",
+                "value": 10,
+                "data_classification_policy": ["public"],
+            },
+            {
+                "id": 2,
+                "category": "A",
+                "value": 20,
+                "data_classification_policy": ["public"],
+            },
+            {
+                "id": 3,
+                "category": "B",
+                "value": 30,
+                "data_classification_policy": ["public"],
+            },
+            {
+                "id": 4,
+                "category": "B",
+                "value": 40,
+                "data_classification_policy": ["private"],
+            },
+        ]
+
+        targets = [
+            {
+                "category": "A",
+                "id": [1, 2],
+                "value": [10, 20],
+                "data_classification_policy": ["public"],
+            },
+            {
+                "category": "B",
+                "id": [3, 4],
+                "value": [30, 40],
+                "data_classification_policy": ["private", "public"],
+            },
+        ]
+
+        check_operator(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["value", "id"]
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        exception_texts = [
+            "Inconsistent value for field 'id' in group 'A': '1' vs '2'. Ensure that all non-aggregated fields in CollateInstancesByField are consistent across all instances.",
+        ]
+        check_operator_exception(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["value"]
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        exception_texts = [
+            "The field 'not_exist' specified by CollateInstancesByField's 'by_field' argument is not found in instance."
+        ]
+        check_operator_exception(
+            operator=CollateInstancesByField(
+                by_field="not_exist", aggregate_fields=["value"]
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        exception_texts = [
+            "The field 'not_exist' specified in CollateInstancesByField's 'aggregate_fields' argument is not found in instance."
+        ]
+        check_operator_exception(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["id", "value", "not_exist"]
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
 
 class TestApplyMetric(UnitxtTestCase):
     def _test_apply_metric(
@@ -3096,6 +3277,79 @@ Agent:"""
         ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
 
+    def test_join_errors(self):
+        input_multi_stream = MultiStream(
+            {
+                "questions": [
+                    {
+                        "question": "question_1",
+                        "id": "1",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                ],
+                "answers": [
+                    {
+                        "answer": "answer_1",
+                        "id": "2",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                ],
+                "train": [{"field": "train1"}],
+            }
+        )
+
+        with self.assertRaises(UnitxtError) as cm:
+            JoinStreams(
+                left_stream="questions",
+                right_stream="answers",
+                how="inner",
+                on=["id"],
+                new_stream_name="questions_and_answers",
+            )(input_multi_stream)
+
+        self.assertEqual(
+            str(cm.exception),
+            "JoinStreams resulted in an empty stream. It means that that keys in fields '['id']' on the left and on right streams do not match the merge policy of 'inner'.",
+        )
+
+        input_multi_stream = MultiStream(
+            {
+                "questions": [
+                    {
+                        "question": "question_1",
+                        "id": "1",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                ],
+                "answers": [
+                    {
+                        "answer": "answer_1",
+                        "id": "1",
+                        "data_classification_policy": ["confidential"],
+                        "recipe_metadata": [],
+                    },
+                ],
+                "train": [{"field": "train1"}],
+            }
+        )
+
+        with self.assertRaises(UnitxtError) as cm:
+            JoinStreams(
+                left_stream="questions",
+                right_stream="answers",
+                how="inner",
+                on=["id"],
+                new_stream_name="questions_and_answers",
+            )(input_multi_stream)
+
+        self.assertEqual(
+            str(cm.exception),
+            "'data_classification_policy' field is not identical in both left and right instances merged in JoinStreams.",
+        )
+
     def test_delete_split(self):
         input_multi_stream = MultiStream(
             {
@@ -3147,3 +3401,24 @@ Agent:"""
             }
         ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
+
+    def test_recursive_replace(self):
+        operator = RecursiveReplace(
+            key="type",
+            map_values={"int": "integer", "float": "number"},
+            remove_values=["any"],
+        )
+
+        inputs = [{"pro": {"type": "int"}, "bro": [{"type": "float"}, {"type": "any"}]}]
+
+        targets = [{"pro": {"type": "integer"}, "bro": [{"type": "number"}, {}]}]
+
+        check_operator(operator=operator, inputs=inputs, targets=targets)
+
+    def test_normalizers(self):
+        normalizer = NormalizeListFields(fields=["field_containing_a_list"])
+        instance = {"field_containing_a_list": ["a", "b", "c", "d"]}
+        processed_instance = normalizer.process(instance)
+        self.assertDictEqual(
+            {"field_containing_a_list": "a, b, c, d"}, processed_instance
+        )

@@ -1,0 +1,4 @@
+{
+    "__type__": "mean_squared_error",
+    "__description__": "Metric to calculate the mean squared error (MSE) between the prediction and the reference values.\n\n    Assume both the prediction and reference are floats.\n\n    Support only a single reference per prediction  .\n    "
+}

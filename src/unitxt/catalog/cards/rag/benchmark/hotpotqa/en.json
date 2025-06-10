@@ -1,0 +1,62 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "vincentkoc/hotpot_qa_archive",
+        "name": "distractor",
+        "revision": "c060661",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "test": "train[30%]",
+                "train": "train[70%]"
+            }
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "question": "question",
+                "id": "question_id",
+                "level": "metadata_tags/level"
+            }
+        },
+        {
+            "__type__": "copy",
+            "field": "context/title",
+            "to_field": "reference_context_ids"
+        },
+        {
+            "__type__": "join",
+            "field": "context/sentences",
+            "by": " ",
+            "to_field": "reference_contexts",
+            "process_every_value": true
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "is_answerable_label": true
+            }
+        },
+        {
+            "__type__": "wrap",
+            "field": "answer",
+            "inside": "list",
+            "to_field": "reference_answers"
+        }
+    ],
+    "task": "tasks.rag.end_to_end",
+    "templates": {
+        "default": "templates.rag.end_to_end.json_predictions"
+    },
+    "__tags__": {
+        "license": "CC BY-SA 4.0",
+        "url": "https://huggingface.co/datasets/BeIR/hotpotqa"
+    },
+    "__description__": "HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering.\nHotpotQA is a new dataset with 113k Wikipedia-based question-answer pairs with four key features: (1) the questions require finding and reasoning over multiple supporting documents to answer; (2) the questions are diverse and not constrained to any pre-existing knowledge bases or knowledge schemas; (3) we provide sentence-level supporting facts required for reasoning, allowingQA systems to reason with strong supervision and explain the predictions; (4) we offer a new type of factoid comparison questions to test QA systems ability to extract relevant facts and perform necessary comparison.\n    "
+}

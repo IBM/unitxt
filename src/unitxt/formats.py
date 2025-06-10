@@ -13,16 +13,68 @@ from typing import (
 
 from .dataclass import OptionalField
 from .dict_utils import dict_get
+from .error_utils import UnitxtError
 from .image_operators import image_to_data_url
 from .operator import InstanceOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype
+from .utils import retry_connection_with_exponential_backoff
 
 constants = get_constants()
 
 
 class Format(InstanceOperator):
     pass
+
+
+class GraniteDocumentsFormat(Format):
+    model: str = "ibm-granite/granite-3.1-8b-instruct"
+    citations: bool = True
+    length: str = "long"
+
+    _requirements_list = ["transformers"]
+
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
+    def prepare(self):
+        super().prepare()
+        from transformers import AutoTokenizer
+
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model)
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        inputs = instance["input_fields"]
+        if "question" not in inputs:
+            raise UnitxtError(
+                "GraniteRAGFormat works only for tasks with field: 'question'"
+            )
+        if "context" not in inputs and "contexts" not in inputs:
+            raise UnitxtError(
+                "GraniteRAGFormat works only for tasks with field: 'context' or 'contexts"
+            )
+
+        if "context" in inputs:
+            texts = [inputs["context"]]
+        if "contexts" in inputs:
+            texts = inputs["contexts"]
+
+        documents = []
+        for text in texts:
+            documents.append({"title": "", "text": text})
+
+        question = inputs["question"]
+
+        instance["source"] = self.tokenizer.apply_chat_template(
+            [
+                {"role": "user", "content": question},
+            ],
+            documents=documents,
+            controls={"citations": self.citations, "length": self.length},
+            add_generation_prompt=True,
+            tokenize=False,
+        )
+        return instance
 
 
 def apply_capital_new_line_notation(text: str) -> str:
@@ -66,7 +118,7 @@ def apply_capital_new_line_notation(text: str) -> str:
 
 
 class BaseFormat(Format):
-    demos_field: str = "demos"
+    demos_field: str = constants.demos_field
 
     @staticmethod
     def _pop_field(instance, field_name, do_pop: bool = True) -> str:
@@ -83,14 +135,19 @@ class BaseFormat(Format):
     def _prepare_instance_fields(self, instance) -> Tuple[str]:
         instance_fields = {}
 
-        for field in "source", "instruction", "system_prompt", "target_prefix":
+        for field in (
+            "source",
+            constants.instruction_field,
+            constants.system_prompt_field,
+            "target_prefix",
+        ):
             instance_fields[field] = self._pop_field(instance, field)
 
         instance_fields["media"] = self._pop_field(instance, "media", do_pop=False)
         if not instance_fields["media"]:
             instance_fields["media"] = {"images": [], "audios": []}
 
-        instance_fields["demos"] = []
+        instance_fields[constants.demos_field] = []
         if self.demos_field is not None and self.demos_field in instance:
             demos = instance[self.demos_field]
             assert (
@@ -100,7 +157,7 @@ class BaseFormat(Format):
                 demo = {}
                 for field in ["source", "target", "target_prefix"]:
                     demo[field] = self._pop_field(demo_instance, field, do_pop=False)
-                instance_fields["demos"].append(demo)
+                instance_fields[constants.demos_field].append(demo)
 
         return instance_fields
 
@@ -169,7 +226,7 @@ class SystemFormat(BaseFormat):
         .. code-block::
 
             system_format = SystemFormat(
-                demos_field="demos",
+                demos_field=constants.demos_field,
                 demo_format="Input: {source}\nOutput: {target}\n\n",
                 model_input_format="Instruction: {instruction}\n\n{demos}Input: {source}\nOutput: ",
             )
@@ -299,7 +356,17 @@ class ChatAPIFormat(BaseFormat):
             )
 
         The resulting `messages` is now a dictionary ready for sending to the OpenAI API.
+
+        By default, the instruction in the template is placed in a turn with a 'system' role.
+        However, some chat tokenizers, will not place the default system prompt for the model,
+        if there is turn with an explicit 'system' role.   To keep the default system prompt,
+        set 'place_instruction_in_user_turns=True'.  This will cause the instruction of the template
+        to be placed in a turn with a 'user' role.  Note the instruction will also be placed
+        in every demo turn (if demos are generated.)
+
     """
+
+    place_instruction_in_user_turns: bool = False
 
     def to_content(self, text: str, media: Dict[str, Any]) -> Union[str, List[Content]]:
         # Regular expression to find <img> tags with src attribute
@@ -365,9 +432,11 @@ class ChatAPIFormat(BaseFormat):
     ) -> List[Message]:
         messages = []
 
-        if system_prompt or instruction:
+        if system_prompt or (instruction and not self.place_instruction_in_user_turns):
             system_content = self.to_content(
-                system_prompt + ("\n" if system_prompt != "" else "") + instruction,
+                system_prompt
+                + ("\n" if system_prompt != "" else "")
+                + (instruction if not self.place_instruction_in_user_turns else ""),
                 media,
             )
             messages.append(
@@ -378,9 +447,14 @@ class ChatAPIFormat(BaseFormat):
             )
 
         for demo_instance in demos:
-            user_content = self.to_content(demo_instance["source"], media)
+            text = demo_instance["source"]
+            if instruction and self.place_instruction_in_user_turns:
+                text = f"{instruction}\n{text}"
+
+            user_content = self.to_content(text, media)
             assistant_content = self.to_content(
-                target_prefix + demo_instance["target"], media
+                target_prefix + demo_instance["target"],
+                media,
             )
             messages.extend(
                 [
@@ -392,7 +466,11 @@ class ChatAPIFormat(BaseFormat):
                 ]
             )
 
-        last_user_content = self.to_content(source, media)
+        text = source
+        if instruction and self.place_instruction_in_user_turns:
+            text = f"{instruction}\n{text}"
+
+        last_user_content = self.to_content(text, media)
 
         messages.extend([{"role": "user", "content": last_user_content}])
 
@@ -435,8 +513,10 @@ class HFSystemFormat(ChatAPIFormat):
     """
 
     model_name: str
+    chat_kwargs_dict: Dict[str, str] = {}
     _requirements_list = ["transformers", "Jinja2"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer
@@ -457,7 +537,10 @@ class HFSystemFormat(ChatAPIFormat):
         )
         return (
             self.tokenizer.apply_chat_template(
-                chat, tokenize=False, add_generation_prompt=True
+                chat,
+                tokenize=False,
+                add_generation_prompt=True,
+                **self.chat_kwargs_dict,
             )
             + target_prefix
         )

@@ -1,0 +1,8 @@
+{
+    "__type__": "multi_reference_template",
+    "input_format": "{query}",
+    "references_field": "reference_calls",
+    "postprocessors": [
+        "processors.load_json_or_empty_tool_call"
+    ]
+}

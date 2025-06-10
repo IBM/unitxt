@@ -19,9 +19,8 @@ classifiers = [
 dependencies = [
     "datasets>=2.16.0",
     "evaluate",
-    "absl-py",
-    "ipadic",
-    "scipy"
+    "scipy>=1.10.1",
+    "diskcache"
 ]
 
 [project.urls]
@@ -51,7 +50,8 @@ dev = [
     "tomli",
     "codespell",
     "fuzzywuzzy",
-    "httpretty"
+    "httpretty",
+    "psutil"
 ]
 docs = [
     "sphinx_rtd_theme",
@@ -60,13 +60,12 @@ docs = [
     "datasets",
     "evaluate",
     "nltk",
-    "sacrebleu",
-    "absl-py",
     "rouge_score",
     "scikit-learn",
     "jiwer",
     "editdistance",
-    "fuzzywuzzy"
+    "fuzzywuzzy",
+    "pydantic"
 ]
 helm = [
     "crfm-helm[unitxt]>=0.5.3"
@@ -89,8 +88,7 @@ tests = [
     "editdistance",
     "rouge-score",
     "nltk",
-    "mecab-python3",
-    "sacrebleu[ko]",
+    "sacrebleu[ko,ja]",
     "scikit-learn<=1.5.2",
     "jiwer",
     "conllu",
@@ -104,29 +102,51 @@ tests = [
     "bs4",
     "tenacity==8.3.0",
     "accelerate",
-    "spacy", 
     "func_timeout==4.3.5",
     "Wikipedia-API",
     "sqlglot",
+    "sqlparse",
+    "diskcache",
+    "pydantic",
+    "jsonschema_rs"
 ]
 ui = [
     "gradio",
     "transformers"
 ]
+text2sql = [
+    "sqlglot",
+    "func_timeout==4.3.5",
+    "sqlparse",
+    "tabulate"
+]
 watsonx = [
-    "ibm-watsonx-ai==1.1.14"
+    "ibm-watsonx-ai==1.2.10"
 ]
 inference-tests = [
-  "litellm==v1.52.9",
+  "litellm>=1.52.9",
   "tenacity",
   "diskcache",
-  "numpy==1.26.4"
+  "numpy==1.26.4",
+  "ollama"
 ]
 assistant = [
     "streamlit",
     "watchdog",
     "litellm"
 ]
+remote_inference = [
+    "litellm>=1.52.9",
+    "tenacity",
+    "diskcache"
+]
+local_inference = [
+    "transformers",
+    "torch",
+    "accelerate"
+]
+
+
 
 # Combine all extras by referencing other groups
 all = [
@@ -138,13 +158,15 @@ all = [
     "unitxt[tests]",
     "unitxt[ui]",
     "unitxt[watsonx]",
-    "unitxt[assistant]"
+    "unitxt[assistant]",
+    "unitxt[text2sql]"
 ]
 
 [project.scripts]
 unitxt-explore = "unitxt.ui:launch"
 unitxt-assistant = "unitxt.assistant:launch"
 unitxt-metrics-service = "unitxt.service.metrics.main:start_metrics_http_service"
+unitxt-evaluate = "unitxt.evaluate_cli:main"
 
 [tool.ruff]
 exclude = [
@@ -184,11 +206,14 @@ keep-runtime-typing = true
 ".vscode/*" = ["TID251"]
 "tests/*" = ["TID251"]
 "utils/*" = ["TID251"]
+"src/unitxt/api.py" = ["B904"]
+"src/unitxt/metrics.py" = ["C901"]
+"src/unitxt/loaders.py" = ["C901"]
 "src/unitxt/__init__.py" = ["F811", "F401"]
 "src/unitxt/metric.py" = ["F811", "F401"]
 "src/unitxt/dataset.py" = ["F811", "F401"]
 "src/unitxt/blocks.py" = ["F811", "F401"]
-"tests/library/test_loaders.py" = ["N802", "N803"]
+"tests/library/test_loaders.py" = ["N802", "N803", "RUF015"]
 "tests/library/test_dataclass.py" = ["F811", "E731"]
 "src/unitxt/validate.py" = ["B024"]
 "src/unitxt/standard.py" = ["C901"]
@@ -196,6 +221,7 @@ keep-runtime-typing = true
 "src/unitxt/metric_utils.py" = ["C901"]
 "src/unitxt/dataclass.py" = ["C901"]
 "src/unitxt/operators.py" = ["C901"]
+"src/unitxt/utils.py" = ["C901"]
 "docs/conf.py" = ["E402"]
 "prepare/cards/attaq_500.py" = ["RUF001"]
 "prepare/instructions/models/llama.py" = ["RUF001"]
@@ -205,6 +231,8 @@ keep-runtime-typing = true
 "performance/*.py" = ["T201"]
 "src/unitxt/llm_as_judge.py" = ["F401", "C901"]
 "examples/*.py" = ["T201"]
+"tests/library/test_retry.py" = ["B904", "N818"]
+"src/unitxt/tool_calling.py" = ["C901"]
 
 [tool.ruff.lint]
 extend-select = [
@@ -246,7 +274,7 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.
 "src".msg = "Use unitxt outside src/ and relative imports inside src/ and install unitxt from source with `pip install -e '.[dev]'`."
 
 [tool.codespell]
-ignore-words-list = 'rouge,ot,ans,nd,cann,som,tha,vie,ment,criterias,atleast'
+ignore-words-list = 'rouge,ot,ans,nd,cann,som,tha,vie,ment,criterias,atleast,te'
 check-filenames = true
 check-hidden = false
 regex = "(?<![a-z])[a-z'`]+|[A-Z][a-z'`]*|[a-z]+'[a-z]*|[a-z]+(?=[_-])|[a-z]+(?=[A-Z])|\\d+"

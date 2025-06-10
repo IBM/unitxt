@@ -1,0 +1,53 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "Paul/XSTest",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "response": ""
+            }
+        }
+    ],
+    "task": {
+        "__type__": "task",
+        "input_fields": {
+            "prompt": "str",
+            "id": "int",
+            "type": "str",
+            "label": "str"
+        },
+        "reference_fields": {
+            "response": "str"
+        },
+        "prediction_type": "str",
+        "metrics": [
+            "metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.assistant_message_compliance, context_fields=[prompt,response]]"
+        ]
+    },
+    "templates": {
+        "default": {
+            "__type__": "input_output_template",
+            "input_format": "{prompt}",
+            "output_format": "{response}"
+        }
+    },
+    "__description__": "Test suite designed to identify exaggerated safety / false refusal in Large Language Models (LLMs).",
+    "__tags__": {
+        "languages": [
+            "english"
+        ]
+    }
+}

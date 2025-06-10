@@ -1,4 +1,3 @@
-from datasets import load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
@@ -9,26 +8,20 @@ from unitxt.blocks import (
 )
 from unitxt.test_utils.card import test_card
 
-dataset_name = "ag_news"
-
-ds_builder = load_dataset_builder(dataset_name)
-classlabels = ds_builder.info.features["label"]
-
-mappers = {}
-for i in range(len(classlabels.names)):
-    mappers[str(i)] = classlabels.names[i]
-
-
 card = TaskCard(
-    loader=LoadHF(path=f"{dataset_name}"),
+    loader=LoadHF(path="fancyzhx/ag_news"),
     preprocess_steps=[
         SplitRandomMix(
             {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}
         ),
-        MapInstanceValues(mappers={"label": mappers}),
+        MapInstanceValues(
+            mappers={
+                "label": {"0": "World", "1": "Sports", "2": "Business", "3": "Sci/Tech"}
+            }
+        ),
         Set(
             fields={
-                "classes": classlabels.names,
+                "classes": ["World", "Sports", "Business", "Sci/Tech"],
                 "text_type": "sentence",
             }
         ),
@@ -52,4 +45,4 @@ card = TaskCard(
     ),
 )
 test_card(card, debug=False)
-add_to_catalog(card, f"cards.{dataset_name}", overwrite=True)
+add_to_catalog(card, "cards.ag_news", overwrite=True)

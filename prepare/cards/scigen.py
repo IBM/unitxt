@@ -28,7 +28,7 @@ with unitxt.settings.context(mock_inference_mode=True):
                 }
             ),
         ],
-        task="tasks.generation.from_pair[metrics=[metrics.llm_as_judge.rating.llama_3_1_70b_instruct.table2text_single_turn_with_reference]]",
+        task="tasks.generation.from_pair",
         templates=[
             "templates.generation.from_pair.default[postprocessors=[processors.lower_case]]"
         ],

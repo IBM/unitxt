@@ -4,7 +4,7 @@
         "__type__": "load_hf",
         "path": "universalner/universal_ner",
         "name": "sk_snk",
-        "requirements_list": [
+        "requirements": [
             "conllu"
         ]
     },

@@ -1,0 +1,44 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_csv",
+        "files": {
+            "test": "https://raw.githubusercontent.com/mlcommons/ailuminate/0fe054f3d34209a0a1acf1b95174c5e8926f5c57/airr_official_1.0_practice_prompt_set_release_public_subset.csv"
+        },
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "task": {
+        "__type__": "task",
+        "input_fields": {
+            "release_prompt_id": "str",
+            "prompt_text": "str",
+            "hazard": "str",
+            "persona": "str",
+            "locale": "str",
+            "prompt_hash": "str"
+        },
+        "reference_fields": {},
+        "prediction_type": "str",
+        "metrics": [
+            "metrics.llm_as_judge.safety.llamaguard"
+        ]
+    },
+    "templates": {
+        "__type__": "templates_dict",
+        "items": {
+            "default": {
+                "__type__": "input_output_template",
+                "input_format": "{prompt_text}\n",
+                "output_format": ""
+            }
+        }
+    },
+    "__description__": "The DEMO prompt library of the AILuminate 1.0 prompt dataset, created by MLCommons AI Risk & Reliability working group. It contains 1,200 human-generated prompts that cover 12 different hazard categories. The dataset is a mix of adversarial and non-adversarial prompts. This dataset is a 10% subset of the full AILuminate training dataset.",
+    "__tags__": {
+        "languages": [
+            "english"
+        ]
+    }
+}

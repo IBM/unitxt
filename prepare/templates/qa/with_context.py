@@ -1,4 +1,14 @@
 from unitxt.catalog import add_to_catalog
+from unitxt.serializers import (
+    ConversationSerializer,
+    DialogSerializer,
+    ImageSerializer,
+    ListSerializer,
+    MultiTypeSerializer,
+    SQLDatabaseAsSchemaSerializer,
+    TableSerializer,
+    VideoSerializer,
+)
 from unitxt.templates import MultiReferenceTemplate, TemplatesList
 
 add_to_catalog(
@@ -92,7 +102,8 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
-        instruction="Using the information from the {context_type} given below, summarize a paragraph-long response to the following user query.",
+        instruction="Using the information from the {context_type} given below, summarize a paragraph-long response to the following user query."
+        + "\nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.",
         input_format="{context_type}:\n{context}\nQuery:\n{question}",
         output_format="{answers}",
         target_prefix="Answer:\n",
@@ -128,5 +139,74 @@ add_to_catalog(
         ]
     ),
     "templates.qa.with_context.all",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\n{question}\nAnswer the question using a single word.",
+        references_field="answers",
+        __description__="lmms-evals default template for chartqa.",
+    ),
+    "templates.qa.with_context.chart_qa",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
+        references_field="answers",
+        __description__="lmms-evals default template for docvqa.",
+    ),
+    "templates.qa.with_context.doc_vqa",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
+        references_field="answers",
+        __description__="lmms-evals default template for docvqa.",
+    ),
+    "templates.qa.with_context.info_vqa",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\nAnswer the question using a single word or phrase.\n{question}",
+        references_field="answers",
+        __description__="lmms-evals default template for websrc.",
+    ),
+    "templates.qa.with_context.websrc",
+    overwrite=True,
+)
+
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        instruction="Read the context and answer the last question in the conversation. Answer with the minimal span from the context answering the question.",
+        input_format="Context: {context}\n\nConversation:\n{conversation}",
+        references_field="answers",
+        serializer=MultiTypeSerializer(
+            serializers=[
+                ImageSerializer(),
+                VideoSerializer(),
+                TableSerializer(),
+                DialogSerializer(),
+                ConversationSerializer(),
+                ListSerializer(),
+                SQLDatabaseAsSchemaSerializer(),
+            ]
+        ),
+        postprocessors=[
+            "processors.take_first_non_empty_line",
+            "processors.lower_case",
+            "processors.remove_punctuations",
+            "processors.remove_articles",
+            "processors.fix_whitespace",
+        ],
+    ),
+    "templates.qa.multi_turn.with_context.simple",
     overwrite=True,
 )

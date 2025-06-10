@@ -2,10 +2,16 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "head_qa",
+        "path": "alesi12/head_qa_v2",
         "name": "es"
     },
     "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
         {
             "__type__": "rename",
             "field_to_field": {

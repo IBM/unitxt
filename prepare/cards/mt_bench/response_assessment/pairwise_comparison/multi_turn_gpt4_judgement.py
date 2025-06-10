@@ -4,6 +4,7 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
+    Fillna,
     FilterByCondition,
     InterleaveListsToDialogOperator,
     MapInstanceValues,
@@ -20,10 +21,12 @@ card = TaskCard(
             "model_answer": "data/mt_bench/model_answer/*.jsonl",
             "judgment": "data/mt_bench/model_judgment/gpt-4_pair.jsonl",
         },
+        data_classification_policy=["public"],
     ),
     preprocess_steps=[
         "operators.mt_bench.pairwise_hf_space_processing_steps",
         FilterByCondition(values={"turn": 2}, condition="eq"),
+        Fillna(field="reference", value=None),
         FilterByCondition(values={"reference": None}, condition="eq"),
         FilterByCondition(
             values={"winner": ["model_1", "tie", "model_2"]}, condition="in"
@@ -55,7 +58,7 @@ card = TaskCard(
     ],
 )
 
-test_card(card, demos_taken_from="test", strict=False, loader_limit=1000)
+test_card(card, demos_taken_from="test", strict=False, loader_limit=15000)
 add_to_catalog(
     card,
     "cards.mt_bench.response_assessment.pairwise_comparison.multi_turn_gpt4_judgement",

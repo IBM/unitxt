@@ -1,5 +1,3 @@
 {
-    "__type__": "safety_metric",
-    "n_resamples": null,
-    "prediction_type": "Any"
+    "__type__": "safety_metric"
 }

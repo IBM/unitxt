@@ -1,0 +1,75 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "vincentkoc/hotpot_qa_archive",
+        "revision": "c060661",
+        "name": "distractor",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "join",
+            "field": "context/sentences",
+            "by": " ",
+            "to_field": "context_sentences",
+            "process_every_value": true
+        },
+        {
+            "__type__": "zip_field_values",
+            "fields": [
+                "context/title",
+                "context_sentences"
+            ],
+            "to_field": "documents"
+        },
+        {
+            "__type__": "explode",
+            "field": "documents",
+            "to_field": "document"
+        },
+        {
+            "__type__": "copy",
+            "field": "document/0",
+            "to_field": "document_id"
+        },
+        {
+            "__type__": "copy",
+            "field": "document/0",
+            "to_field": "title"
+        },
+        {
+            "__type__": "replace",
+            "field": "document/1",
+            "old": " ",
+            "new": " "
+        },
+        {
+            "__type__": "wrap",
+            "field": "document/1",
+            "inside": "list",
+            "to_field": "passages"
+        },
+        {
+            "__type__": "deduplicate",
+            "by": [
+                "document_id"
+            ]
+        }
+    ],
+    "task": "tasks.rag.corpora",
+    "templates": {
+        "empty": {
+            "__type__": "input_output_template",
+            "input_format": "",
+            "output_format": ""
+        }
+    },
+    "__tags__": {
+        "license": "CC BY-SA 4.0",
+        "url": "https://huggingface.co/datasets/BeIR/hotpotqa"
+    },
+    "__description__": "HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering.\nHotpotQA is a new dataset with 113k Wikipedia-based question-answer pairs with four key features: (1) the questions require finding and reasoning over multiple supporting documents to answer; (2) the questions are diverse and not constrained to any pre-existing knowledge bases or knowledge schemas; (3) we provide sentence-level supporting facts required for reasoning, allowingQA systems to reason with strong supervision and explain the predictions; (4) we offer a new type of factoid comparison questions to test QA systems ability to extract relevant facts and perform necessary comparison.\n"
+}

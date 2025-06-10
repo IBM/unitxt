@@ -6,6 +6,7 @@ from unitxt.inference import (
 )
 
 model_names_to_provider = {
+    "mistral-large-instruct": ["watsonx", "rits"],
     "llama-3-3-70b-instruct": ["watsonx", "rits"],
     "llama-3-1-70b-instruct": ["watsonx", "rits"],
     "gpt-4o": ["open-ai"],
@@ -16,6 +17,7 @@ model_names_to_provider = {
     "meta-llama/llama-3-3-70b-instruct": ["ibm_wml"],
     "meta-llama/llama-3-1-70b-instruct": ["ibm_wml"],
     "meta-llama/llama-3-405b-instruct": ["ibm_wml"],
+    "mistralai/mistral-small-3-1-24b-instruct-2503": ["ibm_wml"],
     "llama-3-1-405b-instruct-fp8": ["rits"],
 }
 

@@ -22,6 +22,7 @@ card = TaskCard(
             "model_answer": "data/arena-hard-v0.1/model_answer/*.jsonl",
             "judgment": "data/arena-hard-v0.1/model_judgment/gpt-4-1106-preview/*.jsonl",
         },
+        data_classification_policy=["public"],
     ),
     preprocess_steps=[
         "operators.arena_hard_hf_space_processing_steps",
@@ -69,7 +70,7 @@ card = TaskCard(
     ],
 )
 
-test_card(card, demos_taken_from="test", strict=False, loader_limit=100000)
+test_card(card, demos_taken_from="test", strict=False, loader_limit=15000)
 add_to_catalog(
     card,
     "cards.arena_hard.response_assessment.pairwise_comparative_rating.both_games_gpt_4_judge",

@@ -5,7 +5,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.collections_operators import Dictify, Wrap
-from unitxt.loaders import LoadCSV
+from unitxt.loaders import LoadJsonFile
 from unitxt.operators import (
     Cast,
     Copy,
@@ -17,11 +17,10 @@ from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadCSV(
+    loader=LoadJsonFile(
         files={
             "test": "https://raw.githubusercontent.com/IBM/mt-rag-benchmark/refs/heads/main/human/generation_tasks/reference+RAG.jsonl"
         },
-        file_type="json",
         lines=True,
         data_classification_policy=["public"],
     ),
@@ -76,6 +75,7 @@ test_card(
     full_mismatch_prediction_values=[json.dumps(wrong_answer)],
     debug=False,
     demos_taken_from="test",
+    metrics=["metrics.accuracy"],
     demos_pool_size=5,
 )
 
@@ -96,23 +96,17 @@ for subset in ["clapnq", "cloud", "fiqa", "govt"]:
         subset_operators.append(Set(fields={"title": ""}))
 
     card = TaskCard(
-        loader=LoadCSV(
+        loader=LoadJsonFile(
             files={
                 "test": f"https://github.com/IBM/mt-rag-benchmark/raw/refs/heads/main/corpora/{subset}.jsonl.zip"
             },
             compression="zip",
-            file_type="json",
             lines=True,
             data_classification_policy=["public"],
         ),
         preprocess_steps=[
             *subset_operators,
             Wrap(field="text", inside="list", to_field="passages"),
-            Set(
-                fields={
-                    "metadata_field": "",
-                }
-            ),
         ],
         task="tasks.rag.corpora",
         templates={
@@ -126,6 +120,7 @@ for subset in ["clapnq", "cloud", "fiqa", "govt"]:
         card,
         strict=False,
         demos_taken_from="test",
+        metrics=["metrics.accuracy"],
     )
 
     add_to_catalog(card, f"cards.rag.mtrag.documents.{subset}", overwrite=True)

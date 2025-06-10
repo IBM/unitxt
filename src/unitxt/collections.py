@@ -22,6 +22,10 @@ class Collection(Artifact):
     def keys(self) -> List[Hashable]:
         pass
 
+    @abstractmethod
+    def __len__(self):
+        pass
+
 
 class ListCollection(Collection):
     items: List[Artifact] = field(default_factory=list)
@@ -47,6 +51,12 @@ class DictCollection(Collection):
 
     def keys(self) -> List[Hashable]:
         return list(self.items.keys())
+
+    def len(self):
+        return len(self.items)
+
+    def __len__(self):
+        return len(self.items)
 
 
 class ItemPicker(Artifact):

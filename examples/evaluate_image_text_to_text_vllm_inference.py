@@ -7,16 +7,18 @@ from unitxt.inference import (
 with settings.context(
     disable_hf_datasets_cache=False,
 ):
+    max_tokens = 512
     dataset = load_dataset(
-        card="cards.seed_bench",
+        card="cards.chart_qa_lmms_eval",
         format="formats.chat_api",
         loader_limit=30,
         split="test",
     )
 
     inference_model = VLLMInferenceEngine(
-        model="microsoft/Phi-3-vision-128k-instruct",
-        max_tokens=2,
+        model="meta-llama/Llama-3.2-11B-Vision-Instruct",
+        max_tokens=max_tokens,
+        temperature=0.0,
     )
 
     predictions = inference_model(dataset)

@@ -8,14 +8,19 @@ The context includes information relevant to the nature or generation of the res
 You will assess the quality of the response subject to an evaluation criteria.
 ###Context:
 {context_variables}
+
 ###Response:
 {response}
+
 ###Evaluation criteria:
 {criteria_description}
 {display_options_instruction}
+
 Briefly assess the quality of the response subject to the evaluation criteria.
 Focus on the evaluation criteria during assessment, do not provide a general assessment.
-Assessment: """
+Assessment:
+
+Lets think step by step """
     ),
     "summarization": InputOutputTemplate(
         input_format="""Transform the following assessment into a concise summary that focuses on the key details, excluding references to the assessment itself.
@@ -24,11 +29,13 @@ Assessment: {assessment}
 Summary:"""
     ),
     "answer": InputOutputTemplate(
-        input_format="""Now consider the evaluation criteria and choose a final answer. Only include the chosen answer in the response.
+        input_format="""Now based on the assessment, choose a criteria option. Only include the chosen option in the response. If the assessment already contains a selected option, choose that option. Don't contradict the assessment's selected option.
+
 ###Evaluation criteria:
 {criteria_description}
-{score_option_instruction}
-The selected answer is: """,
+{display_options_instruction}
+
+The selected criteria option is: """,
         postprocessors=["processors.match_closest_option"],
     ),
 }
@@ -41,9 +48,11 @@ You will choose the better quality response subject to the evaluation criteria.
 
 This is the context:
 {context_variables}
+
 This is the evaluation criteria:
 {criteria_name}
 {criteria_description}
+
 Response {option_a}:
 {response_a}
 Response {option_b}:
@@ -51,7 +60,9 @@ Response {option_b}:
 
 Keeping the evaluation criteria in mind, briefly assess which response is better.
 Focus on the evaluation criteria during assessment, do not provide a general assessment.
-Assessment: """
+Assessment:
+
+Lets think step by step """
     ),
     "summarization": InputOutputTemplate(
         input_format="""Transform the following assessment into a concise summary that focuses on the key details, excluding references to the assessment itself. The summary must clearly state which response won.
