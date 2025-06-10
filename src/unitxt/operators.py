@@ -1373,10 +1373,7 @@ class ComputeExpressionMixin(Artifact):
 
     def compute_expression(self, instance: dict) -> Any:
         if settings.allow_unverified_code:
-            try:
-                return eval(self.expression, {**self.globals, **instance})
-            except:
-                pass
+            return eval(self.expression, {**self.globals, **instance})
 
         raise ValueError(
             f"Cannot evaluate expression in {self} when unitxt.settings.allow_unverified_code=False - either set it to True or set {settings.allow_unverified_code_key} environment variable."
@@ -1446,7 +1443,7 @@ class ExecuteExpression(InstanceOperator, ComputeExpressionMixin):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        instance[self.to_field] = self.compute_expression(instance)
+        dict_set(instance, self.to_field, self.compute_expression(instance))
         return instance
 
 
