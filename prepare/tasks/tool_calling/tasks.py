@@ -23,7 +23,7 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        __description__="""Task to test tool calling capabilities.  It assume the model is provided with a query and is requested to invoke a single tool from the list of provided tools.
+        __description__="""Task to test tool calling capabilities.  It assume the model is provided with a dialog (set of turns) and is requested to invoke a single tool from the list of provided tools given the dialog.
 
         Reference_calls is a list of ground truth tool calls to compare with.
         """,
