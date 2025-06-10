@@ -1,3 +1,5 @@
+from typing import List
+
 from unitxt import add_to_catalog
 from unitxt.inference import (
     CrossProviderInferenceEngine,
@@ -72,5 +74,30 @@ tool_calling_metric = LLMJudgeDirect(
 add_to_catalog(
     tool_calling_metric,
     "metrics.tool_calling.correctness.llama_3_3_70b_instruct_judge",
+    overwrite=True,
+)
+
+tool_calling_metric = LLMJudgeDirect(
+    inference_engine=CrossProviderInferenceEngine(
+        model="llama-3-3-70b-instruct",
+        max_tokens=1024,
+        temperature=0,
+        provider="watsonx",
+    ),
+    criteria=tool_calling_criteria,
+    context_fields={
+        "tools": "tools",
+        "reference_tool_calls": "reference_calls",
+        "user_dialog": "dialog",
+    },
+    criteria_field="criteria",
+    generate_summaries=False,
+    check_positional_bias=False,
+    prediction_type=List[ToolCall],
+)
+
+add_to_catalog(
+    tool_calling_metric,
+    "metrics.tool_calling.multi_turn.correctness.llama_3_3_70b_instruct_judge",
     overwrite=True,
 )
