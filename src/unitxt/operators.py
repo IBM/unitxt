@@ -619,7 +619,7 @@ class Move(InstanceOperator):
     to_field: str
 
     def process(
-        self, instance: Dict[str, Any], stream_name: str | None = None
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         value = dict_get(instance, self.field)
         dict_delete(instance, self.field)
