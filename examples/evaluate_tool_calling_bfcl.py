@@ -13,7 +13,7 @@ with settings.context(
         max_test_instances=10,
     )
     model = CrossProviderInferenceEngine(
-        model="llama-3-1-8b-instruct",
+        model="llama-3-1-8b-instruct", provider="watsonx"
     )
 
     predictions = model(dataset)

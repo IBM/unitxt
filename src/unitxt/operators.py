@@ -436,6 +436,7 @@ class InstanceFieldOperator(InstanceOperator):
     field_to_field: Optional[Union[List[List[str]], Dict[str, str]]] = None
     use_query: Optional[bool] = None
     process_every_value: bool = False
+    set_every_value: bool = NonPositionalField(default=False)
     get_default: Any = None
     not_exist_ok: bool = False
     not_exist_do_nothing: bool = False
@@ -553,6 +554,7 @@ class InstanceFieldOperator(InstanceOperator):
                 to_field,
                 new_value,
                 not_exist_ok=True,
+                set_multiple=self.set_every_value,
             )
         return instance
 
@@ -613,6 +615,11 @@ class Rename(FieldOperator):
 @deprecation(version="2.0.0", alternative=Rename)
 class RenameFields(Rename):
     pass
+
+
+class BytesToString(FieldOperator):
+    def process_value(self, value: Any) -> Any:
+        return str(value)
 
 
 class AddConstant(FieldOperator):
@@ -1366,7 +1373,10 @@ class ComputeExpressionMixin(Artifact):
 
     def compute_expression(self, instance: dict) -> Any:
         if settings.allow_unverified_code:
-            return eval(self.expression, {**self.globals, **instance})
+            try:
+                return eval(self.expression, {**self.globals, **instance})
+            except:
+                pass
 
         raise ValueError(
             f"Cannot evaluate expression in {self} when unitxt.settings.allow_unverified_code=False - either set it to True or set {settings.allow_unverified_code_key} environment variable."

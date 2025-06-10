@@ -3,8 +3,8 @@
     "loader": {
         "__type__": "load_json_file",
         "files": {
-            "questions": "https://raw.githubusercontent.com/ShishirPatil/gorilla/70b6a4a2144597b1f99d1f4d3185d35d7ee532a4/berkeley-function-call-leaderboard/data/BFCL_v3_simple.json",
-            "answers": "https://raw.githubusercontent.com/ShishirPatil/gorilla/70b6a4a2144597b1f99d1f4d3185d35d7ee532a4/berkeley-function-call-leaderboard/data/possible_answer/BFCL_v3_simple.json"
+            "questions": "https://raw.githubusercontent.com/ShishirPatil/gorilla/70b6a4a2144597b1f99d1f4d3185d35d7ee532a4/berkeley-function-call-leaderboard/data/BFCL_v3_java.json",
+            "answers": "https://raw.githubusercontent.com/ShishirPatil/gorilla/70b6a4a2144597b1f99d1f4d3185d35d7ee532a4/berkeley-function-call-leaderboard/data/possible_answer/BFCL_v3_java.json"
         },
         "lines": true,
         "data_classification_policy": [
@@ -75,7 +75,7 @@
         "templates.tool_calling.multi_turn"
     ],
     "__description__": "The Berkeley function calling leaderboard is a live leaderboard to evaluate the ability of different LLMs to call functions (also referred to as tools). We built this dataset from our learnings to be representative of most users' function calling use-cases, for example, in agents, as a part of enterprise workflows, etc. To this end, our evaluation dataset spans diverse categories, and across multiple languages.",
-    "__title__": "Berkeley Function Calling Leaderboard (Multi Turn Setup) - Simple V3",
+    "__title__": "Berkeley Function Calling Leaderboard (Multi Turn Setup) - Java V3",
     "__tags__": {
         "annotations_creators": "expert-generated",
         "language": [

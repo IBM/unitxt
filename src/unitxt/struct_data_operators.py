@@ -23,6 +23,7 @@ For key-value pairs, expected input format is:
     {"key1": "value1", "key2": value2, "key3": "value3"}
 """
 
+import ast
 import json
 import random
 from abc import ABC, abstractmethod
@@ -752,6 +753,19 @@ class LoadJson(FieldOperator):
                 return self.failure_value
         else:
             return json.loads(value, strict=False)
+
+
+class PythonCallProcessor(FieldOperator):
+    def process_value(self, value: str) -> ToolCall:
+        expr = ast.parse(value, mode="eval").body
+        function = expr.func.id
+        args = {}
+        for kw in expr.keywords:
+            args[kw.arg] = ast.literal_eval(kw.value)
+        # Handle positional args, if any
+        if expr.args:
+            args["_args"] = [ast.literal_eval(arg) for arg in expr.args]
+        return {"name": function, "arguments": args}
 
 
 class ToolCallPostProcessor(FieldOperator):

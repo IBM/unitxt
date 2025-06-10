@@ -18,10 +18,8 @@ with settings.context(
     )
 
     predictions = model.infer(dataset)
+
     results = evaluate(predictions=predictions, data=dataset)
 
     print("Global Results:")
     print(results.global_scores.summary)
-
-    # print("Instance Results:")
-    # print(results.instance_scores.summary)
