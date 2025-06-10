@@ -54,11 +54,11 @@ model_list = [
 # [
 #    {
 #        "role": "system",
-#        "content": "Classify the contractual clauses of the following text to one of these options: Adjustments, Agreements, Amendments, Anti-Corruption Laws, Applicable Laws, Approvals, Arbitration, Assignments, Assigns, Authority, Authorizations, Base Salary, Benefits, Binding Effects, Books, Brokers, Capitalization, Change In Control, Closings, Compliance With Laws, Confidentiality, Consent To Jurisdiction, Consents, Construction, Cooperation, Costs, Counterparts, Death, Defined Terms, Definitions, Disability, Disclosures, Duties, Effective Dates, Effectiveness, Employment, Enforceability, Enforcements, Entire Agreements, Erisa, Existence, Expenses, Fees, Financial Statements, Forfeitures, Further Assurances, General, Governing Laws, Headings, Indemnifications, Indemnity, Insurances, Integration, Intellectual Property, Interests, Interpretations, Jurisdictions, Liens, Litigations, Miscellaneous, Modifications, No Conflicts, No Defaults, No Waivers, Non-Disparagement, Notices, Organizations, Participations, Payments, Positions, Powers, Publicity, Qualifications, Records, Releases, Remedies, Representations, Sales, Sanctions, Severability, Solvency, Specific Performance, Submission To Jurisdiction, Subsidiaries, Successors, Survival, Tax Withholdings, Taxes, Terminations, Terms, Titles, Transactions With Affiliates, Use Of Proceeds, Vacations, Venues, Vesting, Waiver Of Jury Trials, Waivers, Warranties, Withholdings."
+#        "content": "Classify the contractual clauses of the following text to one of these options: Records, Warranties... "
 #    },
 #    {
 #        "role": "user",
-#        "content": "text: Each Credit Party shall maintain, in all material respects, proper, complete and consistent books of record with respect to such Person\u2019s operations, affairs, and financial condition.\u00a0From time to time upon reasonable prior notice, each Credit Party shall permit any Lender, at such reasonable times and intervals and to a reasonable extent and under the reasonable guidance of officers of or employees delegated by officers of such Credit Party, to, subject to any applicable confidentiality considerations, examine and copy the books and records of such Credit Party, to visit and inspect the Property of such Credit Party, and to discuss the business operations and Property of such Credit Party with the officers and directors thereof (provided that, so long as no Event of Default has occurred and is continuing, the Lenders shall be entitled to only one such visit per year coordinated by the Administrative Agent)."
+#        "content": "text: Each Credit Party shall maintain..."
 #    },
 #    {
 #        "role": "assistant",
@@ -66,7 +66,7 @@ model_list = [
 #    },
 #    {
 #        "role": "user",
-#        "content": "text: Executive agrees to be employed with the Company, and the Company agrees to employ Executive, during the Term and on the terms and conditions set forth in this Agreement. Executive agrees during the term of this Agreement to devote substantially all of Executive\u2019s business time, efforts, skills and abilities to the performance of Executive\u2019s duties to the Company and to the furtherance of the Company's business."
+#        "content": "text: Executive agrees to be employed with the Company...."
 #    }
 # ]
 #
@@ -75,8 +75,8 @@ model_list = [
 # [
 #     {
 #         "role": "user",
-#         "content": "Classify the contractual clauses of the following text to one of these options: Adjustments, Agreements, Amendments, Anti-Corruption Laws, Applicable Laws, Approvals, Arbitration, Assignments, Assigns, Authority, Authorizations, Base Salary, Benefits, Binding Effects, Books, Brokers, Capitalization, Change In Control, Closings, Compliance With Laws, Confidentiality, Consent To Jurisdiction, Consents, Construction, Cooperation, Costs, Counterparts, Death, Defined Terms, Definitions, Disability, Disclosures, Duties, Effective Dates, Effectiveness, Employment, Enforceability, Enforcements, Entire Agreements, Erisa, Existence, Expenses, Fees, Financial Statements, Forfeitures, Further Assurances, General, Governing Laws, Headings, Indemnifications, Indemnity, Insurances, Integration, Intellectual Property, Interests, Interpretations, Jurisdictions, Liens, Litigations, Miscellaneous, Modifications, No Conflicts, No Defaults, No Waivers, Non-Disparagement, Notices, Organizations, Participations, Payments, Positions, Powers, Publicity, Qualifications, Records, Releases, Remedies, Representations, Sales, Sanctions, Severability, Solvency, Specific Performance, Submission To Jurisdiction, Subsidiaries, Successors, Survival, Tax Withholdings, Taxes, Terminations, Terms, Titles, Transactions With Affiliates, Use Of Proceeds, Vacations, Venues, Vesting, Waiver Of Jury Trials, Waivers, Warranties, Withholdings.
-#                      text: Each Credit Party shall maintain, in all material respects, proper, complete and consistent books of record with respect to such Person\u2019s operations, affairs, and financial condition.\u00a0From time to time upon reasonable prior notice, each Credit Party shall permit any Lender, at such reasonable times and intervals and to a reasonable extent and under the reasonable guidance of officers of or employees delegated by officers of such Credit Party, to, subject to any applicable confidentiality considerations, examine and copy the books and records of such Credit Party, to visit and inspect the Property of such Credit Party, and to discuss the business operations and Property of such Credit Party with the officers and directors thereof (provided that, so long as no Event of Default has occurred and is continuing, the Lenders shall be entitled to only one such visit per year coordinated by the Administrative Agent)."
+#         "content": "Classify the contractual clauses of the following text to one of these options: ...
+#                      text: Each Credit Party shall maintain...."
 #     },
 #     {
 #         "role": "assistant",
@@ -84,18 +84,18 @@ model_list = [
 #     },
 #     {
 #         "role": "user",
-#         "content": "Classify the contractual clauses of the following text to one of these options: Adjustments, Agreements, Amendments, Anti-Corruption Laws, Applicable Laws, Approvals, Arbitration, Assignments, Assigns, Authority, Authorizations, Base Salary, Benefits, Binding Effects, Books, Brokers, Capitalization, Change In Control, Closings, Compliance With Laws, Confidentiality, Consent To Jurisdiction, Consents, Construction, Cooperation, Costs, Counterparts, Death, Defined Terms, Definitions, Disability, Disclosures, Duties, Effective Dates, Effectiveness, Employment, Enforceability, Enforcements, Entire Agreements, Erisa, Existence, Expenses, Fees, Financial Statements, Forfeitures, Further Assurances, General, Governing Laws, Headings, Indemnifications, Indemnity, Insurances, Integration, Intellectual Property, Interests, Interpretations, Jurisdictions, Liens, Litigations, Miscellaneous, Modifications, No Conflicts, No Defaults, No Waivers, Non-Disparagement, Notices, Organizations, Participations, Payments, Positions, Powers, Publicity, Qualifications, Records, Releases, Remedies, Representations, Sales, Sanctions, Severability, Solvency, Specific Performance, Submission To Jurisdiction, Subsidiaries, Successors, Survival, Tax Withholdings, Taxes, Terminations, Terms, Titles, Transactions With Affiliates, Use Of Proceeds, Vacations, Venues, Vesting, Waiver Of Jury Trials, Waivers, Warranties, Withholdings.
-#                     text: Executive agrees to be employed with the Company, and the Company agrees to employ Executive, during the Term and on the terms and conditions set forth in this Agreement. Executive agrees during the term of this Agreement to devote substantially all of Executive\u2019s business time, efforts, skills and abilities to the performance of Executive\u2019s duties to the Company and to the furtherance of the Company's business."
+#         "content": "Classify the contractual clauses of the following text to one of these options: ...
+#                     text: Executive agrees to be employed with the Company...
 #     }
 # ]
 #
 # formats.empty  - pass inputs as a single string
 #
-# "Classify the contractual clauses of the following text to one of these options: Adjustments, Agreements, Amendments, Anti-Corruption Laws, Applicable Laws, Approvals, Arbitration, Assignments, Assigns, Authority, Authorizations, Base Salary, Benefits, Binding Effects, Books, Brokers, Capitalization, Change In Control, Closings, Compliance With Laws, Confidentiality, Consent To Jurisdiction, Consents, Construction, Cooperation, Costs, Counterparts, Death, Defined Terms, Definitions, Disability, Disclosures, Duties, Effective Dates, Effectiveness, Employment, Enforceability, Enforcements, Entire Agreements, Erisa, Existence, Expenses, Fees, Financial Statements, Forfeitures, Further Assurances, General, Governing Laws, Headings, Indemnifications, Indemnity, Insurances, Integration, Intellectual Property, Interests, Interpretations, Jurisdictions, Liens, Litigations, Miscellaneous, Modifications, No Conflicts, No Defaults, No Waivers, Non-Disparagement, Notices, Organizations, Participations, Payments, Positions, Powers, Publicity, Qualifications, Records, Releases, Remedies, Representations, Sales, Sanctions, Severability, Solvency, Specific Performance, Submission To Jurisdiction, Subsidiaries, Successors, Survival, Tax Withholdings, Taxes, Terminations, Terms, Titles, Transactions With Affiliates, Use Of Proceeds, Vacations, Venues, Vesting, Waiver Of Jury Trials, Waivers, Warranties, Withholdings.
-# text: Each Credit Party shall maintain, in all material respects, proper, complete and consistent books of record with respect to such Person\u2019s operations, affairs, and financial condition.\u00a0From time to time upon reasonable prior notice, each Credit Party shall permit any Lender, at such reasonable times and intervals and to a reasonable extent and under the reasonable guidance of officers of or employees delegated by officers of such Credit Party, to, subject to any applicable confidentiality considerations, examine and copy the books and records of such Credit Party, to visit and inspect the Property of such Credit Party, and to discuss the business operations and Property of such Credit Party with the officers and directors thereof (provided that, so long as no Event of Default has occurred and is continuing, the Lenders shall be entitled to only one such visit per year coordinated by the Administrative Agent).
+# "Classify the contractual clauses of the following text to one of these options: Records, Warranties,.
+# text: Each Credit Party shall maintain...
 # The contractual clauses is Records
 #
-# text: Executive agrees to be employed with the Company, and the Company agrees to employ Executive, during the Term and on the terms and conditions set forth in this Agreement. Executive agrees during the term of this Agreement to devote substantially all of Executive\u2019s business time, efforts, skills and abilities to the performance of Executive\u2019s duties to the Company and to the furtherance of the Company's business.
+# text: Executive agrees to be employed with the Company,...
 # The contractual clauses is "
 
 for model, model_name in model_list:
