@@ -271,6 +271,20 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             self.assertEqual(dataset[1]["prediction"], "the")
             self.assertEqual(dataset[2]["prediction"], "telephone number")
 
+    def test_hf_auto_model_inference_engine_batching(self):
+        model = HFAutoModelInferenceEngine(
+            model_name="HuggingFaceTB/SmolLM2-135M-Instruct",  # pragma: allowlist secret
+            max_new_tokens=2,
+            batch_size=2,
+            data_classification_policy=["public"],
+        )
+
+        dataset = get_text_dataset()
+
+        predictions = list(model(dataset))
+
+        self.assertListEqual(predictions, ["7\n", "12"])
+
     def test_hf_auto_model_inference_engine(self):
         data = get_text_dataset()
         engine = HFAutoModelInferenceEngine(
