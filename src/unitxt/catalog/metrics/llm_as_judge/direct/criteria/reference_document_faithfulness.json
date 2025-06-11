@@ -2,6 +2,10 @@
     "__type__": "criteria_with_options",
     "name": "reference_document_faithfulness",
     "description": "Is the response faithful according to reference document?",
+    "prediction_field": "response",
+    "context_fields": [
+        "reference_document"
+    ],
     "options": [
         {
             "__type__": "criteria_option",

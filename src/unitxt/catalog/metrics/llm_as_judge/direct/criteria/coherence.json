@@ -2,6 +2,10 @@
     "__type__": "criteria_with_options",
     "name": "coherence",
     "description": "Is the response coherent with respect to the original text?",
+    "prediction_field": "response",
+    "context_fields": [
+        "original text"
+    ],
     "options": [
         {
             "__type__": "criteria_option",

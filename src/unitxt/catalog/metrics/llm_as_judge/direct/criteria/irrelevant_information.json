@@ -2,6 +2,8 @@
     "__type__": "criteria_with_options",
     "name": "irrelevant_information",
     "description": "Does the user response contain irrelevant information?",
+    "prediction_field": "user response",
+    "context_fields": [],
     "options": [
         {
             "__type__": "criteria_option",

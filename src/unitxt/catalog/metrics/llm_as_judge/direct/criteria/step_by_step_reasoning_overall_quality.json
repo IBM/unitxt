@@ -1,0 +1,10 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "step_by_step_reasoning_overall_quality",
+    "description": "On a scale of 1 (low) to 5 (high), does the generated response answer the question in a well-justified manner?",
+    "prediction_field": "generated response",
+    "context_fields": [
+        "question"
+    ],
+    "options": []
+}
