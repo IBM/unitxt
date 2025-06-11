@@ -19,7 +19,7 @@ card = TaskCard(
         data_field="instances",
     ),
     preprocess_steps=[
-        Rename(field="instance", to_field="context"),
+        Rename(field="instance", to_field="steps"),
         Rename(field="annotations/Contradiction/majority_human", to_field="label"),
         MapInstanceValues(
             mappers={
@@ -39,7 +39,7 @@ card = TaskCard(
         ),
     ],
     task=Task(
-        input_fields={"context": str, "criteria": Any},
+        input_fields={"steps": str, "criteria": Any},
         reference_fields={"mean_score": float},
         prediction_type=float,
         metrics=["metrics.spearman", "metrics.accuracy"],

@@ -18,7 +18,7 @@ card = TaskCard(
         data_field="instances",
     ),
     preprocess_steps=[
-        Rename(field="instance", to_field="context"),
+        Rename(field="instance", to_field="generated response"),
         Rename(field="annotations/Overall Quality/mean_human", to_field="mean_score"),
         Cast(field="mean_score", to="float"),
         Set(
@@ -28,7 +28,7 @@ card = TaskCard(
         ),
     ],
     task=Task(
-        input_fields={"context": str, "criteria": Any},
+        input_fields={"generated response": str, "criteria": Any},
         reference_fields={"mean_score": float},
         prediction_type=float,
         metrics=[

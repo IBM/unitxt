@@ -21,7 +21,7 @@ card = TaskCard(
         data_field="instances",
     ),
     preprocess_steps=[
-        Rename(field="instance", to_field="model_response"),
+        Rename(field="instance", to_field="reasoning"),
         Rename(field="annotations/Sound Reasoning/majority_human", to_field="label"),
         MapInstanceValues(
             mappers={
@@ -41,7 +41,7 @@ card = TaskCard(
         ),
     ],
     task=Task(
-        input_fields={"model_response": str, "label": str, "criteria": Any},
+        input_fields={"reasoning": str, "label": str, "criteria": Any},
         reference_fields={"label_value": float},
         prediction_type=float,
         metrics=["metrics.spearman", "metrics.accuracy"],

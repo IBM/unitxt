@@ -24,8 +24,8 @@ card = TaskCard(
         data_field="instances",
     ),
     preprocess_steps=[
-        Rename(field="instance/user_prompt", to_field="user_prompt"),
-        Rename(field="instance/response", to_field="assistant_response"),
+        Rename(field="instance/user_prompt", to_field="user message"),
+        Rename(field="instance/response", to_field="assistant message"),
         Rename(field="annotations/safety/majority_human", to_field="label"),
         Copy(field="label", to_field="label_value"),
         MapInstanceValues(
@@ -41,8 +41,8 @@ card = TaskCard(
     ],
     task=Task(
         input_fields={
-            "user_prompt": str,
-            "assistant_response": str,
+            "user message": str,
+            "assistant message": str,
             "label": str,
             "criteria": Any,
         },

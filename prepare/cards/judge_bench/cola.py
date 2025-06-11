@@ -21,7 +21,7 @@ card = TaskCard(
         data_field="instances",
     ),
     preprocess_steps=[
-        Rename(field="instance", to_field="text"),
+        Rename(field="instance", to_field="response"),
         Rename(field="annotations/grammaticality/majority_human", to_field="label"),
         Copy(field="label", to_field="label_value"),
         MapInstanceValues(
@@ -36,7 +36,7 @@ card = TaskCard(
         ),
     ],
     task=Task(
-        input_fields={"text": str, "label": str, "criteria": Any},
+        input_fields={"response": str, "label": str, "criteria": Any},
         reference_fields={"label_value": float},
         prediction_type=float,
         metrics=["metrics.spearman", "metrics.accuracy"],
