@@ -711,15 +711,21 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             **model_args,
         )
 
-    def prepare_inputs(self, data: Iterable) -> Mapping:
+    def prepare_inputs(self, data: Iterable, tools: Iterable) -> Mapping:
         tokenizer_kargs = {}
         if isinstance(data[0], list):
-            data = self.processor.apply_chat_template(
-                data,
-                tokenize=False,
-                add_generation_prompt=True,
-                **self.chat_kwargs_dict,
-            )
+            processed = []
+            for item, item_tools in zip(data, tools):
+                processed.append(
+                    self.processor.apply_chat_template(
+                        item,
+                        tokenize=False,
+                        tools=item_tools,
+                        add_generation_prompt=True,
+                        **self.chat_kwargs_dict,
+                    )
+                )
+            data = processed
             tokenizer_kargs["add_special_tokens"] = False
 
         if self.processor.pad_token is None:
@@ -760,10 +766,20 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             total=len(dataset) // self.batch_size,
         ):
             # Get the current batch
-            batch_sources = [instance["source"] for instance in batch]
-
+            sources = []
+            tools = []
+            for instance in batch:
+                sources.append(instance["source"])
+                if "task_data" in instance and "__tools__" in instance["task_data"]:
+                    task_data = instance["task_data"]
+                    if isinstance(task_data, str):
+                        task_data = json.loads(task_data)
+                    tools.append(task_data["__tools__"])
+                else:
+                    tools.append(None)
             # Tokenize inputs for the batch
-            tokenized_inputs = self.prepare_inputs(batch_sources)
+
+            tokenized_inputs = self.prepare_inputs(sources, tools)
 
             # Determine input length (handle encoder-decoder models)
             input_length = (
@@ -805,7 +821,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
                     self.get_return_object(
                         output=outputs[i],
                         output_tokens=len(output_tokens_strings[i]),
-                        inp=batch_sources[i],
+                        inp=sources[i],
                         inp_tokens=len(tokenized_inputs.encodings[i].tokens)
                         if tokenized_inputs.encodings is not None
                         else None,
