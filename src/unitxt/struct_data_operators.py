@@ -772,7 +772,9 @@ class ToolCallPostProcessor(FieldOperator):
     allow_failure: bool = False
 
     def process_value(self, value: str) -> ToolCall:
-        value = extract_possible_json_str(value)
+        value = extract_possible_json_str(
+            value
+        )  # clear tokens such as <tool_call> focusing on the call json itself
         if self.allow_failure:
             try:
                 result = json.loads(value)
