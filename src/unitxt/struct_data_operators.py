@@ -25,6 +25,7 @@ For key-value pairs, expected input format is:
 
 import json
 import random
+import re
 from abc import ABC, abstractmethod
 from typing import (
     Any,
@@ -759,13 +760,17 @@ class ToolCallPostProcessor(FieldOperator):
     allow_failure: bool = False
 
     def process_value(self, value: str) -> ToolCall:
+        match = re.search(r"(\{.*\}|\[.*\])", value, re.DOTALL)
+        if not match:
+            return self.failure_value
+        json_str = match.group(0)
         if self.allow_failure:
             try:
-                result = json.loads(value)
+                result = json.loads(json_str)
             except json.JSONDecodeError:
                 return self.failure_value
         else:
-            result = json.loads(value, strict=False)
+            result = json.loads(json_str, strict=False)
         if isoftype(result, List[ToolCall]):
             if len(result) > 1:
                 UnitxtWarning(f"More than one tool returned from model: {result}")
