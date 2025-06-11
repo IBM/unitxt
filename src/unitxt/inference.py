@@ -521,13 +521,6 @@ class HFInferenceEngineBase(
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, self.label)
 
-    def decode_tokens(self, tokens: Sequence, inp_length: int) -> List[str]:
-        return self.processor.decode(tokens[inp_length:], skip_special_tokens=True)
-
-    @staticmethod
-    def create_string_from_tokens(string_tokens: List[str]) -> str:
-        return "".join(token for token in string_tokens)
-
     def make_predictions(self, prepared_inputs: Mapping) -> Mapping:
         return self.model.generate(
             **prepared_inputs,
@@ -689,7 +682,8 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         # cause an error because the data is always on the gpu
         # if torch.cuda.device_count() > 1:
         # assert self.device == torch.device(0)
-        args["device_map"] = "auto"
+        if self.device_map is None:
+            args["device_map"] = "auto"
         # else:
         #     if not self.load_in_8bit:
         #         args["device"] = self.device
@@ -768,57 +762,58 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             # Get the current batch
             batch_sources = [instance["source"] for instance in batch]
 
-            # --- Process the current batch ---
-            # 1. Tokenize inputs for the batch
+            # Tokenize inputs for the batch
             tokenized_inputs = self.prepare_inputs(batch_sources)
 
-            # 2. Determine input length (handle encoder-decoder models)
+            # Determine input length (handle encoder-decoder models)
             input_length = (
                 1
                 if self.model.config.is_encoder_decoder
                 else tokenized_inputs.input_ids.shape[1]
             )
 
-            # 3. Make predictions for the batch
+            # Make predictions for the batch
             predictions = self.make_predictions(tokenized_inputs)
             sequences = predictions.sequences  # Sequences for the current batch
 
-            # 4. Decode tokens for the batch
-            string_tokens_batch = [
-                self.decode_tokens(sequence, input_length) for sequence in sequences
-            ]
+            output_tokens = sequences[:, input_length:]
 
-            # 5. Calculate logprobs or create strings for the batch
-            final_outputs_batch = (
-                self.get_logprobs(predictions, string_tokens_batch)
-                if return_logprobs
-                else [
-                    self.create_string_from_tokens(strings)
-                    for strings in string_tokens_batch
-                ]
-            )
-
-            # 6. Create return objects for the batch
-            batch_results = [
-                self.get_return_object(
-                    output=final_outputs_batch[
-                        j
-                    ],  # Output for the j-th item in the batch
-                    output_tokens=len(string_tokens_batch[j]),
-                    inp=batch[j]["source"],  # Original input for the j-th item
-                    inp_tokens=len(tokenized_inputs.encodings[j].tokens)
-                    if tokenized_inputs.encodings is not None
-                    else None,
-                    return_meta_data=return_meta_data,
+            output_tokens_strings = []
+            for tokens in output_tokens:
+                output_tokens_strings.append(
+                    [
+                        self.processor.decode(token, skip_special_tokens=True)
+                        for token in tokens
+                    ]
                 )
-                for j in range(
-                    len(sequences)
-                )  # Iterate through items in the current batch
-            ]
 
-            # Add results from this batch to the overall list
+            output_strings = []
+            for tokens in output_tokens:
+                output_strings.append(
+                    self.processor.decode(tokens, skip_special_tokens=True)
+                )
+
+            if return_logprobs:
+                outputs = self.get_logprobs(predictions, output_tokens_strings)
+            else:
+                outputs = output_strings
+
+            # Create return objects for the batch
+            batch_results = []
+            for i in range(len(sequences)):
+                batch_results.append(
+                    self.get_return_object(
+                        output=outputs[i],
+                        output_tokens=len(output_tokens_strings[i]),
+                        inp=batch_sources[i],
+                        inp_tokens=len(tokenized_inputs.encodings[i].tokens)
+                        if tokenized_inputs.encodings is not None
+                        else None,
+                        return_meta_data=return_meta_data,
+                    )
+                )
+
             all_final_outputs.extend(batch_results)
-            # --- End of batch processing ---
 
         return all_final_outputs
 
@@ -847,7 +842,10 @@ class HFLlavaInferenceEngine(HFInferenceEngineBase):
         self, sequences: Sequence, scores: Sequence, beam_indices: Optional[int]
     ) -> Sequence:
         if not hasattr(self.model.config, "vocab_size"):
-            self.model.config.vocab_size = self.model.vocab_size
+            try:
+                self.model.config.vocab_size = self.model.vocab_size
+            except:
+                self.model.config.vocab_size = self.model.config.text_config.vocab_size
 
         return super().compute_transition_scores(sequences, scores, beam_indices)
 
@@ -917,18 +915,34 @@ class HFLlavaInferenceEngine(HFInferenceEngineBase):
 
             predictions = self.make_predictions(processed_inputs)
 
-            string_tokens = self.decode_tokens(predictions.sequences[0], input_len)
+            sequences = predictions.sequences  # Sequences for the current batch
 
-            final_outputs = (
-                self.get_logprobs(predictions, [string_tokens])[0]
-                if return_logprobs
-                else self.create_string_from_tokens(string_tokens)
-            )
+            output_tokens = sequences[:, input_len:]
+
+            output_tokens_strings = []
+            for tokens in output_tokens:
+                output_tokens_strings.append(
+                    [
+                        self.processor.decode(token, skip_special_tokens=True)
+                        for token in tokens
+                    ]
+                )
+
+            output_strings = []
+            for tokens in output_tokens:
+                output_strings.append(
+                    self.processor.decode(tokens, skip_special_tokens=True)
+                )
+
+            if return_logprobs:
+                final_outputs = self.get_logprobs(predictions, output_tokens_strings)
+            else:
+                final_outputs = output_strings
 
             results.append(
                 self.get_return_object(
-                    output=final_outputs,
-                    output_tokens=len(string_tokens),
+                    output=final_outputs[0],
+                    output_tokens=len(output_tokens_strings[0]),
                     inp=instance["source"],
                     inp_tokens=None,
                     return_meta_data=return_meta_data,
