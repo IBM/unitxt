@@ -776,7 +776,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             tools = []
             for instance in batch:
                 sources.append(instance["source"])
-                if "__tools__" in instance["task_data"]:
+                if "task_data" in instance and "__tools__" in instance["task_data"]:
                     task_data = instance["task_data"]
                     if isinstance(task_data, str):
                         task_data = json.loads(task_data)
