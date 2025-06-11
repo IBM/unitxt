@@ -25,7 +25,6 @@ For key-value pairs, expected input format is:
 
 import json
 import random
-import re
 from abc import ABC, abstractmethod
 from typing import (
     Any,
@@ -755,22 +754,32 @@ class LoadJson(FieldOperator):
             return json.loads(value, strict=False)
 
 
+def extract_possible_json_str(text):
+    """Extract potential JSON string from text by finding outermost braces/brackets."""
+    # Find first opening delimiter
+    start_positions = [pos for pos in [text.find("{"), text.find("[")] if pos != -1]
+    start = min(start_positions) if start_positions else 0
+
+    # Find last closing delimiter
+    end_positions = [pos for pos in [text.rfind("}"), text.rfind("]")] if pos != -1]
+    end = max(end_positions) if end_positions else len(text) - 1
+
+    return text[start : end + 1]
+
+
 class ToolCallPostProcessor(FieldOperator):
     failure_value: Any = None
     allow_failure: bool = False
 
     def process_value(self, value: str) -> ToolCall:
-        match = re.search(r"(\{.*\}|\[.*\])", value, re.DOTALL)
-        if not match:
-            return self.failure_value
-        json_str = match.group(0)
+        value = extract_possible_json_str(value)
         if self.allow_failure:
             try:
-                result = json.loads(json_str)
+                result = json.loads(value)
             except json.JSONDecodeError:
                 return self.failure_value
         else:
-            result = json.loads(json_str, strict=False)
+            result = json.loads(value, strict=False)
         if isoftype(result, List[ToolCall]):
             if len(result) > 1:
                 UnitxtWarning(f"More than one tool returned from model: {result}")
