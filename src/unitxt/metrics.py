@@ -827,6 +827,52 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
         }
 
 
+class MultiTurnToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
+    """Compares each predicted tool call with list of references tool call."""
+
+    main_score = "argument_schema_validation"
+    reduction = MeanReduction()
+    prediction_type = List[ToolCall]
+    _requirements_list = ["jsonschema-rs"]
+
+    def prepare(self):
+        super().prepare()
+        import jsonschema_rs
+
+        self._schema = jsonschema_rs
+
+    def map(
+        self,
+        prediction: List[ToolCall],
+        references: List[List[ToolCall]],
+        task_data: Dict[str, Any],
+    ) -> Dict[str, float]:
+        validation_scores = []
+        for tool_call in prediction:
+            parameters = None
+            for tool in task_data["__tools__"]:
+                if tool["function"]["name"] == tool_call["name"]:
+                    parameters = tool["function"]["parameters"]
+
+            if parameters is None:
+                validation_scores.append(0.0)
+            else:
+                try:
+                    self._schema.validate(
+                        parameters,
+                        tool_call["arguments"],
+                    )
+                    validation_scores.append(1.0)
+                except self._schema.ValidationError:
+                    validation_scores.append(0.0)
+
+        argument_schema_validation = sum(validation_scores) / len(validation_scores)
+
+        return {
+            "argument_schema_validation": argument_schema_validation,
+        }
+
+
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
     # Use None to disable confidence interval computation.

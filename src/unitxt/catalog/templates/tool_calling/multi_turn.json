@@ -1,0 +1,8 @@
+{
+    "__type__": "multi_turn_template",
+    "references_field": "reference_calls",
+    "turns_field": "dialog",
+    "postprocessors": [
+        "processors.multi_tool_call"
+    ]
+}

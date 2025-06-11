@@ -7,7 +7,7 @@ Number = NewType("Number", Union[float, int])
 
 
 class Turn(TypedDict):
-    role: Literal["system", "user", "agent"]
+    role: Literal["system", "user", "agent", "tool_call", "tool_output"]
     content: Text
 
 

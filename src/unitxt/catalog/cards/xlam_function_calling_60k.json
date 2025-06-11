@@ -1,0 +1,103 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "Salesforce/xlam-function-calling-60k",
+        "split": "train",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "dialog": [
+                    {
+                        "role": "user"
+                    }
+                ]
+            },
+            "use_deepcopy": true
+        },
+        {
+            "__type__": "copy",
+            "field": "query",
+            "to_field": "dialog/0/content"
+        },
+        {
+            "__type__": "load_json",
+            "field": "answers",
+            "to_field": "reference_calls"
+        },
+        {
+            "__type__": "load_json",
+            "field": "tools"
+        },
+        {
+            "__type__": "move",
+            "field": "tools/*/parameters",
+            "to_field": "properties"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "tools/*/parameters": {
+                    "type": "object"
+                }
+            },
+            "use_deepcopy": true
+        },
+        {
+            "__type__": "copy",
+            "field": "properties",
+            "to_field": "tools/*/parameters/properties",
+            "set_every_value": true
+        },
+        {
+            "__type__": "execute_expression",
+            "to_field": "required",
+            "expression": "[[p for p, c in tool['parameters']['properties'].items() if 'optional' not in c['type']] for tool in tools]"
+        },
+        {
+            "__type__": "copy",
+            "field": "required",
+            "to_field": "tools/*/parameters/required",
+            "set_every_value": true
+        },
+        "operators.fix_json_schema"
+    ],
+    "task": "tasks.tool_calling.multi_turn",
+    "templates": [
+        "templates.tool_calling.multi_turn"
+    ],
+    "__description__": "This dataset contains 60,000 data points collected by APIGen, an automated data generation pipeline designed to produce verifiable high-quality datasets for function-calling applications. Each data point in the dataset is verified through three hierarchical stages: format checking, actual function executions, and semantic verification, ensuring its reliability and correctness.",
+    "__title__": "APIGen Function-Calling Datasets",
+    "__tags__": {
+        "annotations_creators": "expert-generated",
+        "language": [
+            "en"
+        ],
+        "license": "hf-gated",
+        "size_categories": [
+            "10K<n<100K"
+        ],
+        "task_categories": [
+            "question-answering",
+            "reading-comprehension",
+            "tool-calling",
+            "multi-turn-tool-calling"
+        ],
+        "task_ids": [
+            "tool-calling",
+            "multi-turn-tool-calling",
+            "reading-comprehension"
+        ]
+    }
+}

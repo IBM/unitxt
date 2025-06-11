@@ -1,0 +1,104 @@
+{
+    "__type__": "benchmark",
+    "subsets": {
+        "bfcl.simple": {
+            "__type__": "dataset_recipe",
+            "card": "cards.bfcl.multi_turn.simple_v3",
+            "format": "formats.chat_api",
+            "metrics": [
+                "metrics.tool_calling.multi_turn.validity",
+                "metrics.tool_calling.multi_turn.correctness.llama_3_3_70b_instruct_judge"
+            ]
+        },
+        "bfcl.multiple": {
+            "__type__": "dataset_recipe",
+            "card": "cards.bfcl.multi_turn.multiple_v3",
+            "format": "formats.chat_api",
+            "metrics": [
+                "metrics.tool_calling.multi_turn.validity",
+                "metrics.tool_calling.multi_turn.correctness.llama_3_3_70b_instruct_judge"
+            ]
+        },
+        "bfcl.live_multiple": {
+            "__type__": "dataset_recipe",
+            "card": "cards.bfcl.multi_turn.live_multiple_v3",
+            "format": "formats.chat_api",
+            "metrics": [
+                "metrics.tool_calling.multi_turn.validity",
+                "metrics.tool_calling.multi_turn.correctness.llama_3_3_70b_instruct_judge"
+            ]
+        },
+        "bfcl.live_simple": {
+            "__type__": "dataset_recipe",
+            "card": "cards.bfcl.multi_turn.live_simple_v3",
+            "format": "formats.chat_api",
+            "metrics": [
+                "metrics.tool_calling.multi_turn.validity",
+                "metrics.tool_calling.multi_turn.correctness.llama_3_3_70b_instruct_judge"
+            ]
+        },
+        "bfcl.java": {
+            "__type__": "dataset_recipe",
+            "card": "cards.bfcl.multi_turn.java_v3",
+            "format": "formats.chat_api",
+            "metrics": [
+                "metrics.tool_calling.multi_turn.validity",
+                "metrics.tool_calling.multi_turn.correctness.llama_3_3_70b_instruct_judge"
+            ]
+        },
+        "bfcl.javascript": {
+            "__type__": "dataset_recipe",
+            "card": "cards.bfcl.multi_turn.javascript_v3",
+            "format": "formats.chat_api",
+            "metrics": [
+                "metrics.tool_calling.multi_turn.validity",
+                "metrics.tool_calling.multi_turn.correctness.llama_3_3_70b_instruct_judge"
+            ]
+        },
+        "bfcl.parallel": {
+            "__type__": "dataset_recipe",
+            "card": "cards.bfcl.multi_turn.parallel_v3",
+            "format": "formats.chat_api",
+            "metrics": [
+                "metrics.tool_calling.multi_turn.validity",
+                "metrics.tool_calling.multi_turn.correctness.llama_3_3_70b_instruct_judge"
+            ]
+        },
+        "bfcl.parallel_multiple": {
+            "__type__": "dataset_recipe",
+            "card": "cards.bfcl.multi_turn.parallel_multiple_v3",
+            "format": "formats.chat_api",
+            "metrics": [
+                "metrics.tool_calling.multi_turn.validity",
+                "metrics.tool_calling.multi_turn.correctness.llama_3_3_70b_instruct_judge"
+            ]
+        },
+        "bfcl.live_parallel": {
+            "__type__": "dataset_recipe",
+            "card": "cards.bfcl.multi_turn.live_parallel_v3",
+            "format": "formats.chat_api",
+            "metrics": [
+                "metrics.tool_calling.multi_turn.validity",
+                "metrics.tool_calling.multi_turn.correctness.llama_3_3_70b_instruct_judge"
+            ]
+        },
+        "bfcl.live_parallel_multiple": {
+            "__type__": "dataset_recipe",
+            "card": "cards.bfcl.multi_turn.live_parallel_multiple_v3",
+            "format": "formats.chat_api",
+            "metrics": [
+                "metrics.tool_calling.multi_turn.validity",
+                "metrics.tool_calling.multi_turn.correctness.llama_3_3_70b_instruct_judge"
+            ]
+        },
+        "xlam": {
+            "__type__": "dataset_recipe",
+            "card": "cards.xlam_function_calling_60k",
+            "format": "formats.chat_api",
+            "metrics": [
+                "metrics.tool_calling.multi_turn.validity",
+                "metrics.tool_calling.multi_turn.correctness.llama_3_3_70b_instruct_judge"
+            ]
+        }
+    }
+}
