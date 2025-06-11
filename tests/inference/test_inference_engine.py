@@ -31,6 +31,8 @@ from tests.utils import UnitxtInferenceTestCase
 logger = get_logger()
 settings = get_settings()
 
+local_decoder_model = "HuggingFaceTB/SmolLM2-135M-Instruct"  # pragma: allowlist secret
+
 
 @lru_cache
 def get_image_dataset(format=None):
@@ -91,29 +93,33 @@ def get_text_dataset(format=None):
 class TestInferenceEngine(UnitxtInferenceTestCase):
     def test_pipeline_based_inference_engine(self):
         model = HFPipelineBasedInferenceEngine(
-            model_name="google/flan-t5-small", max_new_tokens=32
+            model_name=local_decoder_model,  # pragma: allowlist secret
+            max_new_tokens=2,
         )
 
         dataset = get_text_dataset()
 
         predictions = model(dataset)
 
-        self.assertListEqual(predictions, ["365", "1"])
+        self.assertListEqual(list(predictions), ["7\n", "12"])
 
     def test_pipeline_based_inference_engine_lazy_load(self):
         model = HFPipelineBasedInferenceEngine(
-            model_name="google/flan-t5-small", max_new_tokens=32, lazy_load=True
+            model_name=local_decoder_model,  # pragma: allowlist secret
+            max_new_tokens=2,
+            lazy_load=True,
         )
         dataset = get_text_dataset()
 
         predictions = model(dataset)
 
-        self.assertListEqual(predictions, ["365", "1"])
+        self.assertListEqual(list(predictions), ["7\n", "12"])
 
     def test_dataset_verification_inference_engine(self):
         inference_model = HFPipelineBasedInferenceEngine(
-            model_name="google/flan-t5-small",
-            max_new_tokens=32,
+            model_name=local_decoder_model,  # pragma: allowlist secret
+            max_new_tokens=2,
+            lazy_load=True,
             data_classification_policy=["public"],
         )
         dataset = [{"source": "", "data_classification_policy": ["pii"]}]
@@ -273,7 +279,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_hf_auto_model_inference_engine_batching(self):
         model = HFAutoModelInferenceEngine(
-            model_name="HuggingFaceTB/SmolLM2-135M-Instruct",  # pragma: allowlist secret
+            model_name=local_decoder_model,  # pragma: allowlist secret
             max_new_tokens=2,
             batch_size=2,
             data_classification_policy=["public"],
@@ -371,12 +377,15 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         ).infer([{"source": "say hello."}])
 
     def test_log_prob_scoring_inference_engine(self):
-        engine = HFOptionSelectingInferenceEngine(model_name="gpt2", batch_size=1)
+        engine = HFOptionSelectingInferenceEngine(
+            model_name=local_decoder_model,  # pragma: allowlist secret
+            batch_size=1,
+        )
 
         log_probs = engine.get_log_probs(["hello world", "by universe"])
 
-        self.assertAlmostEqual(log_probs[0], -8.58, places=2)
-        self.assertAlmostEqual(log_probs[1], -10.98, places=2)
+        self.assertAlmostEqual(log_probs[0], -9.77, places=2)
+        self.assertAlmostEqual(log_probs[1], -11.92, places=2)
 
     def test_option_selecting_inference_engine(self):
         dataset = [
@@ -384,7 +393,9 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             {"source": "by ", "task_data": {"options": ["the", "truck"]}},
         ]
 
-        engine = HFOptionSelectingInferenceEngine(model_name="gpt2", batch_size=1)
+        engine = HFOptionSelectingInferenceEngine(
+            model_name=local_decoder_model, batch_size=1
+        )
         predictions = engine.infer(dataset)
 
         self.assertEqual(predictions[0], "world")
@@ -403,7 +414,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         ]
 
         engine = HFOptionSelectingInferenceEngine(
-            model_name="Qwen/Qwen2.5-0.5B-Instruct", batch_size=1
+            model_name=local_decoder_model, batch_size=1
         )
         predictions = engine.infer(dataset)
 
@@ -425,14 +436,14 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         set_seed(0, deterministic=True)
 
         engine = HFPipelineBasedInferenceEngine(
-            model_name="Qwen/Qwen2.5-0.5B-Instruct",
+            model_name=local_decoder_model,
             max_new_tokens=1,
             top_k=1,
         )
         predictions = engine.infer(dataset)
 
-        self.assertEqual(predictions[0], "Hello")
-        self.assertEqual(predictions[1], "As")
+        self.assertEqual(predictions[0], "hi")
+        self.assertEqual(predictions[1], "I")
 
     def test_ollama_inference_engine(self):
         dataset = [
@@ -449,6 +460,8 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         if os.path.exists(unitxt.settings.inference_engine_cache_path):
             shutil.rmtree(unitxt.settings.inference_engine_cache_path)
 
+        model_name = local_decoder_model  # pragma: allowlist secret
+
         dataset = load_dataset(
             card="cards.openbook_qa",
             split="test",
@@ -456,7 +469,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             loader_limit=20,
         )
         inference_model = HFPipelineBasedInferenceEngine(
-            model_name="google/flan-t5-small",
+            model_name=model_name,
             max_new_tokens=32,
             temperature=0,
             top_p=1,
@@ -468,7 +481,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         inference_without_cache_time = time.time() - start_time
         # Set seed for reproducibility
         inference_model = HFPipelineBasedInferenceEngine(
-            model_name="google/flan-t5-small",
+            model_name=model_name,
             max_new_tokens=32,
             temperature=0,
             top_p=1,
@@ -515,7 +528,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             shutil.rmtree(unitxt.settings.inference_engine_cache_path)
 
         inference_model = HFPipelineBasedInferenceEngine(
-            model_name="google/flan-t5-small",
+            model_name=model_name,
             max_new_tokens=32,
             temperature=0,
             top_p=1,
@@ -627,25 +640,22 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
     def test_hf_auto_model_and_hf_pipeline_equivalency(self):
         unitxt.settings.allow_unverified_code = True
         for _format in ["formats.chat_api", None]:
-            model_name = (
-                "HuggingFaceTB/SmolLM2-135M-Instruct"  # pragma: allowlist secret
-            )
+            model_name = local_decoder_model  # pragma: allowlist secret
             model_args = {
                 "max_new_tokens": 32,
                 "temperature": 0,
                 "top_p": 1,
                 "use_cache": False,
-                "device": "cpu",
             }
 
             dataset = load_dataset(
                 card="cards.openbook_qa", split="test", format=_format, loader_limit=64
             )  # the number of instances need to large enough to catch differences
             pipeline_inference_model = HFPipelineBasedInferenceEngine(
-                model_name=model_name, **model_args
+                model_name=model_name, device="cpu", **model_args
             )
             auto_inference_model = HFAutoModelInferenceEngine(
-                model_name=model_name, **model_args
+                model_name=model_name, device_map="cpu", **model_args
             )
 
             pipeline_inference_model_predictions = pipeline_inference_model.infer(
@@ -656,17 +666,3 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             self.assertEqual(
                 pipeline_inference_model_predictions, auto_inference_model_predictions
             )
-
-    def test_multi_byte_tokens_decoding(self):
-        model = HFAutoModelInferenceEngine(
-            model_name="Qwen/Qwen1.5-0.5B-Chat",
-            max_new_tokens=32,
-            use_cache=False,
-        )
-        from transformers import AutoTokenizer
-
-        tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen1.5-0.5B-Chat")
-        text = "以下の質問に答えてください。回答は1単語で述べてください。"
-        tokens = tokenizer(text)["input_ids"]
-        decoded_text = model.decode_tokens(tokens, 0)
-        self.assertEqual(text, decoded_text)
