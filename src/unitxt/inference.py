@@ -1399,21 +1399,25 @@ class OllamaInferenceEngine(
         return get_model_and_label_id(self.model, self.label)
 
     def prepare_engine(self):
-        pass
+        from ollama import Client
+
+        self.client = Client(
+            host=self.credentials["api_base"]
+            if self.credentials is not None and "api_base" in self.credentials
+            else None
+        )
 
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        import ollama
-
         args = self.to_dict([StandardAPIParamsMixin])
         results = []
         model = args.pop("model")
         for instance in dataset:
             messages = self.to_messages(instance)
-            response = ollama.chat(
+            response = self.client.chat(
                 messages=messages,
                 model=model,
                 options=args,
