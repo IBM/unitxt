@@ -36,24 +36,31 @@ dataset_query = "benchmarks.bluebench[loader_limit=30,splits=[test]]"
 # dataset_query = "card=cards.rag.documents.clap_nq.en"     # assaf's example
 # dataset_query = "card=cards.cola"
 
+
 class WaterMarkGenerator(Dataclass):
     measured_stream: Stream
     water_mark: int = -1
 
-    def stream_counter(self)->Generator:
-        for i, instance in enumerate (self.measured_stream):
+    def stream_counter(self) -> Generator:
+        for i, instance in enumerate(self.measured_stream):
             if i > self.water_mark:
                 self.water_mark = i
             yield instance
 
-class WaterMarkStreamer(MultiStreamOperator):
 
+class WaterMarkStreamer(MultiStreamOperator):
     generators: Dict[str, WaterMarkGenerator] = None
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         if not self.generators:
-            self.generators = {k: WaterMarkGenerator(measured_stream=multi_stream[k]) for k in multi_stream}
-        reusable_generators = {k: ReusableGenerator(generator=self.generators[k].stream_counter) for k in multi_stream}
+            self.generators = {
+                k: WaterMarkGenerator(measured_stream=multi_stream[k])
+                for k in multi_stream
+            }
+        reusable_generators = {
+            k: ReusableGenerator(generator=self.generators[k].stream_counter)
+            for k in multi_stream
+        }
 
         return MultiStream.from_generators(reusable_generators)
 
@@ -114,11 +121,11 @@ class BlueBenchProfiler:
 
         # The official way -- based on api.py
         current_loader_cache_size = settings.loader_cache_size
-        settings.loader_cache_size = 1000   # cover all needs
+        settings.loader_cache_size = 1000  # cover all needs
         t0 = time()
         recipe = load_recipe(dataset_query, **kwargs)
         t0_5 = time()
-        #exhaust recipe to ensure all data is loaded, and hopefully saved in the expanded loader-cache
+        # exhaust recipe to ensure all data is loaded, and hopefully saved in the expanded loader-cache
         ms = recipe()
         for stream_name in ms:
             len(list(ms[stream_name]))
@@ -145,18 +152,21 @@ class BlueBenchProfiler:
         # now just streaming through recipe, without generating an HF dataset:
         ms = recipe()
         total_production_length_of_recipe = {k: len(list(ms[k])) for k in ms}
-        logger.critical(f"lengths of total production of recipe: {total_production_length_of_recipe}")
+        logger.critical(
+            f"lengths of total production of recipe: {total_production_length_of_recipe}"
+        )
 
         settings.loader_cache_size = current_loader_cache_size
         return {
-            "load_recipe" : t0_5 - t0,
+            "load_recipe": t0_5 - t0,
             "recipe()": t2 - t1,
-            "source_to_dataset": t3-t2,
+            "source_to_dataset": t3 - t2,
             "instantiate_model": t4 - t3,
-            "inference_time" : t5 - t4,
-            "evaluation_time" : t6 - t5,
-            "load_data_time": t1-t0
+            "inference_time": t5 - t4,
+            "evaluation_time": t6 - t5,
+            "load_data_time": t1 - t0,
         }
+
 
 def profile_benchmark():
     # profile the official way, with cProfile
@@ -173,19 +183,21 @@ def profile_benchmark():
                 dataset = dataset[split_name]
         predictions = model.infer(dataset=dataset)
         evaluation_result = evaluate(predictions=predictions, data=dataset)
-        logger.info(f"length of evaluation result from cProfiling: {len(evaluation_result)}")
+        logger.info(
+            f"length of evaluation result from cProfiling: {len(evaluation_result)}"
+        )
+
 
 def profile_no_cprofile():
     bluebench_profiler = BlueBenchProfiler()
     queries = dataset_query if isinstance(dataset_query, list) else [dataset_query]
     res = defaultdict(float)
     for dsq in queries:
-        dsq_time = bluebench_profiler.profiler_do_the_profiling(
-            dataset_query=dsq
-        )
+        dsq_time = bluebench_profiler.profiler_do_the_profiling(dataset_query=dsq)
         for k in dsq_time:
             res[k] += dsq_time[k]
     return {k: round(res[k], 3) for k in res}
+
 
 def find_cummtime_of(func_name: str, file_name: str, pst_printout: str) -> float:
     relevant_lines = list(
@@ -219,28 +231,26 @@ def use_cprofile():
         assert s.split("\n")[7].split()[3] == "cumtime"
         load_recipe = find_cummtime_of("load_recipe", "api.py", s)
         source_to_dataset = find_cummtime_of("_source_to_dataset", "api.py", s)
-        list_out_dataset = find_cummtime_of("list_from_dataset", "bluebench_profiler.py", s)
+        list_out_dataset = find_cummtime_of(
+            "list_from_dataset", "bluebench_profiler.py", s
+        )
         just_load_and_list = find_cummtime_of(
             "profiler_do_the_load_and_list_only", "bluebench_profiler.py", s
         )
         instantiate_model = find_cummtime_of(
             "profiler_instantiate_model", "bluebench_profiler.py", s
         )
-        inference_time = find_cummtime_of(
-            "infer", "inference.py", s
-        )
-        evaluation_time = find_cummtime_of(
-            "evaluate", "api.py", s
-        )
+        inference_time = find_cummtime_of("infer", "inference.py", s)
+        evaluation_time = find_cummtime_of("evaluate", "api.py", s)
 
     return {
-        "load_recipe" : load_recipe,
+        "load_recipe": load_recipe,
         "source_to_dataset": source_to_dataset,
-        "list_out_dataset" : list_out_dataset,
+        "list_out_dataset": list_out_dataset,
         "just_load_and_list": just_load_and_list,
         "instantiate_model": instantiate_model,
-        "inference_time" : inference_time,
-        "evaluation_time" : evaluation_time,
+        "inference_time": inference_time,
+        "evaluation_time": evaluation_time,
         "performance.prof file": temp_prof_file_path,
     }
 
@@ -277,7 +287,6 @@ def main():
 
     dict_to_print["dataset_query"] = dataset_query
     dict_to_print["used_eager_mode"] = settings.use_eager_execution
-
 
     # Write the profiling results to the JSON file (user-specified)
     with open(args.output_file, "w+") as outfile:

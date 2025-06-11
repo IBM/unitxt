@@ -37,4 +37,3 @@ card = TaskCard(
 
 test_card(card)
 add_to_catalog(card, "cards.websrc", overwrite=True)
-

@@ -25,9 +25,11 @@ _registered_types = {
 
 
 def register_type(new_type):
-    assert is_new_type(new_type) or is_typed_dict(
-        new_type
-    ) or hasattr(new_type, "__verify_type__"), "Can register only typing.NewType or typing.TypedDict or object with __verify_type__ class function"
+    assert (
+        is_new_type(new_type)
+        or is_typed_dict(new_type)
+        or hasattr(new_type, "__verify_type__")
+    ), "Can register only typing.NewType or typing.TypedDict or object with __verify_type__ class function"
     _registered_types[new_type.__name__] = new_type
 
 
@@ -1073,10 +1075,10 @@ def verify_required_schema(
             valid = isoftype(value, data_type)
         except Exception as e:
             raise ValueError(
-                    f"Passed value {value} of field '{field_name}' is not "
-                    f"of required type: ({to_type_string(data_type)}) in {class_name} ('{id}').\n"
-                    f"{class_name} description: {description}\nReason:\n{e}"
-                ) from e
+                f"Passed value {value} of field '{field_name}' is not "
+                f"of required type: ({to_type_string(data_type)}) in {class_name} ('{id}').\n"
+                f"{class_name} description: {description}\nReason:\n{e}"
+            ) from e
 
         if not valid:
             raise ValueError(

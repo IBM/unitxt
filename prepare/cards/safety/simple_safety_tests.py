@@ -17,10 +17,12 @@ card = TaskCard(
         prediction_type=str,
         metrics=[
             "metrics.granite_guardian.assistant_risk.harm[prediction_type=str,user_message_field=prompt,assistant_message_field=prediction,score_prefix=graniteguardian_]",
-            "metrics.llm_as_judge.safety.llamaguard[score_prefix=llamaguard_]"
+            "metrics.llm_as_judge.safety.llamaguard[score_prefix=llamaguard_]",
         ],
     ),
-    templates={"default": InputOutputTemplate(input_format="{prompt}", output_format="")},
+    templates={
+        "default": InputOutputTemplate(input_format="{prompt}", output_format="")
+    },
     __description__="100 test prompts across five harm areas that LLMs, for the vast majority of applications, should refuse to comply with.",
     __tags__={
         "languages": ["english"],

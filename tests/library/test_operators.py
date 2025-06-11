@@ -2,8 +2,10 @@ import json
 from collections import Counter
 from typing import Any
 
+from unitxt.error_utils import UnitxtError
 from unitxt.formats import SystemFormat
 from unitxt.metrics import MetricsList
+from unitxt.normalizers import NormalizeListFields
 from unitxt.operators import (
     AddConstant,
     Apply,
@@ -1057,7 +1059,6 @@ label (str):
             targets=targets,
             tester=self,
         )
-
 
     def test_apply_stream_operators_field(self):
         inputs = [
@@ -2189,7 +2190,6 @@ label (str):
                 fields={"a/d": "float", "b": "int"},
                 failure_defaults={"a/d": 0.0, "b": 0},
                 process_every_value=True,
-                use_nested_query=True,
             ),
             inputs=[{"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}],
             targets=[{"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}],
@@ -3277,6 +3277,79 @@ Agent:"""
         ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
 
+    def test_join_errors(self):
+        input_multi_stream = MultiStream(
+            {
+                "questions": [
+                    {
+                        "question": "question_1",
+                        "id": "1",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                ],
+                "answers": [
+                    {
+                        "answer": "answer_1",
+                        "id": "2",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                ],
+                "train": [{"field": "train1"}],
+            }
+        )
+
+        with self.assertRaises(UnitxtError) as cm:
+            JoinStreams(
+                left_stream="questions",
+                right_stream="answers",
+                how="inner",
+                on=["id"],
+                new_stream_name="questions_and_answers",
+            )(input_multi_stream)
+
+        self.assertEqual(
+            str(cm.exception),
+            "JoinStreams resulted in an empty stream. It means that that keys in fields '['id']' on the left and on right streams do not match the merge policy of 'inner'.",
+        )
+
+        input_multi_stream = MultiStream(
+            {
+                "questions": [
+                    {
+                        "question": "question_1",
+                        "id": "1",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                ],
+                "answers": [
+                    {
+                        "answer": "answer_1",
+                        "id": "1",
+                        "data_classification_policy": ["confidential"],
+                        "recipe_metadata": [],
+                    },
+                ],
+                "train": [{"field": "train1"}],
+            }
+        )
+
+        with self.assertRaises(UnitxtError) as cm:
+            JoinStreams(
+                left_stream="questions",
+                right_stream="answers",
+                how="inner",
+                on=["id"],
+                new_stream_name="questions_and_answers",
+            )(input_multi_stream)
+
+        self.assertEqual(
+            str(cm.exception),
+            "'data_classification_policy' field is not identical in both left and right instances merged in JoinStreams.",
+        )
+
     def test_delete_split(self):
         input_multi_stream = MultiStream(
             {
@@ -3330,40 +3403,22 @@ Agent:"""
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
 
     def test_recursive_replace(self):
+        operator = RecursiveReplace(
+            key="type",
+            map_values={"int": "integer", "float": "number"},
+            remove_values=["any"],
+        )
 
-        operator = RecursiveReplace(key="type", map_values={"int": "integer", "float": "number"}, remove_values=["any"])
+        inputs = [{"pro": {"type": "int"}, "bro": [{"type": "float"}, {"type": "any"}]}]
 
-        inputs = [
-            {
-                "pro": {
-                    "type": "int"
-                },
-                "bro": [
-                    {
-                        "type": "float"
-                    },
-                    {
-                        "type": "any"
-                    }
-                ]
-
-             }
-        ]
-
-        targets = [
-            {
-                "pro": {
-                    "type": "integer"
-                },
-                "bro": [
-                    {
-                        "type": "number"
-                    },
-                    {
-                    }
-                ]
-
-             }
-        ]
+        targets = [{"pro": {"type": "integer"}, "bro": [{"type": "number"}, {}]}]
 
         check_operator(operator=operator, inputs=inputs, targets=targets)
+
+    def test_normalizers(self):
+        normalizer = NormalizeListFields(fields=["field_containing_a_list"])
+        instance = {"field_containing_a_list": ["a", "b", "c", "d"]}
+        processed_instance = normalizer.process(instance)
+        self.assertDictEqual(
+            {"field_containing_a_list": "a, b, c, d"}, processed_instance
+        )

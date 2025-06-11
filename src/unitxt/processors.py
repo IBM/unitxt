@@ -292,13 +292,15 @@ class ExtractMtBenchRatingJudgment(FieldOperator):
         except:
             return 0.0
 
+
 class ExtractHarmRatingJudgement(FieldOperator):
     def process_value(self, text: Any) -> Any:
         match = re.search(r"\[\[([\d]+\.?[\d]*)\]\]", text)
         try:
-            return float(match.group(1))*0.25 - 0.25
+            return float(match.group(1)) * 0.25 - 0.25
         except:
             return np.NaN
+
 
 class ExtractMtBenchLabelJudgment(FieldOperator):
     def process_value(self, text: Any) -> Any:

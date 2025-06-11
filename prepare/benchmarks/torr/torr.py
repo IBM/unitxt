@@ -14,6 +14,7 @@ tables_benchmark_dir = os.path.join(
 )
 MAX_PREDICTIONS = 100
 
+
 # Recursive function to build nested benchmarks
 def build_nested_benchmark(dir_path, prefix="recipes.torr"):
     nested_scenarios = OrderedDict()
