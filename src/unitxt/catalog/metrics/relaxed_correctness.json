@@ -1,4 +1,4 @@
 {
-    "__type__": "relaxed_correctness",
+    "__type__": "unitxt.metrics.RelaxedCorrectness",
     "n_resamples": null
 }

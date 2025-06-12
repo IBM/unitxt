@@ -1,13 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "ibm/argument_quality_ranking_30k",
         "name": "argument_topic"
     },
     "preprocess_steps": [
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "classes": [
                     "affirmative action",

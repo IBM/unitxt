@@ -1,6 +1,6 @@
 {
-    "__type__": "post_process",
+    "__type__": "unitxt.processors.PostProcess",
     "operator": {
-        "__type__": "list_to_empty_entities_tuples"
+        "__type__": "unitxt.processors.ListToEmptyEntitiesTuples"
     }
 }

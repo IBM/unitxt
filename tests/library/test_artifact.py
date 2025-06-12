@@ -6,6 +6,7 @@ from unitxt.artifact import (
     Artifact,
     ArtifactLink,
     fetch_artifact,
+    from_dict,
     get_artifacts_data_classification,
     reset_artifacts_json_cache,
 )
@@ -20,8 +21,8 @@ from unitxt.operator import SequentialOperator
 from unitxt.operators import Copy, Rename, Set
 from unitxt.processors import StringEquals
 from unitxt.settings_utils import get_settings
-from unitxt.standard import StandardRecipe
-from unitxt.task import FormTask, Task
+from unitxt.standard import DatasetRecipe
+from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate, YesNoTemplate
 from unitxt.test_utils.catalog import temp_catalog
 
@@ -51,7 +52,7 @@ class TestArtifact(UnitxtTestCase):
 
     def test_artifact_loading_with_artifact_dict_reference(self):
         t = ArtifactReferencing(
-            reference={"__type__": "artifact_to_reference", "a": "0"}
+            reference={"__type__": ArtifactToReference.get_artifact_type(), "a": "0"}
         )
 
         self.assertEqual(str(t.reference), str(ArtifactToReference(a="0")))
@@ -572,13 +573,13 @@ class TestArtifact(UnitxtTestCase):
     def test_artifact_is_not_saving_if_artifact_has_changed(self):
         with self.assertRaises(UnitxtError) as e:
             args = {
-                "__type__": "dataset_recipe",
+                "__type__": "unitxt.standard.DatasetRecipe",
                 "card": "cards.sst2",
                 "template_card_index": 0,
                 "demos_pool_size": 100,
                 "num_demos": 0,
             }
-            a = Artifact.from_dict(args)
+            a = from_dict(args)
             a.num_demos = 1
             a.save("not_suppose_to_save.json")
 
@@ -619,7 +620,7 @@ class TestArtifact(UnitxtTestCase):
         loader = LoadHF(path="resources/some_path", split="test")
         inputs = {"question": "str", "metadata": "List[Dict[str, Any]]"}
         outputs = {"answer": "str"}
-        task = FormTask(
+        task = Task(
             inputs=inputs,
             outputs=outputs,
             metrics=["metrics.jaccard_index"],
@@ -637,7 +638,7 @@ class TestArtifact(UnitxtTestCase):
             templates=templates,
             preprocess_steps=preprocessors,
         )
-        recipe = StandardRecipe(
+        recipe = DatasetRecipe(
             card=card,
             template_card_index=0,
             postprocessors=[

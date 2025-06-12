@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": "unitxt.loaders.LoadJsonFile",
         "files": {
             "train": "https://raw.githubusercontent.com/nyu-mll/quality/05e85750d4c5444d2a0a4ad299f6df5f4df06068/data/v1.0.1/QuALITY.v1.0.1.htmlstripped.train",
             "validation": "https://raw.githubusercontent.com/nyu-mll/quality/05e85750d4c5444d2a0a4ad299f6df5f4df06068/data/v1.0.1/QuALITY.v1.0.1.htmlstripped.dev"
@@ -13,7 +13,7 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
+            "__type__": "unitxt.splitters.SplitRandomMix",
             "mix": {
                 "train": "train[80%]",
                 "validation": "train[20%]",
@@ -21,32 +21,32 @@
             }
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "article",
             "to_field": "context"
         },
         {
-            "__type__": "explode",
+            "__type__": "unitxt.collections_operators.Explode",
             "field": "questions",
             "to_field": "data"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "data/question",
             "to_field": "question"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "data/options",
             "to_field": "choices"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "data/gold_label",
             "to_field": "answer"
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": "unitxt.operators.MapInstanceValues",
             "mappers": {
                 "answer": {
                     "1": 0,
@@ -58,7 +58,7 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "context_type": "document"
             }

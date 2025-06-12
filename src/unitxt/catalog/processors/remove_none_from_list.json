@@ -1,9 +1,9 @@
 {
-    "__type__": "post_process",
+    "__type__": "unitxt.processors.PostProcess",
     "process_references": true,
     "process_prediction": true,
     "operator": {
-        "__type__": "remove_values",
+        "__type__": "unitxt.operators.RemoveValues",
         "unallowed_values": [
             "none"
         ]

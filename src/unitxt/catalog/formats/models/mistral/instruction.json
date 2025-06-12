@@ -1,5 +1,5 @@
 {
-    "__type__": "system_format",
+    "__type__": "unitxt.formats.SystemFormat",
     "demo_format": "{source} [/INST]{target_prefix}{target}</s> [INST] ",
     "model_input_format": "[INST] {instruction}{demos}{source} [/INST]{target_prefix}"
 }

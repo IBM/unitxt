@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "vincentkoc/hotpot_qa_archive",
         "name": "distractor",
         "revision": "c060661",
@@ -11,14 +11,14 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
+            "__type__": "unitxt.splitters.SplitRandomMix",
             "mix": {
                 "test": "train[30%]",
                 "train": "train[70%]"
             }
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "question": "question",
                 "id": "question_id",
@@ -26,25 +26,25 @@
             }
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "context/title",
             "to_field": "reference_context_ids"
         },
         {
-            "__type__": "join",
+            "__type__": "unitxt.string_operators.Join",
             "field": "context/sentences",
             "by": " ",
             "to_field": "reference_contexts",
             "process_every_value": true
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "is_answerable_label": true
             }
         },
         {
-            "__type__": "wrap",
+            "__type__": "unitxt.collections_operators.Wrap",
             "field": "answer",
             "inside": "list",
             "to_field": "reference_answers"

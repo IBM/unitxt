@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "ibm-research/REAL-MM-RAG_TechReport",
         "name": "default",
         "split": "test",
@@ -11,28 +11,28 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_splits",
+            "__type__": "unitxt.splitters.RenameSplits",
             "mapper": {
                 "test": "train"
             }
         },
         {
-            "__type__": "hash_image",
+            "__type__": "unitxt.image_operators.HashImage",
             "field": "image",
             "to_field": "document_id"
         },
         {
-            "__type__": "deduplicate",
+            "__type__": "unitxt.operators.Deduplicate",
             "by": [
                 "document_id"
             ]
         },
         {
-            "__type__": "to_image",
+            "__type__": "unitxt.image_operators.ToImage",
             "field": "image"
         },
         {
-            "__type__": "wrap",
+            "__type__": "unitxt.collections_operators.Wrap",
             "field": "image",
             "inside": "list",
             "to_field": "passages"
@@ -41,7 +41,7 @@
     "task": "tasks.rag.corpora",
     "templates": {
         "empty": {
-            "__type__": "input_output_template",
+            "__type__": "unitxt.templates.InputOutputTemplate",
             "input_format": "",
             "output_format": ""
         }

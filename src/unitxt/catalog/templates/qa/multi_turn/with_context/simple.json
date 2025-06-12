@@ -1,31 +1,31 @@
 {
-    "__type__": "multi_reference_template",
+    "__type__": "unitxt.templates.MultiReferenceTemplate",
     "instruction": "Read the context and answer the last question in the conversation. Answer with the minimal span from the context answering the question.",
     "input_format": "Context: {context}\n\nConversation:\n{conversation}",
     "references_field": "answers",
     "serializer": {
-        "__type__": "multi_type_serializer",
+        "__type__": "unitxt.serializers.MultiTypeSerializer",
         "serializers": [
             {
-                "__type__": "image_serializer"
+                "__type__": "unitxt.serializers.ImageSerializer"
             },
             {
-                "__type__": "video_serializer"
+                "__type__": "unitxt.serializers.VideoSerializer"
             },
             {
-                "__type__": "table_serializer"
+                "__type__": "unitxt.serializers.TableSerializer"
             },
             {
-                "__type__": "dialog_serializer"
+                "__type__": "unitxt.serializers.DialogSerializer"
             },
             {
-                "__type__": "conversation_serializer"
+                "__type__": "unitxt.serializers.ConversationSerializer"
             },
             {
-                "__type__": "list_serializer"
+                "__type__": "unitxt.serializers.ListSerializer"
             },
             {
-                "__type__": "sql_database_as_schema_serializer"
+                "__type__": "unitxt.serializers.SQLDatabaseAsSchemaSerializer"
             }
         ]
     },
