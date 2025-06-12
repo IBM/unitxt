@@ -414,6 +414,8 @@ def initialize_inference_engine(
             chat_kwargs_dict=chat_kwargs_dict,
         )
 
+        # Keep the actual model name for the results
+        args.model = inference_model.model_name
     # --- Remote Model (CrossProviderInferenceEngine) ---
     elif args.model.lower() == "cross_provider":
         if "model_name" not in model_args_dict:
@@ -444,6 +446,9 @@ def initialize_inference_engine(
             model=remote_model_name,
             **model_args_dict,
         )
+
+        # Keep the actual model name for the results
+        args.model = inference_model.engine.model
     else:
         # This case should not be reached due to argparse choices
         logger.error(
@@ -682,7 +687,7 @@ def _save_results_to_disk(
 
     # prepend to the results_path name the time in a wat like this: 2025-04-04T11:37:32
 
-    timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
 
     results_path = prepend_timestamp_to_path(results_path, timestamp)
     samples_path = prepend_timestamp_to_path(samples_path, timestamp)
