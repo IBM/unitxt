@@ -22,7 +22,7 @@ from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
 )
 from .settings_utils import get_constants, get_settings
-from .text_utils import camel_to_snake_case, is_camel_case, print_dict_as_yaml
+from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import isoftype, issubtype
 from .utils import (
     artifacts_json_cache,
@@ -367,11 +367,14 @@ class Artifact(Dataclass):
 
     def to_json(self):
         data = self.to_dict()
+
         return json_dump(data)
 
     def to_yaml(self):
+        import yaml
+
         data = self.to_dict()
-        return print_dict_as_yaml(data)
+        return yaml.dump(data)
 
     def serialize(self):
         if self.__id__ is not None:
