@@ -298,9 +298,13 @@ def cli_load_dataset(args: argparse.Namespace) -> HFDataset:
             dataset_query=task_str, **overwrite_args
         )
 
-    benchmark = Benchmark(subsets=benchmark_subsets)
+    # this hack circumvents an issue with multi-level benchmarks (such Bluebench's translation subset) that fail when wrapped with an additional Benchmark() object.
+    if len(benchmark_subsets) == 1:
+        source = next(iter(benchmark_subsets.values()))
+    else:
+        source = Benchmark(subsets=benchmark_subsets)
 
-    test_dataset = _source_to_dataset(benchmark, split=args.split)
+    test_dataset = _source_to_dataset(source, split=args.split)
     logger.info(
         f"Dataset loaded successfully. Number of instances: {len(test_dataset)}"
     )
