@@ -45,11 +45,13 @@ card = TaskCard(
         metrics=[
             "metrics.rouge",
         ],
-        default_template=InputOutputTemplate(
+    ),
+    templates=[
+        InputOutputTemplate(
             input_format="{input}",
             output_format="{output}",
-        ),
-    ),
+        )
+    ],
 )
 
 dataset = load_dataset(
