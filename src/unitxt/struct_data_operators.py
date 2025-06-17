@@ -754,11 +754,27 @@ class LoadJson(FieldOperator):
             return json.loads(value, strict=False)
 
 
+def extract_possible_json_str(text):
+    """Extract potential JSON string from text by finding outermost braces/brackets."""
+    # Find first opening delimiter
+    start_positions = [pos for pos in [text.find("{"), text.find("[")] if pos != -1]
+    start = min(start_positions) if start_positions else 0
+
+    # Find last closing delimiter
+    end_positions = [pos for pos in [text.rfind("}"), text.rfind("]")] if pos != -1]
+    end = max(end_positions) if end_positions else len(text) - 1
+
+    return text[start : end + 1]
+
+
 class ToolCallPostProcessor(FieldOperator):
     failure_value: Any = None
     allow_failure: bool = False
 
     def process_value(self, value: str) -> ToolCall:
+        value = extract_possible_json_str(
+            value
+        )  # clear tokens such as <tool_call> focusing on the call json itself
         if self.allow_failure:
             try:
                 result = json.loads(value)

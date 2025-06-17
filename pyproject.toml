@@ -145,7 +145,17 @@ local_inference = [
     "torch",
     "accelerate"
 ]
-
+bluebench = [
+    "unitxt[remote_inference]",
+    "unitxt[local_inference]",
+    "conllu",
+    "scikit-learn",
+    "sympy",
+    "bert_score",
+    "nltk",
+    "rouge_score",
+    "sacrebleu[ko]"
+]
 
 
 # Combine all extras by referencing other groups
