@@ -964,6 +964,7 @@ class HFLlavaInferenceEngine(HFInferenceEngineBase):
             results.append(
                 self.get_return_object(
                     output=final_outputs[0],
+                    generated_text=output_strings,
                     output_tokens=len(output_tokens_strings[0]),
                     inp=instance["source"],
                     inp_tokens=None,
