@@ -1,6 +1,11 @@
+from typing import List
+
 from unitxt.api import load_dataset
-from unitxt.inference import WMLInferenceEngineGeneration
-from unitxt.text_utils import print_dict
+from unitxt.inference import (
+    HFAutoModelInferenceEngine,
+    TextGenerationInferenceOutput,
+    WMLInferenceEngineGeneration,
+)
 
 if __name__ == "__main__":
     # Set required env variables using your WML credentials:
@@ -22,6 +27,10 @@ if __name__ == "__main__":
         decoding_method="greedy",
     )
 
+    hf_model = HFAutoModelInferenceEngine(
+        model_name="google/flan-t5-small", max_new_tokens=10
+    )
+
     # Loading dataset:
     dataset = load_dataset(
         card="cards.go_emotions.simplified",
@@ -30,8 +39,16 @@ if __name__ == "__main__":
     )
     test_data = dataset["test"]
 
-    # Performing inference:
-    predictions = wml_inference.infer_log_probs(test_data, return_meta_data=True)
-    for inp, prediction in zip(test_data, predictions):
-        result = {**inp, "prediction": prediction}
-        print_dict(result, keys_to_print=["source", "prediction"])
+    for model in [wml_inference, hf_model]:
+        # Performing inference:
+        predictions: List[TextGenerationInferenceOutput] = model.infer_log_probs(
+            test_data, return_meta_data=True
+        )
+        for instance, prediction in zip(test_data, predictions):
+            print("model:", model.__class__)
+            print("source:", instance["source"])
+            print("generated_text:", prediction.generated_text)
+            print(
+                "predicated top tokens:",
+                [token["text"] for token in prediction.prediction],
+            )
