@@ -1939,10 +1939,12 @@ class OpenAiInferenceEngine(
             top_logprobs_response = response.choices[0].logprobs.content
             pred_output = [
                 {
+                    "text": generated_token.token,
+                    "logprob": generated_token.logprob,
                     "top_tokens": [
                         {"text": obj.token, "logprob": obj.logprob}
                         for obj in generated_token.top_logprobs
-                    ]
+                    ],
                 }
                 for generated_token in top_logprobs_response
             ]
@@ -1952,7 +1954,9 @@ class OpenAiInferenceEngine(
             logging.error(
                 f"Error predicting instance {messages}:{e}. Returning empty prediction"
             )
-            prediction = [{"top_tokens": [{"text": "-", "logprob": 0}]}]
+            prediction = [
+                {"text": "-", "logprob": 0, "top_tokens": [{"text": "-", "logprob": 0}]}
+            ]
             return TextGenerationInferenceOutput(
                 prediction=prediction,
                 generated_text=prediction,

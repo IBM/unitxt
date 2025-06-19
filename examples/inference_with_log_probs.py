@@ -3,6 +3,7 @@ from typing import List
 from unitxt.api import load_dataset
 from unitxt.inference import (
     HFAutoModelInferenceEngine,
+    RITSInferenceEngine,
     TextGenerationInferenceOutput,
     WMLInferenceEngineGeneration,
 )
@@ -31,6 +32,9 @@ if __name__ == "__main__":
         model_name="google/flan-t5-small", max_new_tokens=10
     )
 
+    rits_model = RITSInferenceEngine(
+        model_name="ibm-granite/granite-3.3-8b-instruct", max_tokens=10
+    )
     # Loading dataset:
     dataset = load_dataset(
         card="cards.go_emotions.simplified",
@@ -39,7 +43,7 @@ if __name__ == "__main__":
     )
     test_data = dataset["test"]
 
-    for model in [wml_inference, hf_model]:
+    for model in [rits_model, wml_inference, hf_model]:
         # Performing inference:
         predictions: List[TextGenerationInferenceOutput] = model.infer_log_probs(
             test_data, return_meta_data=True
