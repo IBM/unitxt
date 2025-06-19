@@ -2904,6 +2904,8 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             tool_call = data[idx]["tools"]["tools"] is not None
 
             output = response["choices"][0][output_type]
+            if "content" not in output:
+                output["content"] = ""
             if tool_call:
                 if "tool_calls" in output:
                     func = output["tool_calls"][0]["function"]
