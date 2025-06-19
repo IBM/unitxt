@@ -47,13 +47,13 @@ def get_image_dataset(format=None):
         {
             "context": {"image": random_image, "format": "JPEG"},
             "context_type": "image",
-            "question": "What is the capital of Texas?",
+            "question": "What is the capital of Texas? Answer in one word.",
             "answers": ["Austin"],
         },
         {
             "context": {"image": random_image, "format": "JPEG"},
             "context_type": "image",
-            "question": "What is the color of the sky?",
+            "question": "What is the color of the sky? Answer in one word.",
             "answers": ["Blue"],
         },
     ]
@@ -168,6 +168,19 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             top_k=1,
             repetition_penalty=1.5,
             decoding_method="greedy",
+        )
+
+        dataset = get_text_dataset()
+
+        predictions = model(dataset)
+
+        self.assertListEqual(predictions, ["7", "2"])
+
+    def test_watsonx_chat_inference(self):
+        model = WMLInferenceEngineChat(
+            model_name="ibm/granite-3-8b-instruct",
+            data_classification_policy=["public"],
+            temperature=0,
         )
 
         dataset = get_text_dataset()
@@ -319,7 +332,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         )
         self.assertIsInstance(prediction[0]["text"], str)
         self.assertIsInstance(prediction[0]["logprob"], float)
-
+        self.assertEqual(sample.generated_text, "365")
         results = engine.infer(data)
 
         self.assertTrue(isoftype(results, List[str]))
@@ -337,7 +350,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         results = inference_engine.infer_log_probs(
             dataset.select([0]), return_meta_data=True
         )
-
+        self.assertEqual(results[0].generated_text, "Austin.")
         self.assertTrue(isoftype(results, List[TextGenerationInferenceOutput]))
         self.assertEqual(results[0].stop_reason, "stop")
         self.assertTrue(isoftype(results[0].prediction, List[Dict[str, Any]]))

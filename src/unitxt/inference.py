@@ -2934,6 +2934,7 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             results.append(
                 self.get_return_object(
                     prediction,
+                    response["choices"][0]["message"]["content"],
                     response,
                     str(inp),
                     return_meta_data,
@@ -2942,11 +2943,13 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
 
         return results
 
-    def get_return_object(self, predict_result, result, input_text, return_meta_data):
+    def get_return_object(
+        self, predict_result, generated_text, result, input_text, return_meta_data
+    ):
         if return_meta_data:
             return TextGenerationInferenceOutput(
                 prediction=predict_result,
-                generated_text=result["choices"][0]["content"],
+                generated_text=generated_text,
                 input_tokens=result["usage"]["prompt_tokens"],
                 output_tokens=len(predict_result)
                 if isinstance(predict_result, list)
