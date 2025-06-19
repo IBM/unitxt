@@ -45,6 +45,7 @@ if __name__ == "__main__":
             test_data, return_meta_data=True
         )
         for instance, prediction in zip(test_data, predictions):
+            print("*" * 80)
             print("model:", model.__class__)
             print("source:", instance["source"])
             print("generated_text:", prediction.generated_text)
@@ -52,3 +53,4 @@ if __name__ == "__main__":
                 "predicated top tokens:",
                 [token["text"] for token in prediction.prediction],
             )
+            print("*" * 80)
