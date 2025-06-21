@@ -45,6 +45,7 @@ jobs:
         pip install --only-binary :all: spacy
         pip install networkx==3.2.1
         pip install datasets==3.5.1
+        pip install jiwer==3.1.0
 
     - name:  Hugging Face Login
       run: |
