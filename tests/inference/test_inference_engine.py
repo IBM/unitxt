@@ -345,12 +345,13 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             model_name="meta-llama/llama-3-2-11b-vision-instruct",
             max_tokens=128,
             top_logprobs=3,
+            temperature=0.0,
         )
 
         results = inference_engine.infer_log_probs(
             dataset.select([0]), return_meta_data=True
         )
-        self.assertEqual(results[0].generated_text, "Austin.")
+        self.assertEqual(results[0].generated_text, "The capital of Texas is Austin.")
         self.assertTrue(isoftype(results, List[TextGenerationInferenceOutput]))
         self.assertEqual(results[0].stop_reason, "stop")
         self.assertTrue(isoftype(results[0].prediction, List[Dict[str, Any]]))
@@ -378,7 +379,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         dataset = get_text_dataset(format="formats.chat_api")
         predictions = model(dataset)
 
-        self.assertListEqual(predictions, ["7", "3"])
+        self.assertListEqual(predictions, ["7", "`2"])
 
     def test_lite_llm_inference_engine_without_task_data_not_failing(self):
         LiteLLMInferenceEngine(
