@@ -7,7 +7,7 @@ from unitxt.inference import (
 logger = get_logger()
 
 sum_tool = {
-    "name": "add_numbers",
+    "mame": "add_numbers",
     "description": "Add two numbers together and return the result.",
     "parameters": {
         "type": "object",

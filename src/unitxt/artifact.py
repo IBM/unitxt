@@ -16,7 +16,7 @@ from .dataclass import (
     NonPositionalField,
     fields,
 )
-from .error_utils import Documentation, UnitxtError, UnitxtWarning
+from .error_utils import Documentation, UnitxtError, UnitxtWarning, error_context
 from .logging_utils import get_logger
 from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
@@ -342,8 +342,10 @@ class Artifact(Dataclass):
         self.verify_data_classification_policy()
         self.prepare_args()
         if not settings.skip_artifacts_prepare_and_verify:
-            self.prepare()
-            self.verify()
+            with error_context(self, function="prepare()"):
+                self.prepare()
+            with error_context(self, function="verify()"):
+                self.verify()
 
     def _to_raw_dict(self):
         return {
