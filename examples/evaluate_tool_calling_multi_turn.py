@@ -82,14 +82,6 @@ data = [
                 "role": "user",
                 "content": "Subtract  1212382312231231 from 834672468234768234?",
             },
-            {
-                "role": "user",
-                "content": "Subtract  1212382312231231 from 834672468234768234?",
-            },
-            {
-                "role": "user",
-                "content": "Subtract  1212382312231231 from 834672468234768234?",
-            },
         ],
         "tools": [sum_tool, subtract_tool],
         "reference_calls": [
