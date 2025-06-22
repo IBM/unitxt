@@ -96,7 +96,7 @@ add_to_catalog(
     LLMAsJudge(
         inference_model=CrossProviderInferenceEngine(
             model="llama-3-3-70b-instruct",
-            max_tokens=30,
+            max_tokens=2048,
         ),
         template="templates.response_assessment.pairwise_comparative_rating.arena_hard",
         task="pairwise_comparative_rating.single_turn",
