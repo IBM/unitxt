@@ -2,7 +2,7 @@ from typing import List
 
 from unitxt.catalog import add_to_catalog
 from unitxt.task import Task
-from unitxt.types import Tool, ToolCall, Turn
+from unitxt.types import Dialog, Tool, ToolCall
 
 add_to_catalog(
     Task(
@@ -27,7 +27,7 @@ add_to_catalog(
 
         Reference_calls is a list of ground truth tool calls to compare with.
         """,
-        input_fields={"dialog": List[Turn], "tools": List[Tool]},
+        input_fields={"dialog": Dialog, "tools": List[Tool]},
         reference_fields={"reference_calls": List[ToolCall]},
         prediction_type=List[ToolCall],
         metrics=[

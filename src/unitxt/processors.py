@@ -98,6 +98,16 @@ class ExtractWithRegex(RegexParser):
         return ""
 
 
+class GroupDictWithRegex(FieldOperator):
+    pattern: str
+
+    def process_value(self, value: Any) -> Any:
+        match = re.match(self.pattern, value)
+        if match:
+            return match.groupdict()
+        return {}
+
+
 class ListToEmptyEntitiesTuples(FieldOperator):
     def process_value(self, lst: Any) -> Any:
         try:

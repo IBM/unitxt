@@ -19,7 +19,7 @@ from .image_operators import image_to_data_url
 from .operator import InstanceOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype
-from .types import Turn
+from .types import Dialog
 from .utils import retry_connection_with_exponential_backoff
 
 constants = get_constants()
@@ -175,7 +175,7 @@ class BaseFormat(Format):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
-        turns: Optional[List[Turn]] = None,
+        turns: Optional[Dialog] = None,
     ) -> str:
         """Abstract method for formatting instances in different subclasses.
 
@@ -262,7 +262,7 @@ class SystemFormat(BaseFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
-        turns: Optional[List[Turn]] = None,
+        turns: Optional[Dialog] = None,
     ) -> str:
         if turns is not None and not source:
             source = json.dumps(turns)
@@ -438,7 +438,7 @@ class ChatAPIFormat(BaseFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
-        turns: Optional[List[Turn]] = None,
+        turns: Optional[Dialog] = None,
     ) -> List[Message]:
         messages = []
 
@@ -500,7 +500,7 @@ class ChatAPIFormat(BaseFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
-        turns: Optional[List[Turn]] = None,
+        turns: Optional[Dialog] = None,
     ) -> Union[str, List[Message]]:
         chat = self.to_chat(
             system_prompt,
@@ -549,7 +549,7 @@ class HFSystemFormat(ChatAPIFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
-        turns: Optional[List[Turn]] = None,
+        turns: Optional[Dialog] = None,
     ) -> str:
         chat = self.to_chat(
             system_prompt, instruction, source, target_prefix, demos, media, turns

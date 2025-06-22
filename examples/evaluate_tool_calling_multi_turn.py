@@ -37,8 +37,32 @@ data = [
         "dialog": [
             {
                 "role": "user",
+                "content": "What is the sum of  1 and 3?",
+            },
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "type": "function",
+                        "id": "tool_call_0",
+                        "function": {
+                            "name": "add_numbers",
+                            "arguments": {"num1": 1, "num2": 3},
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "tool",
+                "name": "add_numbers",
+                "tool_call_id": "tool_call_0",
+                "content": "4",
+            },
+            {
+                "role": "user",
                 "content": "What is the sum of  1212382312231231 and 834672468234768234?",
-            }
+            },
         ],
         "tools": [sum_tool, subtract_tool],
         "reference_calls": [
@@ -57,7 +81,15 @@ data = [
             {
                 "role": "user",
                 "content": "Subtract  1212382312231231 from 834672468234768234?",
-            }
+            },
+            {
+                "role": "user",
+                "content": "Subtract  1212382312231231 from 834672468234768234?",
+            },
+            {
+                "role": "user",
+                "content": "Subtract  1212382312231231 from 834672468234768234?",
+            },
         ],
         "tools": [sum_tool, subtract_tool],
         "reference_calls": [
