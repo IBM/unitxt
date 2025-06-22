@@ -47,13 +47,13 @@ def get_image_dataset(format=None):
         {
             "context": {"image": random_image, "format": "JPEG"},
             "context_type": "image",
-            "question": "What is the capital of Texas? Answer in one word.",
+            "question": "What is the capital of Texas?",
             "answers": ["Austin"],
         },
         {
             "context": {"image": random_image, "format": "JPEG"},
             "context_type": "image",
-            "question": "What is the color of the sky? Answer in one word.",
+            "question": "What is the color of the sky?",
             "answers": ["Blue"],
         },
     ]
