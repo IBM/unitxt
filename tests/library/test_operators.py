@@ -54,6 +54,7 @@ from unitxt.operators import (
     TakeByField,
     ZipFieldValues,
 )
+from unitxt.processors import ExtractMtBenchRatingJudgment
 from unitxt.stream import MultiStream
 from unitxt.stream_operators import DeleteSplits, JoinStreams
 from unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
@@ -2468,6 +2469,22 @@ references (str):
 
         check_operator(
             operator=JoinStr(field_to_field={"a": "b"}, separator=","),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_extract_mt_bench_rating_judgment(self):
+        inputs = [
+            {"a": "Verdict [[ 9.0 / 10 ]]"},
+            {"a": "Verdict [[3]]"},
+            {"a": "Verdict [[3.2]]"},
+        ]
+
+        targets = [{"a": 0.9}, {"a": 0.3}, {"a": 0.32}]
+
+        check_operator(
+            operator=ExtractMtBenchRatingJudgment(field="a"),
             inputs=inputs,
             targets=targets,
             tester=self,
