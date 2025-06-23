@@ -194,7 +194,9 @@ class InferenceEngine(Artifact):
                 from diskcache import Cache
 
                 self._cache = Cache(
-                    settings.inference_engine_cache_path + self.__class__.__name__
+                    os.path.join(
+                        settings.inference_engine_cache_path, self.__class__.__name__
+                    )
                 )
 
     def __call__(
