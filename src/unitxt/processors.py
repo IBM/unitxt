@@ -286,7 +286,7 @@ class StringOrNotString(StringEquals):
 
 class ExtractMtBenchRatingJudgment(FieldOperator):
     def process_value(self, text: Any) -> Any:
-        match = re.search(r"\[\[([\d]+\.?[\d]*)\]\]", text)
+        match = re.search(r"\[\[([\s*\d]+\.?[\d]*\s*)(/\s*10)?\s*\]\]", text)
         try:
             return float(match.group(1)) / 10
         except:
