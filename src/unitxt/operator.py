@@ -347,7 +347,7 @@ class StreamOperator(MultiStreamOperator):
     def _process_stream(
         self, stream: Stream, stream_name: Optional[str] = None
     ) -> Generator:
-        with error_context(self, stream_name=stream_name):
+        with error_context(self, stream=stream_name):
             yield from self.process(stream, stream_name)
 
     @abstractmethod
@@ -392,8 +392,8 @@ class PagedStreamOperator(StreamOperator):
             if len(page) >= self.page_size:
                 with error_context(
                     self,
-                    stream_name=stream_name,
-                    page_number=page_number,
+                    stream=stream_name,
+                    page=page_number,
                     page_size=len(page),
                 ):
                     yield from self.process(page, stream_name)
@@ -402,8 +402,8 @@ class PagedStreamOperator(StreamOperator):
         if page:  # Handle any remaining instances in the last partial page
             with error_context(
                 self,
-                stream_name=stream_name,
-                page_number=page_number,
+                stream=stream_name,
+                page=page_number,
                 page_size=len(page),
                 final_page=True,
             ):
@@ -461,7 +461,7 @@ class InstanceOperator(StreamOperator):
         self, stream: Stream, stream_name: Optional[str] = None
     ) -> Generator:
         for _index, instance in enumerate(stream):
-            with error_context(self, stream_name=stream_name, instance_index=_index):
+            with error_context(self, stream=stream_name, instance=_index):
                 yield self._process_instance(instance, stream_name)
 
     def _process_instance(

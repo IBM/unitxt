@@ -1,7 +1,6 @@
+import re
 from contextlib import contextmanager
 from typing import Any, Optional
-
-from scipy import constants
 
 from .logging_utils import get_logger
 from .settings_utils import get_constants
@@ -68,89 +67,187 @@ class UnitxtWarning:
 context_block_title = "Unitxt Error Context"
 
 
-def _add_context_to_exception(
-    original_error: Exception, context_object: Any = None, **context
-):
-    """Add context information to an exception by modifying its message."""
-    # Get the original message, removing any existing context
-    original_message = str(original_error)
-    if hasattr(original_error, "__error_context__"):
-        # If this error already has context, get the original message from the stored context
-        original_message = original_error.__error_context__["original_message"]
-        context = {
-            "Unitxt": constants.version,
-            "Python": constants.python,
-            **original_error.__error_context__["context"],
-            **context,
-        }
-    # Build context message from all provided context information
-    context_parts = []
+def _visible_length(text: str) -> int:
+    ansi_escape = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]|\x1b\]8;;[^\x1b]*\x1b\\")
+    return len(ansi_escape.sub("", text))
 
-    # Add object context if provided
-    if context_object is not None:
-        if hasattr(context_object, "__class__"):
-            context_parts.append(f"Object: {context_object.__class__.__name__}")
-        else:
-            context_parts.append(f"Object: {type(context_object).__name__}")
 
-    for key in context.keys():
-        value = context[key]
-        if value is None:
-            value = "unknown"
-        context_parts.append(f"{key.replace('_', ' ').title()}: {value}")
+def _make_object_clickable(
+    full_obj_name: str, display_name: Optional[str] = None
+) -> str:
+    if display_name is None:
+        display_name = full_obj_name.split(".")[-1]
 
-    # Store context message for display
-    if context_parts:
-        # Create a box around the context information
-        max_width = (
-            max(len(context_block_title), max(len(part) for part in context_parts)) + 4
+    if full_obj_name.startswith("unitxt."):
+        parts = full_obj_name.split(".")
+        if len(parts) >= 2:
+            module_path = ".".join(parts[:2])
+            doc_url = f"{Documentation.URL}{module_path}.html#{full_obj_name}"
+            return f"\033]8;;{doc_url}\033\\{display_name}\033]8;;\033\\"
+
+    return display_name
+
+
+def _get_existing_context(error: Exception):
+    """Extract existing context from an error if it exists."""
+    if hasattr(error, "__error_context__"):
+        existing = error.__error_context__
+        return (
+            existing["original_message"],
+            existing["context_object"],
+            existing["context"],
         )
-        top_line = "┌" + "─" * max_width + "┐"
-        bottom_line = "└" + "─" * max_width + "┘"
+    return str(error), None, {}
 
-        context_lines = [top_line]
-        context_lines.append(
-            f"│ {context_block_title}{' ' * (max_width - len(context_block_title) - 1)}│"
-        )
-        for part in context_parts:
-            context_lines.append(f"│  - {part}{' ' * (max_width - len(part) - 4)}│")
-        context_lines.append(bottom_line)
 
-        context_message = "\n" + "\n".join(context_lines)
-        enhanced_message = f"{context_message}\n\n{original_message}"
+def _format_object_context(obj: Any) -> Optional[str]:
+    """Format an object for display in error context."""
+    if obj is None:
+        return None
+
+    if hasattr(obj, "__class__"):
+        class_name = obj.__class__.__name__
+        module_name = getattr(obj.__class__, "__module__", "")
     else:
-        enhanced_message = original_message
+        obj_type = type(obj)
+        class_name = obj_type.__name__
+        module_name = getattr(obj_type, "__module__", "")
 
-    # Store context info in a special attribute
-    original_error.__error_context__ = {
+    if module_name:
+        full_name = f"{module_name}.{class_name}"
+        clickable_object = _make_object_clickable(full_name, class_name)
+        return f"Object: {clickable_object}"
+    return f"Object: {class_name}"
+
+
+def _make_clickable_link(url: str) -> str:
+    """Create a clickable terminal link."""
+    return f"\033]8;;{url}\033\\link\033]8;;\033\\"
+
+
+def _format_help_context(help_docs) -> list:
+    """Format help documentation into context parts."""
+    parts = []
+
+    if isinstance(help_docs, str):
+        parts.append(f"Help: {_make_clickable_link(help_docs)}")
+    elif isinstance(help_docs, dict):
+        for label, url in help_docs.items():
+            parts.append(f"Help ({label}): {_make_clickable_link(url)}")
+    elif isinstance(help_docs, list):
+        for item in help_docs:
+            if isinstance(item, dict) and len(item) == 1:
+                label, url = next(iter(item.items()))
+                parts.append(f"Help ({label}): {_make_clickable_link(url)}")
+            elif isinstance(item, str):
+                parts.append(f"Help: {_make_clickable_link(item)}")
+
+    return parts
+
+
+def _build_context_parts(context_object: Any, context: dict) -> list:
+    """Build the list of context information parts."""
+    parts = []
+
+    # Add object context
+    obj_context = _format_object_context(context_object)
+    if obj_context:
+        parts.append(obj_context)
+
+    # Add regular context items (skip 'help' as it's handled separately)
+    for key, value in context.items():
+        if key == "help":
+            continue
+        value = "unknown" if value is None else value
+        parts.append(f"{key.replace('_', ' ').title()}: {value}")
+
+    # Add help documentation
+    if "help" in context:
+        parts.extend(_format_help_context(context["help"]))
+    else:
+        parts.append(f"Help: {_make_clickable_link(Documentation.URL)}")
+
+    return parts
+
+
+def _create_context_box(parts: list) -> str:
+    """Create a formatted box containing context information."""
+    if not parts:
+        return ""
+
+    max_width = (
+        max(len(context_block_title), max(_visible_length(part) for part in parts)) + 4
+    )
+    top_line = "┌" + "─" * max_width + "┐"
+    bottom_line = "└" + "─" * max_width + "┘"
+
+    lines = [top_line]
+    lines.append(
+        f"│ {context_block_title}{' ' * (max_width - len(context_block_title) - 1)}│"
+    )
+
+    for part in parts:
+        padding = " " * (max_width - _visible_length(part) - 4)
+        lines.append(f"│  - {part}{padding}│")
+
+    lines.append(bottom_line)
+    return "\n".join(lines)
+
+
+def _store_context_attributes(
+    error: Exception, context_object: Any, context: dict, original_message: str
+):
+    """Store context information in error attributes."""
+    error.__error_context__ = {
         "context_object": context_object,
         "context": context,
         "original_message": original_message,
     }
 
-    # Store original information as attributes for backward compatibility
+    # Backward compatibility attributes
     try:
-        original_error.original_error = type(original_error)(original_message)
+        error.original_error = type(error)(original_message)
     except (TypeError, ValueError):
-        # For custom exceptions with complex constructors, create a basic Exception
-        original_error.original_error = Exception(original_message)
+        error.original_error = Exception(original_message)
 
-    original_error.context_object = context_object
-    original_error.context = context
+    error.context_object = context_object
+    error.context = context
 
-    # Simply modify the exception's args to include the enhanced message
-    original_error.args = (enhanced_message,)
 
-    # Handle KeyError's special __str__ method that adds quotes
-    if isinstance(original_error, KeyError):
+def _add_context_to_exception(
+    original_error: Exception, context_object: Any = None, **context
+):
+    """Add context information to an exception by modifying its message."""
+    original_message, existing_object, existing_context = _get_existing_context(
+        original_error
+    )
 
-        def enhanced_str(self):
-            return enhanced_message
+    # Use existing context object if available, otherwise use the provided one
+    final_context_object = existing_object or context_object
 
-        # Bind the method to the instance
-        import types
+    # Merge contexts with version info at the top
+    final_context = {
+        "Unitxt": constants.version,
+        "Python": constants.python,
+        **existing_context,
+        **context,
+    }
 
-        original_error.__str__ = types.MethodType(enhanced_str, original_error)
+    context_parts = _build_context_parts(final_context_object, final_context)
+    context_message = _create_context_box(context_parts)
+
+    _store_context_attributes(
+        original_error, final_context_object, final_context, original_message
+    )
+
+    # Modify error message to include context
+    if context_parts:
+        error_class = type(original_error)
+        backspaces = "\b" * (len(error_class.__name__) + 2)
+        formatted_message = f"{backspaces}{context_message}\n\n{error_class.__name__}: {original_message}"
+        original_error.args = (formatted_message,)
+    else:
+        original_error.args = (original_message,)
 
 
 @contextmanager
@@ -162,10 +259,27 @@ def error_context(context_object: Any = None, **context):
         **context: Any additional context to include in the error message.
                   You can provide any key-value pairs that help identify where the error occurred.
 
+                  Special context keys:
+                  - help: Documentation links to help with the error.
+                    Can be a string (single URL), dict (label: URL), or list of URLs/dicts.
+
     Examples:
         # Basic usage with object and context
         with error_context(self, operation="validation", item_id=42):
             result = process_item(item)
+
+        # With help documentation links
+        with error_context(operation="schema_validation",
+                          help="https://docs.example.com/schema"):
+            validate_schema(data)
+
+        # With multiple documentation links
+        with error_context(operation="model_training",
+                          help={
+                              "Training Guide": "https://docs.example.com/training",
+                              "Troubleshooting": "https://docs.example.com/troubleshoot"
+                          }):
+            train_model(data)
 
         # File processing context
         with error_context(input_file="data.json", line_number=156):
@@ -174,15 +288,11 @@ def error_context(context_object: Any = None, **context):
         # Processing context
         with error_context(processor, step="preprocessing", batch_size=32):
             results = process_batch(batch)
-
-        # Database context
-        with error_context(db_connection, table="users", operation="SELECT"):
-            results = execute_query(query)
     """
     try:
         yield
     except Exception as e:
         # Add context to the original exception by modifying its message
         _add_context_to_exception(e, context_object, **context)
-        # Re-raise the same exception - this preserves the original traceback completely
+        # Re-raise the exception with enhanced context
         raise

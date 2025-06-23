@@ -285,7 +285,7 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
     ) -> Dict[str, Any]:
         instance = self.set_default_values(instance)
 
-        with error_context(self, stage="Task Verification"):
+        with error_context(self, stage="Schema Verification"):
             verify_required_schema(
                 self.input_fields,
                 instance,

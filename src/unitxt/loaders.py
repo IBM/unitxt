@@ -66,7 +66,7 @@ from tqdm import tqdm
 
 from .dataclass import NonPositionalField
 from .dict_utils import dict_get
-from .error_utils import Documentation, UnitxtError, UnitxtWarning
+from .error_utils import Documentation, UnitxtError, UnitxtWarning, error_context
 from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
@@ -218,13 +218,15 @@ class Loader(SourceOperator):
         pass
 
     def load_data(self) -> MultiStream:
-        try:
+        with error_context(
+            self,
+            stage="Data Loading",
+            help="https://www.unitxt.ai/en/latest/unitxt.loaders.html#module-unitxt.loaders",
+        ):
             iterables = self.load_iterables()
-        except Exception as e:
-            raise UnitxtError(f"Error in loader:\n{self}") from e
-        if isoftype(iterables, MultiStream):
-            return iterables
-        return MultiStream.from_iterables(iterables, copying=True)
+            if isoftype(iterables, MultiStream):
+                return iterables
+            return MultiStream.from_iterables(iterables, copying=True)
 
     def process(self) -> MultiStream:
         self._maybe_set_classification_policy()

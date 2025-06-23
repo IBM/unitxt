@@ -32,7 +32,12 @@ class TestContextEnhancedErrors(UnitxtTestCase):
                 raise ValueError("Original error message")
 
         error = cm.exception
-        self.assertEqual(str(error), "Original error message")
+        # With version info, the message now includes a context box
+        message = str(error)
+        self.assertIn("Original error message", message)
+        self.assertIn("Unitxt Error Context", message)
+        self.assertIn("Unitxt:", message)
+        self.assertIn("Python:", message)
 
     def test_error_context_with_context_object(self):
         """Test error_context with a context object."""
@@ -173,7 +178,11 @@ class TestErrorContext(UnitxtTestCase):
         self.assertIsInstance(error, ValueError)
         self.assertEqual(str(error.original_error), "Something went wrong")
         self.assertEqual(error.context_object, processor)
-        self.assertEqual(error.context, {"operation": "validation", "item_id": 42})
+        # Context now includes version info plus the specified context
+        self.assertIn("Unitxt", error.context)
+        self.assertIn("Python", error.context)
+        self.assertEqual(error.context["operation"], "validation")
+        self.assertEqual(error.context["item_id"], 42)
 
     def test_error_context_without_object(self):
         """Test error_context without a context object."""
@@ -184,7 +193,11 @@ class TestErrorContext(UnitxtTestCase):
         error = cm.exception
         self.assertIsInstance(error, KeyError)
         self.assertIsNone(error.context_object)
-        self.assertEqual(error.context, {"input_file": "data.json", "line_number": 156})
+        # Context now includes version info plus the specified context
+        self.assertIn("Unitxt", error.context)
+        self.assertIn("Python", error.context)
+        self.assertEqual(error.context["input_file"], "data.json")
+        self.assertEqual(error.context["line_number"], 156)
 
     def test_error_context_preserves_original_traceback(self):
         """Test that error_context preserves the original exception's traceback."""
@@ -205,7 +218,7 @@ class TestErrorContext(UnitxtTestCase):
         # The traceback should show the line number where the error was processed
         # The traceback points to the raise statement where the original error was raised
         self.assertEqual(
-            caught_error.__traceback__.tb_lineno, 191
+            caught_error.__traceback__.tb_lineno, 208
         )  # Line where raise ValueError occurs
 
     def test_error_context_nested_contexts(self):
@@ -226,15 +239,28 @@ class TestErrorContext(UnitxtTestCase):
                 with error_context(inner, stage="inner", step=2, index=1):
                     raise RuntimeError("Nested error")
 
-        # Should get the outermost context (outer catches the inner enhanced error)
+        # Should preserve the innermost context object (where the error actually occurred)
+        # but combine context data from both levels (outer context overrides inner when keys conflict)
         error = cm.exception
-        self.assertEqual(error.context_object, outer)
-        self.assertEqual(error.context, {"stage": "outer", "step": 1, "index": 1})
+        self.assertEqual(error.context_object, inner)
+        # expected_context = {
+        #     "Unitxt": "1.24.0",  # This might vary by environment
+        #     "Python": "3.10.18",  # This might vary by environment
+        #     "stage": "outer",
+        #     "step": 1,
+        #     "index": 1,
+        # }
+        # Check that the context contains the expected keys and values for non-version fields
+        self.assertIn("Unitxt", error.context)
+        self.assertIn("Python", error.context)
+        self.assertEqual(error.context["stage"], "outer")
+        self.assertEqual(error.context["step"], 1)
+        self.assertEqual(error.context["index"], 1)
 
-        # The error message should include both contexts
+        # The error message should show the innermost context object but merged context data
         message = str(error)
-        self.assertIn("Object: OuterProcessor", message)
-        self.assertIn("Stage: outer", message)
+        self.assertIn("Object: InnerProcessor", message)
+        self.assertIn("Stage: outer", message)  # outer context overrides inner
 
     def test_error_context_empty_context(self):
         """Test error_context with empty context."""
@@ -244,8 +270,13 @@ class TestErrorContext(UnitxtTestCase):
 
         error = cm.exception
         self.assertIsNone(error.context_object)
-        self.assertEqual(error.context, {})
-        self.assertEqual(str(error), "Test error")
+        # Context now includes version info
+        self.assertIn("Unitxt", error.context)
+        self.assertIn("Python", error.context)
+        # Message now includes context box even for "empty" context
+        message = str(error)
+        self.assertIn("Test error", message)
+        self.assertIn("Unitxt Error Context", message)
 
     def test_error_context_complex_objects(self):
         """Test error_context with complex context objects."""
