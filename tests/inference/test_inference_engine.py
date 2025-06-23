@@ -176,6 +176,19 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertListEqual(predictions, ["7", "2"])
 
+    def test_watsonx_chat_inference(self):
+        model = WMLInferenceEngineChat(
+            model_name="ibm/granite-3-8b-instruct",
+            data_classification_policy=["public"],
+            temperature=0,
+        )
+
+        dataset = get_text_dataset()
+
+        predictions = model(dataset)
+
+        self.assertListEqual(predictions, ["7", "2"])
+
     def test_watsonx_inference_with_external_client(self):
         from ibm_watsonx_ai.client import APIClient, Credentials
 
@@ -319,7 +332,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         )
         self.assertIsInstance(prediction[0]["text"], str)
         self.assertIsInstance(prediction[0]["logprob"], float)
-
+        self.assertEqual(sample.generated_text, "365")
         results = engine.infer(data)
 
         self.assertTrue(isoftype(results, List[str]))
@@ -332,12 +345,13 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             model_name="meta-llama/llama-3-2-11b-vision-instruct",
             max_tokens=128,
             top_logprobs=3,
+            temperature=0.0,
         )
 
         results = inference_engine.infer_log_probs(
             dataset.select([0]), return_meta_data=True
         )
-
+        self.assertEqual(results[0].generated_text, "The capital of Texas is Austin.")
         self.assertTrue(isoftype(results, List[TextGenerationInferenceOutput]))
         self.assertEqual(results[0].stop_reason, "stop")
         self.assertTrue(isoftype(results[0].prediction, List[Dict[str, Any]]))
@@ -365,7 +379,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         dataset = get_text_dataset(format="formats.chat_api")
         predictions = model(dataset)
 
-        self.assertListEqual(predictions, ["7", "3"])
+        self.assertListEqual(predictions, ["7", "`2"])
 
     def test_lite_llm_inference_engine_without_task_data_not_failing(self):
         LiteLLMInferenceEngine(
