@@ -177,10 +177,9 @@ def _source_to_dataset(
         except DatasetGenerationError as e:
             if e.__cause__:
                 raise e.__cause__ from None
-            elif e.__context__:
+            if e.__context__:
                 raise e.__context__ from None
-            else:
-                raise
+            raise
 
         if streaming:
             return ds_builder.as_streaming_dataset(split=split)
