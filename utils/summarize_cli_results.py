@@ -20,17 +20,13 @@ def extract_scores(directory):
 
                     env_info = content.get("environment_info", {})
                     timestamp = env_info.get("timestamp_utc", "N/A")
-                    model = (
-                        env_info.get("environment_info", {})
-                        .get("parsed_arguments", {})
-                        .get("model", "N/A")
-                    )
+                    model = env_info.get("parsed_arguments", {}).get("model", "N/A")
                     results = content.get("results", {})
 
                     row = {}
                     row["Model"] = model
-                    row["Average"] = results.get("score", "N/A")
                     row["Timestamp"] = timestamp
+                    row["Average"] = results.get("score", "N/A")
 
                     for key in results.keys():
                         if isinstance(results[key], dict):
@@ -41,7 +37,7 @@ def extract_scores(directory):
             except Exception as e:
                 logger.error(f"Error parsing results file {filename}: {e}.")
 
-    return pd.DataFrame(data)
+    return pd.DataFrame(data).sort_values(by="Timestamp", ascending=True)
 
 
 if __name__ == "__main__":
