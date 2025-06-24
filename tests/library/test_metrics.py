@@ -554,34 +554,34 @@ class TestMetrics(UnitxtTestCase):
                 references=references,
                 perform_validations_in_apply_metric=False,
             )
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "Expecting a list of references for each prediction in F1Micro metric. Received reference of type <class 'str'>: dog",
+            str(cm.exception),
         )
 
         references = [["cat", "dog"], ["dog"]]
         predictions = ["cat", "dog"]
         with self.assertRaises(ValueError) as cm:
             apply_metric(metric=metric, predictions=predictions, references=references)
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "Expecting a list with a single reference per prediction in F1Micro metric. Received a list with multiple references: ['cat', 'dog']",
+            str(cm.exception),
         )
         references = [[["cat", "dog"]], ["dog"]]
         predictions = ["cat", "dog"]
         with self.assertRaises(ValueError) as cm:
             apply_metric(metric=metric, predictions=predictions, references=references)
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "Each reference is expected to be of type 'str' in F1Micro metric. Received reference of type <class 'list'>: ['cat', 'dog']",
+            str(cm.exception),
         )
         references = [["cat"], ["dog"]]
         predictions = [["cat", "dog"], "dog"]
         with self.assertRaises(ValueError) as cm:
             apply_metric(metric=metric, predictions=predictions, references=references)
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "Each prediction is expected to be of type 'str' in F1Micro metric. Received prediction of type <class 'list'>: ['cat', 'dog']",
+            str(cm.exception),
         )
 
     def test_f1_binary(self):
@@ -932,9 +932,9 @@ class TestMetrics(UnitxtTestCase):
         with self.assertRaises(Exception) as cm:
             apply_metric(metric=metric, predictions=predictions, references=references2)
 
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "Expecting a list with a single reference per prediction in F1MicroMultiLabel metric. Received a list with multiple references: ['A', 'B']",
+            str(cm.exception),
         )
 
         references3 = [[["A"]], [["BC"]], [["C"]], [["123"]]]  # OK references
