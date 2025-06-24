@@ -52,4 +52,4 @@ if __name__ == "__main__":
     directory = sys.argv[1]
     df = extract_scores(directory)
 
-    logger.log(df.to_markdown(index=False))
+    logger.info(df.to_markdown(index=False))
