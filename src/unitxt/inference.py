@@ -39,7 +39,7 @@ from .artifact import Artifact
 from .base_metric import Metric
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
-from .error_utils import UnitxtError, UnitxtWarning
+from .error_utils import UnitxtError, UnitxtWarning, error_context
 from .image_operators import (
     EncodeImageToString,
     ImageDataString,
@@ -189,7 +189,12 @@ class InferenceEngine(Artifact):
     def prepare(self):
         if not settings.mock_inference_mode:
             super().prepare()  # no need to prepare a mock
-            self.prepare_engine()
+            with error_context(
+                self,
+                stage="Prepare Inference Engine",
+                help="https://www.unitxt.ai/en/latest/docs/inference.html",
+            ):
+                self.prepare_engine()
             if self.use_cache:
                 from diskcache import Cache
 
@@ -204,7 +209,12 @@ class InferenceEngine(Artifact):
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
-        return self.infer(dataset=dataset, return_meta_data=return_meta_data)
+        with error_context(
+            self,
+            stage="Running Inference",
+            help="https://www.unitxt.ai/en/latest/docs/inference.html",
+        ):
+            return self.infer(dataset=dataset, return_meta_data=return_meta_data)
 
     def get_instance_cache_key(self, instance):
         instance_key_fields = ["media", "source", "task_data"]
@@ -248,54 +258,69 @@ class InferenceEngine(Artifact):
             result = self._mock_infer(dataset)
         else:
             if self.use_cache:
-                number_of_batches = math.ceil(len(dataset) / self.cache_batch_size)
-                result = []
-                for batch_index, batch in enumerate(
-                    batched(dataset, self.cache_batch_size)
+                with error_context(
+                    self,
+                    stage="Inference Cache Handling",
+                    help="https://www.unitxt.ai/en/latest/docs/inference.html",
                 ):
-                    cached_results = []
-                    missing_examples = []
-                    for i, item in enumerate(batch):
-                        cache_key = self._get_cache_key(item)
-                        cached_value = self._cache.get(cache_key)
-                        if cached_value is not None:
-                            cached_results.append(
-                                (i, cached_value)
-                            )  # each element is index in batch, and value
-                        else:
-                            missing_examples.append(
-                                (i, item)
-                            )  # each element is index in batch and example
-                    # infare on missing examples only, without indices
-
-                    logger.info(
-                        f"Inferring batch {batch_index + 1} / {number_of_batches} with {len(missing_examples)} instances (found {len(cached_results)} instances in {self._cache.directory})"
-                    )
-                    if len(missing_examples) > 0:
-                        inferred_results = self._infer(
-                            [e[1] for e in missing_examples], return_meta_data
-                        )
-                        # recombined to index and value
-                        inferred_results = list(
-                            zip([e[0] for e in missing_examples], inferred_results)
-                        )
-                        # Add missing examples to cache
-                        for (_, item), (_, prediction) in zip(
-                            missing_examples, inferred_results
-                        ):
-                            if prediction is None:
-                                continue
+                    number_of_batches = math.ceil(len(dataset) / self.cache_batch_size)
+                    result = []
+                    for batch_index, batch in enumerate(
+                        batched(dataset, self.cache_batch_size)
+                    ):
+                        cached_results = []
+                        missing_examples = []
+                        for i, item in enumerate(batch):
                             cache_key = self._get_cache_key(item)
-                            self._cache[cache_key] = prediction
-                    else:
-                        inferred_results = []
-                    # Combine cached and inferred results in original order
-                    batch_predictions = [
-                        p[1] for p in sorted(cached_results + inferred_results)
-                    ]
-                    result.extend(batch_predictions)
+                            cached_value = self._cache.get(cache_key)
+                            if cached_value is not None:
+                                cached_results.append(
+                                    (i, cached_value)
+                                )  # each element is index in batch, and value
+                            else:
+                                missing_examples.append(
+                                    (i, item)
+                                )  # each element is index in batch and example
+                        # infare on missing examples only, without indices
+
+                        logger.info(
+                            f"Inferring batch {batch_index + 1} / {number_of_batches} with {len(missing_examples)} instances (found {len(cached_results)} instances in {self._cache.directory})"
+                        )
+                        if len(missing_examples) > 0:
+                            with error_context(
+                                self,
+                                stage="Running Inference",
+                                help="https://www.unitxt.ai/en/latest/docs/inference.html",
+                            ):
+                                inferred_results = self._infer(
+                                    [e[1] for e in missing_examples], return_meta_data
+                                )
+                            # recombined to index and value
+                            inferred_results = list(
+                                zip([e[0] for e in missing_examples], inferred_results)
+                            )
+                            # Add missing examples to cache
+                            for (_, item), (_, prediction) in zip(
+                                missing_examples, inferred_results
+                            ):
+                                if prediction is None:
+                                    continue
+                                cache_key = self._get_cache_key(item)
+                                self._cache[cache_key] = prediction
+                        else:
+                            inferred_results = []
+                        # Combine cached and inferred results in original order
+                        batch_predictions = [
+                            p[1] for p in sorted(cached_results + inferred_results)
+                        ]
+                        result.extend(batch_predictions)
             else:
-                result = self._infer(dataset, return_meta_data)
+                with error_context(
+                    self,
+                    stage="Running Inference",
+                    help="https://www.unitxt.ai/en/latest/docs/inference.html",
+                ):
+                    result = self._infer(dataset, return_meta_data)
         return ListWithMetadata(
             result,
             metadata={

@@ -454,20 +454,25 @@ class Artifact(Dataclass):
             )
             return instance
 
-        if not any(
-            data_classification in data_classification_policy
-            for data_classification in instance_data_classification
+        with error_context(
+            self,
+            action="Sensitive Data Verification",
+            help="https://www.unitxt.ai/en/latest/docs/data_classification_policy.html",
         ):
-            raise UnitxtError(
-                f"The instance '{instance} 'has the following data classification policy "
-                f"'{instance_data_classification}', however, the artifact '{name}' "
-                f"is only configured to support the data with classification "
-                f"'{data_classification_policy}'. To enable this either change "
-                f"the 'data_classification_policy' attribute of the artifact, "
-                f"or modify the environment variable "
-                f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.",
-                Documentation.DATA_CLASSIFICATION_POLICY,
-            )
+            if not any(
+                data_classification in data_classification_policy
+                for data_classification in instance_data_classification
+            ):
+                raise UnitxtError(
+                    f"The instance '{instance} 'has the following data classification policy "
+                    f"'{instance_data_classification}', however, the artifact '{name}' "
+                    f"is only configured to support the data with classification "
+                    f"'{data_classification_policy}'. To enable this either change "
+                    f"the 'data_classification_policy' attribute of the artifact, "
+                    f"or modify the environment variable "
+                    f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.",
+                    Documentation.DATA_CLASSIFICATION_POLICY,
+                )
 
         return instance
 

@@ -90,23 +90,27 @@ class UnitxtUnverifiedCodeError(UnitxtError):
 
 @retry_connection_with_exponential_backoff(backoff_factor=2)
 def hf_load_dataset(path: str, *args, **kwargs):
-    if settings.hf_offline_datasets_path is not None:
-        path = os.path.join(settings.hf_offline_datasets_path, path)
-    try:
-        return _hf_load_dataset(
-            path,
-            *args,
-            **kwargs,
-            verification_mode="no_checks",
-            trust_remote_code=settings.allow_unverified_code,
-            download_mode="force_redownload"
-            if settings.disable_hf_datasets_cache
-            else "reuse_dataset_if_exists",
-        )
-    except ValueError as e:
-        if "trust_remote_code" in str(e):
-            raise UnitxtUnverifiedCodeError(path) from e
-        raise e  # Re raise
+    with error_context(
+        stage="Raw Dataset Download",
+        help="https://www.unitxt.ai/en/latest/unitxt.loaders.html#module-unitxt.loaders",
+    ):
+        if settings.hf_offline_datasets_path is not None:
+            path = os.path.join(settings.hf_offline_datasets_path, path)
+        try:
+            return _hf_load_dataset(
+                path,
+                *args,
+                **kwargs,
+                verification_mode="no_checks",
+                trust_remote_code=settings.allow_unverified_code,
+                download_mode="force_redownload"
+                if settings.disable_hf_datasets_cache
+                else "reuse_dataset_if_exists",
+            )
+        except ValueError as e:
+            if "trust_remote_code" in str(e):
+                raise UnitxtUnverifiedCodeError(path) from e
+            raise e  # Re raise
 
 
 @retry_connection_with_exponential_backoff(backoff_factor=2)
@@ -516,9 +520,13 @@ class LoadCSV(LoadWithPandas):
     sep: str = ","
 
     def read_dataframe(self, file) -> pd.DataFrame:
-        return pd.read_csv(
-            file, sep=self.sep, low_memory=self.streaming, **self.get_args()
-        )
+        with error_context(
+            stage="Raw Dataset Loading",
+            help="https://www.unitxt.ai/en/latest/unitxt.loaders.html#module-unitxt.loaders",
+        ):
+            return pd.read_csv(
+                file, sep=self.sep, low_memory=self.streaming, **self.get_args()
+            )
 
 
 def read_file(source) -> bytes:
@@ -562,32 +570,36 @@ class LoadJsonFile(LoadWithPandas):
     data_field: Optional[str] = None
 
     def read_dataframe(self, file) -> pd.DataFrame:
-        args = self.get_args()
-        if not self.lines:
-            data = json.loads(read_file(file))
-            if self.data_field:
-                instances = dict_get(data, self.data_field)
-                if not isoftype(instances, List[Dict[str, Any]]):
-                    raise UnitxtError(
-                        f"{self.data_field} of file {file} is not a list of dictionariess in LoadJsonFile loader"
-                    )
-            else:
-                if isoftype(data, Dict[str, Any]):
-                    instances = [data]
-                elif isoftype(data, List[Dict[str, Any]]):
-                    instances = data
+        with error_context(
+            stage="Raw Dataset Loading",
+            help="https://www.unitxt.ai/en/latest/unitxt.loaders.html#module-unitxt.loaders",
+        ):
+            args = self.get_args()
+            if not self.lines:
+                data = json.loads(read_file(file))
+                if self.data_field:
+                    instances = dict_get(data, self.data_field)
+                    if not isoftype(instances, List[Dict[str, Any]]):
+                        raise UnitxtError(
+                            f"{self.data_field} of file {file} is not a list of dictionariess in LoadJsonFile loader"
+                        )
                 else:
+                    if isoftype(data, Dict[str, Any]):
+                        instances = [data]
+                    elif isoftype(data, List[Dict[str, Any]]):
+                        instances = data
+                    else:
+                        raise UnitxtError(
+                            f"data of file {file} is not dictionary or a list of dictionaries in LoadJsonFile loader"
+                        )
+                dataframe = pd.DataFrame(instances)
+            else:
+                if self.data_field is not None:
                     raise UnitxtError(
-                        f"data of file {file} is not dictionary or a list of dictionaries in LoadJsonFile loader"
+                        "Can not load from a specific 'data_field' when loading multiple lines (lines=True)"
                     )
-            dataframe = pd.DataFrame(instances)
-        else:
-            if self.data_field is not None:
-                raise UnitxtError(
-                    "Can not load from a specific 'data_field' when loading multiple lines (lines=True)"
-                )
-            dataframe = pd.read_json(file, lines=self.lines, **args)
-        return dataframe
+                dataframe = pd.read_json(file, lines=self.lines, **args)
+            return dataframe
 
 
 class LoadFromSklearn(LazyLoader):
@@ -633,8 +645,12 @@ class LoadFromSklearn(LazyLoader):
         dataset_id = str(self) + "_" + split
         dataset = self.__class__._loader_cache.get(dataset_id, None)
         if dataset is None:
-            split_data = self.downloader(subset=split)
-            targets = [split_data["target_names"][t] for t in split_data["target"]]
+            with error_context(
+                stage="Raw Dataset Loading",
+                help="https://www.unitxt.ai/en/latest/unitxt.loaders.html#module-unitxt.loaders",
+            ):
+                split_data = self.downloader(subset=split)
+                targets = [split_data["target_names"][t] for t in split_data["target"]]
             df = pd.DataFrame([split_data["data"], targets]).T
             df.columns = ["data", "target"]
             dataset = df.to_dict("records")
@@ -853,18 +869,22 @@ class LoadFromIBMCloud(Loader):
                     if self.data_dir is not None
                     else data_file
                 )
-                with tempfile.NamedTemporaryFile() as temp_file:
-                    # Download to  a temporary file in same file partition, and then do an atomic move
-                    self._download_from_cos(
-                        cos,
-                        self.bucket_name,
-                        object_key,
-                        local_dir + "/" + os.path.basename(temp_file.name),
-                    )
-                    os.renames(
-                        local_dir + "/" + os.path.basename(temp_file.name),
-                        local_dir + "/" + data_file,
-                    )
+                with error_context(
+                    stage="Raw Dataset Download",
+                    help="https://www.unitxt.ai/en/latest/unitxt.loaders.html#module-unitxt.loaders",
+                ):
+                    with tempfile.NamedTemporaryFile() as temp_file:
+                        # Download to  a temporary file in same file partition, and then do an atomic move
+                        self._download_from_cos(
+                            cos,
+                            self.bucket_name,
+                            object_key,
+                            local_dir + "/" + os.path.basename(temp_file.name),
+                        )
+                        os.renames(
+                            local_dir + "/" + os.path.basename(temp_file.name),
+                            local_dir + "/" + data_file,
+                        )
 
         if isinstance(self.data_files, list):
             dataset = hf_load_dataset(local_dir, streaming=False, field=self.data_field)

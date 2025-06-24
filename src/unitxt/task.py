@@ -285,7 +285,11 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
     ) -> Dict[str, Any]:
         instance = self.set_default_values(instance)
 
-        with error_context(self, stage="Schema Verification"):
+        with error_context(
+            self,
+            stage="Schema Verification",
+            help="https://www.unitxt.ai/en/latest/docs/adding_task.html",
+        ):
             verify_required_schema(
                 self.input_fields,
                 instance,
