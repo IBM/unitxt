@@ -522,11 +522,11 @@ class TestLoaders(UnitxtTestCase):
 
         with self.assertRaises(ValueError) as cm:
             LoadFromDictionary(data=data)
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             f"Passed data to LoadFromDictionary is not of type Dict[str, List[Dict[str, Any]]].\n"
             f"Expected data should map between split name and list of instances.\n"
             f"Received value: {data}\n",
+            str(cm.exception),
         )
 
         data = {
@@ -537,10 +537,10 @@ class TestLoaders(UnitxtTestCase):
         }
         with self.assertRaises(ValueError) as cm:
             LoadFromDictionary(data=data)
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             f"Not all instances in split 'train' have the same fields.\n"
             f"instance {data['train'][1]} has different fields different from {data['train'][0]}",
+            str(cm.exception),
         )
 
     def test_load_from_hf_space(self):

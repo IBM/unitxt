@@ -342,9 +342,9 @@ class Artifact(Dataclass):
         self.verify_data_classification_policy()
         self.prepare_args()
         if not settings.skip_artifacts_prepare_and_verify:
-            with error_context(self, function="prepare()"):
+            with error_context(self, action="Prepare Object"):
                 self.prepare()
-            with error_context(self, function="verify()"):
+            with error_context(self, action="Verify Object"):
                 self.verify()
 
     def _to_raw_dict(self):

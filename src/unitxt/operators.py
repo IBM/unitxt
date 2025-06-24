@@ -67,7 +67,7 @@ from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
-from .error_utils import UnitxtError
+from .error_utils import UnitxtError, error_context
 from .generator_utils import ReusableGenerator
 from .operator import (
     InstanceOperator,
@@ -521,7 +521,7 @@ class InstanceFieldOperator(InstanceOperator):
     ) -> Dict[str, Any]:
         self.verify_field_definition()
         for from_field, to_field in self._field_to_field:
-            try:
+            with error_context(self, field=from_field, action="Read Field"):
                 old_value = dict_get(
                     instance,
                     from_field,
@@ -532,11 +532,8 @@ class InstanceFieldOperator(InstanceOperator):
                     if self.not_exist_do_nothing:
                         continue
                     old_value = self.get_default
-            except Exception as e:
-                raise ValueError(
-                    f"Failed to get '{from_field}' from instance due to the exception above."
-                ) from e
-            try:
+
+            with error_context(self, field=from_field, action="Process Field"):
                 if self.process_every_value:
                     new_value = [
                         self.process_instance_value(value, instance)
@@ -544,10 +541,7 @@ class InstanceFieldOperator(InstanceOperator):
                     ]
                 else:
                     new_value = self.process_instance_value(old_value, instance)
-            except Exception as e:
-                raise ValueError(
-                    f"Failed to process field '{from_field}' from instance due to the exception above."
-                ) from e
+
             dict_set(
                 instance,
                 to_field,
@@ -1200,9 +1194,10 @@ class ApplyOperatorsField(InstanceOperator):
     ) -> Dict[str, Any]:
         operator_names = instance.get(self.operators_field)
         if operator_names is None:
-            assert (
-                self.default_operators is not None
-            ), f"No operators found in field '{self.operators_field}', and no default operators provided."
+            if self.default_operators is None:
+                raise ValueError(
+                    f"No operators found in field '{self.operators_field}', and no default operators provided."
+                )
             operator_names = self.default_operators
 
         if isinstance(operator_names, str):

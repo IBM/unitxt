@@ -539,9 +539,9 @@ class TestMetrics(UnitxtTestCase):
         predictions = [None]
         with self.assertRaises(ValueError) as cm:
             apply_metric(metric=metric, predictions=predictions, references=references)
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "Each prediction is expected to be of type 'str' in F1Micro metric. Received prediction of type <class 'NoneType'>: None",
+            str(cm.exception),
         )
 
         references = [["cat"], "dog"]
@@ -922,9 +922,9 @@ class TestMetrics(UnitxtTestCase):
         with self.assertRaises(Exception) as cm:
             apply_metric(metric=metric, predictions=predictions, references=references)
 
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "Each reference is expected to be of type 'List[str]' in F1MicroMultiLabel metric. Received reference of type <class 'str'>: A B",
+            str(cm.exception),
         )
 
         references2 = [["A", "B"], ["BC", "D"], ["C"], ["123"]]
@@ -942,9 +942,9 @@ class TestMetrics(UnitxtTestCase):
         with self.assertRaises(Exception) as cm:
             apply_metric(metric=metric, predictions=predictions, references=references3)
 
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "Each prediction is expected to be of type 'List[str]' in F1MicroMultiLabel metric. Received prediction of type <class 'list'>: [13, 23, 234]",
+            str(cm.exception),
         )
 
     def test_f1_macro_multilabel_with_nones(self):
