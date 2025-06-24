@@ -6580,6 +6580,7 @@ class SQLExecutionLogicAccuracy(InstanceMetric):
         "execution_accuracy",
         "non_empty_execution_accuracy",
         "subset_non_empty_execution_accuracy",
+        "execution_accuracy_bird",
         "gold_sql_runtime",
         "predicted_sql_runtime",
     ]
@@ -6635,6 +6636,7 @@ class SQLExecutionAccuracy(InstanceMetric):
         "execution_accuracy",
         "non_empty_execution_accuracy",
         "subset_non_empty_execution_accuracy",
+        "execution_accuracy_bird",
         "gold_sql_runtime",
         "predicted_sql_runtime",
     ]

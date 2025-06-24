@@ -780,6 +780,9 @@ class SQLExecutionResult:
     subset_non_empty_execution_accuracy: (
         int  # Whether predicted is a subset of gold or vice versa, non-empty only
     )
+    execution_accuracy_bird: (
+        int  # Whether the predicted SQL matches gold using BIRD evaluation logic
+    )
     non_empty_gold_df: int  # Whether the gold SQL produced a non-empty dataframe
     gold_sql_runtime: float  # Time taken to execute the gold SQL
     predicted_sql_runtime: float  # Time taken to execute the predicted SQL
@@ -794,8 +797,6 @@ class SQLExecutionResult:
 def compare_dfs_ignore_colnames_ordered_rows(
     df1: pd.DataFrame, df2: pd.DataFrame
 ) -> bool:
-    df1.fillna(0, inplace=True)
-    df2.fillna(0, inplace=True)
     if df1.shape != df2.shape:
         return False
     df1_sorted_rows = np.array([np.sort(row) for row in df1.values.astype(str)])
@@ -819,10 +820,11 @@ def compare_dfs_ignore_colnames_subset(
     def row_to_multiset(row):
         return Counter(str(x) for x in row)
 
-    def normalize_and_sort(df):
-        return pd.DataFrame(
-            sorted([sorted(map(str, row)) for row in df.values.tolist()])
-        )
+    def rows_to_multisets(df):
+        return [row_to_multiset(row) for row in df.values]
+
+    def sort_df(df):
+        return df.sort_values(by=list(df.columns)).reset_index(drop=True)
 
     if df1.empty or df2.empty or len(df1) != len(df2):
         return False
@@ -830,16 +832,29 @@ def compare_dfs_ignore_colnames_subset(
     subset_df, superset_df = (df1, df2) if df1.shape[1] <= df2.shape[1] else (df2, df1)
 
     if ignore_row_order:
-        subset_df = normalize_and_sort(subset_df)
-        superset_df = normalize_and_sort(superset_df)
+        subset_df = sort_df(subset_df)
+        superset_df = sort_df(superset_df)
 
-    subset_rows = [row_to_multiset(row) for row in subset_df.values]
-    superset_rows = [row_to_multiset(row) for row in superset_df.values]
+    subset_rows = rows_to_multisets(subset_df)
+    superset_rows = rows_to_multisets(superset_df)
 
     for r1, r2 in zip(subset_rows, superset_rows):
         if not all(r1[k] <= r2.get(k, 0) for k in r1):
             return False
     return True
+
+
+def compare_dfs_bird_eval_logic(df1: pd.DataFrame, df2: pd.DataFrame):
+    """Compare two SQL query result sets for exact match, as used in BIRD benchmark evaluation.
+
+    This function checks if the set of rows returned by the predicted SQL query (`predicted_res`)
+    is exactly equal to the set of rows returned by the ground truth SQL query (`ground_truth_res`).
+    This is the logic used in the original BIRD evaluation code:
+    https://github.com/AlibabaResearch/DAMO-ConvAI/blob/main/bird/llm/src/evaluation.py.
+    """
+    df1_set = {tuple(row) for row in df1.values.astype(str)}
+    df2_set = {tuple(row) for row in df2.values.astype(str)}
+    return int(df1_set == df2_set)
 
 
 def compare_result_dfs(
@@ -903,6 +918,7 @@ def get_sql_execution_results(
             execution_accuracy=0,
             non_empty_execution_accuracy=0,
             subset_non_empty_execution_accuracy=0,
+            execution_accuracy_bird=0,
             non_empty_gold_df=0,
             gold_sql_runtime=gold_runtime,
             predicted_sql_runtime=0,
@@ -920,6 +936,7 @@ def get_sql_execution_results(
             execution_accuracy=1,
             non_empty_execution_accuracy=non_empty_gold_df,
             subset_non_empty_execution_accuracy=non_empty_gold_df,
+            execution_accuracy_bird=1,
             non_empty_gold_df=non_empty_gold_df,
             gold_sql_runtime=gold_runtime,
             predicted_sql_runtime=0,
@@ -937,6 +954,7 @@ def get_sql_execution_results(
                 execution_accuracy=1,
                 non_empty_execution_accuracy=non_empty_gold_df,
                 subset_non_empty_execution_accuracy=non_empty_gold_df,
+                execution_accuracy_bird=1,
                 non_empty_gold_df=non_empty_gold_df,
                 gold_sql_runtime=gold_runtime,
                 predicted_sql_runtime=0,
@@ -960,6 +978,7 @@ def get_sql_execution_results(
             execution_accuracy=0,
             non_empty_execution_accuracy=0,
             subset_non_empty_execution_accuracy=0,
+            execution_accuracy_bird=0,
             non_empty_gold_df=non_empty_gold_df,
             gold_sql_runtime=gold_runtime,
             predicted_sql_runtime=pred_runtime,
@@ -976,11 +995,13 @@ def get_sql_execution_results(
     match, non_empty_match, subset_match = compare_result_dfs(
         gold_df, pred_df, gold_sql
     )
+    bird_match = compare_dfs_bird_eval_logic(gold_df, pred_df)
 
     return SQLExecutionResult(
         execution_accuracy=match,
         non_empty_execution_accuracy=non_empty_match,
         subset_non_empty_execution_accuracy=subset_match,
+        execution_accuracy_bird=bird_match,
         non_empty_gold_df=non_empty_gold_df,
         gold_sql_runtime=gold_runtime,
         predicted_sql_runtime=pred_runtime,

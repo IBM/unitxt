@@ -51,6 +51,7 @@ instance_targets = [
     {
         "error_message": "Error executing SQL: no such column: nme",
         "execution_accuracy": 0,
+        "execution_accuracy_bird": 0,
         "gold_df_json": '{"0":{"0":"Alice","1":"Charlie"}}',
         "gold_error": 0,
         "non_empty_execution_accuracy": 0,
@@ -64,6 +65,7 @@ instance_targets = [
     {
         "error_message": "",
         "execution_accuracy": 1,
+        "execution_accuracy_bird": 1,
         "gold_df_json": '{"0":{"0":"Alice","1":"Charlie"}}',
         "gold_error": 0,
         "non_empty_execution_accuracy": 1,
@@ -77,6 +79,7 @@ instance_targets = [
     {
         "error_message": "",
         "execution_accuracy": 0,
+        "execution_accuracy_bird": 0,
         "gold_df_json": '{"0":{"0":"Alice","1":"Charlie"}}',
         "gold_error": 0,
         "non_empty_execution_accuracy": 0,
@@ -90,6 +93,7 @@ instance_targets = [
     {
         "error_message": "",
         "execution_accuracy": 0,
+        "execution_accuracy_bird": 0,
         "gold_df_json": '{"0":{"0":"Alice","1":"Charlie"}}',
         "gold_error": 0,
         "non_empty_execution_accuracy": 0,
@@ -103,6 +107,7 @@ instance_targets = [
     {
         "error_message": "",
         "execution_accuracy": 1,
+        "execution_accuracy_bird": 1,
         "gold_df_json": "{}",
         "gold_error": 0,
         "non_empty_execution_accuracy": 0,
@@ -116,6 +121,7 @@ instance_targets = [
     {
         "error_message": "No SQL query found in the prediction.",
         "execution_accuracy": 0,
+        "execution_accuracy_bird": 0,
         "gold_df_json": '{"0":{"0":"Alice","1":"Charlie"}}',
         "gold_error": 0,
         "non_empty_execution_accuracy": 0,
@@ -129,6 +135,7 @@ instance_targets = [
     {
         "error_message": "",
         "execution_accuracy": 0,
+        "execution_accuracy_bird": 1,
         "gold_df_json": '{"0":{"0":"Bob","1":"Charlie","2":"Alice"}}',
         "gold_error": 0,
         "non_empty_execution_accuracy": 0,
@@ -142,6 +149,7 @@ instance_targets = [
     {
         "error_message": "",
         "execution_accuracy": 1,
+        "execution_accuracy_bird": 1,
         "gold_df_json": '{"0":{"0":"Bob","1":"Charlie","2":"Alice"}}',
         "gold_error": 0,
         "non_empty_execution_accuracy": 1,
@@ -158,6 +166,9 @@ global_target = {
     "execution_accuracy": 0.38,
     "execution_accuracy_ci_high": 0.75,
     "execution_accuracy_ci_low": 0.12,
+    "execution_accuracy_bird": 0.5,
+    "execution_accuracy_bird_ci_high": 0.87,
+    "execution_accuracy_bird_ci_low": 0.12,
     "gold_error": 0.0,
     "gold_sql_runtime_ci_high": 0.0,
     "gold_sql_runtime_ci_low": 0.0,
@@ -349,6 +360,7 @@ instance_targets = [
         "score": 1,
         "score_name": "non_empty_execution_accuracy",
         "subset_non_empty_execution_accuracy": 1,
+        "execution_accuracy_bird": 1,
     },
     {
         "error_message": "",
@@ -362,6 +374,7 @@ instance_targets = [
         "score": 1,
         "score_name": "non_empty_execution_accuracy",
         "subset_non_empty_execution_accuracy": 1,
+        "execution_accuracy_bird": 1,
     },
     {
         "error_message": "",
@@ -375,6 +388,7 @@ instance_targets = [
         "score": 0,
         "score_name": "non_empty_execution_accuracy",
         "subset_non_empty_execution_accuracy": 0,
+        "execution_accuracy_bird": 0,
     },
     {
         "error_message": "",
@@ -388,6 +402,7 @@ instance_targets = [
         "score": 1,
         "score_name": "non_empty_execution_accuracy",
         "subset_non_empty_execution_accuracy": 1,
+        "execution_accuracy_bird": 1,
     },
     {
         "error_message": "",
@@ -401,6 +416,7 @@ instance_targets = [
         "score": 0,
         "score_name": "non_empty_execution_accuracy",
         "subset_non_empty_execution_accuracy": 0,
+        "execution_accuracy_bird": 1,
     },
     {
         "error_message": "No SQL query found in the prediction.",
@@ -414,6 +430,7 @@ instance_targets = [
         "score": 0,
         "score_name": "non_empty_execution_accuracy",
         "subset_non_empty_execution_accuracy": 0,
+        "execution_accuracy_bird": 0,
     },
     {
         "error_message": "",
@@ -427,6 +444,7 @@ instance_targets = [
         "score": 0,
         "score_name": "non_empty_execution_accuracy",
         "subset_non_empty_execution_accuracy": 0,
+        "execution_accuracy_bird": 1,
     },
     {
         "error_message": "",
@@ -440,6 +458,7 @@ instance_targets = [
         "score": 1,
         "score_name": "non_empty_execution_accuracy",
         "subset_non_empty_execution_accuracy": 1,
+        "execution_accuracy_bird": 1,
     },
 ]
 
@@ -465,6 +484,9 @@ global_target = {
     "subset_non_empty_execution_accuracy": 0.5,
     "subset_non_empty_execution_accuracy_ci_high": 0.88,
     "subset_non_empty_execution_accuracy_ci_low": 0.12,
+    "execution_accuracy_bird": 0.75,
+    "execution_accuracy_bird_ci_high": 1.0,
+    "execution_accuracy_bird_ci_low": 0.38,
 }
 
 outputs = test_metric(
