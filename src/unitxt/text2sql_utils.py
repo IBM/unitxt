@@ -824,7 +824,10 @@ def compare_dfs_ignore_colnames_subset(
         return [row_to_multiset(row) for row in df.values]
 
     def sort_df(df):
-        return df.sort_values(by=list(df.columns)).reset_index(drop=True)
+        sorted_df = df.copy()
+        for col in sorted_df.columns:
+            sorted_df[col] = sorted_df[col].sort_values(ignore_index=True)
+        return sorted_df
 
     if df1.empty or df2.empty or len(df1) != len(df2):
         return False
