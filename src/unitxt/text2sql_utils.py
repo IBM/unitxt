@@ -710,7 +710,7 @@ def extract_select_info(sql: str):
 
 
 def sqlparse_queries_equivalent(sql1: str, sql2: str) -> bool:
-    """Return True if both SQL queries are naively considered equivalent."""
+    """Returns True if both SQL queries are naively considered equivalent."""
     try:
         info1 = extract_select_info(sql1)
         info2 = extract_select_info(sql2)
@@ -728,6 +728,7 @@ def sqlparse_queries_equivalent(sql1: str, sql2: str) -> bool:
 
 
 def sqlglot_parsed_queries_equivalent(sql1: str, sql2: str, dialect: str = "") -> bool:
+    """Return True if two SQL queries match after parsing with SQLGlot."""
     from sqlglot import exp, parse_one
 
     try:
@@ -817,6 +818,31 @@ def compare_dfs_ignore_colnames_unordered_rows(
 def compare_dfs_ignore_colnames_subset(
     df1: pd.DataFrame, df2: pd.DataFrame, ignore_row_order: bool = True
 ) -> bool:
+    """Checks if the smaller of the two DataFrames is likely a subset of the other.
+
+    Subset comparison is column-based, to support Text2SQL evaluation for when the
+    predicted SQL dataframe has missing or additional columns. Each row is treated as
+    a multiset of (stringified) values, and the function checks if every row in the
+    smaller DataFrame (by column count) is a multiset subset of the corresponding row
+    in the larger DataFrame. When ground truth SQL does not have ORDER BY,
+    ignore_row_order can be set to True to ignore the order of rows. In this case,
+    column values are sorted before comparison. This means that there could be cases
+    where the dataframes have the exact same number of rows and column values after
+    sort are the same, but the dataframes are not actually a subset of each other.
+    This is unlikely to happen in practice, but the score is not guaranteed to be
+    100% accurate and may overestimate the accuracy.
+
+    Args:
+        df1 (pd.DataFrame): The first DataFrame to compare.
+        df2 (pd.DataFrame): The second DataFrame to compare.
+        ignore_row_order (bool, optional): If True, ignores the order of rows by
+            sorting them before comparison. Defaults to True.
+
+    Returns:
+        bool: True if the smaller DataFrame (column-wise) is likely a subset of the
+            larger one, False otherwise.
+    """
+
     def row_to_multiset(row):
         return Counter(str(x) for x in row)
 
@@ -848,11 +874,12 @@ def compare_dfs_ignore_colnames_subset(
 
 
 def compare_dfs_bird_eval_logic(df1: pd.DataFrame, df2: pd.DataFrame):
-    """Compare two SQL query result sets for exact match, as used in BIRD benchmark evaluation.
+    """Check if two SQL query result sets are exactly equal, as in BIRD evaluation.
 
-    This function checks if the set of rows returned by the predicted SQL query (`predicted_res`)
-    is exactly equal to the set of rows returned by the ground truth SQL query (`ground_truth_res`).
-    This is the logic used in the original BIRD evaluation code:
+    This function checks if the set of rows returned by the predicted SQL query
+    (`predicted_res`) is exactly equal to the set of rows returned by the ground truth
+    SQL query (`ground_truth_res`). This is the logic used in the original BIRD
+    evaluation code:
     https://github.com/AlibabaResearch/DAMO-ConvAI/blob/main/bird/llm/src/evaluation.py.
     """
     df1_set = {tuple(row) for row in df1.values.astype(str)}
@@ -863,6 +890,25 @@ def compare_dfs_bird_eval_logic(df1: pd.DataFrame, df2: pd.DataFrame):
 def compare_result_dfs(
     gold_df: pd.DataFrame, pred_df: pd.DataFrame, gold_sql: str
 ) -> Tuple[int, int, int]:
+    """Compares two DataFrames representing SQL query results.
+
+    Args:
+        gold_df (pd.DataFrame): The ground truth DataFrame.
+        pred_df (pd.DataFrame): The predicted DataFrame.
+        gold_sql (str): The ground truth SQL query string.
+
+    Returns:
+        Tuple[int, int, int]: A tuple containing:
+            - match (int): 1 if the predicted DataFrame matches the gold DataFrame
+            - non_empty_match (int): 1 if both DataFrames are non-empty and match,
+              0 otherwise.
+            - subset_match (int): 1 if the predicted DataFrame is a subset or
+              superset of the gold DataFrame.
+
+    Notes:
+        - The comparison ignores column names.
+        - Row order is considered only if 'ORDER BY' is present in the SQL query.
+    """
     subset_match = 0
     non_empty_match = 0
     if "ORDER BY" in gold_sql.upper():
@@ -887,6 +933,30 @@ def compare_result_dfs(
 def run_query(
     sql: str, connector, sql_timeout: float
 ) -> Tuple[Optional[pd.DataFrame], float, str]:
+    """Executes a SQL query using the provided connector with a timeout.
+
+    Args:
+        sql (str): The SQL query string to execute.
+        connector: An object with an `execute_query` method that executes the SQL
+            query.
+        sql_timeout (float): The maximum time in seconds to allow for query
+            execution.
+
+    Returns:
+        Tuple[Optional[pd.DataFrame], float, str]:
+            - A pandas DataFrame containing the query results, or None if an error
+              occurred.
+            - The duration in seconds taken to execute the query. 0.0 if an error.
+            - An error message string if an error occurred, otherwise an empty
+              string.
+
+    Notes:
+        - If the SQL string is empty or only whitespace, returns immediately with a
+          message.
+        - If the query execution exceeds the timeout, returns a timeout error
+          message.
+        - Any other exceptions are caught and returned as error messages.
+    """
     import time
 
     from func_timeout import func_timeout
@@ -913,6 +983,47 @@ def run_query(
 def get_sql_execution_results(
     predicted_sql: str, gold_sql: str, connector, sql_timeout: float
 ) -> SQLExecutionResult:
+    """Execute and compare predicted and gold SQL queries, returning execution metrics.
+
+    Args:
+        predicted_sql (str): The SQL query predicted by the model.
+        gold_sql (str): The reference (gold) SQL query.
+        connector: Database connector object used to execute the queries.
+        sql_timeout (float): Maximum time (in seconds) allowed for query execution.
+
+    Returns:
+        SQLExecutionResult: An object containing various execution metrics, including:
+            - execution_accuracy (int): 1 if predicted and gold queries produce
+              equivalent results, else 0.
+            - non_empty_execution_accuracy (int): 1 if both queries produce non-empty
+              and equivalent results, else 0.
+            - subset_non_empty_execution_accuracy (int): 1 if predicted results are a
+              subset or superset of gold results and non-empty, else 0. Subset
+              comparison is column-based. This means that the predicted SQL dataframe
+              can have missing or additional columns compared to the gold SQL dataframe.
+            - execution_accuracy_bird (int): 1 if results match according to BIRD
+              evaluation logic, else 0.
+            - non_empty_gold_df (int): 1 if the gold query result is non-empty, else 0.
+            - gold_sql_runtime (float): Execution time for the gold SQL query.
+            - predicted_sql_runtime (float): Execution time for the predicted SQL query.
+            - pred_to_gold_runtime_ratio (float): Ratio of predicted to gold query
+              runtimes.
+            - gold_error (int): 1 if the gold query failed, else 0.
+            - predicted_error (int): 1 if the predicted query failed, else 0.
+            - gold_df_json (str): JSON representation of the gold query result
+              DataFrame.
+            - predicted_df_json (str): JSON representation of the predicted query
+              result DataFrame.
+            - error_message (str): Error message if any query failed, else empty
+              string.
+
+    Notes:
+        - If the gold query fails, the function returns early with error details.
+        - If the predicted query is identical or SQL-equivalent to the gold query,
+          results are considered correct without execution.
+        - Otherwise, both queries are executed and their results compared using
+          multiple metrics.
+    """
     gold_df, gold_runtime, gold_error_msg = run_query(gold_sql, connector, sql_timeout)
     gold_error = int(bool(gold_error_msg))
 
