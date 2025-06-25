@@ -6,8 +6,52 @@ Text = NewType("Text", str)
 Number = NewType("Number", Union[float, int])
 
 
-class Turn(TypedDict):
-    role: Literal["system", "user", "agent"]
+class JsonSchema:
+    @classmethod
+    def __verify_type__(cls, object):
+        if not isinstance(object, dict):
+            return False
+        import jsonschema_rs
+
+        jsonschema_rs.meta.validate(object)
+        return True
+
+
+class Tool(TypedDict):
+    # Original fields
+    name: str
+    description: str
+    parameters: JsonSchema
+    # LiteLLM extension
+    type: Optional[Literal["function"]]
+
+
+class ToolCall(TypedDict):
+    name: str
+    arguments: Dict[str, Any]
+
+
+class ToolCallContext(TypedDict):
+    id: str
+    type: Literal["function"]
+    function: ToolCall
+
+
+class ToolCallTurn(TypedDict):
+    role: Literal["assistant"]
+    content: Optional[str]
+    tool_calls: List[ToolCallContext]
+
+
+class ToolOutputTurn(TypedDict):
+    role: Literal["tool"]
+    tool_call_id: str
+    name: str
+    content: str
+
+
+class TextTurn(TypedDict):
+    role: Literal["system", "user", "agent", "assistant"]
     content: Text
 
 
@@ -18,7 +62,7 @@ class RagResponse(TypedDict):
     is_answerable: bool
 
 
-Dialog = NewType("Dialog", List[Turn])
+Dialog = NewType("Dialog", List[Union[TextTurn, ToolCallTurn, ToolOutputTurn]])
 
 
 class Conversation(TypedDict):
@@ -57,31 +101,11 @@ class SQLDatabase(TypedDict):
     data: Optional[Dict[str, Dict]]
 
 
-class JsonSchema:
-    @classmethod
-    def __verify_type__(cls, object):
-        if not isinstance(object, dict):
-            return False
-        import jsonschema_rs
-
-        jsonschema_rs.meta.validate(object)
-        return True
-
-
-class Tool(TypedDict):
-    name: str
-    description: str
-    parameters: JsonSchema
-
-
-class ToolCall(TypedDict):
-    name: str
-    arguments: Dict[str, Any]
-
-
 register_type(Text)
 register_type(Number)
-register_type(Turn)
+register_type(TextTurn)
+register_type(ToolCallTurn)
+register_type(ToolOutputTurn)
 register_type(Dialog)
 register_type(Table)
 register_type(Audio)
