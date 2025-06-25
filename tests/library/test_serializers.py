@@ -10,7 +10,7 @@ from unitxt.serializers import (
     TableSerializer,
 )
 from unitxt.settings_utils import get_constants
-from unitxt.types import Dialog, Number, SQLDatabase, Table, Text, Turn
+from unitxt.types import Number, SQLDatabase, Table, Text
 
 from tests.library.test_image_operators import create_random_jpeg_image
 from tests.utils import UnitxtTestCase
@@ -48,9 +48,10 @@ class TestSerializers(UnitxtTestCase):
         self.assertEqual(result, "{'key': 'value'}")
 
     def test_dialog_serializer(self):
-        dialog_data = Dialog(
-            [Turn(role="user", content="Hello"), Turn(role="agent", content="Hi there")]
-        )
+        dialog_data = [
+            {"role": "user", "content": "Hello"},
+            {"role": "agent", "content": "Hi there"},
+        ]
         expected_output = "user: Hello\nagent: Hi there"
         result = self.dialog_serializer.serialize(dialog_data, {})
         self.assertEqual(result, expected_output)
@@ -116,9 +117,10 @@ class TestSerializers(UnitxtTestCase):
         self.assertEqual(result, expected_output)
 
     def test_custom_serializer_with_dialog(self):
-        dialog_data = Dialog(
-            [Turn(role="user", content="Hello"), Turn(role="agent", content="Hi there")]
-        )
+        dialog_data = [
+            {"role": "user", "content": "Hello"},
+            {"role": "agent", "content": "Hi there"},
+        ]
         result = self.custom_serializer.serialize(dialog_data, {})
         self.assertEqual(
             result, "user: Hello\nagent: Hi there"

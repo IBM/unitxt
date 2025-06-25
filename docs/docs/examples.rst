@@ -134,7 +134,7 @@ Related documentation: :ref:`Templates tutorial <adding_template>`, :ref:`Format
 Evaluate the impact of different formats and system prompts
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-This example demonstrates how different formats and system prompts affect the input provided to a llama3 chat model and evaluate their impact on the obtained scores.
+This example demonstrates how different formats and system prompts affect the input provided to a granite chat model and evaluate their impact on the obtained scores.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_different_formats.py>`__
 

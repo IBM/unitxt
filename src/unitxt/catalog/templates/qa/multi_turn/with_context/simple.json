@@ -1,34 +1,8 @@
 {
-    "__type__": "multi_reference_template",
-    "instruction": "Read the context and answer the last question in the conversation. Answer with the minimal span from the context answering the question.",
-    "input_format": "Context: {context}\n\nConversation:\n{conversation}",
+    "__type__": "multi_turn_template",
+    "instruction": "Read the context and answer the last question in the conversation. Answer with the minimal span from the context answering the question.\n Context:{context}",
     "references_field": "answers",
-    "serializer": {
-        "__type__": "multi_type_serializer",
-        "serializers": [
-            {
-                "__type__": "image_serializer"
-            },
-            {
-                "__type__": "video_serializer"
-            },
-            {
-                "__type__": "table_serializer"
-            },
-            {
-                "__type__": "dialog_serializer"
-            },
-            {
-                "__type__": "conversation_serializer"
-            },
-            {
-                "__type__": "list_serializer"
-            },
-            {
-                "__type__": "sql_database_as_schema_serializer"
-            }
-        ]
-    },
+    "turns_field": "conversation/dialog",
     "postprocessors": [
         "processors.take_first_non_empty_line",
         "processors.lower_case",

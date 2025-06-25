@@ -1,0 +1,4 @@
+{
+    "__type__": "multi_turn_tool_calling_metric",
+    "__description__": "Metric that evaluates tool call predictions for the validity with regards to the tools schema."
+}

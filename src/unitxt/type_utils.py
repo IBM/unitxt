@@ -503,9 +503,25 @@ def isoftype(object, typing_type):
     if is_typed_dict(typing_type):
         if not isinstance(object, dict):
             return False
+
+        # Only support total=True, check each field
         for key, expected_type in typing_type.__annotations__.items():
-            if key not in object or not isoftype(object[key], expected_type):
-                return False
+            # Check if field is Optional (Union with None)
+            is_optional = (
+                hasattr(expected_type, "__origin__")
+                and expected_type.__origin__ is Union
+                and type(None) in expected_type.__args__
+            )
+
+            if key not in object:
+                # Field is missing - only allowed if it's Optional
+                if not is_optional:
+                    return False
+            else:
+                # Field is present - check type
+                if not isoftype(object[key], expected_type):
+                    return False
+
         return True
 
     if typing_type == typing.Any:

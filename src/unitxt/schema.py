@@ -59,7 +59,7 @@ def get_schema(stream_name):
 def load_chat_source(chat_str):
     chat = json.loads(chat_str)
     for turn in chat:
-        if isinstance(turn["content"], list):
+        if "content" in turn and isinstance(turn["content"], list):
             for content in turn["content"]:
                 if content["type"] == "image_url":
                     content["image_url"]["url"] = ImageDataString(

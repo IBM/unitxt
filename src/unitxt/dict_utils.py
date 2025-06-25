@@ -3,7 +3,7 @@ from typing import Any, List, Tuple
 
 from .text_utils import to_pretty_string
 
-indx = re.compile(r"^(\d+)$")
+indx = re.compile(r"^-?\d+$")
 
 
 def is_index(string):
