@@ -306,6 +306,11 @@ omit = [
     "src/unitxt/metric.py",
     "src/unitxt/blocks.py",
 ]
+exclude_lines = [
+    "logger.",
+    "pass",
+    "raise ValueError"
+]
 
 [tool.coverage.xml]
 output = "coverage.xml"
