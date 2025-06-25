@@ -23,6 +23,7 @@ For key-value pairs, expected input format is:
     {"key1": "value1", "key2": value2, "key3": "value3"}
 """
 
+import ast
 import json
 import random
 from abc import ABC, abstractmethod
@@ -754,11 +755,40 @@ class LoadJson(FieldOperator):
             return json.loads(value, strict=False)
 
 
+class PythonCallProcessor(FieldOperator):
+    def process_value(self, value: str) -> ToolCall:
+        expr = ast.parse(value, mode="eval").body
+        function = expr.func.id
+        args = {}
+        for kw in expr.keywords:
+            args[kw.arg] = ast.literal_eval(kw.value)
+        # Handle positional args, if any
+        if expr.args:
+            args["_args"] = [ast.literal_eval(arg) for arg in expr.args]
+        return {"name": function, "arguments": args}
+
+
+def extract_possible_json_str(text):
+    """Extract potential JSON string from text by finding outermost braces/brackets."""
+    # Find first opening delimiter
+    start_positions = [pos for pos in [text.find("{"), text.find("[")] if pos != -1]
+    start = min(start_positions) if start_positions else 0
+
+    # Find last closing delimiter
+    end_positions = [pos for pos in [text.rfind("}"), text.rfind("]")] if pos != -1]
+    end = max(end_positions) if end_positions else len(text) - 1
+
+    return text[start : end + 1]
+
+
 class ToolCallPostProcessor(FieldOperator):
     failure_value: Any = None
     allow_failure: bool = False
 
     def process_value(self, value: str) -> ToolCall:
+        value = extract_possible_json_str(
+            value
+        )  # clear tokens such as <tool_call> focusing on the call json itself
         if self.allow_failure:
             try:
                 result = json.loads(value)
@@ -774,6 +804,25 @@ class ToolCallPostProcessor(FieldOperator):
         if not isoftype(result, ToolCall):
             return self.failure_value
         return result
+
+
+class MultipleToolCallPostProcessor(FieldOperator):
+    failure_value: Any = None
+    allow_failure: bool = False
+
+    def process_value(self, value: str) -> List[ToolCall]:
+        if self.allow_failure:
+            try:
+                result = json.loads(value)
+            except json.JSONDecodeError:
+                return self.failure_value
+        else:
+            result = json.loads(value, strict=False)
+        if isoftype(result, List[ToolCall]):
+            return result
+        if not isoftype(result, ToolCall):
+            return self.failure_value
+        return [result]
 
 
 class DumpJson(FieldOperator):

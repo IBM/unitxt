@@ -309,7 +309,9 @@ def recursive_key_value_replace(data, target_key, value_map, value_remove=None):
                         if not isinstance(item, dict) and item not in value_remove
                     ]
                 elif isinstance(value, dict):
-                    pass  # Skip or handle dict values if needed
+                    recursive_key_value_replace(
+                        value, target_key, value_map, value_remove
+                    )
                 elif value in value_remove:
                     keys_to_delete.append(key)
                 elif value in value_map:
@@ -436,6 +438,7 @@ class InstanceFieldOperator(InstanceOperator):
     field_to_field: Optional[Union[List[List[str]], Dict[str, str]]] = None
     use_query: Optional[bool] = None
     process_every_value: bool = False
+    set_every_value: bool = NonPositionalField(default=False)
     get_default: Any = None
     not_exist_ok: bool = False
     not_exist_do_nothing: bool = False
@@ -553,6 +556,7 @@ class InstanceFieldOperator(InstanceOperator):
                 to_field,
                 new_value,
                 not_exist_ok=True,
+                set_multiple=self.set_every_value,
             )
         return instance
 
@@ -610,9 +614,27 @@ class Rename(FieldOperator):
         return res
 
 
+class Move(InstanceOperator):
+    field: str
+    to_field: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        value = dict_get(instance, self.field)
+        dict_delete(instance, self.field)
+        dict_set(instance, self.to_field, value=value)
+        return instance
+
+
 @deprecation(version="2.0.0", alternative=Rename)
 class RenameFields(Rename):
     pass
+
+
+class BytesToString(FieldOperator):
+    def process_value(self, value: Any) -> Any:
+        return str(value)
 
 
 class AddConstant(FieldOperator):
@@ -1436,7 +1458,7 @@ class ExecuteExpression(InstanceOperator, ComputeExpressionMixin):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        instance[self.to_field] = self.compute_expression(instance)
+        dict_set(instance, self.to_field, self.compute_expression(instance))
         return instance
 
 

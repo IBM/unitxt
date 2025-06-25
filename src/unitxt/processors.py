@@ -98,6 +98,16 @@ class ExtractWithRegex(RegexParser):
         return ""
 
 
+class GroupDictWithRegex(FieldOperator):
+    pattern: str
+
+    def process_value(self, value: Any) -> Any:
+        match = re.match(self.pattern, value)
+        if match:
+            return match.groupdict()
+        return {}
+
+
 class ListToEmptyEntitiesTuples(FieldOperator):
     def process_value(self, lst: Any) -> Any:
         try:
@@ -286,7 +296,7 @@ class StringOrNotString(StringEquals):
 
 class ExtractMtBenchRatingJudgment(FieldOperator):
     def process_value(self, text: Any) -> Any:
-        match = re.search(r"\[\[([\d]+\.?[\d]*)\]\]", text)
+        match = re.search(r"\[\[([\s*\d]+\.?[\d]*\s*)(/\s*10)?\s*\]\]", text)
         try:
             return float(match.group(1)) / 10
         except:
