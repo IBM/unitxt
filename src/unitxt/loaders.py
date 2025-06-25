@@ -1153,7 +1153,7 @@ class LoadFromAPI(Loader):
     chunksize: int = 100000
     loader_limit: Optional[int] = None
     streaming: bool = False
-    api_key_env_var: Optional[str] = ""
+    api_key_env_var: Optional[str] = None
     headers: Optional[Dict[str, Any]] = None
     data_field: str = "data"
     method: str = "GET"
