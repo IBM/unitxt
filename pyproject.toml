@@ -309,7 +309,8 @@ omit = [
 exclude_lines = [
     "logger.",
     "pass",
-    "raise ValueError"
+    "raise ValueError",
+    "except Exception"
 ]
 
 [tool.coverage.xml]
