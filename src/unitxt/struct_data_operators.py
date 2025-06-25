@@ -23,6 +23,7 @@ For key-value pairs, expected input format is:
     {"key1": "value1", "key2": value2, "key3": "value3"}
 """
 
+import ast
 import json
 import random
 from abc import ABC, abstractmethod
@@ -754,6 +755,19 @@ class LoadJson(FieldOperator):
             return json.loads(value, strict=False)
 
 
+class PythonCallProcessor(FieldOperator):
+    def process_value(self, value: str) -> ToolCall:
+        expr = ast.parse(value, mode="eval").body
+        function = expr.func.id
+        args = {}
+        for kw in expr.keywords:
+            args[kw.arg] = ast.literal_eval(kw.value)
+        # Handle positional args, if any
+        if expr.args:
+            args["_args"] = [ast.literal_eval(arg) for arg in expr.args]
+        return {"name": function, "arguments": args}
+
+
 def extract_possible_json_str(text):
     """Extract potential JSON string from text by finding outermost braces/brackets."""
     # Find first opening delimiter
@@ -790,6 +804,25 @@ class ToolCallPostProcessor(FieldOperator):
         if not isoftype(result, ToolCall):
             return self.failure_value
         return result
+
+
+class MultipleToolCallPostProcessor(FieldOperator):
+    failure_value: Any = None
+    allow_failure: bool = False
+
+    def process_value(self, value: str) -> List[ToolCall]:
+        if self.allow_failure:
+            try:
+                result = json.loads(value)
+            except json.JSONDecodeError:
+                return self.failure_value
+        else:
+            result = json.loads(value, strict=False)
+        if isoftype(result, List[ToolCall]):
+            return result
+        if not isoftype(result, ToolCall):
+            return self.failure_value
+        return [result]
 
 
 class DumpJson(FieldOperator):

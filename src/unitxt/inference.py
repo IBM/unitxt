@@ -344,7 +344,16 @@ class InferenceEngine(Artifact):
 
     def to_messages(self, instance):
         if isinstance(instance["source"], list):
-            return instance["source"]
+            messages = []
+            for message in instance["source"]:
+                if "tool_calls" in message:
+                    for tool_call in message["tool_calls"]:
+                        if not isinstance(tool_call["function"]["arguments"], str):
+                            tool_call["function"]["arguments"] = json.dumps(
+                                tool_call["function"]["arguments"]
+                            )
+                messages.append(message)
+            return messages
         return [
             {
                 "role": "user",
