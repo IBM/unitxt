@@ -296,6 +296,7 @@ def _asdict_inner(obj):
 
     return copy.deepcopy(obj)
 
+
 def to_dict(obj, func=copy.deepcopy, _visited=None):
     """Recursively converts an object into a dictionary representation while avoiding infinite recursion due to circular references.
 
@@ -325,11 +326,18 @@ def to_dict(obj, func=copy.deepcopy, _visited=None):
         return func(obj)
 
     # For mutable objects, add to visited set before recursing
-    if isinstance(obj, (dict, list)) or is_dataclass(obj) or (isinstance(obj, tuple) and hasattr(obj, "_fields")):
+    if (
+        isinstance(obj, (dict, list))
+        or is_dataclass(obj)
+        or (isinstance(obj, tuple) and hasattr(obj, "_fields"))
+    ):
         _visited.add(obj_id)
 
     if is_dataclass(obj):
-        return {field.name: to_dict(getattr(obj, field.name), func, _visited) for field in fields(obj)}
+        return {
+            field.name: to_dict(getattr(obj, field.name), func, _visited)
+            for field in fields(obj)
+        }
 
     if isinstance(obj, tuple) and hasattr(obj, "_fields"):  # named tuple
         return type(obj)(*[to_dict(v, func, _visited) for v in obj])
@@ -338,9 +346,15 @@ def to_dict(obj, func=copy.deepcopy, _visited=None):
         return type(obj)([to_dict(v, func, _visited) for v in obj])
 
     if isinstance(obj, dict):
-        return type(obj)({to_dict(k, func, _visited): to_dict(v, func, _visited) for k, v in obj.items()})
+        return type(obj)(
+            {
+                to_dict(k, func, _visited): to_dict(v, func, _visited)
+                for k, v in obj.items()
+            }
+        )
 
     return func(obj)
+
 
 class DataclassMeta(ABCMeta):
     """Metaclass for Dataclass.
