@@ -206,10 +206,17 @@ def _source_to_dataset(
             stream = {split: stream[split]}
         ds_builder._generators = stream
 
-        ds_builder.download_and_prepare(
-            verification_mode="no_checks",
-            download_mode=None if use_cache else "force_redownload",
-        )
+        try:
+            ds_builder.download_and_prepare(
+                verification_mode="no_checks",
+                download_mode=None if use_cache else "force_redownload",
+            )
+        except DatasetGenerationError as e:
+            if e.__cause__:
+                raise e.__cause__ from None
+            if e.__context__:
+                raise e.__context__ from None
+            raise
 
         if streaming:
             return ds_builder.as_streaming_dataset(split=split)

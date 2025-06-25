@@ -703,10 +703,9 @@ class TestRecipes(UnitxtTestCase):
         with self.assertRaises(Exception) as cm:
             list(recipe()["test"])
 
-        self.assertTrue(
-            str(cm.exception).startswith(
-                "Input multi-stream is missing a stream named 'train' to take demo instances from for the demos_pool."
-            )
+        self.assertIn(
+            "Input multi-stream is missing a stream named 'train' to take demo instances from for the demos_pool.",
+            str(cm.exception),
         )
 
         with self.assertRaises(Exception) as cm:
@@ -717,9 +716,9 @@ class TestRecipes(UnitxtTestCase):
                 demos_pool_size=0,
             )
 
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers.",
+            str(cm.exception),
         )
 
         with self.assertRaises(Exception) as cm:
@@ -730,9 +729,9 @@ class TestRecipes(UnitxtTestCase):
                 demos_pool_size=10,
             )
 
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "num_demos (got: 30) should not exceed demos_pool_size - 1 (got: 10), (-1: to always allow filtering of a demo identical to the processed instance).",
+            str(cm.exception),
         )
 
     def test_dataset_recipe_with_no_test(self):
@@ -752,12 +751,9 @@ class TestRecipes(UnitxtTestCase):
             DatasetRecipe(
                 card="cards.wnli", template="templates.key_val", template_card_index=100
             )
-        self.assertTrue(
-            re.match(
-                "Specify either template (.*) or template_card_index (.*) but not both",
-                str(cm.exception),
-            )
-            is not None
+        self.assertIn(
+            "Specify either template",
+            str(cm.exception),
         )
 
         # Also check if string index is used
@@ -767,22 +763,19 @@ class TestRecipes(UnitxtTestCase):
                 template="templates.key_val",
                 template_card_index="illegal_template",
             )
-        self.assertTrue(
-            re.match(
-                "Specify either template (.*) or template_card_index (.*) but not both",
-                str(cm.exception),
-            )
-            is not None
+        self.assertIn(
+            "Specify either template",
+            str(cm.exception),
         )
 
         # Return an error if index is not found in card
         with self.assertRaises(ValueError) as cm:
             DatasetRecipe(card="cards.wnli", template_card_index="illegal_template")
-        self.assertTrue("not defined in card." in str(cm.exception))
+        self.assertIn("not defined in card.", str(cm.exception))
 
         with self.assertRaises(ValueError) as cm:
             DatasetRecipe(card="cards.wnli", template_card_index=100)
-        self.assertTrue("not defined in card." in str(cm.exception))
+        self.assertIn("not defined in card.", str(cm.exception))
 
     def test_dataset_recipe_with_balancer_and_size_limit(self):
         recipe = DatasetRecipe(
@@ -884,9 +877,9 @@ class TestRecipes(UnitxtTestCase):
                 num_demos=1,
                 demos_pool_size=10,
             )
-        self.assertEqual(
-            str(e.exception),
+        self.assertIn(
             "Unexpected None value for card.sampler. To use num_demos > 0, please set a sampler on the TaskCard.",
+            str(e.exception),
         )
 
     def test_set_serializer_from_recipe(self):

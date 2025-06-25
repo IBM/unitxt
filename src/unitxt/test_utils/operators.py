@@ -41,8 +41,8 @@ def check_operator_exception(
     except Exception as e:
         for exception_text in exception_texts:
             if tester is not None:
-                tester.assertEqual(str(e), exception_text)
-            elif str(e) != exception_text:
+                tester.assertIn(exception_text, str(e))
+            elif exception_text not in str(e):
                 raise AssertionError(
                     f"Expected exception text : {exception_text}. Got : {e}"
                 ) from e

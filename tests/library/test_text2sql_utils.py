@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import requests
-from unitxt.sql_utils import (
+from unitxt.text2sql_utils import (
     InMemoryDatabaseConnector,
     LocalSQLiteConnector,
     RemoteDatabaseConnector,
@@ -106,7 +106,7 @@ class TestLocalSQLiteConnector(unittest.TestCase):
         self.temp_dir.cleanup()
 
     @patch(
-        "unitxt.sql_utils.LocalSQLiteConnector.get_db_file_path",
+        "unitxt.text2sql_utils.LocalSQLiteConnector.get_db_file_path",
         side_effect=FileNotFoundError("Database file not found."),
     )
     def test_init_database_not_found(self, mock_get_db_file_path):
@@ -114,7 +114,7 @@ class TestLocalSQLiteConnector(unittest.TestCase):
             LocalSQLiteConnector(self.db_config)
 
     @patch(
-        "unitxt.sql_utils.LocalSQLiteConnector.get_db_file_path",
+        "unitxt.text2sql_utils.LocalSQLiteConnector.get_db_file_path",
         side_effect=FileExistsError("More than one file matched for db_id"),
     )
     def test_init_multiple_databases_found(self, mock_get_db_file_path):
@@ -123,7 +123,7 @@ class TestLocalSQLiteConnector(unittest.TestCase):
 
     def test_init_success(self):
         with patch(
-            "unitxt.sql_utils.LocalSQLiteConnector.get_db_file_path",
+            "unitxt.text2sql_utils.LocalSQLiteConnector.get_db_file_path",
             return_value=self.db_path,
         ):
             connector = LocalSQLiteConnector(self.db_config)
@@ -138,7 +138,7 @@ class TestLocalSQLiteConnector(unittest.TestCase):
 
     def test_execute_query(self):
         with patch(
-            "unitxt.sql_utils.LocalSQLiteConnector.get_db_file_path",
+            "unitxt.text2sql_utils.LocalSQLiteConnector.get_db_file_path",
             return_value=self.db_path,
         ):
             connector = LocalSQLiteConnector(self.db_config)
@@ -149,7 +149,7 @@ class TestLocalSQLiteConnector(unittest.TestCase):
 
     def test_execute_query_error(self):
         with patch(
-            "unitxt.sql_utils.LocalSQLiteConnector.get_db_file_path",
+            "unitxt.text2sql_utils.LocalSQLiteConnector.get_db_file_path",
             return_value=self.db_path,
         ):
             connector = LocalSQLiteConnector(self.db_config)

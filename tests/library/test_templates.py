@@ -21,6 +21,7 @@ from unitxt.templates import (
 )
 from unitxt.test_utils.operators import (
     check_operator,
+    check_operator_exception,
 )
 
 from tests.utils import UnitxtTestCase
@@ -948,12 +949,21 @@ class TestTemplates(UnitxtTestCase):
             postprocessors=["post1", "post2"],
         )
 
-        with self.assertRaises(ValueError) as ve:
-            check_operator(template, inputs, targets, tester=self)
-        self.assertIn(
-            "Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'",
-            str(ve.exception.__cause__),
+        check_operator_exception(
+            template,
+            inputs,
+            [
+                "Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'"
+            ],
+            tester=self,
         )
+
+        # with self.assertRaises(ValueError) as ve:
+        #     check_operator(template, inputs, targets, tester=self)
+        # self.assertIn(
+        #     "Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'",
+        #     str(ve.exception),
+        # )
 
     def test_multiple_choice_template_with_shuffle(self):
         enumerators = ["capitals", "lowercase", "numbers", "roman"]
@@ -1047,11 +1057,13 @@ class TestTemplates(UnitxtTestCase):
             postprocessors=["post1", "post2"],
         )
 
-        with self.assertRaises(ValueError) as ve:
-            check_operator(template, inputs, targets, tester=self)
-        self.assertIn(
-            "Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'",
-            str(ve.exception.__cause__),
+        check_operator_exception(
+            template,
+            inputs,
+            [
+                "Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'"
+            ],
+            tester=self,
         )
 
     def test_multiple_choice_template_with_shuffle_choices_seed(self):
