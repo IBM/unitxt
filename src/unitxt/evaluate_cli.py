@@ -834,7 +834,7 @@ def main():
     logger.info("Unitxt Evaluation CLI finished successfully.")
 
 
-def extract_scores(directory):
+def extract_scores(directory):  # pragma: no cover
     import pandas as pd
 
     data = []
