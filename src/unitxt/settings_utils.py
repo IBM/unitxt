@@ -1,6 +1,7 @@
 import importlib.metadata
 import importlib.util
 import os
+import sys
 from contextlib import contextmanager
 
 from .version import version
@@ -177,6 +178,9 @@ if Constants.is_uninitilized():
     constants.dataset_url = "unitxt/data"
     constants.metric_url = "unitxt/metric"
     constants.version = version
+    constants.python = (
+        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    )
     constants.catalog_hierarchy_sep = "."
     constants.env_local_catalogs_paths_sep = ":"
     constants.non_registered_files = [

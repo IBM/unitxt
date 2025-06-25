@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
 from .deprecation_utils import deprecation
-from .error_utils import Documentation, UnitxtError, UnitxtWarning
+from .error_utils import Documentation, UnitxtError, UnitxtWarning, error_context
 from .logging_utils import get_logger
 from .metrics import MetricsList
 from .operator import InstanceOperator
@@ -285,13 +285,18 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
     ) -> Dict[str, Any]:
         instance = self.set_default_values(instance)
 
-        verify_required_schema(
-            self.input_fields,
-            instance,
-            class_name="Task",
-            id=self.__id__,
-            description=self.__description__,
-        )
+        with error_context(
+            self,
+            stage="Schema Verification",
+            help="https://www.unitxt.ai/en/latest/docs/adding_task.html",
+        ):
+            verify_required_schema(
+                self.input_fields,
+                instance,
+                class_name="Task",
+                id=self.__id__,
+                description=self.__description__,
+            )
         input_fields = {key: instance[key] for key in self.input_fields.keys()}
         data_classification_policy = instance.get("data_classification_policy", [])
 
