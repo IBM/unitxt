@@ -177,6 +177,7 @@ unitxt-explore = "unitxt.ui:launch"
 unitxt-assistant = "unitxt.assistant:launch"
 unitxt-metrics-service = "unitxt.service.metrics.main:start_metrics_http_service"
 unitxt-evaluate = "unitxt.evaluate_cli:main"
+unitxt-summarize = "unitxt.summarize_cli_results:main"
 
 [tool.ruff]
 exclude = [
