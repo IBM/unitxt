@@ -185,7 +185,6 @@ def _source_to_dataset(
     split=None,
     use_cache=False,
     streaming=False,
-    lock_timeout=60,  # Timeout in seconds for acquiring the lock
 ):
     from .dataset import Dataset as UnitxtDataset
 
@@ -194,7 +193,7 @@ def _source_to_dataset(
         to_dict(source, object_to_str_without_addresses), sort_keys=True
     )
     config_name = "recipe-" + short_hex_hash(source_signature)
-
+    # Obtain data stream from the source
     stream = source()
 
     try:
