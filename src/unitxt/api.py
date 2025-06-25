@@ -199,7 +199,7 @@ def _source_to_dataset(
     try:
         ds_builder = UnitxtDataset(
             dataset_name="unitxt",
-            config_name=config_name,
+            config_name=config_name,  # Dictate the cache name
             version=constants.version,
         )
         if split is not None:
