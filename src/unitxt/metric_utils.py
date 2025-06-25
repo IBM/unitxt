@@ -9,7 +9,7 @@ import pandas as pd
 from datasets import Features, Value
 
 from .dataclass import Dataclass
-from .error_utils import Documentation, UnitxtError
+from .error_utils import Documentation, UnitxtError, error_context
 from .operator import (
     InstanceOperator,
     MultiStreamOperator,
@@ -36,6 +36,9 @@ from .utils import recursive_copy
 
 constants = get_constants()
 
+DEFAULT_STREAM_NAME = "all_data"
+DEFAULT_STREAM_SUBSET_SEPARATOR = ">>"
+
 
 def nan_mean(scores):
     result = mean(score for score in scores if score == score)
@@ -56,7 +59,10 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
             yield {**original, "prediction": prediction}
 
     def process(
-        self, predictions: List[str], references: Iterable, split_name: str = "all"
+        self,
+        predictions: List[str],
+        references: Iterable,
+        split_name: str = DEFAULT_STREAM_NAME,
     ) -> MultiStream:
         return MultiStream(
             {
@@ -152,7 +158,7 @@ class SplitSubsetsAndGroups(MultiStreamOperator):
 
                 subset_stream_name = (
                     stream_name
-                    + "://"
+                    + DEFAULT_STREAM_SUBSET_SEPARATOR
                     + "/".join(instance[self.subsets_field][: self.subset_depth])
                 )
 
@@ -190,7 +196,7 @@ def group_str_to_key_value(group_str):
 
 @lru_cache(maxsize=None)
 def stream_name_to_origin_subset_group(stream_name):
-    origin, subset_group = stream_name.split("://")
+    origin, subset_group = stream_name.split(DEFAULT_STREAM_SUBSET_SEPARATOR)
     if "?" in subset_group:
         subset, group = subset_group.split("?")
     else:
@@ -734,22 +740,23 @@ def _compute(
     predictions: List[Any],
     references: Iterable,
     flatten: bool = False,
-    split_name: str = "all",
+    split_name: str = DEFAULT_STREAM_NAME,
     calc_confidence_intervals: bool = True,
 ):
     _reset_env_local_catalogs()
     register_all_artifacts()
     recipe = MetricRecipe(calc_confidence_intervals=calc_confidence_intervals)
 
-    multi_stream = recipe(
-        predictions=predictions, references=references, split_name=split_name
-    )
+    with error_context(stage="Metric Processing"):
+        multi_stream = recipe(
+            predictions=predictions, references=references, split_name=split_name
+        )
 
-    if flatten:
-        operator = FlattenInstances()
-        multi_stream = operator(multi_stream)
+        if flatten:
+            operator = FlattenInstances()
+            multi_stream = operator(multi_stream)
 
-    stream = multi_stream[split_name]
+        stream = multi_stream[split_name]
     return EvaluationResults(stream)
 
 

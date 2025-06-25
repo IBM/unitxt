@@ -1816,54 +1816,58 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
 
         # to be populated only when two or more metrics
         accumulated_scores = []
+        with error_context(self, stage="Load Metrics"):
+            first_instance = stream.peek()
 
-        first_instance = stream.peek()
-
-        metric_names = first_instance.get(self.metric_field, [])
-        if not metric_names:
-            raise RuntimeError(
-                f"Missing metric names in field '{self.metric_field}' and instance '{first_instance}'."
-            )
-
-        if isinstance(metric_names, str):
-            metric_names = [metric_names]
-
-        metrics_list = []
-        for metric_name in metric_names:
-            metric = self.get_artifact(metric_name)
-            if isinstance(metric, MetricsList):
-                metrics_list.extend(list(metric.items))
-            elif isinstance(metric, Metric):
-                metrics_list.append(metric)
-            else:
-                raise ValueError(
-                    f"Operator {metric_name} must be a Metric or MetricsList"
+            metric_names = first_instance.get(self.metric_field, [])
+            if not metric_names:
+                raise RuntimeError(
+                    f"Missing metric names in field '{self.metric_field}' and instance '{first_instance}'."
                 )
 
-        for metric in metrics_list:
-            metric.set_confidence_interval_calculation(self.calc_confidence_intervals)
-        # Each metric operator computes its score and then sets the main score, overwriting
-        # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
-        # This will cause the first listed metric to run last, and the main score will be set
-        # by the first listed metric (as desired).
-        metrics_list = list(reversed(metrics_list))
+            if isinstance(metric_names, str):
+                metric_names = [metric_names]
 
-        for i, metric in enumerate(metrics_list):
-            if i == 0:  # first metric
-                multi_stream = MultiStream({"tmp": stream})
-            else:  # metrics with previous scores
-                reusable_generator = ReusableGenerator(
-                    generator=update_scores_of_stream_instances,
-                    gen_kwargs={"stream": stream, "scores": accumulated_scores},
+            metrics_list = []
+            for metric_name in metric_names:
+                metric = self.get_artifact(metric_name)
+                if isinstance(metric, MetricsList):
+                    metrics_list.extend(list(metric.items))
+                elif isinstance(metric, Metric):
+                    metrics_list.append(metric)
+                else:
+                    raise ValueError(
+                        f"Operator {metric_name} must be a Metric or MetricsList"
+                    )
+        with error_context(self, stage="Setup Metrics"):
+            for metric in metrics_list:
+                metric.set_confidence_interval_calculation(
+                    self.calc_confidence_intervals
                 )
-                multi_stream = MultiStream.from_generators({"tmp": reusable_generator})
+            # Each metric operator computes its score and then sets the main score, overwriting
+            # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
+            # This will cause the first listed metric to run last, and the main score will be set
+            # by the first listed metric (as desired).
+            metrics_list = list(reversed(metrics_list))
 
-            multi_stream = metric(multi_stream)
+            for i, metric in enumerate(metrics_list):
+                if i == 0:  # first metric
+                    multi_stream = MultiStream({"tmp": stream})
+                else:  # metrics with previous scores
+                    reusable_generator = ReusableGenerator(
+                        generator=update_scores_of_stream_instances,
+                        gen_kwargs={"stream": stream, "scores": accumulated_scores},
+                    )
+                    multi_stream = MultiStream.from_generators(
+                        {"tmp": reusable_generator}
+                    )
 
-            if i < len(metrics_list) - 1:  # last metric
-                accumulated_scores = []
-                for inst in multi_stream["tmp"]:
-                    accumulated_scores.append(recursive_copy(inst["score"]))
+                multi_stream = metric(multi_stream)
+
+                if i < len(metrics_list) - 1:  # last metric
+                    accumulated_scores = []
+                    for inst in multi_stream["tmp"]:
+                        accumulated_scores.append(recursive_copy(inst["score"]))
 
         yield from multi_stream["tmp"]
 
