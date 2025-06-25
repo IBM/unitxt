@@ -203,10 +203,8 @@ def _source_to_dataset(
             config_name=config_name,
             version=constants.version,
         )
-
         if split is not None:
             stream = {split: stream[split]}
-
         ds_builder._generators = stream
 
         ds_builder.download_and_prepare(
@@ -214,7 +212,6 @@ def _source_to_dataset(
             download_mode=None if use_cache else "force_redownload",
         )
 
-        # If we reach here, the lock was successfully acquired and released
         if streaming:
             return ds_builder.as_streaming_dataset(split=split)
 
