@@ -1,3 +1,4 @@
+import json
 import re
 from abc import abstractmethod
 from typing import (
@@ -18,6 +19,7 @@ from .image_operators import image_to_data_url
 from .operator import InstanceOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype
+from .types import Dialog
 from .utils import retry_connection_with_exponential_backoff
 
 constants = get_constants()
@@ -135,6 +137,9 @@ class BaseFormat(Format):
     def _prepare_instance_fields(self, instance) -> Tuple[str]:
         instance_fields = {}
 
+        if "__turns__" in instance:
+            instance_fields["turns"] = instance["__turns__"]
+
         for field in (
             "source",
             constants.instruction_field,
@@ -170,6 +175,7 @@ class BaseFormat(Format):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
+        turns: Optional[Dialog] = None,
     ) -> str:
         """Abstract method for formatting instances in different subclasses.
 
@@ -256,7 +262,10 @@ class SystemFormat(BaseFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
+        turns: Optional[Dialog] = None,
     ) -> str:
+        if turns is not None and not source:
+            source = json.dumps(turns)
         demos_string = ""
         for demo in demos:
             demo_str = self.demo_format.format(
@@ -429,6 +438,7 @@ class ChatAPIFormat(BaseFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
+        turns: Optional[Dialog] = None,
     ) -> List[Message]:
         messages = []
 
@@ -447,18 +457,22 @@ class ChatAPIFormat(BaseFormat):
             )
 
         for demo_instance in demos:
-            text = demo_instance["source"]
-            if instruction and self.place_instruction_in_user_turns:
-                text = f"{instruction}\n{text}"
+            if "__turns__" in demo_instance:
+                messages.extend(demo_instance["__turns__"])
+            else:
+                text = demo_instance["source"]
 
-            user_content = self.to_content(text, media)
+                if instruction and self.place_instruction_in_user_turns:
+                    text = f"{instruction}\n{text}"
+                source_content = self.to_content(text, media)
+                messages.extend([{"role": "user", "content": source_content}])
+
             assistant_content = self.to_content(
                 target_prefix + demo_instance["target"],
                 media,
             )
             messages.extend(
                 [
-                    {"role": "user", "content": user_content},
                     {
                         "role": "assistant",
                         "content": assistant_content,
@@ -470,9 +484,11 @@ class ChatAPIFormat(BaseFormat):
         if instruction and self.place_instruction_in_user_turns:
             text = f"{instruction}\n{text}"
 
-        last_user_content = self.to_content(text, media)
-
-        messages.extend([{"role": "user", "content": last_user_content}])
+        if turns is None:
+            last_user_content = self.to_content(text, media)
+            messages.extend([{"role": "user", "content": last_user_content}])
+        else:
+            messages.extend(turns)
 
         return messages
 
@@ -484,6 +500,7 @@ class ChatAPIFormat(BaseFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
+        turns: Optional[Dialog] = None,
     ) -> Union[str, List[Message]]:
         chat = self.to_chat(
             system_prompt,
@@ -492,6 +509,7 @@ class ChatAPIFormat(BaseFormat):
             target_prefix,
             demos,
             media,
+            turns,
         )
         media["images"] = []
         return chat
@@ -531,9 +549,10 @@ class HFSystemFormat(ChatAPIFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
+        turns: Optional[Dialog] = None,
     ) -> str:
         chat = self.to_chat(
-            system_prompt, instruction, source, target_prefix, demos, media
+            system_prompt, instruction, source, target_prefix, demos, media, turns
         )
         return (
             self.tokenizer.apply_chat_template(
