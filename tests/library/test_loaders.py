@@ -4,7 +4,6 @@ import tempfile
 from unittest.mock import patch
 
 import pandas as pd
-from unitxt.error_utils import UnitxtError
 from unitxt.loaders import (
     LoadCSV,
     LoadFromDictionary,
@@ -82,12 +81,8 @@ class TestLoaders(UnitxtTestCase):
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
 
     def test_failed_load_csv(self):
-        if settings.use_eager_execution:
-            with self.assertRaises(UnitxtError):
-                list(LoadCSV(files={"test": "not_exist.csv"})()["test"])
-        else:
-            with self.assertRaises(FileNotFoundError):
-                list(LoadCSV(files={"test": "not_exist.csv"})()["test"])
+        with self.assertRaises(FileNotFoundError):
+            list(LoadCSV(files={"test": "not_exist.csv"})()["test"])
 
     def test_load_csv_with_pandas_args(self):
         # Using a context for the temporary directory
@@ -522,11 +517,11 @@ class TestLoaders(UnitxtTestCase):
 
         with self.assertRaises(ValueError) as cm:
             LoadFromDictionary(data=data)
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             f"Passed data to LoadFromDictionary is not of type Dict[str, List[Dict[str, Any]]].\n"
             f"Expected data should map between split name and list of instances.\n"
             f"Received value: {data}\n",
+            str(cm.exception),
         )
 
         data = {
@@ -537,10 +532,10 @@ class TestLoaders(UnitxtTestCase):
         }
         with self.assertRaises(ValueError) as cm:
             LoadFromDictionary(data=data)
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             f"Not all instances in split 'train' have the same fields.\n"
             f"instance {data['train'][1]} has different fields different from {data['train'][0]}",
+            str(cm.exception),
         )
 
     def test_load_from_hf_space(self):

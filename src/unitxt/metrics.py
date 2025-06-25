@@ -43,7 +43,7 @@ from .dataclass import (
 )
 from .deprecation_utils import deprecation
 from .dict_utils import dict_get
-from .error_utils import Documentation, UnitxtError, UnitxtWarning
+from .error_utils import Documentation, UnitxtError, UnitxtWarning, error_context
 from .inference import (
     HFPipelineBasedInferenceEngine,
     InferenceEngine,
@@ -383,28 +383,35 @@ class MapReduceMetric(
         return intermediates
 
     def process(self, stream: Stream, stream_name: Optional[str] = None):
-        instances_scores, global_scores = self.compute(stream, stream_name)
-        for i, (instance, instance_scores) in enumerate(zip(stream, instances_scores)):
-            previous_score = instance.get("score", {"global": {}, "instance": {}})
+        with error_context(
+            self,
+            stage="Evaluating Metric",
+            help="https://www.unitxt.ai/en/latest/docs/adding_metric.html",
+        ):
+            instances_scores, global_scores = self.compute(stream, stream_name)
+            for i, (instance, instance_scores) in enumerate(
+                zip(stream, instances_scores)
+            ):
+                previous_score = instance.get("score", {"global": {}, "instance": {}})
 
-            if i == 0:
-                for key in global_scores:
-                    if is_original_key(key) and key in previous_score["global"]:
-                        UnitxtWarning(
-                            message=f"Metric '{key}' that has just been evaluated with value {global_scores[key]}, is already recorded "
-                            f"to have value {previous_score['global'][key]} by a previous metric evaluation on this instance or stream. "
-                            f"To avoid overwriting the existing value, add a score_prefix to the metric name (e.g. score_prefix='my_second_' , "
-                            f"which will yield, in this case, a score named: 'my_second_{key}')",
-                            additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
-                        )
+                if i == 0:
+                    for key in global_scores:
+                        if is_original_key(key) and key in previous_score["global"]:
+                            UnitxtWarning(
+                                message=f"Metric '{key}' that has just been evaluated with value {global_scores[key]}, is already recorded "
+                                f"to have value {previous_score['global'][key]} by a previous metric evaluation on this instance or stream. "
+                                f"To avoid overwriting the existing value, add a score_prefix to the metric name (e.g. score_prefix='my_second_' , "
+                                f"which will yield, in this case, a score named: 'my_second_{key}')",
+                                additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
+                            )
 
-            global_scores = {**previous_score["global"], **global_scores}
-            instance_scores = {**previous_score["instance"], **instance_scores}
+                global_scores = {**previous_score["global"], **global_scores}
+                instance_scores = {**previous_score["instance"], **instance_scores}
 
-            yield {
-                **instance,
-                "score": {"global": global_scores, "instance": instance_scores},
-            }
+                yield {
+                    **instance,
+                    "score": {"global": global_scores, "instance": instance_scores},
+                }
 
     def compute(self, stream: Stream, stream_name: Optional[str] = None):
         evaluation_inputs_stream = self._instances_stream_to_evaluation_inputs(stream)
@@ -1123,83 +1130,88 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
     process_single_instances = True
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        references = []
-        predictions = []
-        task_data = []
+        with error_context(
+            self,
+            stage="Evaluating Metric",
+            help="https://www.unitxt.ai/en/latest/docs/adding_metric.html",
+        ):
+            references = []
+            predictions = []
+            task_data = []
 
-        instances = []
+            instances = []
 
-        for instance in stream:
-            instance = self.verify_instance(instance)
+            for instance in stream:
+                instance = self.verify_instance(instance)
 
-            if "score" not in instance:
-                instance["score"] = {"global": {}, "instance": {}}
+                if "score" not in instance:
+                    instance["score"] = {"global": {}, "instance": {}}
 
-            instance_references, instance_prediction = (
-                instance["references"],
-                instance["prediction"],
-            )
+                instance_references, instance_prediction = (
+                    instance["references"],
+                    instance["prediction"],
+                )
 
-            references.append(instance_references)
-            predictions.append(instance_prediction)
-            instances.append(instance)
+                references.append(instance_references)
+                predictions.append(instance_prediction)
+                instances.append(instance)
 
-            instance_task_data = (
-                instance["task_data"] if "task_data" in instance else {}
-            )
-            task_data.append(instance_task_data)
-            instance_score = None
+                instance_task_data = (
+                    instance["task_data"] if "task_data" in instance else {}
+                )
+                task_data.append(instance_task_data)
+                instance_score = None
 
-            # for backward compatibility
-            no_score_value = np.nan
-            if self.process_single_instances:
-                try:
-                    instance_score = self._compute(
-                        [instance_references],
-                        [instance_prediction],
-                        [instance_task_data],
+                # for backward compatibility
+                no_score_value = np.nan
+                if self.process_single_instances:
+                    try:
+                        instance_score = self._compute(
+                            [instance_references],
+                            [instance_prediction],
+                            [instance_task_data],
+                        )
+                    except:
+                        no_score_value = None
+                if not instance_score:
+                    instance_score = {
+                        "score": no_score_value,
+                        "score_name": self.main_score,
+                    }
+
+                    if isinstance(self.main_score, str):
+                        instance_score[self.main_score] = no_score_value
+
+                instance["score"]["instance"].update(
+                    self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                        instance_score, instance["score"]["instance"]
                     )
-                except:
-                    no_score_value = None
-            if not instance_score:
-                instance_score = {
-                    "score": no_score_value,
-                    "score_name": self.main_score,
-                }
+                )
+            self._validate_references_and_prediction(references, predictions)
+            global_score = {"num_of_instances": len(instances)}
 
-                if isinstance(self.main_score, str):
-                    instance_score[self.main_score] = no_score_value
-
-            instance["score"]["instance"].update(
+            result = self._compute(references, predictions, task_data)
+            global_score.update(
                 self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
-                    instance_score, instance["score"]["instance"]
+                    result, global_score
                 )
             )
-        self._validate_references_and_prediction(references, predictions)
-        global_score = {"num_of_instances": len(instances)}
+            if self.ci_scores:
+                score_names = [
+                    self._add_score_prefix(score_name) for score_name in self.ci_scores
+                ]
+            else:
+                score_names = [global_score["score_name"]]
 
-        result = self._compute(references, predictions, task_data)
-        global_score.update(
-            self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
-                result, global_score
-            )
-        )
-        if self.ci_scores:
-            score_names = [
-                self._add_score_prefix(score_name) for score_name in self.ci_scores
-            ]
-        else:
-            score_names = [global_score["score_name"]]
+            for score_name in score_names:
+                confidence_interval = self.compute_global_confidence_intervals(
+                    references, predictions, task_data, score_name
+                )
+                global_score.update(confidence_interval)
 
-        for score_name in score_names:
-            confidence_interval = self.compute_global_confidence_intervals(
-                references, predictions, task_data, score_name
-            )
-            global_score.update(confidence_interval)
-
-        for instance in instances:
-            self.update_and_adjust_global_score(instance, global_score)
-            yield instance
+            for instance in instances:
+                self.update_and_adjust_global_score(instance, global_score)
+                yield instance
 
     def _compute(
         self,
@@ -1249,96 +1261,105 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         return instance
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        instances = []
-        for instance in stream:
-            self.verify_instance(instance)
-            instance = self.preprocess_instance(instance)
-            instances.append(instance)
+        with error_context(
+            self,
+            stage="Evaluating Metrics",
+            help="https://www.unitxt.ai/en/latest/docs/adding_metric.html",
+        ):
+            instances = []
+            for instance in stream:
+                self.verify_instance(instance)
+                instance = self.preprocess_instance(instance)
+                instances.append(instance)
 
-        predictions = [instance["prediction"] for instance in instances]
-        references = [instance["references"] for instance in instances]
-        task_data = [
-            instance["task_data"] if "task_data" in instance else {}
-            for instance in instances
-        ]
-        self._validate_references_and_prediction(references, predictions)
-        global_score = {"num_of_instances": len(instances)}
-        # compute the metric over all refs and preds
-        instance_scores = self.compute(
-            references=references,
-            predictions=predictions,
-            task_data=task_data,
-        )
-
-        # add the score and score_name fields
-        for instance_score in instance_scores:
-            instance_score["score"] = instance_score[self.main_score]
-            instance_score["score_name"] = self.main_score
-
-        for instance, score in zip(instances, instance_scores):
-            if "score" not in instance:
-                instance["score"] = {"global": {}, "instance": {}}
-
-            instance["score"]["instance"].update(
-                self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
-                    score, instance["score"]["instance"]
-                )
+            predictions = [instance["prediction"] for instance in instances]
+            references = [instance["references"] for instance in instances]
+            task_data = [
+                instance["task_data"] if "task_data" in instance else {}
+                for instance in instances
+            ]
+            self._validate_references_and_prediction(references, predictions)
+            global_score = {"num_of_instances": len(instances)}
+            # compute the metric over all refs and preds
+            instance_scores = self.compute(
+                references=references,
+                predictions=predictions,
+                task_data=task_data,
             )
 
-        for reduction, fields in self.reduction_map.items():
-            assert (
-                reduction in self.implemented_reductions
-            ), f"Reduction {reduction} is not implemented, use one of {self.implemented_reductions}"
+            # add the score and score_name fields
+            for instance_score in instance_scores:
+                instance_score["score"] = instance_score[self.main_score]
+                instance_score["score_name"] = self.main_score
 
-            if reduction == "mean":
-                for field_name in fields:
-                    field_name_with_prefix = self._add_score_prefix(field_name)
-                    global_score[field_name_with_prefix] = nan_mean(
-                        [
-                            instance["score"]["instance"][field_name_with_prefix]
-                            for instance in instances
-                        ]
+            for instance, score in zip(instances, instance_scores):
+                if "score" not in instance:
+                    instance["score"] = {"global": {}, "instance": {}}
+
+                instance["score"]["instance"].update(
+                    self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                        score, instance["score"]["instance"]
                     )
-                    if field_name == self.main_score:
-                        global_score["score"] = global_score[field_name_with_prefix]
-                        global_score["score_name"] = self.score_prefix + self.main_score
-
-                ci_fields = (
-                    list(set(self.ci_scores))
-                    if self.ci_scores is not None
-                    else [self.main_score]
                 )
-                ci_fields_with_prefix = [
-                    self._add_score_prefix(ci_field) for ci_field in ci_fields
-                ]
-                confidence_interval = self.score_based_confidence_interval(
-                    instances=instances, score_names=ci_fields_with_prefix
-                )
-                global_score.update(confidence_interval)
-            if reduction == "weighted_win_rate":
-                for field_name in fields:
-                    field_name_with_prefix = self._add_score_prefix(field_name)
-                    total_battles = 0
-                    wins = 0
-                    for instance in instances:
-                        s = instance["score"]["instance"][field_name_with_prefix]
-                        if s > 0:
-                            total_battles += s
-                            wins += s
-                        elif s < 0:
-                            total_battles += abs(s)
-                        else:
-                            total_battles += 2
-                            wins += 1
 
-                    global_score[field_name_with_prefix] = wins / total_battles
-                    if field_name == self.main_score:
-                        global_score["score"] = global_score[field_name_with_prefix]
-                        global_score["score_name"] = self.score_prefix + self.main_score
+            for reduction, fields in self.reduction_map.items():
+                assert (
+                    reduction in self.implemented_reductions
+                ), f"Reduction {reduction} is not implemented, use one of {self.implemented_reductions}"
 
-        for instance in instances:
-            self.update_and_adjust_global_score(instance, global_score)
-            yield instance
+                if reduction == "mean":
+                    for field_name in fields:
+                        field_name_with_prefix = self._add_score_prefix(field_name)
+                        global_score[field_name_with_prefix] = nan_mean(
+                            [
+                                instance["score"]["instance"][field_name_with_prefix]
+                                for instance in instances
+                            ]
+                        )
+                        if field_name == self.main_score:
+                            global_score["score"] = global_score[field_name_with_prefix]
+                            global_score["score_name"] = (
+                                self.score_prefix + self.main_score
+                            )
+
+                    ci_fields = (
+                        list(set(self.ci_scores))
+                        if self.ci_scores is not None
+                        else [self.main_score]
+                    )
+                    ci_fields_with_prefix = [
+                        self._add_score_prefix(ci_field) for ci_field in ci_fields
+                    ]
+                    confidence_interval = self.score_based_confidence_interval(
+                        instances=instances, score_names=ci_fields_with_prefix
+                    )
+                    global_score.update(confidence_interval)
+                if reduction == "weighted_win_rate":
+                    for field_name in fields:
+                        field_name_with_prefix = self._add_score_prefix(field_name)
+                        total_battles = 0
+                        wins = 0
+                        for instance in instances:
+                            s = instance["score"]["instance"][field_name_with_prefix]
+                            if s > 0:
+                                total_battles += s
+                                wins += s
+                            elif s < 0:
+                                total_battles += abs(s)
+                            else:
+                                total_battles += 2
+                                wins += 1
+
+                        global_score[field_name_with_prefix] = wins / total_battles
+                        if field_name == self.main_score:
+                            global_score["score"] = global_score[field_name_with_prefix]
+                            global_score["score_name"] = (
+                                self.score_prefix + self.main_score
+                            )
+
+            for instance in instances:
+                self.update_and_adjust_global_score(instance, global_score)
+                yield instance
 
     @abstractmethod
     def compute(
@@ -1644,91 +1665,97 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             assert isinstance(fields["score_fields"], list)
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        instance_scores = self.compute_instance_scores(stream)
-        global_score = {"num_of_instances": len(instance_scores)}
-        for reduction_type, reduction_params in self.reduction_map.items():
-            assert (
-                reduction_type in self.implemented_reductions
-            ), f"Reduction {reduction_type} is not implemented, use one of {self.implemented_reductions}"
+        with error_context(
+            self,
+            stage="Evaluating Metrics",
+            help="https://www.unitxt.ai/en/latest/docs/adding_metric.html",
+        ):
+            instance_scores = self.compute_instance_scores(stream)
+            global_score = {"num_of_instances": len(instance_scores)}
+            for reduction_type, reduction_params in self.reduction_map.items():
+                assert (
+                    reduction_type in self.implemented_reductions
+                ), f"Reduction {reduction_type} is not implemented, use one of {self.implemented_reductions}"
 
-            field_name_full_prefix = ""
-            # used for passing to the bootstrapping, depends on whether the groups are fixed or not
-            aggregation_function = None
-            if reduction_type == "mean":
-                aggregation_function = self.average_item_scores
-                reduction_fields = list(set(reduction_params))
-                # no group reduction, so resample instances individually
-                scores_to_resample = instance_scores
-            elif reduction_type == "max":
-                aggregation_function = self.max_item_scores
-                reduction_fields = list(set(reduction_params))
-                # no group reduction, so resample instances individually
-                scores_to_resample = instance_scores
-            elif reduction_type == "group_mean":
-                aggregation_function = self.average_item_scores
-                self._validate_group_mean_reduction()
-                reduction_fields = (
-                    [self.main_score]
-                    if "score_fields" not in reduction_params
-                    else list(set(reduction_params["score_fields"]))
-                )
-                aggregation_function_name = str(reduction_params["agg_func"][0])
-                field_name_full_prefix = "group_" + aggregation_function_name + "_"
-                do_resample_as_group = reduction_params["agg_func"][2]
-                if do_resample_as_group:
-                    # append fixed_ to name because resamples the groups as fixed units
-                    field_name_full_prefix = "fixed_" + field_name_full_prefix
-                (
-                    scores_to_resample,
-                    aggregation_function,
-                ) = self._set_up_group_mean_aggregation(
-                    instance_scores,
-                    reduction_params,
-                    reduction_fields,
-                )
-            else:
-                raise ValueError(
-                    f"Reduction {reduction_type} is not supported, please specify a valid reduction method in reduction_map {self.reduction_map}."
-                )
+                field_name_full_prefix = ""
+                # used for passing to the bootstrapping, depends on whether the groups are fixed or not
+                aggregation_function = None
+                if reduction_type == "mean":
+                    aggregation_function = self.average_item_scores
+                    reduction_fields = list(set(reduction_params))
+                    # no group reduction, so resample instances individually
+                    scores_to_resample = instance_scores
+                elif reduction_type == "max":
+                    aggregation_function = self.max_item_scores
+                    reduction_fields = list(set(reduction_params))
+                    # no group reduction, so resample instances individually
+                    scores_to_resample = instance_scores
+                elif reduction_type == "group_mean":
+                    aggregation_function = self.average_item_scores
+                    self._validate_group_mean_reduction()
+                    reduction_fields = (
+                        [self.main_score]
+                        if "score_fields" not in reduction_params
+                        else list(set(reduction_params["score_fields"]))
+                    )
+                    aggregation_function_name = str(reduction_params["agg_func"][0])
+                    field_name_full_prefix = "group_" + aggregation_function_name + "_"
+                    do_resample_as_group = reduction_params["agg_func"][2]
+                    if do_resample_as_group:
+                        # append fixed_ to name because resamples the groups as fixed units
+                        field_name_full_prefix = "fixed_" + field_name_full_prefix
+                    (
+                        scores_to_resample,
+                        aggregation_function,
+                    ) = self._set_up_group_mean_aggregation(
+                        instance_scores,
+                        reduction_params,
+                        reduction_fields,
+                    )
+                else:
+                    raise ValueError(
+                        f"Reduction {reduction_type} is not supported, please specify a valid reduction method in reduction_map {self.reduction_map}."
+                    )
 
-            # calculate global scores for each reduction field
-            for field_name in reduction_fields:
-                field_name_full = (
-                    field_name_full_prefix + self.score_prefix + field_name
-                )
-                # if group resampling (3rd element of agg_func parameter) is True, then
-                #   1. scores_to_resample are the group scores, and
-                #   2. aggregation_function is to take the raw mean
-                # if no group resampling (3rd element of agg_func parameter) is False, then
-                #   1. scores_to_resample are the original instance scores, and
-                #   2. aggregation_function is to apply the group aggregation from the instance scores
-                # either way, the application of aggregation_function to scores_to_resample yields the global score
-                global_score[field_name_full] = aggregation_function(
-                    scores_to_resample, self.score_prefix + field_name
-                )
-                if field_name == self.main_score:
-                    global_score["score"] = global_score[field_name_full]
-                    global_score["score_name"] = field_name_full
+                # calculate global scores for each reduction field
+                for field_name in reduction_fields:
+                    field_name_full = (
+                        field_name_full_prefix + self.score_prefix + field_name
+                    )
+                    # if group resampling (3rd element of agg_func parameter) is True, then
+                    #   1. scores_to_resample are the group scores, and
+                    #   2. aggregation_function is to take the raw mean
+                    # if no group resampling (3rd element of agg_func parameter) is False, then
+                    #   1. scores_to_resample are the original instance scores, and
+                    #   2. aggregation_function is to apply the group aggregation from the instance scores
+                    # either way, the application of aggregation_function to scores_to_resample yields the global score
+                    global_score[field_name_full] = aggregation_function(
+                        scores_to_resample, self.score_prefix + field_name
+                    )
+                    if field_name == self.main_score:
+                        global_score["score"] = global_score[field_name_full]
+                        global_score["score_name"] = field_name_full
 
-            # need to specify which fields should have CIs calculated for them through ci_scores
-            # (will not automatically calculate CIs for fields in reduction map)
-            if self.ci_scores is not None:
-                confidence_interval = self.score_based_confidence_interval(
-                    instances=scores_to_resample,
-                    score_names=[
-                        self.score_prefix + ci_score for ci_score in set(self.ci_scores)
-                    ],
-                    ci_score_prefix=field_name_full_prefix,
-                    aggregation_func=aggregation_function,
-                )
-                global_score.update(confidence_interval)
+                # need to specify which fields should have CIs calculated for them through ci_scores
+                # (will not automatically calculate CIs for fields in reduction map)
+                if self.ci_scores is not None:
+                    confidence_interval = self.score_based_confidence_interval(
+                        instances=scores_to_resample,
+                        score_names=[
+                            self.score_prefix + ci_score
+                            for ci_score in set(self.ci_scores)
+                        ],
+                        ci_score_prefix=field_name_full_prefix,
+                        aggregation_func=aggregation_function,
+                    )
+                    global_score.update(confidence_interval)
 
-        for instance in instance_scores:
-            self.update_and_adjust_global_score(instance, global_score)
+            for instance in instance_scores:
+                self.update_and_adjust_global_score(instance, global_score)
 
-        for i, instance in enumerate(stream):
-            instance["score"] = recursive_copy(instance_scores[i]["score"])
-            yield instance
+            for i, instance in enumerate(stream):
+                instance["score"] = recursive_copy(instance_scores[i]["score"])
+                yield instance
 
     def compute_instance_scores(
         self, stream: Stream, stream_name: Optional[str] = None

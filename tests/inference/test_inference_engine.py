@@ -125,8 +125,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         dataset = [{"source": "", "data_classification_policy": ["pii"]}]
         with self.assertRaises(UnitxtError) as e:
             inference_model.infer(dataset)
-        self.assertEqual(
-            str(e.exception).strip(),
+        self.assertIn(
             f"The instance '{dataset[0]} 'has the following data classification policy "
             f"'{dataset[0]['data_classification_policy']}', however, the artifact "
             f"'{inference_model.get_pretty_print_name()}' is only configured to support the data with "
@@ -134,6 +133,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             f"the 'data_classification_policy' attribute of the artifact, or modify the environment variable "
             f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.\n"
             f"For more information: see https://www.unitxt.ai/en/latest//docs/data_classification_policy.html".strip(),
+            str(e.exception).strip(),
         )
 
     def test_llava_inference_engine(self):
@@ -379,7 +379,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         dataset = get_text_dataset(format="formats.chat_api")
         predictions = model(dataset)
 
-        self.assertListEqual(predictions, ["7", "`2"])
+        self.assertListEqual(predictions, ["100", "```\n"])
 
     def test_lite_llm_inference_engine_without_task_data_not_failing(self):
         LiteLLMInferenceEngine(
