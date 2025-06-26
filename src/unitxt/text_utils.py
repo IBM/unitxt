@@ -1,5 +1,6 @@
 import re
 import shutil
+import types
 from typing import List, Tuple
 
 import pandas as pd
@@ -295,6 +296,36 @@ def construct_dict_as_python_lines(d, indent_delta=4) -> List[str]:
         return [f'"{d}"']
     if d is None or isinstance(d, (int, float, bool)):
         return [f"{d}"]
+
+    if isinstance(d, types.FunctionType):
+        from .utils import get_function_source
+
+        try:
+            source = get_function_source(d)
+            source_lines = source.splitlines()
+
+            # Find the base indentation of the function definition
+            base_indent = len(source_lines[0]) - len(source_lines[0].lstrip())
+
+            # Remove only the base indentation from each line
+            result_lines = []
+            for line in source_lines:
+                # Preserve empty lines
+                if line.strip() == "":
+                    result_lines.append("")
+                else:
+                    # Remove base indent while preserving internal indentation
+                    if line.startswith(" " * base_indent):
+                        result_lines.append(line[base_indent:])
+                    else:
+                        result_lines.append(line.lstrip())
+
+            return result_lines
+
+        except (OSError, TypeError):
+            # If source is not available
+            return [f"<function {d.__name__} (source unavailable)>"]
+
     raise RuntimeError(f"unrecognized value to print as python: {d}")
 
 

@@ -5,10 +5,32 @@
    To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
 =====================================
-Operators 
+Operators
 =====================================
 
 Operators are specialized functions designed to process data.
+
+.. tip::
+
+    If you cannot find operators fit to your needs simply use instance function operator:
+
+    .. code-block:: python
+
+        def my_function(instance, stream_name=None):
+            instance["x"] += 42
+            return instance
+
+    Or stream function operator:
+
+    .. code-block:: python
+
+        def my_other_function(stream, stream_name=None):
+            for instance in stream:
+                instance["x"] += 42
+                yield instance
+
+    Both functions can be plugged in every place in unitxt requires operators, e.g pre-processing pipeline.
+
 
 They are used in the TaskCard for preparing data for specific tasks and by Post Processors
 to process the textual output of the model to the expect input of the metrics.
@@ -18,11 +40,11 @@ There are several types of operators.
 1. Field Operators - Operators that modify individual fields of the instances in the input streams.  Example of such operators are operators that
 cast field values, uppercase string fields, or translate text between languages.
 
-2. Instance Operators - Operators that modify individual instances in the input streams. For example, operators that add or remove fields.
+1. Instance Operators - Operators that modify individual instances in the input streams. For example, operators that add or remove fields.
 
-3. Stream Operators - Operators that perform operations on full streams. For example, operators that remove instances based on some condition.
+2. Stream Operators - Operators that perform operations on full streams. For example, operators that remove instances based on some condition.
 
-4. MultiStream Operators - Operator that perform operations on multiple streams.  For example, operators that repartition the instances between train and test splits.
+3. MultiStream Operators - Operator that perform operations on multiple streams.  For example, operators that repartition the instances between train and test splits.
 
 Unitxt comes with a large collection of built in operators - that were design to cover most common requirements of dataset processing.
 
