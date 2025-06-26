@@ -12,6 +12,19 @@ from unitxt.splitters import RenameSplits
 from unitxt.struct_data_operators import LoadJson
 from unitxt.test_utils.card import test_card
 
+
+def extract_required_parameters(instance, stream_name=None):
+    result = []
+    for tool in instance["tools"]:
+        required_params = []
+        for param_name, param_info in tool["parameters"]["properties"].items():
+            if "optional" not in param_info["type"]:
+                required_params.append(param_name)
+        result.append(required_params)
+    instance["required"] = result
+    return instance
+
+
 card = TaskCard(
     loader=LoadHF(
         path="Salesforce/xlam-function-calling-60k",
