@@ -26,7 +26,7 @@ from .schema import loads_batch
 from .settings_utils import get_constants, get_settings
 from .standard import DatasetRecipe
 from .task import Task
-from .utils import lru_cache_decorator
+from .utils import json_dump, lru_cache_decorator
 
 logger = get_logger()
 constants = get_constants()
