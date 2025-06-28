@@ -41,7 +41,7 @@ dataset = create_dataset(
 # )
 # Change to this to infer with external APIs:
 
-model = CrossProviderInferenceEngine(model="llama-3-8b-instruct", provider="watsonx")
+model = CrossProviderInferenceEngine(model="llama-3-3-70b-instruct", provider="watsonx")
 # The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
 
 
@@ -57,7 +57,7 @@ print(json.dumps(results.instance_scores[0]["source"], indent=4))
 
 print("Instance Results:")
 print(
-    results.instance_scores.to_df(
+    results.instance_scores.to_markdown(
         columns=[
             "text",
             "prediction",
@@ -66,5 +66,5 @@ print(
             "score",
             "score_name",
         ]
-    ).to_markdown()
+    )
 )
