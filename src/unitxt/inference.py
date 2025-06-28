@@ -3677,7 +3677,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
 
     _provider_param_renaming = {
         "bam": {"max_tokens": "max_new_tokens", "model": "model_name"},
-        "watsonx-sdk": {"max_tokens": "max_new_tokens", "model": "model_name"},
+        "watsonx-sdk": {"model": "model_name"},
         "rits": {"model": "model_name"},
     }
 
