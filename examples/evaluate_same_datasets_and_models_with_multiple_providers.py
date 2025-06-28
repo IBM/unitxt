@@ -52,16 +52,7 @@ for provider in [
             # result_df = pd.json_normalize(evaluated_dataset)
             # result_df.to_csv(f"output.csv")
             # Print results
-            print(
-                results.instance_scores.to_markdown(
-                    columns=[
-                        "source",
-                        "prediction",
-                        "processed_prediction",
-                        "processed_references",
-                    ],
-                )
-            )
+            print(results.instance_scores.summary)
 
             global_scores = results.global_scores
             df.loc[len(df)] = [
