@@ -2,6 +2,8 @@
     "__type__": "criteria_with_options",
     "name": "conversational",
     "description": "Does the user response come across as conversational?",
+    "prediction_field": "user response",
+    "context_fields": [],
     "options": [
         {
             "__type__": "criteria_option",

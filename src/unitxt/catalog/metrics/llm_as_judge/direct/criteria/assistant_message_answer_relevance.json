@@ -1,17 +1,22 @@
 {
     "__type__": "criteria_with_options",
     "name": "assistant_message_answer_relevance",
-    "description": "Assistant message fails to address or properly respond to the User's input.",
+    "description": "Assistant message addresses or properly responds to the User's input.",
+    "prediction_field": "assistant message",
+    "context_fields": [
+        "user message",
+        "context"
+    ],
     "options": [
         {
             "__type__": "criteria_option",
             "name": "Yes",
-            "description": ""
+            "description": "The assistant message addresses or properly responds to the user's input."
         },
         {
             "__type__": "criteria_option",
             "name": "No",
-            "description": ""
+            "description": "The assistant message fails to address or properly respond to the user's input."
         }
     ],
     "option_map": {

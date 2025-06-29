@@ -2,6 +2,8 @@
     "__type__": "criteria_with_options",
     "name": "naturalness",
     "description": "Is the user response natural?",
+    "prediction_field": "user response",
+    "context_fields": [],
     "options": [
         {
             "__type__": "criteria_option",
