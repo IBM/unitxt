@@ -369,7 +369,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_lite_llm_inference_engine(self):
         model = LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-2-1b-instruct",
+            model="watsonx/meta-llama/llama-3-3-70b-instruct",
             max_tokens=2,
             temperature=0,
             top_p=1,
@@ -379,11 +379,11 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         dataset = get_text_dataset(format="formats.chat_api")
         predictions = model(dataset)
 
-        self.assertListEqual(predictions, ["100", "```\n"])
+        self.assertListEqual(predictions, ["7", "2"])
 
     def test_lite_llm_inference_engine_without_task_data_not_failing(self):
         LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-2-1b-instruct",
+            model="watsonx/meta-llama/llama-3-3-70b-instruct",
             max_tokens=2,
             temperature=0,
             top_p=1,
