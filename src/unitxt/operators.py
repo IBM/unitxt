@@ -67,7 +67,7 @@ from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
-from .error_utils import UnitxtError
+from .error_utils import UnitxtError, error_context
 from .generator_utils import ReusableGenerator
 from .operator import (
     InstanceOperator,
@@ -309,7 +309,9 @@ def recursive_key_value_replace(data, target_key, value_map, value_remove=None):
                         if not isinstance(item, dict) and item not in value_remove
                     ]
                 elif isinstance(value, dict):
-                    pass  # Skip or handle dict values if needed
+                    recursive_key_value_replace(
+                        value, target_key, value_map, value_remove
+                    )
                 elif value in value_remove:
                     keys_to_delete.append(key)
                 elif value in value_map:
@@ -436,6 +438,7 @@ class InstanceFieldOperator(InstanceOperator):
     field_to_field: Optional[Union[List[List[str]], Dict[str, str]]] = None
     use_query: Optional[bool] = None
     process_every_value: bool = False
+    set_every_value: bool = NonPositionalField(default=False)
     get_default: Any = None
     not_exist_ok: bool = False
     not_exist_do_nothing: bool = False
@@ -521,7 +524,7 @@ class InstanceFieldOperator(InstanceOperator):
     ) -> Dict[str, Any]:
         self.verify_field_definition()
         for from_field, to_field in self._field_to_field:
-            try:
+            with error_context(self, field=from_field, action="Read Field"):
                 old_value = dict_get(
                     instance,
                     from_field,
@@ -532,11 +535,8 @@ class InstanceFieldOperator(InstanceOperator):
                     if self.not_exist_do_nothing:
                         continue
                     old_value = self.get_default
-            except Exception as e:
-                raise ValueError(
-                    f"Failed to get '{from_field}' from instance due to the exception above."
-                ) from e
-            try:
+
+            with error_context(self, field=from_field, action="Process Field"):
                 if self.process_every_value:
                     new_value = [
                         self.process_instance_value(value, instance)
@@ -544,15 +544,13 @@ class InstanceFieldOperator(InstanceOperator):
                     ]
                 else:
                     new_value = self.process_instance_value(old_value, instance)
-            except Exception as e:
-                raise ValueError(
-                    f"Failed to process field '{from_field}' from instance due to the exception above."
-                ) from e
+
             dict_set(
                 instance,
                 to_field,
                 new_value,
                 not_exist_ok=True,
+                set_multiple=self.set_every_value,
             )
         return instance
 
@@ -610,9 +608,27 @@ class Rename(FieldOperator):
         return res
 
 
+class Move(InstanceOperator):
+    field: str
+    to_field: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        value = dict_get(instance, self.field)
+        dict_delete(instance, self.field)
+        dict_set(instance, self.to_field, value=value)
+        return instance
+
+
 @deprecation(version="2.0.0", alternative=Rename)
 class RenameFields(Rename):
     pass
+
+
+class BytesToString(FieldOperator):
+    def process_value(self, value: Any) -> Any:
+        return str(value)
 
 
 class AddConstant(FieldOperator):
@@ -1200,9 +1216,10 @@ class ApplyOperatorsField(InstanceOperator):
     ) -> Dict[str, Any]:
         operator_names = instance.get(self.operators_field)
         if operator_names is None:
-            assert (
-                self.default_operators is not None
-            ), f"No operators found in field '{self.operators_field}', and no default operators provided."
+            if self.default_operators is None:
+                raise ValueError(
+                    f"No operators found in field '{self.operators_field}', and no default operators provided."
+                )
             operator_names = self.default_operators
 
         if isinstance(operator_names, str):
@@ -1436,7 +1453,7 @@ class ExecuteExpression(InstanceOperator, ComputeExpressionMixin):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        instance[self.to_field] = self.compute_expression(instance)
+        dict_set(instance, self.to_field, self.compute_expression(instance))
         return instance
 
 
@@ -1821,54 +1838,58 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
 
         # to be populated only when two or more metrics
         accumulated_scores = []
+        with error_context(self, stage="Load Metrics"):
+            first_instance = stream.peek()
 
-        first_instance = stream.peek()
-
-        metric_names = first_instance.get(self.metric_field, [])
-        if not metric_names:
-            raise RuntimeError(
-                f"Missing metric names in field '{self.metric_field}' and instance '{first_instance}'."
-            )
-
-        if isinstance(metric_names, str):
-            metric_names = [metric_names]
-
-        metrics_list = []
-        for metric_name in metric_names:
-            metric = self.get_artifact(metric_name)
-            if isinstance(metric, MetricsList):
-                metrics_list.extend(list(metric.items))
-            elif isinstance(metric, Metric):
-                metrics_list.append(metric)
-            else:
-                raise ValueError(
-                    f"Operator {metric_name} must be a Metric or MetricsList"
+            metric_names = first_instance.get(self.metric_field, [])
+            if not metric_names:
+                raise RuntimeError(
+                    f"Missing metric names in field '{self.metric_field}' and instance '{first_instance}'."
                 )
 
-        for metric in metrics_list:
-            metric.set_confidence_interval_calculation(self.calc_confidence_intervals)
-        # Each metric operator computes its score and then sets the main score, overwriting
-        # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
-        # This will cause the first listed metric to run last, and the main score will be set
-        # by the first listed metric (as desired).
-        metrics_list = list(reversed(metrics_list))
+            if isinstance(metric_names, str):
+                metric_names = [metric_names]
 
-        for i, metric in enumerate(metrics_list):
-            if i == 0:  # first metric
-                multi_stream = MultiStream({"tmp": stream})
-            else:  # metrics with previous scores
-                reusable_generator = ReusableGenerator(
-                    generator=update_scores_of_stream_instances,
-                    gen_kwargs={"stream": stream, "scores": accumulated_scores},
+            metrics_list = []
+            for metric_name in metric_names:
+                metric = self.get_artifact(metric_name)
+                if isinstance(metric, MetricsList):
+                    metrics_list.extend(list(metric.items))
+                elif isinstance(metric, Metric):
+                    metrics_list.append(metric)
+                else:
+                    raise ValueError(
+                        f"Operator {metric_name} must be a Metric or MetricsList"
+                    )
+        with error_context(self, stage="Setup Metrics"):
+            for metric in metrics_list:
+                metric.set_confidence_interval_calculation(
+                    self.calc_confidence_intervals
                 )
-                multi_stream = MultiStream.from_generators({"tmp": reusable_generator})
+            # Each metric operator computes its score and then sets the main score, overwriting
+            # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
+            # This will cause the first listed metric to run last, and the main score will be set
+            # by the first listed metric (as desired).
+            metrics_list = list(reversed(metrics_list))
 
-            multi_stream = metric(multi_stream)
+            for i, metric in enumerate(metrics_list):
+                if i == 0:  # first metric
+                    multi_stream = MultiStream({"tmp": stream})
+                else:  # metrics with previous scores
+                    reusable_generator = ReusableGenerator(
+                        generator=update_scores_of_stream_instances,
+                        gen_kwargs={"stream": stream, "scores": accumulated_scores},
+                    )
+                    multi_stream = MultiStream.from_generators(
+                        {"tmp": reusable_generator}
+                    )
 
-            if i < len(metrics_list) - 1:  # last metric
-                accumulated_scores = []
-                for inst in multi_stream["tmp"]:
-                    accumulated_scores.append(recursive_copy(inst["score"]))
+                multi_stream = metric(multi_stream)
+
+                if i < len(metrics_list) - 1:  # last metric
+                    accumulated_scores = []
+                    for inst in multi_stream["tmp"]:
+                        accumulated_scores.append(recursive_copy(inst["score"]))
 
         yield from multi_stream["tmp"]
 

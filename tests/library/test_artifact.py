@@ -198,8 +198,7 @@ class TestArtifact(UnitxtTestCase):
         instance["data_classification_policy"] = ["pii"]
         with self.assertRaises(UnitxtError) as e:
             metric.verify_instance(instance)
-        self.assertEqual(
-            str(e.exception),
+        self.assertIn(
             f"The instance '{instance} 'has the following data classification policy "
             f"'{instance['data_classification_policy']}', however, the artifact "
             f"'{artifact_name}' is only configured to support the data with classification "
@@ -207,6 +206,7 @@ class TestArtifact(UnitxtTestCase):
             f"the 'data_classification_policy' attribute of the artifact, "
             f"or modify the environment variable "
             f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.\nFor more information: see https://www.unitxt.ai/en/latest//docs/data_classification_policy.html \n",
+            str(e.exception),
         )
         # "Fixing" the env variable so that it does not affect other tests:
         del os.environ["UNITXT_DATA_CLASSIFICATION_POLICY"]

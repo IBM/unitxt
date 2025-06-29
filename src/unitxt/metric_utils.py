@@ -1,5 +1,6 @@
 import json
 import re
+import textwrap
 from collections import defaultdict
 from functools import lru_cache
 from statistics import mean
@@ -9,7 +10,7 @@ import pandas as pd
 from datasets import Features, Value
 
 from .dataclass import Dataclass
-from .error_utils import Documentation, UnitxtError
+from .error_utils import Documentation, UnitxtError, error_context
 from .operator import (
     InstanceOperator,
     MultiStreamOperator,
@@ -36,6 +37,9 @@ from .utils import recursive_copy
 
 constants = get_constants()
 
+DEFAULT_STREAM_NAME = "all_data"
+DEFAULT_STREAM_SUBSET_SEPARATOR = ">>"
+
 
 def nan_mean(scores):
     result = mean(score for score in scores if score == score)
@@ -56,7 +60,10 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
             yield {**original, "prediction": prediction}
 
     def process(
-        self, predictions: List[str], references: Iterable, split_name: str = "all"
+        self,
+        predictions: List[str],
+        references: Iterable,
+        split_name: str = DEFAULT_STREAM_NAME,
     ) -> MultiStream:
         return MultiStream(
             {
@@ -152,7 +159,7 @@ class SplitSubsetsAndGroups(MultiStreamOperator):
 
                 subset_stream_name = (
                     stream_name
-                    + "://"
+                    + DEFAULT_STREAM_SUBSET_SEPARATOR
                     + "/".join(instance[self.subsets_field][: self.subset_depth])
                 )
 
@@ -190,7 +197,7 @@ def group_str_to_key_value(group_str):
 
 @lru_cache(maxsize=None)
 def stream_name_to_origin_subset_group(stream_name):
-    origin, subset_group = stream_name.split("://")
+    origin, subset_group = stream_name.split(DEFAULT_STREAM_SUBSET_SEPARATOR)
     if "?" in subset_group:
         subset, group = subset_group.split("?")
     else:
@@ -677,22 +684,43 @@ class InstanceScores(list):
             return df[columns]
         return df
 
+    def _to_markdown(self, df, max_col_width=30, **kwargs):
+        def wrap_column(series, max_width=30):
+            """Wraps string values in a Pandas Series to a maximum width."""
+            return series.apply(
+                lambda x: "\n".join(
+                    textwrap.fill(line, width=max_width) for line in str(x).splitlines()
+                )
+            )
+
+        wrapped_df = df.copy()
+        for col in wrapped_df.columns:
+            wrapped_df[col] = wrap_column(wrapped_df[col], max_col_width)
+        return wrapped_df.to_markdown(**kwargs)
+
+    def to_markdown(self, flatten=True, columns=None, max_col_width=30, **kwargs):
+        return self._to_markdown(self.to_df(flatten, columns), max_col_width, **kwargs)
+
     @property
     def summary(self):
-        return to_pretty_string(
-            self.to_df()
-            .head()
-            .drop(
-                columns=[
-                    "metadata",
-                    "media",
-                    "data_classification_policy",
-                    "groups",
-                    "subset",
-                ]
-            ),
-            float_format=".2g",
+        df = self.to_df(
+            flatten=False,
+            columns=[
+                "source",
+                "prediction",
+                "processed_prediction",
+                "references",
+                "processed_references",
+                "score",
+            ],
+        ).head()
+        df["score_name"] = df["score"].apply(lambda x: x["instance"]["score_name"])
+        df["all_scores"] = df["score"].apply(
+            lambda x: "\n".join(f"{k}: {v}" for k, v in x["instance"].items())
         )
+        df["score"] = df["score"].apply(lambda x: x["instance"]["score"])
+
+        return self._to_markdown(df)
 
     def __repr__(self):
         return to_pretty_string(self, float_format=".2g")
@@ -734,22 +762,23 @@ def _compute(
     predictions: List[Any],
     references: Iterable,
     flatten: bool = False,
-    split_name: str = "all",
+    split_name: str = DEFAULT_STREAM_NAME,
     calc_confidence_intervals: bool = True,
 ):
     _reset_env_local_catalogs()
     register_all_artifacts()
     recipe = MetricRecipe(calc_confidence_intervals=calc_confidence_intervals)
 
-    multi_stream = recipe(
-        predictions=predictions, references=references, split_name=split_name
-    )
+    with error_context(stage="Metric Processing"):
+        multi_stream = recipe(
+            predictions=predictions, references=references, split_name=split_name
+        )
 
-    if flatten:
-        operator = FlattenInstances()
-        multi_stream = operator(multi_stream)
+        if flatten:
+            operator = FlattenInstances()
+            multi_stream = operator(multi_stream)
 
-    stream = multi_stream[split_name]
+        stream = multi_stream[split_name]
     return EvaluationResults(stream)
 
 

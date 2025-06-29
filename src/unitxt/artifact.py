@@ -16,13 +16,13 @@ from .dataclass import (
     NonPositionalField,
     fields,
 )
-from .error_utils import Documentation, UnitxtError, UnitxtWarning
+from .error_utils import Documentation, UnitxtError, UnitxtWarning, error_context
 from .logging_utils import get_logger
 from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
 )
 from .settings_utils import get_constants, get_settings
-from .text_utils import camel_to_snake_case, is_camel_case, print_dict_as_yaml
+from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import isoftype, issubtype
 from .utils import (
     artifacts_json_cache,
@@ -342,8 +342,10 @@ class Artifact(Dataclass):
         self.verify_data_classification_policy()
         self.prepare_args()
         if not settings.skip_artifacts_prepare_and_verify:
-            self.prepare()
-            self.verify()
+            with error_context(self, action="Prepare Object"):
+                self.prepare()
+            with error_context(self, action="Verify Object"):
+                self.verify()
 
     def _to_raw_dict(self):
         return {
@@ -367,11 +369,14 @@ class Artifact(Dataclass):
 
     def to_json(self):
         data = self.to_dict()
+
         return json_dump(data)
 
     def to_yaml(self):
+        import yaml
+
         data = self.to_dict()
-        return print_dict_as_yaml(data)
+        return yaml.dump(data)
 
     def serialize(self):
         if self.__id__ is not None:
@@ -449,20 +454,25 @@ class Artifact(Dataclass):
             )
             return instance
 
-        if not any(
-            data_classification in data_classification_policy
-            for data_classification in instance_data_classification
+        with error_context(
+            self,
+            action="Sensitive Data Verification",
+            help="https://www.unitxt.ai/en/latest/docs/data_classification_policy.html",
         ):
-            raise UnitxtError(
-                f"The instance '{instance} 'has the following data classification policy "
-                f"'{instance_data_classification}', however, the artifact '{name}' "
-                f"is only configured to support the data with classification "
-                f"'{data_classification_policy}'. To enable this either change "
-                f"the 'data_classification_policy' attribute of the artifact, "
-                f"or modify the environment variable "
-                f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.",
-                Documentation.DATA_CLASSIFICATION_POLICY,
-            )
+            if not any(
+                data_classification in data_classification_policy
+                for data_classification in instance_data_classification
+            ):
+                raise UnitxtError(
+                    f"The instance '{instance} 'has the following data classification policy "
+                    f"'{instance_data_classification}', however, the artifact '{name}' "
+                    f"is only configured to support the data with classification "
+                    f"'{data_classification_policy}'. To enable this either change "
+                    f"the 'data_classification_policy' attribute of the artifact, "
+                    f"or modify the environment variable "
+                    f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.",
+                    Documentation.DATA_CLASSIFICATION_POLICY,
+                )
 
         return instance
 

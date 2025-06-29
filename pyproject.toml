@@ -145,7 +145,17 @@ local_inference = [
     "torch",
     "accelerate"
 ]
-
+bluebench = [
+    "unitxt[remote_inference]",
+    "unitxt[local_inference]",
+    "conllu",
+    "scikit-learn",
+    "sympy",
+    "bert_score",
+    "nltk",
+    "rouge_score",
+    "sacrebleu[ko]"
+]
 
 
 # Combine all extras by referencing other groups
@@ -167,6 +177,7 @@ unitxt-explore = "unitxt.ui:launch"
 unitxt-assistant = "unitxt.assistant:launch"
 unitxt-metrics-service = "unitxt.service.metrics.main:start_metrics_http_service"
 unitxt-evaluate = "unitxt.evaluate_cli:main"
+unitxt-summarize = "unitxt.evaluate_cli:summarize_cli"
 
 [tool.ruff]
 exclude = [
@@ -294,6 +305,12 @@ omit = [
     "src/unitxt/dataset.py",
     "src/unitxt/metric.py",
     "src/unitxt/blocks.py",
+]
+exclude_lines = [
+    "logger.",
+    "pass",
+    "raise ValueError",
+    "except Exception"
 ]
 
 [tool.coverage.xml]

@@ -298,9 +298,13 @@ def cli_load_dataset(args: argparse.Namespace) -> HFDataset:
             dataset_query=task_str, **overwrite_args
         )
 
-    benchmark = Benchmark(subsets=benchmark_subsets)
+    # this hack circumvents an issue with multi-level benchmarks (such Bluebench's translation subset) that fail when wrapped with an additional Benchmark() object.
+    if len(benchmark_subsets) == 1:
+        source = next(iter(benchmark_subsets.values()))
+    else:
+        source = Benchmark(subsets=benchmark_subsets)
 
-    test_dataset = _source_to_dataset(benchmark, split=args.split)
+    test_dataset = _source_to_dataset(source, split=args.split)
     logger.info(
         f"Dataset loaded successfully. Number of instances: {len(test_dataset)}"
     )
@@ -414,6 +418,8 @@ def initialize_inference_engine(
             chat_kwargs_dict=chat_kwargs_dict,
         )
 
+        # Keep the actual model name for the results
+        args.model = inference_model.model_name
     # --- Remote Model (CrossProviderInferenceEngine) ---
     elif args.model.lower() == "cross_provider":
         if "model_name" not in model_args_dict:
@@ -444,6 +450,9 @@ def initialize_inference_engine(
             model=remote_model_name,
             **model_args_dict,
         )
+
+        # Keep the actual model name for the results
+        args.model = inference_model.engine.model
     else:
         # This case should not be reached due to argparse choices
         logger.error(
@@ -682,7 +691,7 @@ def _save_results_to_disk(
 
     # prepend to the results_path name the time in a wat like this: 2025-04-04T11:37:32
 
-    timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
 
     results_path = prepend_timestamp_to_path(results_path, timestamp)
     samples_path = prepend_timestamp_to_path(samples_path, timestamp)
@@ -823,6 +832,50 @@ def main():
         sys.exit(1)
 
     logger.info("Unitxt Evaluation CLI finished successfully.")
+
+
+def extract_scores(directory):  # pragma: no cover
+    import pandas as pd
+
+    data = []
+
+    for filename in sorted(os.listdir(directory)):
+        if filename.endswith("evaluation_results.json"):
+            file_path = os.path.join(directory, filename)
+            try:
+                with open(file_path, encoding="utf-8") as f:
+                    content = json.load(f)
+
+                    env_info = content.get("environment_info", {})
+                    timestamp = env_info.get("timestamp_utc", "N/A")
+                    model = env_info.get("parsed_arguments", {}).get("model", "N/A")
+                    results = content.get("results", {})
+
+                    row = {}
+                    row["Model"] = model
+                    row["Timestamp"] = timestamp
+                    row["Average"] = results.get("score", "N/A")
+
+                    for key in results.keys():
+                        if isinstance(results[key], dict):
+                            score = results[key].get("score", "N/A")
+                            row[key] = score
+
+                    data.append(row)
+            except Exception as e:
+                logger.error(f"Error parsing results file {filename}: {e}.")
+
+    return pd.DataFrame(data).sort_values(by="Timestamp", ascending=True)
+
+
+def summarize_cli():
+    if len(sys.argv) != 2:
+        logger.error("Usage: python summarize_cli_results.py <results-directory>")
+        sys.exit(1)
+    directory = sys.argv[1]
+    df = extract_scores(directory)
+
+    logger.info(df.to_markdown(index=False))
 
 
 if __name__ == "__main__":

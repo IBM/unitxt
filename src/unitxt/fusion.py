@@ -2,6 +2,7 @@ from abc import abstractmethod
 from typing import Dict, Generator, List, Optional, Union
 
 from .dataclass import NonPositionalField
+from .error_utils import error_context
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .random_utils import new_random_generator
@@ -92,7 +93,7 @@ class FixedFusion(BaseFusion):
                         max_from_this_split = max_per_this_split
 
             logger.info(f"Processing {split} from {origin_name}...")
-            try:
+            with error_context(self, subset=origin_name):
                 for instance in multi_stream[split]:
                     if (
                         max_from_this_split is not None
@@ -105,8 +106,6 @@ class FixedFusion(BaseFusion):
                         instance["subset"].insert(0, origin_name)
                     emitted_from_this_split += 1
                     yield instance
-            except Exception as e:
-                raise RuntimeError(f"Exception in subset: {origin_name}") from e
 
 
 class WeightedFusion(BaseFusion):
@@ -164,16 +163,15 @@ class WeightedFusion(BaseFusion):
                 weights=[self.named_weights[name] for name in population],
             )[0]
             iterator = iterators[origin_name]
-            try:
-                instance = next(iterator)
-                if isinstance(origin_name, str):
-                    if "subset" not in instance:
-                        instance["subset"] = []
-                    instance["subset"].insert(0, origin_name)
-                total_examples += 1
-                yield instance
+            with error_context(self, subset=origin_name):
+                try:
+                    instance = next(iterator)
+                    if isinstance(origin_name, str):
+                        if "subset" not in instance:
+                            instance["subset"] = []
+                        instance["subset"].insert(0, origin_name)
+                    total_examples += 1
+                    yield instance
 
-            except StopIteration:
-                iterators.pop(origin_name)
-            except Exception as e:
-                raise RuntimeError(f"Exception in subset: {origin_name}") from e
+                except StopIteration:
+                    iterators.pop(origin_name)

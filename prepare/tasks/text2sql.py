@@ -23,3 +23,23 @@ add_to_catalog(
     "tasks.text2sql",
     overwrite=True,
 )
+
+add_to_catalog(
+    Task(
+        input_fields={
+            "id": str,
+            "utterance": str,
+            "hint": Optional[str],
+            "db": SQLDatabase,
+        },
+        reference_fields={"query": str},
+        prediction_type=str,
+        metrics=[
+            "metrics.text2sql.execution_logic_accuracy",
+            "metrics.text2sql.non_execution_accuracy",
+            "metrics.anls",
+        ],
+    ),
+    "tasks.text2sql_logic",
+    overwrite=True,
+)

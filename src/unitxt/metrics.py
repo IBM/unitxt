@@ -8,7 +8,8 @@ import uuid
 import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
-from dataclasses import field
+from dataclasses import asdict, field
+from dataclasses import fields as dataclasses_fields
 from enum import Enum
 from functools import lru_cache
 from typing import (
@@ -43,7 +44,7 @@ from .dataclass import (
 )
 from .deprecation_utils import deprecation
 from .dict_utils import dict_get
-from .error_utils import Documentation, UnitxtError, UnitxtWarning
+from .error_utils import Documentation, UnitxtError, UnitxtWarning, error_context
 from .inference import (
     HFPipelineBasedInferenceEngine,
     InferenceEngine,
@@ -65,6 +66,7 @@ from .operators import ArtifactFetcherMixin, Copy, FieldOperator, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
+from .text2sql_utils import SQLExecutionResult, SQLNonExecutionMetricResult
 from .type_utils import isoftype, parse_type_string, to_type_string
 from .types import ToolCall
 from .utils import deep_copy, recursive_copy, retry_connection_with_exponential_backoff
@@ -383,28 +385,35 @@ class MapReduceMetric(
         return intermediates
 
     def process(self, stream: Stream, stream_name: Optional[str] = None):
-        instances_scores, global_scores = self.compute(stream, stream_name)
-        for i, (instance, instance_scores) in enumerate(zip(stream, instances_scores)):
-            previous_score = instance.get("score", {"global": {}, "instance": {}})
+        with error_context(
+            self,
+            stage="Evaluating Metric",
+            help="https://www.unitxt.ai/en/latest/docs/adding_metric.html",
+        ):
+            instances_scores, global_scores = self.compute(stream, stream_name)
+            for i, (instance, instance_scores) in enumerate(
+                zip(stream, instances_scores)
+            ):
+                previous_score = instance.get("score", {"global": {}, "instance": {}})
 
-            if i == 0:
-                for key in global_scores:
-                    if is_original_key(key) and key in previous_score["global"]:
-                        UnitxtWarning(
-                            message=f"Metric '{key}' that has just been evaluated with value {global_scores[key]}, is already recorded "
-                            f"to have value {previous_score['global'][key]} by a previous metric evaluation on this instance or stream. "
-                            f"To avoid overwriting the existing value, add a score_prefix to the metric name (e.g. score_prefix='my_second_' , "
-                            f"which will yield, in this case, a score named: 'my_second_{key}')",
-                            additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
-                        )
+                if i == 0:
+                    for key in global_scores:
+                        if is_original_key(key) and key in previous_score["global"]:
+                            UnitxtWarning(
+                                message=f"Metric '{key}' that has just been evaluated with value {global_scores[key]}, is already recorded "
+                                f"to have value {previous_score['global'][key]} by a previous metric evaluation on this instance or stream. "
+                                f"To avoid overwriting the existing value, add a score_prefix to the metric name (e.g. score_prefix='my_second_' , "
+                                f"which will yield, in this case, a score named: 'my_second_{key}')",
+                                additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
+                            )
 
-            global_scores = {**previous_score["global"], **global_scores}
-            instance_scores = {**previous_score["instance"], **instance_scores}
+                global_scores = {**previous_score["global"], **global_scores}
+                instance_scores = {**previous_score["instance"], **instance_scores}
 
-            yield {
-                **instance,
-                "score": {"global": global_scores, "instance": instance_scores},
-            }
+                yield {
+                    **instance,
+                    "score": {"global": global_scores, "instance": instance_scores},
+                }
 
     def compute(self, stream: Stream, stream_name: Optional[str] = None):
         evaluation_inputs_stream = self._instances_stream_to_evaluation_inputs(stream)
@@ -827,6 +836,52 @@ class ToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
         }
 
 
+class MultiTurnToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]):
+    """Compares each predicted tool call with list of references tool call."""
+
+    main_score = "argument_schema_validation"
+    reduction = MeanReduction()
+    prediction_type = List[ToolCall]
+    _requirements_list = ["jsonschema-rs"]
+
+    def prepare(self):
+        super().prepare()
+        import jsonschema_rs
+
+        self._schema = jsonschema_rs
+
+    def map(
+        self,
+        prediction: List[ToolCall],
+        references: List[List[ToolCall]],
+        task_data: Dict[str, Any],
+    ) -> Dict[str, float]:
+        validation_scores = []
+        for tool_call in prediction:
+            parameters = None
+            for tool in task_data["__tools__"]:
+                if tool["function"]["name"] == tool_call["name"]:
+                    parameters = tool["function"]["parameters"]
+
+            if parameters is None:
+                validation_scores.append(0.0)
+            else:
+                try:
+                    self._schema.validate(
+                        parameters,
+                        tool_call["arguments"],
+                    )
+                    validation_scores.append(1.0)
+                except self._schema.ValidationError:
+                    validation_scores.append(0.0)
+
+        argument_schema_validation = sum(validation_scores) / len(validation_scores)
+
+        return {
+            "argument_schema_validation": argument_schema_validation,
+        }
+
+
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
     # Use None to disable confidence interval computation.
@@ -1077,83 +1132,88 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
     process_single_instances = True
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        references = []
-        predictions = []
-        task_data = []
+        with error_context(
+            self,
+            stage="Evaluating Metric",
+            help="https://www.unitxt.ai/en/latest/docs/adding_metric.html",
+        ):
+            references = []
+            predictions = []
+            task_data = []
 
-        instances = []
+            instances = []
 
-        for instance in stream:
-            instance = self.verify_instance(instance)
+            for instance in stream:
+                instance = self.verify_instance(instance)
 
-            if "score" not in instance:
-                instance["score"] = {"global": {}, "instance": {}}
+                if "score" not in instance:
+                    instance["score"] = {"global": {}, "instance": {}}
 
-            instance_references, instance_prediction = (
-                instance["references"],
-                instance["prediction"],
-            )
+                instance_references, instance_prediction = (
+                    instance["references"],
+                    instance["prediction"],
+                )
 
-            references.append(instance_references)
-            predictions.append(instance_prediction)
-            instances.append(instance)
+                references.append(instance_references)
+                predictions.append(instance_prediction)
+                instances.append(instance)
 
-            instance_task_data = (
-                instance["task_data"] if "task_data" in instance else {}
-            )
-            task_data.append(instance_task_data)
-            instance_score = None
+                instance_task_data = (
+                    instance["task_data"] if "task_data" in instance else {}
+                )
+                task_data.append(instance_task_data)
+                instance_score = None
 
-            # for backward compatibility
-            no_score_value = np.nan
-            if self.process_single_instances:
-                try:
-                    instance_score = self._compute(
-                        [instance_references],
-                        [instance_prediction],
-                        [instance_task_data],
+                # for backward compatibility
+                no_score_value = np.nan
+                if self.process_single_instances:
+                    try:
+                        instance_score = self._compute(
+                            [instance_references],
+                            [instance_prediction],
+                            [instance_task_data],
+                        )
+                    except:
+                        no_score_value = None
+                if not instance_score:
+                    instance_score = {
+                        "score": no_score_value,
+                        "score_name": self.main_score,
+                    }
+
+                    if isinstance(self.main_score, str):
+                        instance_score[self.main_score] = no_score_value
+
+                instance["score"]["instance"].update(
+                    self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                        instance_score, instance["score"]["instance"]
                     )
-                except:
-                    no_score_value = None
-            if not instance_score:
-                instance_score = {
-                    "score": no_score_value,
-                    "score_name": self.main_score,
-                }
+                )
+            self._validate_references_and_prediction(references, predictions)
+            global_score = {"num_of_instances": len(instances)}
 
-                if isinstance(self.main_score, str):
-                    instance_score[self.main_score] = no_score_value
-
-            instance["score"]["instance"].update(
+            result = self._compute(references, predictions, task_data)
+            global_score.update(
                 self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
-                    instance_score, instance["score"]["instance"]
+                    result, global_score
                 )
             )
-        self._validate_references_and_prediction(references, predictions)
-        global_score = {"num_of_instances": len(instances)}
+            if self.ci_scores:
+                score_names = [
+                    self._add_score_prefix(score_name) for score_name in self.ci_scores
+                ]
+            else:
+                score_names = [global_score["score_name"]]
 
-        result = self._compute(references, predictions, task_data)
-        global_score.update(
-            self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
-                result, global_score
-            )
-        )
-        if self.ci_scores:
-            score_names = [
-                self._add_score_prefix(score_name) for score_name in self.ci_scores
-            ]
-        else:
-            score_names = [global_score["score_name"]]
+            for score_name in score_names:
+                confidence_interval = self.compute_global_confidence_intervals(
+                    references, predictions, task_data, score_name
+                )
+                global_score.update(confidence_interval)
 
-        for score_name in score_names:
-            confidence_interval = self.compute_global_confidence_intervals(
-                references, predictions, task_data, score_name
-            )
-            global_score.update(confidence_interval)
-
-        for instance in instances:
-            self.update_and_adjust_global_score(instance, global_score)
-            yield instance
+            for instance in instances:
+                self.update_and_adjust_global_score(instance, global_score)
+                yield instance
 
     def _compute(
         self,
@@ -1203,96 +1263,105 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         return instance
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        instances = []
-        for instance in stream:
-            self.verify_instance(instance)
-            instance = self.preprocess_instance(instance)
-            instances.append(instance)
+        with error_context(
+            self,
+            stage="Evaluating Metrics",
+            help="https://www.unitxt.ai/en/latest/docs/adding_metric.html",
+        ):
+            instances = []
+            for instance in stream:
+                self.verify_instance(instance)
+                instance = self.preprocess_instance(instance)
+                instances.append(instance)
 
-        predictions = [instance["prediction"] for instance in instances]
-        references = [instance["references"] for instance in instances]
-        task_data = [
-            instance["task_data"] if "task_data" in instance else {}
-            for instance in instances
-        ]
-        self._validate_references_and_prediction(references, predictions)
-        global_score = {"num_of_instances": len(instances)}
-        # compute the metric over all refs and preds
-        instance_scores = self.compute(
-            references=references,
-            predictions=predictions,
-            task_data=task_data,
-        )
-
-        # add the score and score_name fields
-        for instance_score in instance_scores:
-            instance_score["score"] = instance_score[self.main_score]
-            instance_score["score_name"] = self.main_score
-
-        for instance, score in zip(instances, instance_scores):
-            if "score" not in instance:
-                instance["score"] = {"global": {}, "instance": {}}
-
-            instance["score"]["instance"].update(
-                self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
-                    score, instance["score"]["instance"]
-                )
+            predictions = [instance["prediction"] for instance in instances]
+            references = [instance["references"] for instance in instances]
+            task_data = [
+                instance["task_data"] if "task_data" in instance else {}
+                for instance in instances
+            ]
+            self._validate_references_and_prediction(references, predictions)
+            global_score = {"num_of_instances": len(instances)}
+            # compute the metric over all refs and preds
+            instance_scores = self.compute(
+                references=references,
+                predictions=predictions,
+                task_data=task_data,
             )
 
-        for reduction, fields in self.reduction_map.items():
-            assert (
-                reduction in self.implemented_reductions
-            ), f"Reduction {reduction} is not implemented, use one of {self.implemented_reductions}"
+            # add the score and score_name fields
+            for instance_score in instance_scores:
+                instance_score["score"] = instance_score[self.main_score]
+                instance_score["score_name"] = self.main_score
 
-            if reduction == "mean":
-                for field_name in fields:
-                    field_name_with_prefix = self._add_score_prefix(field_name)
-                    global_score[field_name_with_prefix] = nan_mean(
-                        [
-                            instance["score"]["instance"][field_name_with_prefix]
-                            for instance in instances
-                        ]
+            for instance, score in zip(instances, instance_scores):
+                if "score" not in instance:
+                    instance["score"] = {"global": {}, "instance": {}}
+
+                instance["score"]["instance"].update(
+                    self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                        score, instance["score"]["instance"]
                     )
-                    if field_name == self.main_score:
-                        global_score["score"] = global_score[field_name_with_prefix]
-                        global_score["score_name"] = self.score_prefix + self.main_score
-
-                ci_fields = (
-                    list(set(self.ci_scores))
-                    if self.ci_scores is not None
-                    else [self.main_score]
                 )
-                ci_fields_with_prefix = [
-                    self._add_score_prefix(ci_field) for ci_field in ci_fields
-                ]
-                confidence_interval = self.score_based_confidence_interval(
-                    instances=instances, score_names=ci_fields_with_prefix
-                )
-                global_score.update(confidence_interval)
-            if reduction == "weighted_win_rate":
-                for field_name in fields:
-                    field_name_with_prefix = self._add_score_prefix(field_name)
-                    total_battles = 0
-                    wins = 0
-                    for instance in instances:
-                        s = instance["score"]["instance"][field_name_with_prefix]
-                        if s > 0:
-                            total_battles += s
-                            wins += s
-                        elif s < 0:
-                            total_battles += abs(s)
-                        else:
-                            total_battles += 2
-                            wins += 1
 
-                    global_score[field_name_with_prefix] = wins / total_battles
-                    if field_name == self.main_score:
-                        global_score["score"] = global_score[field_name_with_prefix]
-                        global_score["score_name"] = self.score_prefix + self.main_score
+            for reduction, fields in self.reduction_map.items():
+                assert (
+                    reduction in self.implemented_reductions
+                ), f"Reduction {reduction} is not implemented, use one of {self.implemented_reductions}"
 
-        for instance in instances:
-            self.update_and_adjust_global_score(instance, global_score)
-            yield instance
+                if reduction == "mean":
+                    for field_name in fields:
+                        field_name_with_prefix = self._add_score_prefix(field_name)
+                        global_score[field_name_with_prefix] = nan_mean(
+                            [
+                                instance["score"]["instance"][field_name_with_prefix]
+                                for instance in instances
+                            ]
+                        )
+                        if field_name == self.main_score:
+                            global_score["score"] = global_score[field_name_with_prefix]
+                            global_score["score_name"] = (
+                                self.score_prefix + self.main_score
+                            )
+
+                    ci_fields = (
+                        list(set(self.ci_scores))
+                        if self.ci_scores is not None
+                        else [self.main_score]
+                    )
+                    ci_fields_with_prefix = [
+                        self._add_score_prefix(ci_field) for ci_field in ci_fields
+                    ]
+                    confidence_interval = self.score_based_confidence_interval(
+                        instances=instances, score_names=ci_fields_with_prefix
+                    )
+                    global_score.update(confidence_interval)
+                if reduction == "weighted_win_rate":
+                    for field_name in fields:
+                        field_name_with_prefix = self._add_score_prefix(field_name)
+                        total_battles = 0
+                        wins = 0
+                        for instance in instances:
+                            s = instance["score"]["instance"][field_name_with_prefix]
+                            if s > 0:
+                                total_battles += s
+                                wins += s
+                            elif s < 0:
+                                total_battles += abs(s)
+                            else:
+                                total_battles += 2
+                                wins += 1
+
+                        global_score[field_name_with_prefix] = wins / total_battles
+                        if field_name == self.main_score:
+                            global_score["score"] = global_score[field_name_with_prefix]
+                            global_score["score_name"] = (
+                                self.score_prefix + self.main_score
+                            )
+
+            for instance in instances:
+                self.update_and_adjust_global_score(instance, global_score)
+                yield instance
 
     @abstractmethod
     def compute(
@@ -1598,91 +1667,97 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             assert isinstance(fields["score_fields"], list)
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        instance_scores = self.compute_instance_scores(stream)
-        global_score = {"num_of_instances": len(instance_scores)}
-        for reduction_type, reduction_params in self.reduction_map.items():
-            assert (
-                reduction_type in self.implemented_reductions
-            ), f"Reduction {reduction_type} is not implemented, use one of {self.implemented_reductions}"
+        with error_context(
+            self,
+            stage="Evaluating Metrics",
+            help="https://www.unitxt.ai/en/latest/docs/adding_metric.html",
+        ):
+            instance_scores = self.compute_instance_scores(stream)
+            global_score = {"num_of_instances": len(instance_scores)}
+            for reduction_type, reduction_params in self.reduction_map.items():
+                assert (
+                    reduction_type in self.implemented_reductions
+                ), f"Reduction {reduction_type} is not implemented, use one of {self.implemented_reductions}"
 
-            field_name_full_prefix = ""
-            # used for passing to the bootstrapping, depends on whether the groups are fixed or not
-            aggregation_function = None
-            if reduction_type == "mean":
-                aggregation_function = self.average_item_scores
-                reduction_fields = list(set(reduction_params))
-                # no group reduction, so resample instances individually
-                scores_to_resample = instance_scores
-            elif reduction_type == "max":
-                aggregation_function = self.max_item_scores
-                reduction_fields = list(set(reduction_params))
-                # no group reduction, so resample instances individually
-                scores_to_resample = instance_scores
-            elif reduction_type == "group_mean":
-                aggregation_function = self.average_item_scores
-                self._validate_group_mean_reduction()
-                reduction_fields = (
-                    [self.main_score]
-                    if "score_fields" not in reduction_params
-                    else list(set(reduction_params["score_fields"]))
-                )
-                aggregation_function_name = str(reduction_params["agg_func"][0])
-                field_name_full_prefix = "group_" + aggregation_function_name + "_"
-                do_resample_as_group = reduction_params["agg_func"][2]
-                if do_resample_as_group:
-                    # append fixed_ to name because resamples the groups as fixed units
-                    field_name_full_prefix = "fixed_" + field_name_full_prefix
-                (
-                    scores_to_resample,
-                    aggregation_function,
-                ) = self._set_up_group_mean_aggregation(
-                    instance_scores,
-                    reduction_params,
-                    reduction_fields,
-                )
-            else:
-                raise ValueError(
-                    f"Reduction {reduction_type} is not supported, please specify a valid reduction method in reduction_map {self.reduction_map}."
-                )
+                field_name_full_prefix = ""
+                # used for passing to the bootstrapping, depends on whether the groups are fixed or not
+                aggregation_function = None
+                if reduction_type == "mean":
+                    aggregation_function = self.average_item_scores
+                    reduction_fields = list(set(reduction_params))
+                    # no group reduction, so resample instances individually
+                    scores_to_resample = instance_scores
+                elif reduction_type == "max":
+                    aggregation_function = self.max_item_scores
+                    reduction_fields = list(set(reduction_params))
+                    # no group reduction, so resample instances individually
+                    scores_to_resample = instance_scores
+                elif reduction_type == "group_mean":
+                    aggregation_function = self.average_item_scores
+                    self._validate_group_mean_reduction()
+                    reduction_fields = (
+                        [self.main_score]
+                        if "score_fields" not in reduction_params
+                        else list(set(reduction_params["score_fields"]))
+                    )
+                    aggregation_function_name = str(reduction_params["agg_func"][0])
+                    field_name_full_prefix = "group_" + aggregation_function_name + "_"
+                    do_resample_as_group = reduction_params["agg_func"][2]
+                    if do_resample_as_group:
+                        # append fixed_ to name because resamples the groups as fixed units
+                        field_name_full_prefix = "fixed_" + field_name_full_prefix
+                    (
+                        scores_to_resample,
+                        aggregation_function,
+                    ) = self._set_up_group_mean_aggregation(
+                        instance_scores,
+                        reduction_params,
+                        reduction_fields,
+                    )
+                else:
+                    raise ValueError(
+                        f"Reduction {reduction_type} is not supported, please specify a valid reduction method in reduction_map {self.reduction_map}."
+                    )
 
-            # calculate global scores for each reduction field
-            for field_name in reduction_fields:
-                field_name_full = (
-                    field_name_full_prefix + self.score_prefix + field_name
-                )
-                # if group resampling (3rd element of agg_func parameter) is True, then
-                #   1. scores_to_resample are the group scores, and
-                #   2. aggregation_function is to take the raw mean
-                # if no group resampling (3rd element of agg_func parameter) is False, then
-                #   1. scores_to_resample are the original instance scores, and
-                #   2. aggregation_function is to apply the group aggregation from the instance scores
-                # either way, the application of aggregation_function to scores_to_resample yields the global score
-                global_score[field_name_full] = aggregation_function(
-                    scores_to_resample, self.score_prefix + field_name
-                )
-                if field_name == self.main_score:
-                    global_score["score"] = global_score[field_name_full]
-                    global_score["score_name"] = field_name_full
+                # calculate global scores for each reduction field
+                for field_name in reduction_fields:
+                    field_name_full = (
+                        field_name_full_prefix + self.score_prefix + field_name
+                    )
+                    # if group resampling (3rd element of agg_func parameter) is True, then
+                    #   1. scores_to_resample are the group scores, and
+                    #   2. aggregation_function is to take the raw mean
+                    # if no group resampling (3rd element of agg_func parameter) is False, then
+                    #   1. scores_to_resample are the original instance scores, and
+                    #   2. aggregation_function is to apply the group aggregation from the instance scores
+                    # either way, the application of aggregation_function to scores_to_resample yields the global score
+                    global_score[field_name_full] = aggregation_function(
+                        scores_to_resample, self.score_prefix + field_name
+                    )
+                    if field_name == self.main_score:
+                        global_score["score"] = global_score[field_name_full]
+                        global_score["score_name"] = field_name_full
 
-            # need to specify which fields should have CIs calculated for them through ci_scores
-            # (will not automatically calculate CIs for fields in reduction map)
-            if self.ci_scores is not None:
-                confidence_interval = self.score_based_confidence_interval(
-                    instances=scores_to_resample,
-                    score_names=[
-                        self.score_prefix + ci_score for ci_score in set(self.ci_scores)
-                    ],
-                    ci_score_prefix=field_name_full_prefix,
-                    aggregation_func=aggregation_function,
-                )
-                global_score.update(confidence_interval)
+                # need to specify which fields should have CIs calculated for them through ci_scores
+                # (will not automatically calculate CIs for fields in reduction map)
+                if self.ci_scores is not None:
+                    confidence_interval = self.score_based_confidence_interval(
+                        instances=scores_to_resample,
+                        score_names=[
+                            self.score_prefix + ci_score
+                            for ci_score in set(self.ci_scores)
+                        ],
+                        ci_score_prefix=field_name_full_prefix,
+                        aggregation_func=aggregation_function,
+                    )
+                    global_score.update(confidence_interval)
 
-        for instance in instance_scores:
-            self.update_and_adjust_global_score(instance, global_score)
+            for instance in instance_scores:
+                self.update_and_adjust_global_score(instance, global_score)
 
-        for i, instance in enumerate(stream):
-            instance["score"] = recursive_copy(instance_scores[i]["score"])
-            yield instance
+            for i, instance in enumerate(stream):
+                instance["score"] = recursive_copy(instance_scores[i]["score"])
+                yield instance
 
     def compute_instance_scores(
         self, stream: Stream, stream_name: Optional[str] = None
@@ -6559,391 +6634,102 @@ RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
 }
 
 
-class SQLExecutionAccuracy(InstanceMetric):
-    reduction_map = {
-        "mean": [
-            "execution_accuracy",
-            "non_empty_execution_accuracy",
-            "subset_non_empty_execution_result",
-            "non_empty_gold_df",
-            "gold_sql_runtime",
-            "predicted_sql_runtime",
-            "pred_to_gold_runtime_ratio",
-            "gold_error",
-            "predicted_error",
-        ]
-    }
+class SQLExecutionLogicAccuracy(InstanceMetric):
+    sql_timeout: float = 60.0
+    prediction_type = "Any"
+    _requirements_list = ["sqlglot", "func_timeout"]
+
     main_score = "non_empty_execution_accuracy"
+
+    all_metrics = [
+        f.name
+        for f in dataclasses_fields(SQLExecutionResult)
+        if isinstance(f.type, type) and f.type in (int, float)
+    ]
+
+    reduction_map = {"mean": all_metrics}
+
     ci_scores = [
         "execution_accuracy",
         "non_empty_execution_accuracy",
-        "subset_non_empty_execution_result",
+        "subset_non_empty_execution_accuracy",
+        "execution_accuracy_bird",
         "gold_sql_runtime",
         "predicted_sql_runtime",
     ]
 
-    prediction_type = "Any"  # string representation is compared
-    sql_timeout = 30.0
+    def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
+        from .text2sql_utils import (
+            ALL_DIALECTS,
+            extract_sql_from_text,
+            get_db_connector,
+            get_sql_execution_results,
+            replace_select_clause,
+        )
 
+        predicted_sql = extract_sql_from_text(prediction)
+        gold_sql = references[0]
+        dialect = task_data["db"]["db_type"]
+        if dialect not in ALL_DIALECTS:
+            dialect = None
+        revised_sql = (
+            replace_select_clause(gold_sql, predicted_sql, dialect)
+            if gold_sql and predicted_sql
+            else ""
+        )
+
+        db_connector = get_db_connector(task_data["db"]["db_type"])(task_data["db"])
+        result_obj = get_sql_execution_results(
+            revised_sql, gold_sql, db_connector, self.sql_timeout
+        )
+
+        result = asdict(result_obj)
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        logger.debug(f"SQL Execution Accuracy Result: {result}")
+        return result
+
+
+class SQLExecutionAccuracy(InstanceMetric):
+    sql_timeout: float = 60.0
+    prediction_type = "Any"
     _requirements_list = ["sqlglot", "func_timeout"]
 
-    @staticmethod
-    def compare_dfs_ignore_colnames_ordered_rows(df1, df2):
-        """Compares two DataFrames based on row content, ignoring column names.
+    main_score = "non_empty_execution_accuracy"
 
-        Args:
-            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
-            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
+    all_metrics = [
+        f.name
+        for f in dataclasses_fields(SQLExecutionResult)
+        if isinstance(f.type, type) and f.type in (int, float)
+    ]
 
-        Returns:
-            True if the DataFrames have the same ordered rows (ignoring column names),
-            False otherwise.
-        """
-        df1.fillna(0, inplace=True)
-        df2.fillna(0, inplace=True)
+    reduction_map = {"mean": all_metrics}
 
-        # Compare row counts first for a quick check
-        if df1.shape != df2.shape:
-            return False
-
-        # Convert DataFrames to numpy arrays of strings to handle mixed types
-        df1_array = df1.values.astype(str)
-        df2_array = df2.values.astype(str)
-
-        # Sort each row's elements (column order independence)
-        df1_sorted_rows = np.array([np.sort(row) for row in df1_array])
-        df2_sorted_rows = np.array([np.sort(row) for row in df2_array])
-
-        # Compare the sorted rows in order
-        return np.array_equal(df1_sorted_rows, df2_sorted_rows)
-
-    @staticmethod
-    def compare_dfs_ignore_colnames_unordered_rows(df1, df2):
-        """Compares two DataFrames based on row content, ignoring row order and column names.
-
-        Args:
-            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
-            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
-
-        Returns:
-            True if the DataFrames have the same content (ignoring column names and row order),
-            False otherwise.
-        """
-        # Compare shapes early on
-        if df1.shape != df2.shape:
-            return False
-
-        # Convert DataFrames to numpy arrays of strings (to handle mixed data types)
-        df1_array = df1.values.astype(str)
-        df2_array = df2.values.astype(str)
-
-        # Sort columns first, then sort rows
-        df1_sorted = np.sort(np.sort(df1_array, axis=1), axis=0)
-        df2_sorted = np.sort(np.sort(df2_array, axis=1), axis=0)
-
-        # Compare the sorted arrays
-        return np.array_equal(df1_sorted, df2_sorted)
-
-    @staticmethod
-    def compare_dfs_ignore_colnames_subset(df1, df2, ignore_row_order=True):
-        """Checks if the values of either DataFrame are a subset of the values in the other DataFrame.
-
-        Comparison is column order independent, and could optionally be row order independent.
-        We interpret "subset" as follows:
-
-        - For each row in df1, there must be a matching (or superset) row in df2, i.e. the set of values
-          in the df1 row is a subset of the set of values in that df2 row. Then do the same check in reverse.
-        - If either condition (df1 is subset of df2 OR df2 is subset of df1) is satisfied, return True.
-
-        We treat an empty dataframe as a subset of nothing, while in theory is a subset of any dataframe.
-
-        Args:
-            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
-            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
-            ignore_row_order (bool): If True, row order doesn't matter; if False, row order is respected.
-
-        Returns:
-            bool: True if df1 is a subset of df2 or vice versa, based on the specified row-order condition.
-
-        """
-        df1_array = df1.values.astype(str)
-        df2_array = df2.values.astype(str)
-
-        df1_sorted_rows = [np.sort(row) for row in df1_array]
-        df2_sorted_rows = [np.sort(row) for row in df2_array]
-
-        def row_is_subset(r_small, r_big):
-            """Check if all elements of r_small are in r_big."""
-            return set(r_small).issubset(set(r_big))
-
-        def df_is_subset_of_another(rows_small, rows_big, respect_order):
-            """Check if the rows_small is subset of rows_big under the given order condition."""
-            if not rows_small:
-                return False  # DataFrame needs to be non-empty
-
-            # If row order matters:
-            if respect_order:
-                i, j = 0, 0
-                while i < len(rows_small) and j < len(rows_big):
-                    if row_is_subset(rows_small[i], rows_big[j]):
-                        i += 1
-                    j += 1
-                return i == len(rows_small)
-            # Row order doesn't matter:
-            matched_indices = set()
-            for r_small in rows_small:
-                found_match = False
-                for idx, r_big in enumerate(rows_big):
-                    if idx not in matched_indices and row_is_subset(r_small, r_big):
-                        found_match = True
-                        matched_indices.add(idx)
-                        break
-                if not found_match:
-                    return False
-            return True
-
-        df1_sub_df2 = df_is_subset_of_another(
-            df1_sorted_rows, df2_sorted_rows, not ignore_row_order
-        )
-        df2_sub_df1 = df_is_subset_of_another(
-            df2_sorted_rows, df1_sorted_rows, not ignore_row_order
-        )
-
-        return df1_sub_df2 or df2_sub_df1
-
-    def get_sql_execution_results(
-        self, predicted_sql: str, gold_sql: str, connector
-    ) -> (int, int, int, int, int, int, int, int, int, str, str, str):
-        """Runs SQL queries using the provided connector and gets scores and results.
-
-        Args:
-            predicted_sql (str): predicted SQL query
-            gold_sql (str): gold reference SQL query
-            connector: database connector
-
-        Returns:
-        a 12-tuple of
-        1. execution_result: if df responses match
-        2. non_empty_execution_result: if dfs are non-empty and match
-        3. subset_non_empty_execution_result: if non-empty dfs and one is a subset of the other
-        4. non_empty_gold_df: if gt df is non-empty
-        5. gold_sql_runtime: ground truth query runtime
-        6. predicted_sql_runtime: predicted query runtime
-        7. pred_to_gold_runtime_ratio: ratio of predicted query runtime to gt query runtime
-        8. gold_error: if gt has an error
-        9. predicted_error: if predicted query has an error
-        10. ground truth dataframe
-        11. predicted query's dataframe
-        12. error message (if any)
-        """
-        import time
-
-        from func_timeout import func_timeout
-        from func_timeout.exceptions import FunctionTimedOut
-
-        from .sql_utils import sqlglot_optimized_equivalence
-
-        gold_res = None
-        gold_error = ""
-        gold_sql_runtime = 0
-        try:
-            start_time = time.perf_counter()
-            gold_res, gold_error = func_timeout(
-                self.sql_timeout,
-                connector.execute_query,
-                args=(gold_sql,),
-            )
-            end_time = time.perf_counter()
-            gold_sql_runtime = end_time - start_time
-        except FunctionTimedOut as e:
-            pred_error = f"Timeout error executing gold SQL: {e}"
-            logger.warning(pred_error)
-        except Exception as e:
-            gold_error = f"Error executing gold SQL: {e}"
-        if gold_error is not None:
-            return (
-                0,
-                0,
-                0,
-                0,
-                gold_sql_runtime,
-                0,
-                0,
-                0,
-                0,
-                "",
-                "",
-                gold_error,
-            )
-
-        if isinstance(gold_res, dict) and "results" in gold_res:
-            gold_res = gold_res["results"]
-        gold_df = pd.DataFrame(gold_res)
-        non_empty_gold_df = 0 if gold_df.empty else 1
-
-        no_execution_match_result = (
-            1,
-            non_empty_gold_df,
-            non_empty_gold_df,
-            non_empty_gold_df,
-            gold_sql_runtime,
-            0,
-            0,
-            0,
-            0,
-            gold_df.to_json(),
-            "",
-            "",
-        )
-        if predicted_sql.lower().strip() == gold_sql.lower().strip():
-            return no_execution_match_result
-        try:
-            if sqlglot_optimized_equivalence(gold_sql, predicted_sql):
-                return no_execution_match_result
-        except Exception as e:  # Catch specific exceptions if possible
-            logger.info(
-                f"Couldn't test equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
-            )
-
-        pred_res = None
-        pred_error = ""
-        pred_sql_runtime = 0
-        try:
-            start_time = time.perf_counter()
-            pred_res, pred_error = func_timeout(
-                self.sql_timeout,
-                connector.execute_query,
-                args=(predicted_sql,),
-            )
-            end_time = time.perf_counter()
-            pred_sql_runtime = end_time - start_time
-        except FunctionTimedOut as e:
-            pred_error = f"Timeout error executing predicted SQL: {e}"
-            logger.info(pred_error)
-        except Exception as e:
-            pred_error = f"Error executing predicted SQL: {e}"
-            logger.info(pred_error)
-
-        pred_to_gold_runtime_ratio = (
-            float(pred_sql_runtime) / gold_sql_runtime if gold_sql_runtime > 0 else 0
-        )
-
-        if pred_res is None:
-            return (
-                0,
-                0,
-                0,
-                0,
-                gold_sql_runtime,
-                pred_sql_runtime,
-                pred_to_gold_runtime_ratio,
-                0,
-                1,
-                "",
-                "",
-                pred_error,
-            )
-
-        if isinstance(pred_res, dict) and "results" in pred_res:
-            pred_res = pred_res["results"]
-        predicted_df = pd.DataFrame(pred_res)
-
-        subset_non_empty_execution_result = 0
-        non_empty_execution_result = 0
-        if "ORDER BY" in gold_sql.upper():
-            execution_result = (
-                1
-                if self.compare_dfs_ignore_colnames_ordered_rows(predicted_df, gold_df)
-                else 0
-            )
-            if non_empty_gold_df:
-                if execution_result == 1:
-                    non_empty_execution_result = 1
-                if self.compare_dfs_ignore_colnames_subset(
-                    gold_df, predicted_df, ignore_row_order=False
-                ):
-                    subset_non_empty_execution_result = 1
-        else:
-            execution_result = (
-                1
-                if self.compare_dfs_ignore_colnames_unordered_rows(
-                    predicted_df, gold_df
-                )
-                else 0
-            )
-            if non_empty_gold_df:
-                if execution_result == 1:
-                    non_empty_execution_result = 1
-                if self.compare_dfs_ignore_colnames_subset(
-                    gold_df, predicted_df, ignore_row_order=True
-                ):
-                    subset_non_empty_execution_result = 1
-
-        return (
-            execution_result,
-            non_empty_execution_result,
-            subset_non_empty_execution_result,
-            non_empty_gold_df,
-            gold_sql_runtime,
-            pred_sql_runtime,
-            pred_to_gold_runtime_ratio,
-            0,
-            0,
-            gold_df.to_json(),
-            predicted_df.to_json(),
-            pred_error,
-        )
+    ci_scores = [
+        "execution_accuracy",
+        "non_empty_execution_accuracy",
+        "subset_non_empty_execution_accuracy",
+        "execution_accuracy_bird",
+        "gold_sql_runtime",
+        "predicted_sql_runtime",
+    ]
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
-        from .sql_utils import get_db_connector
+        from .text2sql_utils import (
+            extract_sql_from_text,
+            get_db_connector,
+            get_sql_execution_results,
+        )
 
-        predicted_sql = prediction
-        execution_result: float = 0.0
+        predicted_sql = extract_sql_from_text(prediction)
+        gold_sql = references[0]
 
-        if predicted_sql and predicted_sql.strip() != "":
-            if not predicted_sql.startswith("SELECT") and "SELECT" in predicted_sql:
-                predicted_sql = predicted_sql[predicted_sql.find("SELECT") :]
-            if ";" in predicted_sql:
-                predicted_sql = predicted_sql[: predicted_sql.find(";") + 1]
+        db_connector = get_db_connector(task_data["db"]["db_type"])(task_data["db"])
+        result_obj = get_sql_execution_results(
+            predicted_sql, gold_sql, db_connector, self.sql_timeout
+        )
 
-            db_connector = get_db_connector(task_data["db"]["db_type"])(task_data["db"])
-
-            logger.debug(
-                f"Starting to get SQL execution results over DB: {task_data['db']}"
-            )
-            (
-                execution_result,
-                non_empty_execution_result,
-                subset_non_empty_execution_result,
-                non_empty_gold_df,
-                gold_sql_runtime,
-                predicted_sql_runtime,
-                pred_to_gold_runtime_ratio,
-                gold_error,
-                predicted_error,
-                gold_df_json,
-                predicted_df_json,
-                error_message,
-            ) = self.get_sql_execution_results(
-                predicted_sql, references[0], db_connector
-            )
-
-        result = {
-            "execution_accuracy": float(execution_result),
-            "non_empty_execution_accuracy": float(non_empty_execution_result),
-            "subset_non_empty_execution_result": float(
-                subset_non_empty_execution_result
-            ),
-            "non_empty_gold_df": float(non_empty_gold_df),
-            "gold_sql_runtime": float(gold_sql_runtime),
-            "predicted_sql_runtime": float(predicted_sql_runtime),
-            "pred_to_gold_runtime_ratio": float(pred_to_gold_runtime_ratio),
-            "gold_error": float(gold_error),
-            "predicted_error": float(predicted_error),
-            "error_message": str(error_message),
-            "gold_df_json": str(gold_df_json),
-            "predicted_df_json": str(predicted_df_json),
-        }
+        result = asdict(result_obj)
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         logger.debug(f"SQL Execution Accuracy Result: {result}")
@@ -6951,34 +6737,22 @@ class SQLExecutionAccuracy(InstanceMetric):
 
 
 class SQLNonExecutionAccuracy(InstanceMetric):
-    reduction_map = {
-        "mean": [
-            "sqlglot_validity",
-            "sqlparse_validity",
-            "sqlglot_equivalence",
-            "sqlglot_optimized_equivalence",
-            "sqlparse_equivalence",
-            "sql_exact_match",
-            "sql_syntactic_equivalence",
-        ]
-    }
-    main_score = "sqlglot_equivalence"
-    ci_scores = [
-        "sqlglot_validity",
-        "sqlparse_validity",
-        "sqlglot_equivalence",
-        "sqlglot_optimized_equivalence",
-        "sqlparse_equivalence",
-        "sql_exact_match",
-        "sql_syntactic_equivalence",
+    all_metrics = [
+        f.name
+        for f in dataclasses_fields(SQLNonExecutionMetricResult)
+        if isinstance(f.type, type) and f.type in (int, float)
     ]
+    reduction_map = {"mean": all_metrics}
+    main_score = "sqlglot_equivalence"
+    ci_scores = all_metrics
 
     prediction_type = "Any"  # string representation is compared
 
     _requirements_list = ["sqlglot", "sqlparse"]
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
-        from .sql_utils import (
+        from .text2sql_utils import (
+            extract_sql_from_text,
             is_sqlglot_parsable,
             is_sqlparse_parsable,
             sql_exact_match,
@@ -6987,48 +6761,45 @@ class SQLNonExecutionAccuracy(InstanceMetric):
             sqlparse_queries_equivalent,
         )
 
-        predicted_sql = prediction
         gold_sql = references[0]
-
-        if predicted_sql and predicted_sql.strip() != "":
-            if not predicted_sql.startswith("SELECT") and "SELECT" in predicted_sql:
-                predicted_sql = predicted_sql[predicted_sql.find("SELECT") :]
-            if ";" in predicted_sql:
-                predicted_sql = predicted_sql[: predicted_sql.find(";") + 1]
+        predicted_sql = extract_sql_from_text(prediction)
 
         is_sqlglot_parsable = is_sqlglot_parsable(predicted_sql)
         is_sqlparse_parsable = is_sqlparse_parsable(predicted_sql)
-        result = {
-            "sqlglot_validity": float(is_sqlglot_parsable),
-            "sqlparse_validity": float(is_sqlparse_parsable),
-            "sqlglot_equivalence": float(
+        result_obj = SQLNonExecutionMetricResult(
+            sqlglot_validity=int(is_sqlglot_parsable),
+            sqlparse_validity=int(is_sqlparse_parsable),
+            sqlglot_equivalence=int(
                 sqlglot_parsed_queries_equivalent(predicted_sql, gold_sql)
                 if is_sqlglot_parsable
                 else 0
             ),
-            "sqlglot_optimized_equivalence": float(
+            sqlglot_optimized_equivalence=int(
                 sqlglot_optimized_equivalence(predicted_sql, gold_sql)
                 if is_sqlglot_parsable
                 else 0
             ),
-            "sqlparse_equivalence": float(
+            sqlparse_equivalence=int(
                 sqlparse_queries_equivalent(predicted_sql, gold_sql)
                 if is_sqlparse_parsable
                 else 0
             ),
-            "sql_exact_match": float(sql_exact_match(predicted_sql, gold_sql)),
-        }
-        result["sql_syntactic_equivalence"] = float(
+            sql_exact_match=int(sql_exact_match(predicted_sql, gold_sql)),
+            sql_syntactic_equivalence=0,  # will update below
+        )
+
+        result_obj.sql_syntactic_equivalence = int(
             any(
-                result[key]
-                for key in [
-                    "sqlglot_equivalence",
-                    "sqlglot_optimized_equivalence",
-                    "sqlparse_equivalence",
-                    "sql_exact_match",
+                [
+                    result_obj.sqlglot_equivalence,
+                    result_obj.sqlglot_optimized_equivalence,
+                    result_obj.sqlparse_equivalence,
+                    result_obj.sql_exact_match,
                 ]
             )
         )
+
+        result = asdict(result_obj)
         logger.debug(f"SQL Non Execution Accuracy Result: {result}")
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
