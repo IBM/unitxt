@@ -1,5 +1,8 @@
 {
-    "__type__": "multi_turn_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "MultiTurnTemplate"
+    },
     "references_field": "reference_calls",
     "turns_field": "dialog",
     "postprocessors": [

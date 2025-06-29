@@ -1,8 +1,14 @@
 {
-    "__type__": "post_process",
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "PostProcess"
+    },
     "process_references": true,
     "process_prediction": true,
     "operator": {
-        "__type__": "match_closest_option"
+        "__type__": {
+            "module": "unitxt.processors",
+            "name": "MatchClosestOption"
+        }
     }
 }

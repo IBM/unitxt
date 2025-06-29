@@ -1,8 +1,14 @@
 {
-    "__type__": "sequential_operator",
+    "__type__": {
+        "module": "unitxt.operator",
+        "name": "SequentialOperator"
+    },
     "steps": [
         {
-            "__type__": "load_json",
+            "__type__": {
+                "module": "unitxt.struct_data_operators",
+                "name": "LoadJson"
+            },
             "field": "prediction",
             "process_every_value": false
         }

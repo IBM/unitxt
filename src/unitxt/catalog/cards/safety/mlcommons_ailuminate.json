@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_csv",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadCSV"
+        },
         "files": {
             "test": "https://raw.githubusercontent.com/mlcommons/ailuminate/0fe054f3d34209a0a1acf1b95174c5e8926f5c57/airr_official_1.0_practice_prompt_set_release_public_subset.csv"
         },
@@ -10,7 +16,10 @@
         ]
     },
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "release_prompt_id": "str",
             "prompt_text": "str",
@@ -26,10 +35,16 @@
         ]
     },
     "templates": {
-        "__type__": "templates_dict",
+        "__type__": {
+            "module": "unitxt.templates",
+            "name": "TemplatesDict"
+        },
         "items": {
             "default": {
-                "__type__": "input_output_template",
+                "__type__": {
+                    "module": "unitxt.templates",
+                    "name": "InputOutputTemplate"
+                },
                 "input_format": "{prompt_text}\n",
                 "output_format": ""
             }

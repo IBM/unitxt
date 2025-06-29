@@ -1,8 +1,14 @@
 {
-    "__type__": "sequential_operator",
+    "__type__": {
+        "module": "unitxt.operator",
+        "name": "SequentialOperator"
+    },
     "steps": [
         {
-            "__type__": "get_sql",
+            "__type__": {
+                "module": "unitxt.processors",
+                "name": "GetSQL"
+            },
             "field": "prediction"
         }
     ]
