@@ -1,5 +1,6 @@
 import json
 import re
+import textwrap
 from collections import defaultdict
 from functools import lru_cache
 from statistics import mean
@@ -683,21 +684,36 @@ class InstanceScores(list):
             return df[columns]
         return df
 
+    def _to_markdown(self, df, max_col_width=30, **kwargs):
+        def wrap_column(series, max_width=30):
+            """Wraps string values in a Pandas Series to a maximum width."""
+            return series.apply(lambda x: textwrap.fill(str(x), width=max_width))
+
+        wrapped_df = df.copy()
+        for col in wrapped_df.columns:
+            wrapped_df[col] = wrap_column(wrapped_df[col], max_col_width)
+        return wrapped_df.to_markdown(**kwargs)
+
+    def to_markdown(self, flatten=True, columns=None, max_col_width=30, **kwargs):
+        return self._to_markdown(self.to_df(flatten, columns), max_col_width, **kwargs)
+
     @property
     def summary(self):
-        return to_pretty_string(
+        return self._to_markdown(
             self.to_df()
             .head()
             .drop(
                 columns=[
                     "metadata",
                     "media",
-                    "data_classification_policy",
                     "groups",
                     "subset",
-                ]
-            ),
-            float_format=".2g",
+                    "demos",
+                    "metrics",
+                    "postprocessors",
+                ],
+                errors="ignore",
+            )
         )
 
     def __repr__(self):
