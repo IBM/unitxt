@@ -709,7 +709,10 @@ class InstanceScores(list):
                     "groups",
                     "subset",
                     "demos",
-                ]
+                    "metrics",
+                    "postprocessors",
+                ],
+                errors="ignore",
             )
         )
 
