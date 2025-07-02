@@ -1311,8 +1311,20 @@ class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
     def _mock_infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return [self.default_inference_value for _ in dataset]
+        result = []
+        for _ in dataset:
+            if return_meta_data:
+                result.append(
+                    TextGenerationInferenceOutput(
+                        prediction=self.default_inference_value,
+                        generated_text=self.default_inference_value,
+                    )
+                )
+            else:
+                result.append(self.default_inference_value)
+        return result
 
     def _infer(
         self,
