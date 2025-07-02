@@ -75,8 +75,6 @@ class TestArtifactRecovery(UnitxtTestCase):
         class DummyExistsForLoading(Artifact):
             pass
 
-        dummy = DummyExistsForLoading()
-
         args = {
             "__type__": {"module": "class_register", "name": "DummyExistsForLoading"},
         }
@@ -84,6 +82,6 @@ class TestArtifactRecovery(UnitxtTestCase):
         artifact = from_dict(args)
         self.assertEqual(DummyExistsForLoading, artifact.__class__)
 
-        Artifact._class_register.pop(dummy.__class__.__name__)
+        Artifact._class_register.pop("DummyExistsForLoading")
         with self.assertRaises(ValueError):
             artifact = from_dict(args)

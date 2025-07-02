@@ -12,7 +12,7 @@ from pygments.formatters import HtmlFormatter
 from pygments.lexers import PythonLexer
 from unitxt.artifact import (
     get_class_or_function_from_artifact_type,
-    get_module_class,
+    get_module_class_names,
 )
 from unitxt.text_utils import print_dict_as_python
 from unitxt.utils import load_json
@@ -54,7 +54,7 @@ def imports_to_syntax_highlighted_html(subtypes: List[str]) -> str:
         return ""
     module_to_class_names = defaultdict(list)
     for subtype in subtypes:
-        (module, class_name) = get_module_class(subtype)
+        (module, class_name) = get_module_class_names(subtype)
         module_to_class_names[module].append(class_name)
 
     imports_txt = ""
@@ -128,7 +128,9 @@ def get_all_type_elements(nested_dict):
 
 @lru_cache(maxsize=None)
 def artifact_type_to_link(artifact_type):
-    artifact_module, artifact_class_name = get_module_class(json.loads(artifact_type))
+    artifact_module, artifact_class_name = get_module_class_names(
+        json.loads(artifact_type)
+    )
     return f'<a class="reference internal" href="../{artifact_module}.html#{artifact_module}.{artifact_class_name}" title="{artifact_module}.{artifact_class_name}"><code class="xref py py-class docutils literal notranslate"><span class="pre">{artifact_class_name}</span></code></a>'
 
 
@@ -182,7 +184,7 @@ def make_content(artifact, label, all_labels):
         )
 
     for type_name in type_elements:
-        artifact_module, artifact_class_name = get_module_class(type_name)
+        artifact_module, artifact_class_name = get_module_class_names(type_name)
         pattern = re.compile(
             f'<span class="n">__type__(.*?)<span class="n">{artifact_class_name}</span>'
         )

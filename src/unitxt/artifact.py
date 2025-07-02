@@ -4,6 +4,7 @@ import json
 import os
 import pkgutil
 import re
+import sys
 import warnings
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, final
@@ -91,66 +92,69 @@ def is_library_module(module_name):
     ):
         return False
 
-    try:
-        importlib.import_module(module_name)
+    # if module_name in sys.modules:
+    #     return True
+
+    # try:
+    #     importlib.import_module(module_name)
+    #     return True
+    # except:
+    #     return False
+
+    if module_name not in sys.modules:
+        try:
+            __import__(module_name)
+        except ImportError:
+            return False
+
+    module = sys.modules[module_name]
+
+    # Built-in modules
+    if not hasattr(module, "__file__") or module.__file__ is None:
         return True
-    except:
-        return False
 
-    # if module_name not in sys.modules:
-    #     try:
-    #         __import__(module_name)
-    #     except ImportError:
-    #         return False
+    file_path = module.__file__
 
-    # module = sys.modules[module_name]
+    # Check for standard library patterns
+    import sysconfig
 
-    # # Built-in modules
-    # if not hasattr(module, "__file__") or module.__file__ is None:
-    #     return True
+    stdlib_path = sysconfig.get_path("stdlib")
 
-    # file_path = module.__file__
+    # Direct match
+    if file_path.startswith(stdlib_path):
+        return True
 
-    # # Check for standard library patterns
-    # import sysconfig
+    # Handle different Python installations (Homebrew, pyenv, etc.)
+    # Look for common stdlib patterns: .../lib/python3.x/...
+    import re
 
-    # stdlib_path = sysconfig.get_path("stdlib")
+    if (
+        re.search(r"/lib/python\d+\.\d+/", file_path)
+        and "site-packages" not in file_path
+    ):
+        return True
 
-    # # Direct match
-    # if file_path.startswith(stdlib_path):
-    #     return True
+    # Check if it's an installed package
+    if any(pkg_dir in file_path for pkg_dir in ["site-packages", "dist-packages"]):
+        return True  # Regular installed package
 
-    # # Handle different Python installations (Homebrew, pyenv, etc.)
-    # # Look for common stdlib patterns: .../lib/python3.x/...
-    # import re
+    # Check if it's an editable install (file outside site-packages but package is installed)
+    site_packages = sysconfig.get_path("purelib")
+    package_name = module_name.split(".")[0]
 
-    # if (
-    #     re.search(r"/lib/python\d+\.\d+/", file_path)
-    #     and "site-packages" not in file_path
-    # ):
-    #     return True
+    import glob
 
-    # # Check if it's an installed package
-    # if any(pkg_dir in file_path for pkg_dir in ["site-packages", "dist-packages"]):
-    #     return True  # Regular installed package
+    # Check for various editable install patterns
+    egg_links = glob.glob(os.path.join(site_packages, f"{package_name}*.egg-link"))
+    pth_files = glob.glob(os.path.join(site_packages, f"*{package_name}*.pth"))
+    editable_pth = glob.glob(
+        os.path.join(site_packages, f"__editable__.{package_name}*.pth")
+    )
 
-    # # Check if it's an editable install (file outside site-packages but package is installed)
-    # site_packages = sysconfig.get_path("purelib")
-    # package_name = module_name.split(".")[0]
+    if egg_links or pth_files or editable_pth:
+        return True  # It's an editable install, still a library
 
-    # import glob
-
-    # # Check for various editable install patterns
-    # egg_links = glob.glob(os.path.join(site_packages, f"{package_name}*.egg-link"))
-    # pth_files = glob.glob(os.path.join(site_packages, f"*{package_name}*.pth"))
-    # editable_pth = glob.glob(
-    #     os.path.join(site_packages, f"__editable__.{package_name}*.pth")
-    # )
-
-    # if egg_links or pth_files or editable_pth:
-    #     return True  # It's an editable install, still a library
-
-    # return False
+    return False
 
 
 def import_module_from_file(file_path):
@@ -165,13 +169,13 @@ def import_module_from_file(file_path):
 
 
 # type is the dict read from a catelog entry, the value of a key "__type__"
-def get_module_class(artifact_type: dict):
+def get_module_class_names(artifact_type: dict):
     return artifact_type["module"], artifact_type["name"]
 
 
 # type is the dict read from a catelog entry, the value of a key "__type__"
 def get_class_from_artifact_type(type: dict):
-    module_path, class_name = get_module_class(type)
+    module_path, class_name = get_module_class_names(type)
     if module_path == "class_register":
         if class_name not in Artifact._class_register:
             raise ValueError(
@@ -201,7 +205,7 @@ def get_class_from_artifact_type(type: dict):
 
 
 def get_class_or_function_from_artifact_type(type: dict):
-    module_path, class_name = get_module_class(type)
+    module_path, class_name = get_module_class_names(type)
     module = importlib.import_module(module_path)
 
     if "." not in class_name:
@@ -434,7 +438,7 @@ class Artifact(Dataclass):
         if not is_library_module(module_name):
             non_library_module_warning = f"module named {module_name} is not importable. Class {cls} is thus registered into Artifact.class_register, indexed by {cls.__name__}, accessible there as long as this class_register lives."
             warnings.warn(non_library_module_warning, ImportWarning, stacklevel=2)
-            Artifact._class_register[cls.__name__] = cls
+            cls.register_class(cls)  ### Artifact._class_register[cls.__name__] = cls
             return {"module": "class_register", "name": cls.__name__}
         # module_package = getattr(module, "__package__", None)
         # module_name = Artifact.fix_module_name_if_not_in_path(module)
@@ -509,7 +513,19 @@ class Artifact(Dataclass):
 
     @final
     def __post_init__(self):
-        self.__type__ = self.__class__.get_artifact_type()
+        # record module and class name as they are, without verifying instantiationability via python imports
+        module = inspect.getmodule(self.__class__)
+        # standardize module name
+        module_name = getattr(module, "__name__", None)
+        class_name = (
+            self.__class__.__qualname__
+            if hasattr(self.__class__, "__qualname__")
+            and "." in self.__class__.__qualname__
+            else self.__class__.__name__
+        )
+        self.__type__ = {"module": module_name, "name": class_name}
+        ## now verify
+        self.maybe_fix_type_to_ensure_instantiation_ability()
 
         for field in fields(self):
             if issubtype(
@@ -529,7 +545,8 @@ class Artifact(Dataclass):
 
     def _to_raw_dict(self):
         return {
-            "__type__": self.__class__.get_artifact_type(),
+            # "__type__": self.__class__.get_artifact_type(),
+            "__type__": self.__type__,
             **self.process_data_before_dump(self._init_dict),
         }
 
@@ -566,6 +583,24 @@ class Artifact(Dataclass):
         if self.__id__ is not None:
             return self.__id__
         return self.to_json()
+
+    def maybe_fix_type_to_ensure_instantiation_ability(self):
+        if (
+            not is_library_module(self.__type__["module"])
+            or "<locals>" in self.__type__["name"]
+        ):
+            self.__class__.register_class(self.__class__)
+            self.__type__ = {
+                "module": "class_register",
+                "name": self.__class__.__name__,
+            }
+            return
+        # if self.__type__["module"] == "class_register":
+        #     return
+        # if not is_library_module(self.__type__["module"]):
+        #     self.__type__["module"] = "class_register"
+        #     if not self.__type__["name"] in Artifact._class_register:
+        #         Artifact._class_register[self.__type__["name"]] = self.__class__
 
     def save(self, path):
         original_args = from_dict(self.to_dict()).get_repr_dict()

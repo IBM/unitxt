@@ -74,7 +74,7 @@ class TestCatalogs(UnitxtTestCase):
             class ClassToSave(Artifact):
                 t: int = 0
 
-                class SubClassToSave(Artifact):
+                class InnerClassToSave(Artifact):
                     fl: float = 1.5
 
             add_to_catalog(ClassToSave(t=1), "test.save", catalog_path=tmp_dir)
@@ -90,17 +90,17 @@ class TestCatalogs(UnitxtTestCase):
             self.assertEqual(1, content["t"])
 
             add_to_catalog(
-                ClassToSave.SubClassToSave(fl=2.5),
-                "test.save_sub",
+                ClassToSave.InnerClassToSave(fl=2.5),
+                "test.save_inner",
                 catalog_path=tmp_dir,
             )
 
-            with open(os.path.join(tmp_dir, "test", "save_sub.json")) as f:
+            with open(os.path.join(tmp_dir, "test", "save_inner.json")) as f:
                 content = json.load(f)
 
             self.assertTrue(
                 content["__type__"]["module"] == "class_register"
-                and content["__type__"]["name"] == "SubClassToSave"
+                and content["__type__"]["name"] == "InnerClassToSave"
             )
             self.assertEqual(2, len(content))
             self.assertEqual(2.5, content["fl"])
