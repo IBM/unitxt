@@ -1947,6 +1947,14 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
 
 class Accuracy(InstanceMetric):
+    """Measures exact match accuracy between prediction and references.
+
+    Range: [0, 1] (higher is better)
+    Returns 1.0 if prediction matches any reference, 0.0 otherwise.
+
+    Reference: https://en.wikipedia.org/wiki/Accuracy_and_precision
+    """
+
     reduction_map = {"mean": ["accuracy"]}
     main_score = "accuracy"
     ci_scores = ["accuracy"]
@@ -1967,6 +1975,12 @@ class Accuracy(InstanceMetric):
 
 
 class ExactMatchMM(InstanceMetric):
+    """Multi-modal exact match metric with flexible matching patterns.
+
+    Range: [0, 1] (higher is better)
+    Handles various answer formats like single characters, options, and "the answer is X".
+    """
+
     reduction_map = {"mean": ["exact_match_mm"]}
     main_score = "exact_match_mm"
     prediction_type = Any  # string representation is compared
@@ -2008,6 +2022,12 @@ class ExactMatchMM(InstanceMetric):
 
 
 class ANLS(InstanceMetric):
+    """Average Normalized Levenshtein Similarity for text comparison.
+
+    Range: [0, 1] (higher is better)
+    Measures semantic similarity between texts using edit distance normalization.
+    """
+
     main_score = "anls"
     reduction_map = {"mean": ["anls"]}
     prediction_type = str  # string representation is compared
@@ -2238,6 +2258,14 @@ class WebsrcSquadF1(GlobalMetric):
 
 
 class JaccardIndex(ReductionInstanceMetric[str, Dict[str, float]]):
+    """Computes Jaccard similarity coefficient between prediction and reference sets.
+
+    Range: [0, 1] (higher is better)
+    Measures overlap as intersection over union of two sets.
+
+    Reference: https://en.wikipedia.org/wiki/Jaccard_index
+    """
+
     main_score = "jaccard_index"
     reduction = MeanReduction()
     prediction_type = Union[list, set]
@@ -2292,6 +2320,12 @@ class MaxAccuracy(Accuracy):
 
 
 class UnsortedListExactMatch(InstanceMetric):
+    """Measures exact match between prediction and reference lists, ignoring order.
+
+    Range: [0, 1] (higher is better)
+    Returns 1.0 if sorted prediction equals sorted reference, 0.0 otherwise.
+    """
+
     reduction_map = {"mean": ["unsorted_list_exact_match"]}
     main_score = "unsorted_list_exact_match"
     ci_scores = ["unsorted_list_exact_match"]
@@ -2306,6 +2340,12 @@ class UnsortedListExactMatch(InstanceMetric):
 
 
 class StringContainment(ReductionInstanceMetric[str, Dict[str, float]]):
+    """Checks if any reference string is contained within the prediction.
+
+    Range: [0, 1] (higher is better)
+    Returns 1.0 if any reference appears as substring in prediction.
+    """
+
     main_score = "string_containment"
     reduction = MeanReduction()
     prediction_type = Any
@@ -2732,6 +2772,14 @@ class Meteor(InstanceMetric):
 
 
 class F1(GlobalMetric):
+    """Computes macro-averaged F1 score across all classes.
+
+    Range: [0, 1] (higher is better)
+    Balances precision and recall, giving equal weight to all classes.
+
+    Reference: https://en.wikipedia.org/wiki/F-score
+    """
+
     _metric = None
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
@@ -2789,12 +2837,26 @@ class F1(GlobalMetric):
 
 
 class F1Micro(F1):
+    """Computes micro-averaged F1 score across all classes.
+
+    Range: [0, 1] (higher is better)
+    Aggregates predictions and references globally before computing F1.
+
+    Reference: https://en.wikipedia.org/wiki/F-score
+    """
+
     main_score = "f1_micro"
     average = "micro"
 
 
 class F1Binary(GlobalMetric):
-    """Calculate f1 for a binary task, using 0.5 as the threshold in the case of float predictions."""
+    """Computes F1 score for binary classification tasks.
+
+    Range: [0, 1] (higher is better)
+    Uses 0.5 threshold for float predictions, balances precision and recall.
+
+    Reference: https://en.wikipedia.org/wiki/F-score
+    """
 
     process_single_instances = False
     main_score = "f1_binary"
@@ -3135,6 +3197,14 @@ class NLTKMixin(Artifact):
 
 
 class Rouge(InstanceMetric, NLTKMixin):
+    """Computes ROUGE scores for text summarization evaluation.
+
+    Range: [0, 1] (higher is better)
+    Measures n-gram overlap between prediction and reference texts.
+
+    Reference: https://en.wikipedia.org/wiki/ROUGE_(metric)
+    """
+
     main_score = "rougeL"
     prediction_type = str
     single_reference_per_prediction = False  # multiple references allowed
@@ -3179,6 +3249,14 @@ class Rouge(InstanceMetric, NLTKMixin):
 
 
 class RougeHF(NLTKMixin, HuggingfaceInstanceMetric):
+    """HuggingFace implementation of ROUGE metrics for text evaluation.
+
+    Range: [0, 1] (higher is better)
+    Uses HuggingFace's ROUGE implementation for n-gram overlap scoring.
+
+    Reference: https://en.wikipedia.org/wiki/ROUGE_(metric)
+    """
+
     hf_metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
@@ -3224,6 +3302,14 @@ class RougeHF(NLTKMixin, HuggingfaceInstanceMetric):
 
 # Computes char edit distance, ignoring whitespace
 class CharEditDistance(InstanceMetric):
+    """Computes character-level edit distance between texts.
+
+    Range: [0, ∞) (lower is better)
+    Measures minimum character edits needed to transform prediction into reference.
+
+    Reference: https://en.wikipedia.org/wiki/Edit_distance
+    """
+
     main_score = "char_edit_distance"
     reduction_map = {"mean": [main_score]}
     ci_scores = [main_score]
@@ -3263,6 +3349,14 @@ class CharEditDistanceAccuracy(CharEditDistance):
 
 
 class Wer(HuggingfaceMetric):
+    """Word Error Rate for speech recognition and text comparison.
+
+    Range: [0, ∞) (lower is better)
+    Measures word-level edits normalized by reference length.
+
+    Reference: https://en.wikipedia.org/wiki/Word_error_rate
+    """
+
     hf_metric_name = "wer"
     main_score = "wer"
     prediction_type = str
@@ -3284,6 +3378,12 @@ class Wer(HuggingfaceMetric):
 
 
 class MeanSquaredError(MapReduceMetric[float, float]):
+    """Computes mean squared error between predictions and references.
+
+    Range: [0, ∞) (lower is better)
+    Measures average squared differences between predicted and true values.
+    """
+
     main_score = "mean_squared_error"
     prediction_type = float
     single_reference_per_prediction = True
@@ -3298,6 +3398,12 @@ class MeanSquaredError(MapReduceMetric[float, float]):
 
 
 class RootMeanSquaredError(MeanSquaredError):
+    """Computes root mean squared error between predictions and references.
+
+    Range: [0, ∞) (lower is better)
+    Square root of mean squared error, same units as original values.
+    """
+
     main_score = "root_mean_squared_error"
 
     def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
@@ -3305,6 +3411,14 @@ class RootMeanSquaredError(MeanSquaredError):
 
 
 class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
+    """Computes Spearman rank correlation coefficient.
+
+    Range: [-1, 1] (higher absolute value is better)
+    Measures monotonic relationship between predictions and references.
+
+    Reference: https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient
+    """
+
     main_score = "spearmanr"
     ci_score_names = ["spearmanr"]
     prediction_type = float
@@ -3343,6 +3457,14 @@ class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
 
 
 class KendallTauMetric(GlobalMetric):
+    """Computes Kendall's tau rank correlation coefficient.
+
+    Range: [-1, 1] (higher absolute value is better)
+    Measures strength of ordinal association between predictions and references.
+
+    Reference: https://en.wikipedia.org/wiki/Kendall_rank_correlation_coefficient
+    """
+
     main_score = "kendalltau_b"
     variant = "b"
     process_single_instances = False
@@ -3373,6 +3495,14 @@ class KendallTauMetric(GlobalMetric):
 
 
 class MatthewsCorrelation(HuggingfaceMetric):
+    """Computes Matthews correlation coefficient for classification.
+
+    Range: [-1, 1] (higher is better)
+    Balanced metric for binary classification, handles class imbalance well.
+
+    Reference: https://en.wikipedia.org/wiki/Phi_coefficient
+    """
+
     hf_metric_name = "matthews_correlation"
     main_score = "matthews_correlation"
     str_to_id: dict = InternalField(default_factory=dict)
@@ -3404,6 +3534,14 @@ class MatthewsCorrelation(HuggingfaceMetric):
 
 
 class RocAuc(GlobalMetric):
+    """Computes Area Under the ROC Curve for binary classification.
+
+    Range: [0, 1] (higher is better)
+    Measures discriminative ability across all classification thresholds.
+
+    Reference: https://en.wikipedia.org/wiki/Receiver_operating_characteristic
+    """
+
     main_score = "roc_auc"
     process_single_instances = False
     _requirements_list: List[str] = ["scikit-learn"]
@@ -3800,6 +3938,12 @@ def normalize_answer(s):
 
 
 class TokenOverlap(InstanceMetric):
+    """Computes token-level overlap F1, precision, and recall between texts.
+
+    Range: [0, 1] (higher is better)
+    Splits texts into tokens and measures set-based overlap metrics.
+    """
+
     reduction_map = {"mean": ["f1", "precision", "recall"]}
     main_score = "f1"
     ci_scores = ["f1", "precision", "recall"]
@@ -3835,6 +3979,14 @@ class TokenOverlap(InstanceMetric):
 
 
 class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
+    """Computes BERTScore using contextual embeddings for text evaluation.
+
+    Range: [0, 1] (higher is better)
+    Measures semantic similarity using BERT-based token embeddings.
+
+    Reference: https://arxiv.org/abs/1904.09675
+    """
+
     main_score = "f1"
     reduction: DictReduction = MeanReduction()
     model_name: str
@@ -3892,6 +4044,12 @@ class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
 
 
 class SentenceBert(MapReduceMetric[str, float], TorchDeviceMixin):
+    """Computes semantic similarity using Sentence-BERT embeddings.
+
+    Range: [-1, 1] (higher is better)
+    Measures cosine similarity between sentence-level embeddings.
+    """
+
     model_name: str
     batch_size: int = 32
     main_score = "sbert_score"
@@ -4393,7 +4551,13 @@ class LlamaIndexFaithfulness(LlamaIndexLLMMetric):
 
 
 class Perplexity(BulkInstanceMetric):
-    """Computes the likelihood of generating text Y after text X - P(Y|X)."""
+    """Computes perplexity of generating target text given source context.
+
+    Range: [1, ∞) (lower is better)
+    Measures how well a language model predicts the target sequence.
+
+    Reference: https://en.wikipedia.org/wiki/Perplexity
+    """
 
     main_score = "perplexity"
     reduction_map = {"mean": ["perplexity"]}
@@ -4888,6 +5052,14 @@ class RetrievalMetric(InstanceMetric):
 
 
 class MRR(RetrievalMetric):
+    """Mean Reciprocal Rank for information retrieval evaluation.
+
+    Range: [0, 1] (higher is better)
+    Measures the average of reciprocal ranks of first relevant items.
+
+    Reference: https://en.wikipedia.org/wiki/Mean_reciprocal_rank
+    """
+
     reduction_map = {"mean": ["mrr"]}
     main_score = "mrr"
     ci_scores = ["mrr"]
@@ -4905,6 +5077,14 @@ class MRR(RetrievalMetric):
 
 
 class MAP(RetrievalMetric):
+    """Mean Average Precision for information retrieval evaluation.
+
+    Range: [0, 1] (higher is better)
+    Averages precision values at ranks where relevant documents are retrieved.
+
+    Reference: https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Mean_average_precision
+    """
+
     reduction_map = {"mean": ["map"]}
     main_score = "map"
     ci_scores = ["map"]
@@ -5663,7 +5843,11 @@ class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainmentOl
 
 
 class BinaryMaxF1(F1Binary):
-    """Calculate the maximal F1 and the decision threshold that achieves it for a binary task with float predictions."""
+    """Finds optimal F1 score and threshold for binary classification.
+
+    Range: [0, 1] (higher is better)
+    Tests all possible thresholds to maximize F1 score.
+    """
 
     main_score = "max_f1_binary"
     single_reference_per_prediction = True
@@ -5711,7 +5895,11 @@ class BinaryMaxF1(F1Binary):
 
 
 class BinaryAccuracy(InstanceMetric):
-    """Calculate accuracy for a binary task, using 0.5 as the threshold in the case of float predictions."""
+    """Computes accuracy for binary classification tasks.
+
+    Range: [0, 1] (higher is better)
+    Uses 0.5 threshold for float predictions.
+    """
 
     reduction_map = {"mean": ["accuracy_binary"]}
     main_score = "accuracy_binary"
@@ -5741,7 +5929,11 @@ class BinaryAccuracy(InstanceMetric):
 
 
 class BinaryMaxAccuracy(GlobalMetric):
-    """Calculate the maximal accuracy and the decision threshold that achieves it for a binary task with float predictions."""
+    """Finds optimal accuracy and threshold for binary classification.
+
+    Range: [0, 1] (higher is better)
+    Tests all possible thresholds to maximize accuracy.
+    """
 
     process_single_instances = False
     main_score = "max_accuracy_binary"
