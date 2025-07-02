@@ -255,7 +255,7 @@ class InferenceEngine(Artifact):
         """
         self.verify_infer_inputs(dataset, return_meta_data)
         if settings.mock_inference_mode:
-            result = self._mock_infer(dataset)
+            result = self._mock_infer(dataset, return_meta_data)
         else:
             if self.use_cache:
                 with error_context(
@@ -333,8 +333,20 @@ class InferenceEngine(Artifact):
     def _mock_infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return [str(instance["source"]) for instance in dataset]
+        result = []
+        for instance in dataset:
+            prediction = str(instance["source"])
+            if return_meta_data:
+                result.append(
+                    TextGenerationInferenceOutput(
+                        prediction=prediction, generated_text=prediction
+                    )
+                )
+            else:
+                result.append(prediction)
+        return result
 
     @abc.abstractmethod
     def get_engine_id(self):
