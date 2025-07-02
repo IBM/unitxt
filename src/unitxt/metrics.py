@@ -6121,7 +6121,7 @@ For MacOS: If error on 'mecab-config' show up during installation ], one should 
 class NormalizedSacrebleu(HuggingfaceMetric):
     """Normalized SacreBLEU metric for machine translation evaluation.
 
-    Range: [0, 100] (higher is better)
+    Range: [0, 1] (higher is better)
     Character-level tokenization of BLEU score for improved cross-lingual evaluation.
 
     Reference: https://arxiv.org/abs/1804.08771
