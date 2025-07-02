@@ -628,6 +628,14 @@ class AccuracyFast(ReductionInstanceMetric[str, Dict[str, float]]):
 
 
 class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
+    """Computes F1 score across all classes.
+
+    Range: [0, 1] (higher is better)
+    Balances precision and recall, giving equal weight to all classes.
+
+    Reference: https://en.wikipedia.org/wiki/F-score
+    """
+
     main_score = "f1"
     averages: List[Literal["f1", "macro", "micro", "per_class"]] = [
         "f1",
