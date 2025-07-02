@@ -79,6 +79,8 @@ class TestArtifactRecovery(UnitxtTestCase):
             "__type__": {"module": "class_register", "name": "DummyExistsForLoading"},
         }
 
+        DummyExistsForLoading()
+
         artifact = from_dict(args)
         self.assertEqual(DummyExistsForLoading, artifact.__class__)
 

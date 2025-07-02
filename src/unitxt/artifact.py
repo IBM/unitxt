@@ -545,7 +545,6 @@ class Artifact(Dataclass):
 
     def _to_raw_dict(self):
         return {
-            # "__type__": self.__class__.get_artifact_type(),
             "__type__": self.__type__,
             **self.process_data_before_dump(self._init_dict),
         }
