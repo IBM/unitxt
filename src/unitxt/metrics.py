@@ -2026,6 +2026,8 @@ class ANLS(InstanceMetric):
 
     Range: [0, 1] (higher is better)
     Measures semantic similarity between texts using edit distance normalization.
+
+    Reference: https://arxiv.org/abs/1704.00560 (ICDAR 2019 Robust Reading Challenge)
     """
 
     main_score = "anls"
@@ -4896,6 +4898,14 @@ class FaithfulnessHHEM(BulkInstanceMetric):
 
 
 class Squad(HuggingfaceMetric):
+    """Stanford Question Answering Dataset (SQuAD) evaluation metric.
+
+    Range: [0, 100] (higher is better)
+    Computes F1 score and exact match for question answering tasks.
+
+    Reference: https://arxiv.org/abs/1606.05250
+    """
+
     hf_metric_name = "squad"
     main_score = "f1"
     scale = 100.0
@@ -4914,6 +4924,8 @@ class Squad(HuggingfaceMetric):
 class NDCG(GlobalMetric):
     """Normalized Discounted Cumulative Gain: measures the quality of ranking with respect to ground truth ranking scores.
 
+    Range: [0, 1] (higher is better)
+
     As this measures ranking, it is a global metric that can only be calculated over groups of instances. In the
     common use case where the instances are grouped by different queries, i.e., where the task is to provide a
     relevance score for a search result w.r.t. a query, an nDCG score is calculated per each query (specified in the
@@ -4923,7 +4935,7 @@ class NDCG(GlobalMetric):
     scores affects the outcome - for example, predicted scores of [80, 1, 2] and [0.8, 0.5, 0.6] will receive
     the same nDCG score w.r.t. a given set of reference scores.
 
-    See also https://en.wikipedia.org/wiki/Discounted_cumulative_gain
+    Reference: https://en.wikipedia.org/wiki/Discounted_cumulative_gain
     """
 
     main_score = "nDCG"
@@ -6031,6 +6043,8 @@ def pytrec_eval_at_k(results, qrels, at_k, metric_name):
 class RerankRecall(GlobalMetric):
     """RerankRecall: measures the quality of reranking with respect to ground truth ranking scores.
 
+    Range: [0, 1] (higher is better)
+
     This metric measures ranking performance across a dataset.  The
     references for a query will have a score of 1 for the gold passage
     and 0 for all other passages.  The model returns scores in [0,1]
@@ -6044,6 +6058,7 @@ class RerankRecall(GlobalMetric):
     passage_id_field selects the field containing the passage id for an instance.
     at_k selects the value of k used to compute recall.
 
+    Reference: https://en.wikipedia.org/wiki/Information_retrieval#Recall
     """
 
     main_score = "recall_at_5"
@@ -6104,6 +6119,14 @@ For MacOS: If error on 'mecab-config' show up during installation ], one should 
 
 
 class NormalizedSacrebleu(HuggingfaceMetric):
+    """Normalized SacreBLEU metric for machine translation evaluation.
+
+    Range: [0, 100] (higher is better)
+    Character-level tokenization of BLEU score for improved cross-lingual evaluation.
+
+    Reference: https://arxiv.org/abs/1804.08771
+    """
+
     hf_metric_name = "sacrebleu"
     hf_main_score = "score"
     prediction_type = str
