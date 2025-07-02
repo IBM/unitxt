@@ -5,7 +5,6 @@ import pandas as pd
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.artifact import fetch_artifact
-from unitxt.formats import SystemFormat
 from unitxt.operators import CollateInstances, Copy, FieldOperator, Rename
 from unitxt.processors import PostProcess
 from unitxt.serializers import MultiTypeSerializer, SingleTypeSerializer
@@ -82,13 +81,11 @@ df = pd.DataFrame(
 
 for provider in [
     "watsonx",
-    "bam",
 ]:
     for model_name in [
-        "granite-3-8b-instruct",
-        "llama-3-8b-instruct",
+        "granite-3-3-8b-instruct",
     ]:
-        batch_sizes = [30, 20, 10, 5, 1]
+        batch_sizes = [100, 50, 10, 5, 1]
 
         for batch_size in batch_sizes:
             card, _ = fetch_artifact("cards.banking77")
@@ -104,21 +101,6 @@ for provider in [
             card.task = task
             card.templates = [template]
             format = "formats.chat_api"
-            if provider == "bam" and model_name.startswith("llama"):
-                format = "formats.llama3_instruct"
-            if provider == "bam" and model_name.startswith("granite"):
-                format = SystemFormat(
-                    demo_format=(
-                        "{instruction}\\N{source}\\N<|end_of_text|>\n"
-                        "<|start_of_role|>assistant<|end_of_role|>{target}\\N<|end_of_text|>\n"
-                        "<|start_of_role|>user<|end_of_role|>"
-                    ),
-                    model_input_format=(
-                        "<|start_of_role|>system<|end_of_role|>{system_prompt}<|end_of_text|>\n"
-                        "<|start_of_role|>user<|end_of_role|>{demos}{instruction}\\N{source}\\N<|end_of_text|>\n"
-                        "<|start_of_role|>assistant<|end_of_role|>"
-                    ),
-                )
 
             dataset = load_dataset(
                 card=card,
@@ -138,7 +120,7 @@ for provider in [
             )
             """
             We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
-            watsonx, bam, openai, azure, aws and more.
+            watsonx, openai, azure, aws and more.
 
             For the arguments these inference engines can receive, please refer to the classes documentation or read
             about the the open ai api arguments the CrossProviderInferenceEngine follows.
@@ -148,7 +130,7 @@ for provider in [
             results = evaluate(predictions=predictions, data=test_dataset)
 
             print(
-                results.instance_scores.to_df(
+                results.instance_scores.to_markdown(
                     columns=[
                         "source",
                         "prediction",

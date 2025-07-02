@@ -71,7 +71,7 @@ print("Example prompt:")
 print(json.dumps(results.instance_scores[0]["source"], indent=4))
 
 print("Instance Results:")
-print(results.instance_scores)
+print(results.instance_scores.summary)
 
 print("Global Results:")
 print(results.global_scores.summary)

@@ -1,5 +1,6 @@
 import json
 import re
+import textwrap
 from collections import defaultdict
 from functools import lru_cache
 from statistics import mean
@@ -683,22 +684,43 @@ class InstanceScores(list):
             return df[columns]
         return df
 
+    def _to_markdown(self, df, max_col_width=30, **kwargs):
+        def wrap_column(series, max_width=30):
+            """Wraps string values in a Pandas Series to a maximum width."""
+            return series.apply(
+                lambda x: "\n".join(
+                    textwrap.fill(line, width=max_width) for line in str(x).splitlines()
+                )
+            )
+
+        wrapped_df = df.copy()
+        for col in wrapped_df.columns:
+            wrapped_df[col] = wrap_column(wrapped_df[col], max_col_width)
+        return wrapped_df.to_markdown(**kwargs)
+
+    def to_markdown(self, flatten=True, columns=None, max_col_width=30, **kwargs):
+        return self._to_markdown(self.to_df(flatten, columns), max_col_width, **kwargs)
+
     @property
     def summary(self):
-        return to_pretty_string(
-            self.to_df()
-            .head()
-            .drop(
-                columns=[
-                    "metadata",
-                    "media",
-                    "data_classification_policy",
-                    "groups",
-                    "subset",
-                ]
-            ),
-            float_format=".2g",
+        df = self.to_df(
+            flatten=False,
+            columns=[
+                "source",
+                "prediction",
+                "processed_prediction",
+                "references",
+                "processed_references",
+                "score",
+            ],
+        ).head()
+        df["score_name"] = df["score"].apply(lambda x: x["instance"]["score_name"])
+        df["all_scores"] = df["score"].apply(
+            lambda x: "\n".join(f"{k}: {v}" for k, v in x["instance"].items())
         )
+        df["score"] = df["score"].apply(lambda x: x["instance"]["score"])
+
+        return self._to_markdown(df)
 
     def __repr__(self):
         return to_pretty_string(self, float_format=".2g")
