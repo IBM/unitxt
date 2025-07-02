@@ -92,69 +92,69 @@ def is_library_module(module_name):
     ):
         return False
 
-    # if module_name in sys.modules:
+    if module_name in sys.modules:
+        return True
+
+    try:
+        importlib.import_module(module_name)
+        return True
+    except:
+        return False
+
+    # if module_name not in sys.modules:
+    #     try:
+    #         __import__(module_name)
+    #     except ImportError:
+    #         return False
+
+    # module = sys.modules[module_name]
+
+    # # Built-in modules
+    # if not hasattr(module, "__file__") or module.__file__ is None:
     #     return True
 
-    # try:
-    #     importlib.import_module(module_name)
+    # file_path = module.__file__
+
+    # # Check for standard library patterns
+    # import sysconfig
+
+    # stdlib_path = sysconfig.get_path("stdlib")
+
+    # # Direct match
+    # if file_path.startswith(stdlib_path):
     #     return True
-    # except:
-    #     return False
 
-    if module_name not in sys.modules:
-        try:
-            __import__(module_name)
-        except ImportError:
-            return False
+    # # Handle different Python installations (Homebrew, pyenv, etc.)
+    # # Look for common stdlib patterns: .../lib/python3.x/...
+    # import re
 
-    module = sys.modules[module_name]
+    # if (
+    #     re.search(r"/lib/python\d+\.\d+/", file_path)
+    #     and "site-packages" not in file_path
+    # ):
+    #     return True
 
-    # Built-in modules
-    if not hasattr(module, "__file__") or module.__file__ is None:
-        return True
+    # # Check if it's an installed package
+    # if any(pkg_dir in file_path for pkg_dir in ["site-packages", "dist-packages"]):
+    #     return True  # Regular installed package
 
-    file_path = module.__file__
+    # # Check if it's an editable install (file outside site-packages but package is installed)
+    # site_packages = sysconfig.get_path("purelib")
+    # package_name = module_name.split(".")[0]
 
-    # Check for standard library patterns
-    import sysconfig
+    # import glob
 
-    stdlib_path = sysconfig.get_path("stdlib")
+    # # Check for various editable install patterns
+    # egg_links = glob.glob(os.path.join(site_packages, f"{package_name}*.egg-link"))
+    # pth_files = glob.glob(os.path.join(site_packages, f"*{package_name}*.pth"))
+    # editable_pth = glob.glob(
+    #     os.path.join(site_packages, f"__editable__.{package_name}*.pth")
+    # )
 
-    # Direct match
-    if file_path.startswith(stdlib_path):
-        return True
+    # if egg_links or pth_files or editable_pth:
+    #     return True  # It's an editable install, still a library
 
-    # Handle different Python installations (Homebrew, pyenv, etc.)
-    # Look for common stdlib patterns: .../lib/python3.x/...
-    import re
-
-    if (
-        re.search(r"/lib/python\d+\.\d+/", file_path)
-        and "site-packages" not in file_path
-    ):
-        return True
-
-    # Check if it's an installed package
-    if any(pkg_dir in file_path for pkg_dir in ["site-packages", "dist-packages"]):
-        return True  # Regular installed package
-
-    # Check if it's an editable install (file outside site-packages but package is installed)
-    site_packages = sysconfig.get_path("purelib")
-    package_name = module_name.split(".")[0]
-
-    import glob
-
-    # Check for various editable install patterns
-    egg_links = glob.glob(os.path.join(site_packages, f"{package_name}*.egg-link"))
-    pth_files = glob.glob(os.path.join(site_packages, f"*{package_name}*.pth"))
-    editable_pth = glob.glob(
-        os.path.join(site_packages, f"__editable__.{package_name}*.pth")
-    )
-
-    if egg_links or pth_files or editable_pth:
-        return True  # It's an editable install, still a library
-
-    return False
+    # return False
 
 
 def import_module_from_file(file_path):
