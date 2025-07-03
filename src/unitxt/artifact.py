@@ -5,8 +5,10 @@ import os
 import pkgutil
 import re
 import sys
+import sysconfig
 import warnings
 from abc import abstractmethod
+from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple, Union, final
 
 from .dataclass import (
@@ -36,6 +38,74 @@ settings = get_settings()
 constants = get_constants()
 
 
+@lru_cache(maxsize=1)
+def _get_stdlib_path():
+    return sysconfig.get_path("stdlib")
+
+
+@lru_cache(maxsize=1)
+def _get_site_packages_path():
+    return sysconfig.get_path("purelib")
+
+
+@lru_cache(maxsize=1)
+def _get_stdlib_pattern():
+    return re.compile(r"/lib/python\d+\.\d+/")
+
+
+@lru_cache(maxsize=1)
+def _get_all_site_packages_paths():
+    paths = []
+    # Get standard paths
+    paths.append(sysconfig.get_path("purelib"))
+    paths.append(sysconfig.get_path("platlib"))
+    # Also check sys.path for additional site-packages and dist-packages
+    for path in sys.path:
+        if "site-packages" in path or "dist-packages" in path:
+            paths.append(path)
+    return list(set(paths))  # Remove duplicates
+
+
+@lru_cache(maxsize=1)
+def _get_site_packages_files():
+    all_files = {}
+    for site_packages in _get_all_site_packages_paths():
+        if os.path.exists(site_packages):
+            try:
+                files = os.listdir(site_packages)
+                all_files[site_packages] = frozenset(files)
+            except (OSError, PermissionError):
+                all_files[site_packages] = frozenset()
+    return all_files
+
+
+@lru_cache(maxsize=1)
+def _get_editable_packages():
+    editable_packages = set()
+    all_site_packages_files = _get_site_packages_files()
+
+    for _, files in all_site_packages_files.items():
+        for filename in files:
+            if filename.endswith(".egg-link"):
+                # Extract package name from egg-link file
+                package_name = filename[:-9]  # Remove .egg-link
+                editable_packages.add(package_name)
+            elif filename.endswith(".pth"):
+                if filename.startswith("__editable__."):
+                    # Modern pip editable installs: __editable__.package.pth
+                    parts = filename.split(".")
+                    if len(parts) >= 3:
+                        package_name = parts[1]
+                        editable_packages.add(package_name)
+                # Also check for other .pth files that might contain package names
+                # This mimics the original glob pattern *{package_name}*.pth behavior
+                # but we'll check this during the main function call
+
+    return frozenset(editable_packages)
+
+
+# flake8: noqa: C901
+@lru_cache(maxsize=512)
 def is_library_module(module_name):
     r"""Determines if a given module is a library module (as opposed to a local/project module).
 
@@ -92,15 +162,69 @@ def is_library_module(module_name):
     ):
         return False
 
-    if module_name in sys.modules:
-        return True
+    ########### dafnas #################
 
-    try:
-        importlib.import_module(module_name)
-        return True
-    except:
+    # if module_name in sys.modules:
+    #     return True
+
+    # try:
+    #     importlib.import_module(module_name)
+    #     return True
+    # except:
+    #     return False
+
+    ################## elron's lru ###################
+
+    """Determines if a given module is a library module (as opposed to a local/project module).
+    Fully cached version that minimizes all OS operations.
+    """
+    if not module_name or not isinstance(module_name, str):
         return False
 
+    if module_name not in sys.modules:
+        try:
+            __import__(module_name)
+        except ImportError:
+            return False
+
+    module = sys.modules[module_name]
+
+    # Built-in modules
+    if not hasattr(module, "__file__") or module.__file__ is None:
+        return True
+
+    file_path = module.__file__
+
+    # Check for standard library (cached path)
+    stdlib_path = _get_stdlib_path()
+    if file_path.startswith(stdlib_path):
+        return True
+
+    # Check stdlib pattern (cached regex)
+    stdlib_pattern = _get_stdlib_pattern()
+    if stdlib_pattern.search(file_path) and "site-packages" not in file_path:
+        return True
+
+    # Check if it's in site-packages
+    if any(pkg_dir in file_path for pkg_dir in ["site-packages", "dist-packages"]):
+        return True
+
+    # Check for editable installs (cached set + additional .pth file check)
+    package_name = module_name.split(".")[0]
+    editable_packages = _get_editable_packages()
+    if package_name in editable_packages:
+        return True
+
+    # Additional check for .pth files containing package name (mimics original glob behavior)
+    all_site_packages_files = _get_site_packages_files()
+    for _, files in all_site_packages_files.items():
+        for filename in files:
+            if filename.endswith(".pth") and package_name in filename:
+                return True
+
+    return False
+
+    ############ eleons original ****************
     # if module_name not in sys.modules:
     #     try:
     #         __import__(module_name)

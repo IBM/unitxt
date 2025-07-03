@@ -67,7 +67,10 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "criteria": "metrics.llm_as_judge.direct.criteria.toxicity"
             }
