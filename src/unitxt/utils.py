@@ -5,11 +5,11 @@ import json
 import os
 import random
 import re
-import threading
 import time
 from collections import OrderedDict
-from functools import lru_cache
-from typing import Any, Dict
+from contextvars import ContextVar
+from functools import wraps
+from typing import Any, Dict, Optional
 from urllib.error import HTTPError as UrllibHTTPError
 
 from requests.exceptions import ConnectionError, HTTPError
@@ -123,91 +123,81 @@ class Singleton(type):
 
 
 class LRUCache:
-    """An LRU (Least Recently Used) cache that stores a limited number of items.
-
-    This cache automatically removes the least recently used item when it
-    exceeds its max size. It behaves similarly to a dictionary, allowing
-    items to be added and accessed using `[]` syntax.
-
-    This implementation is thread-safe, using a lock to ensure that only one
-    thread can modify or access the cache at any time.
-
-    Args:
-        max_size (int):
-            The maximum number of items to store in the cache.
-            Items exceeding this limit are automatically removed based on least
-            recent usage.
-    """
-
-    def __init__(self, max_size=10):
+    def __init__(self, max_size: Optional[int] = 10):
         self._max_size = max_size
-        self._cache = OrderedDict()
-        self._lock = threading.Lock()  # Lock to ensure thread safety
+        self._context_cache = ContextVar("context_lru_cache", default=None)
 
-    @property
-    def max_size(self):
-        with self._lock:
-            return self._max_size
-
-    @max_size.setter
-    def max_size(self, size):
-        with self._lock:
-            self._max_size = size
-            # Adjust the cache if the new size is smaller than the current number of items
-            while len(self._cache) > self._max_size:
-                self._cache.popitem(last=False)
+    def _get_cache(self):
+        cache = self._context_cache.get()
+        if cache is None:
+            cache = OrderedDict()
+            self._context_cache.set(cache)
+        return cache
 
     def __setitem__(self, key, value):
-        with self._lock:
-            # If the key already exists, remove it first to refresh its order
-            if key in self._cache:
-                self._cache.pop(key)
-
-            # Add the new item to the cache (most recently used)
-            self._cache[key] = value
-
-            # If the cache exceeds the specified size, remove the least recently used item
-            while len(self._cache) > self._max_size:
-                self._cache.popitem(last=False)
+        cache = self._get_cache()
+        if key in cache:
+            cache.pop(key)
+        cache[key] = value
+        if self._max_size is not None:
+            while len(cache) > self._max_size:
+                cache.popitem(last=False)
 
     def __getitem__(self, key):
-        with self._lock:
-            if key in self._cache:
-                # Move the accessed item to the end (mark as most recently used)
-                value = self._cache.pop(key)
-                self._cache[key] = value
-                return value
-            raise KeyError(f"{key} not found in cache")
-
-    def set(self, key, value):
-        """Sets a key-value pair in the cache."""
-        with self._lock:
-            if key in self._cache:
-                self._cache.pop(key)
-            self._cache[key] = value
-            while len(self._cache) > self._max_size:
-                self._cache.popitem(last=False)
+        cache = self._get_cache()
+        if key in cache:
+            value = cache.pop(key)
+            cache[key] = value
+            return value
+        raise KeyError(f"{key} not found in cache")
 
     def get(self, key, default=None):
-        """Gets a value from the cache by key, returning `default` if the key is not found."""
-        with self._lock:
-            if key in self._cache:
-                value = self._cache.pop(key)
-                self._cache[key] = value  # Move item to end to mark as recently used
-                return value
-            return default
+        cache = self._get_cache()
+        if key in cache:
+            value = cache.pop(key)
+            cache[key] = value
+            return value
+        return default
+
+    def clear(self):
+        """Clear all items from the cache."""
+        cache = self._get_cache()
+        cache.clear()
 
     def __contains__(self, key):
-        with self._lock:
-            return key in self._cache
+        return key in self._get_cache()
 
     def __len__(self):
-        with self._lock:
-            return len(self._cache)
+        return len(self._get_cache())
 
     def __repr__(self):
-        with self._lock:
-            return f"LRUCache(max_size={self._max_size}, items={list(self._cache.items())})"
+        return f"LRUCache(max_size={self._max_size}, items={list(self._get_cache().items())})"
+
+
+def lru_cache_decorator(max_size=128):
+    def decorator(func):
+        cache = LRUCache(max_size=max_size)
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            key = args
+            if kwargs:
+                key += tuple(sorted(kwargs.items()))
+            if key in cache:
+                return cache[key]
+            result = func(*args, **kwargs)
+            cache[key] = result
+            return result
+
+        wrapper.cache_clear = cache.clear
+        return wrapper
+
+    return decorator
+
+
+@lru_cache_decorator(max_size=None)
+def artifacts_json_cache(artifact_path):
+    return load_json(artifact_path)
 
 
 def flatten_dict(
@@ -222,11 +212,6 @@ def flatten_dict(
             items.append((new_key, v))
 
     return dict(items)
-
-
-@lru_cache(maxsize=None)
-def artifacts_json_cache(artifact_path):
-    return load_json(artifact_path)
 
 
 def load_json(path):

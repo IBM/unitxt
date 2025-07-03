@@ -1,6 +1,9 @@
 import copy
+import threading
+import time
 
 from unitxt.utils import (
+    LRUCache,
     deep_copy,
     is_module_available,
     is_package_installed,
@@ -295,3 +298,109 @@ class TestUtils(UnitxtTestCase):
             with self.subTest(i=i):
                 result = remove_numerics_and_quoted_texts(input_str)
                 self.assertEqual(result, expected_output)
+
+    def test_separate_caches_per_thread(self):
+        """Test that each thread maintains its own separate cache."""
+        shared_cache = LRUCache(max_size=5)
+        results = {}
+
+        def thread_function(thread_id):
+            for i in range(3):
+                key = f"thread_{thread_id}_key_{i}"
+                value = f"thread_{thread_id}_value_{i}"
+                shared_cache[key] = value
+
+            thread_items = []
+            for i in range(3):
+                key = f"thread_{thread_id}_key_{i}"
+                if key in shared_cache:
+                    thread_items.append((key, shared_cache[key]))
+
+            results[thread_id] = {"items": thread_items, "cache_len": len(shared_cache)}
+
+        threads = []
+        for i in range(3):
+            t = threading.Thread(target=thread_function, args=(i,))
+            threads.append(t)
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        for thread_id in range(3):
+            self.assertIn(thread_id, results)
+            thread_result = results[thread_id]
+
+            self.assertEqual(thread_result["cache_len"], 3)
+
+            for key, value in thread_result["items"]:
+                self.assertTrue(key.startswith(f"thread_{thread_id}_"))
+                self.assertTrue(value.startswith(f"thread_{thread_id}_"))
+
+    def test_no_cross_thread_contamination(self):
+        """Test that data from one thread doesn't appear in another thread's cache."""
+        shared_cache = LRUCache(max_size=10)
+        contamination_found = threading.Event()
+
+        def writer_thread():
+            for i in range(5):
+                shared_cache[f"writer_{i}"] = f"writer_value_{i}"
+                time.sleep(0.01)  # Small delay to increase overlap chance
+
+        def reader_thread():
+            time.sleep(0.005)
+            for _ in range(10):
+                for i in range(5):
+                    if f"writer_{i}" in shared_cache:
+                        contamination_found.set()
+                        return
+                time.sleep(0.01)
+
+        writer = threading.Thread(target=writer_thread)
+        reader = threading.Thread(target=reader_thread)
+
+        writer.start()
+        reader.start()
+
+        writer.join()
+        reader.join()
+
+        self.assertFalse(
+            contamination_found.is_set(), "Cross-thread contamination detected!"
+        )
+
+    def test_clear_only_affects_current_thread(self):
+        """Test that clearing cache in one thread doesn't affect other threads."""
+        shared_cache = LRUCache(max_size=5)
+        thread_states = {}
+
+        def thread_with_clear(thread_id):
+            shared_cache[f"key_{thread_id}"] = f"value_{thread_id}"
+
+            if thread_id == 1:
+                time.sleep(0.05)  # Ensure other threads have written
+                shared_cache.clear()
+                thread_states[thread_id] = len(shared_cache)
+            else:
+                time.sleep(0.1)  # Wait for thread 1 to clear
+                # Check if our data is still there
+                thread_states[thread_id] = (
+                    len(shared_cache),
+                    f"key_{thread_id}" in shared_cache,
+                )
+
+        threads = []
+        for i in range(3):
+            t = threading.Thread(target=thread_with_clear, args=(i,))
+            threads.append(t)
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        self.assertEqual(thread_states[1], 0)
+
+        for thread_id in [0, 2]:
+            cache_len, has_key = thread_states[thread_id]
+            self.assertEqual(cache_len, 1)
+            self.assertTrue(has_key)
