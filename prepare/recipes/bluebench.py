@@ -82,6 +82,8 @@ def prepare_recipe(default_args, specific_args):
 
     if "template" in recipe and "template_card_index" in recipe:
         del recipe["template_card_index"]
+
+    # Note: BlueBench only uses the chat_api format.
     return DatasetRecipe(**recipe, format="formats.chat_api")
 
 
@@ -237,7 +239,7 @@ for subset in subsets["cards.universal_ner"]:
         "card": f"cards.universal_ner.{subset}",
         "demos_pool_size": 10000,
         "num_demos": 5,
-        "template": "templates.span_labeling.extraction.title",
+        "template": "templates.span_labeling.extraction.detailed",
         "metrics": ["metrics.ner[zero_division=1.0]"],
         "train_refiner": "operators.balancers.ner.zero_vs_many_entities[segments_boundaries=[0,1,2]]",
         "demos_taken_from": "test" if "pud" in subset else "train",
