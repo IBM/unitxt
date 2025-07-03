@@ -1,7 +1,11 @@
 {
     "__type__": "criteria_with_options",
     "name": "relevance",
-    "description": "Is the response relevant with respect to the original text? The response captures the key points of the article. Consider whether all and only the important aspects are contained in the response. Penalize responses that contain redundancies or excess information.",
+    "description": "Is the response relevant with respect to the article? The response captures the key points of the article. Consider whether all and only the important aspects are contained in the response. Penalize responses that contain redundancies or excess information.",
+    "prediction_field": "response",
+    "context_fields": [
+        "article"
+    ],
     "options": [
         {
             "__type__": "criteria_option",

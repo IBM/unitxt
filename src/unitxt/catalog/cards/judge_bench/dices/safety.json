@@ -3,8 +3,7 @@
     "loader": {
         "__type__": "load_json_file",
         "files": {
-            "train": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/toxic_chat/toxic_chat_train.json",
-            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/toxic_chat/toxic_chat_test.json"
+            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/dices/dices_990.json"
         },
         "data_classification_policy": [
             "public"
@@ -14,22 +13,18 @@
     "preprocess_steps": [
         {
             "__type__": "rename",
-            "field": "instance",
-            "to_field": "text"
+            "field": "instance/user_prompt",
+            "to_field": "user message"
         },
         {
             "__type__": "rename",
-            "field": "annotations/jailbreaking/majority_human",
-            "to_field": "label"
+            "field": "instance/response",
+            "to_field": "assistant message"
         },
         {
-            "__type__": "map_instance_values",
-            "mappers": {
-                "label": {
-                    "0": "No",
-                    "1": "Yes"
-                }
-            }
+            "__type__": "rename",
+            "field": "annotations/safety/majority_human",
+            "to_field": "label"
         },
         {
             "__type__": "copy",
@@ -44,13 +39,21 @@
                     "No": 0.0
                 }
             }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "criteria": "metrics.llm_as_judge.direct.criteria.assistant_message_general_harm"
+            }
         }
     ],
     "task": {
         "__type__": "task",
         "input_fields": {
-            "text": "str",
-            "label": "str"
+            "user message": "str",
+            "assistant message": "str",
+            "label": "str",
+            "criteria": "Any"
         },
         "reference_fields": {
             "label_value": "float"
