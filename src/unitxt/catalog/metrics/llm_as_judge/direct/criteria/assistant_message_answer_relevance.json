@@ -1,7 +1,12 @@
 {
     "__type__": "criteria_with_options",
     "name": "assistant_message_answer_relevance",
-    "description": "Assistant message fails to address or properly respond to the User's input.",
+    "description": "Assistant message fails to address or properly respond to the User's input. This includes providing off-topic information, misinterpreting the query, or omitting crucial details requested by the User. An irrelevant answer may contain factually correct information but still fail to meet the User's specific needs or answer their intended question.",
+    "prediction_field": "assistant message",
+    "context_fields": [
+        "user message",
+        "context"
+    ],
     "options": [
         {
             "__type__": "criteria_option",

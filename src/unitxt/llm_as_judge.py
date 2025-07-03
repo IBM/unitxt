@@ -190,7 +190,7 @@ class LLMJudge(BulkInstanceMetric):
             if not (isinstance(v, dict) and len(v) == 0)
         }
 
-    def get_criteria(self, task_data, eval_count):
+    def get_criteria(self, task_data, eval_count) -> List[Criteria]:
         """Retrieves the evaluation criteria from the `criteria_field` or from `self`.
 
         Args:
@@ -224,6 +224,26 @@ class LLMJudge(BulkInstanceMetric):
 
         logger.info(f"Criteria names are '{', '.join(unique_criteria_names)}'")
         return criterias
+
+    def update_eval_fields_from_criteria(self, criteria: List[Criteria]):
+        if not self.context_fields:
+            self.context_fields = {
+                context_field: context_field
+                for context_field in criteria[0].context_fields
+            }
+
+    def get_predictions(
+        self,
+        task_data: List[Dict[str, Any]],
+        criteria: List[Criteria],
+        predictions: List[str],
+    ) -> List[str]:
+        if not predictions and criteria[0].prediction_field:
+            return [
+                dict_get(td, criteria[i].prediction_field)
+                for i, td in enumerate(task_data)
+            ]
+        return predictions
 
 
 class LLMJudgeDirect(LLMJudge):
@@ -517,9 +537,12 @@ class LLMJudgeDirect(LLMJudge):
         logger.info(
             f'Starting evaluation with evaluator "{self.evaluator_name}" and provider "{self.inference_engine.get_pretty_print_name()}'
         )
-        evaluations_count = len(predictions)
+
+        evaluations_count = len(task_data)
         # TODO: find out how to serialize and deserialize enums
         criterias = self.get_criteria(task_data, evaluations_count)
+        self.update_eval_fields_from_criteria(criterias)
+        predictions = self.get_predictions(task_data, criterias, predictions)
         self.__set_main_score(criterias)
         contexts = self.get_contexts(task_data)
         if self.check_positional_bias:

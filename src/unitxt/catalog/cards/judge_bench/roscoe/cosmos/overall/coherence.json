@@ -1,0 +1,69 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_json_file",
+        "files": {
+            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/roscoe/roscoe-cosmos-overall.json"
+        },
+        "data_classification_policy": [
+            "public"
+        ],
+        "data_field": "instances"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename",
+            "field": "annotations/Coherency/mean_human",
+            "to_field": "mean_score"
+        },
+        {
+            "__type__": "cast",
+            "field": "mean_score",
+            "to": "float"
+        },
+        {
+            "__type__": "group_dict_with_regex",
+            "field": "instance",
+            "pattern": ".*?Situation \\(Premise\\):\\s+(?P<premise>.*?)\\s+Claim \\(Hypothesis\\):\\s+(?P<hypothesis>.*?)\\s+Is the Claim supported by the Situation\\?\\s+Correct Relationship \\(Yes or No\\):\\s(?P<correct_answer>.*?)\\s+GENERATED RESPONSE:\\s+(?P<generated_response>.*?)\\s+Judge the generated response:",
+            "flags": 16
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "instance/premise": "premise",
+                "instance/hypothesis": "hypothesis",
+                "instance/generated_response": "generated response",
+                "instance/correct_answer": "correct answer"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "criteria": "metrics.llm_as_judge.direct.criteria.step_by_step_reasoning_coherency",
+                "question": "Is the Hypothesis supported by the Premise?"
+            }
+        }
+    ],
+    "task": {
+        "__type__": "task",
+        "input_fields": {
+            "premise": "str",
+            "hypothesis": "str",
+            "question": "str",
+            "generated response": "str",
+            "correct answer": "str",
+            "criteria": "Any"
+        },
+        "reference_fields": {
+            "mean_score": "float"
+        },
+        "prediction_type": "float",
+        "metrics": [
+            "metrics.spearman"
+        ],
+        "default_template": "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
+    },
+    "templates": [
+        "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
+    ]
+}
