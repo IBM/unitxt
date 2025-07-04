@@ -162,19 +162,6 @@ def is_library_module(module_name):
     ):
         return False
 
-    ########### dafnas #################
-
-    # if module_name in sys.modules:
-    #     return True
-
-    # try:
-    #     importlib.import_module(module_name)
-    #     return True
-    # except:
-    #     return False
-
-    ################## elron's lru ###################
-
     """Determines if a given module is a library module (as opposed to a local/project module).
     Fully cached version that minimizes all OS operations.
     """
@@ -223,62 +210,6 @@ def is_library_module(module_name):
                 return True
 
     return False
-
-    ############ eleons original ****************
-    # if module_name not in sys.modules:
-    #     try:
-    #         __import__(module_name)
-    #     except ImportError:
-    #         return False
-
-    # module = sys.modules[module_name]
-
-    # # Built-in modules
-    # if not hasattr(module, "__file__") or module.__file__ is None:
-    #     return True
-
-    # file_path = module.__file__
-
-    # # Check for standard library patterns
-    # import sysconfig
-
-    # stdlib_path = sysconfig.get_path("stdlib")
-
-    # # Direct match
-    # if file_path.startswith(stdlib_path):
-    #     return True
-
-    # # Handle different Python installations (Homebrew, pyenv, etc.)
-    # # Look for common stdlib patterns: .../lib/python3.x/...
-    # import re
-
-    # if (
-    #     re.search(r"/lib/python\d+\.\d+/", file_path)
-    #     and "site-packages" not in file_path
-    # ):
-    #     return True
-
-    # # Check if it's an installed package
-    # if any(pkg_dir in file_path for pkg_dir in ["site-packages", "dist-packages"]):
-    #     return True  # Regular installed package
-
-    # # Check if it's an editable install (file outside site-packages but package is installed)
-    # site_packages = sysconfig.get_path("purelib")
-    # package_name = module_name.split(".")[0]
-
-    # import glob
-
-    # # Check for various editable install patterns
-    # egg_links = glob.glob(os.path.join(site_packages, f"{package_name}*.egg-link"))
-    # pth_files = glob.glob(os.path.join(site_packages, f"*{package_name}*.pth"))
-    # editable_pth = glob.glob(
-    #     os.path.join(site_packages, f"__editable__.{package_name}*.pth")
-    # )
-
-    # if egg_links or pth_files or editable_pth:
-    #     return True  # It's an editable install, still a library
-
-    # return False
 
 
 def import_module_from_file(file_path):
@@ -520,40 +451,6 @@ class Artifact(Dataclass):
     def is_possible_identifier(cls, obj):
         return isinstance(obj, str) or is_artifact_dict(obj)
 
-    @staticmethod
-    def fix_module_name_if_not_in_path(module):
-        module_name = getattr(module, "__name__", None)
-        if not module_name:
-            if getattr(module, "__file__", None):
-                return module.__file__.split(os.sep)[-1].split(".")[0]
-            return "dummy_module_name"
-        if not getattr(module, "__file__", None):
-            return module_name
-        name_components = module.__name__.split(".")
-        if all(name_component in module.__file__ for name_component in name_components):
-            return module_name
-        file_components = module.__file__.split(os.sep)
-        if file_components[0] == "":
-            file_components = file_components[1:]
-        file_components[-1] = file_components[-1].split(".")[0]  # omit the .py
-        if not getattr(module, "__package__", None) or len(module.__package__) == 0:
-            return file_components[-1]
-        package_components = module.__package__.split(".")
-        assert all(p_c in file_components for p_c in package_components)
-        for i in range(len(file_components) - len(package_components) + 1):
-            if all(
-                package_components[j] == file_components[i + j]
-                for j in range(len(package_components))
-            ):
-                if i == len(file_components) - len(package_components):
-                    return module.__package__
-                return (
-                    module.__package__
-                    + "."
-                    + (".".join(file_components[i + len(package_components) :]))
-                )
-        return "dummy_module_name"
-
     @classmethod
     def get_artifact_type(cls):
         module = inspect.getmodule(cls)
@@ -562,13 +459,8 @@ class Artifact(Dataclass):
         if not is_library_module(module_name):
             non_library_module_warning = f"module named {module_name} is not importable. Class {cls} is thus registered into Artifact.class_register, indexed by {cls.__name__}, accessible there as long as this class_register lives."
             warnings.warn(non_library_module_warning, ImportWarning, stacklevel=2)
-            cls.register_class(cls)  ### Artifact._class_register[cls.__name__] = cls
+            cls.register_class(cls)
             return {"module": "class_register", "name": cls.__name__}
-        # module_package = getattr(module, "__package__", None)
-        # module_name = Artifact.fix_module_name_if_not_in_path(module)
-        # if module_package:
-        #     if not module_name.startswith(module_package):
-        #         module_name = module_package + "." + module_name
         if hasattr(cls, "__qualname__") and "." in cls.__qualname__:
             return {"module": module_name, "name": cls.__qualname__}
         return {"module": module_name, "name": cls.__name__}
@@ -718,12 +610,6 @@ class Artifact(Dataclass):
                 "name": self.__class__.__name__,
             }
             return
-        # if self.__type__["module"] == "class_register":
-        #     return
-        # if not is_library_module(self.__type__["module"]):
-        #     self.__type__["module"] = "class_register"
-        #     if not self.__type__["name"] in Artifact._class_register:
-        #         Artifact._class_register[self.__type__["name"]] = self.__class__
 
     def save(self, path):
         original_args = from_dict(self.to_dict()).get_repr_dict()
