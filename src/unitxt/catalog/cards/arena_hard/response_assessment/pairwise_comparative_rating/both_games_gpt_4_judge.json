@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_from_hf_space",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadFromHFSpace"
+        },
         "space_name": "lmsys/arena-hard-browser",
         "revision": "03b91ca",
         "data_files": {
@@ -16,12 +22,18 @@
     "preprocess_steps": [
         "operators.arena_hard_hf_space_processing_steps",
         {
-            "__type__": "duplicate_split",
+            "__type__": {
+                "module": "unitxt.stream_operators",
+                "name": "DuplicateSplit"
+            },
             "split": "test",
             "to_split": "game_2"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "model_input": "question",
                 "model_1_output": "answer_a",
@@ -36,7 +48,10 @@
             ]
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "model_input": "question",
                 "model_1_output": "answer_b",
@@ -51,7 +66,10 @@
             ]
         },
         {
-            "__type__": "merge_streams",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MergeStreams"
+            },
             "streams_to_merge": [
                 "test",
                 "game_2"
@@ -60,13 +78,19 @@
             "add_origin_stream_name": false
         },
         {
-            "__type__": "delete_splits",
+            "__type__": {
+                "module": "unitxt.stream_operators",
+                "name": "DeleteSplits"
+            },
             "splits": [
                 "game_2"
             ]
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "answer_a_preference": {
                     "A=B": 0,

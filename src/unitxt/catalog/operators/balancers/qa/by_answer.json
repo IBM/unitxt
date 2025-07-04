@@ -1,5 +1,8 @@
 {
-    "__type__": "deterministic_balancer",
+    "__type__": {
+        "module": "unitxt.operators",
+        "name": "DeterministicBalancer"
+    },
     "fields": [
         "reference_fields/answer"
     ]

@@ -1,5 +1,8 @@
 {
-    "__type__": "multi_reference_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "MultiReferenceTemplate"
+    },
     "input_format": "Question: {question}",
     "references_field": "answers",
     "target_prefix": "Answer: "

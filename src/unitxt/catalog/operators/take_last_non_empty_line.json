@@ -1,3 +1,6 @@
 {
-    "__type__": "take_last_non_empty_line"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "TakeLastNonEmptyLine"
+    }
 }

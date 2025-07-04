@@ -1,5 +1,8 @@
 {
-    "__type__": "cross_provider_inference_engine",
+    "__type__": {
+        "module": "unitxt.inference",
+        "name": "CrossProviderInferenceEngine"
+    },
     "model": "llama-3-1-70b-instruct",
     "logprobs": true,
     "max_tokens": 5,

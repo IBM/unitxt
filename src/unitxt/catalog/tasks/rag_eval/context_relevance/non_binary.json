@@ -1,5 +1,8 @@
 {
-    "__type__": "task",
+    "__type__": {
+        "module": "unitxt.task",
+        "name": "Task"
+    },
     "input_fields": {
         "contexts": "List[str]",
         "question": "str",

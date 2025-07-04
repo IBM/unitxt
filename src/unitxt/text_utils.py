@@ -247,7 +247,9 @@ def construct_dict_as_python_lines(d, indent_delta=4) -> List[str]:
             return ["{}"]
         if "__type__" in d:
             istype = True
-            res = ["__type__" + d["__type__"] + "("]
+            res = [
+                "__type__" + d["__type__"]["module"] + "." + d["__type__"]["name"] + "("
+            ]
             if len(d) == 1:
                 res[0] += ")"
                 return res
