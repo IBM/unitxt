@@ -2,7 +2,6 @@ import importlib
 import inspect
 import json
 import os
-import pkgutil
 import re
 import sys
 import sysconfig
@@ -843,24 +842,6 @@ def maybe_recover_artifact(obj):
     if Artifact.is_possible_identifier(obj):
         return verbosed_fetch_artifact(obj)
     return obj
-
-
-def register_all_artifacts(path):
-    for loader, module_name, _is_pkg in pkgutil.walk_packages(path):
-        logger.info(__name__)
-        if module_name == __name__:
-            continue
-        logger.info(f"Loading {module_name}")
-        # Import the module
-        module = loader.find_module(module_name).load_module(module_name)
-
-        # Iterate over every object in the module
-        for _name, obj in inspect.getmembers(module):
-            # Make sure the object is a class
-            if inspect.isclass(obj):
-                # Make sure the class is a subclass of Artifact (but not Artifact itself)
-                if issubclass(obj, Artifact) and obj is not Artifact:
-                    logger.info(obj)
 
 
 def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
