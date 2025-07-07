@@ -85,9 +85,9 @@ def main():
         )
         if final_number_of_catalog_entries <= initial_number_of_catalog_entries:
             error_msg = f"all the following {len(prepare_files)} prepare files fail forever: {prepare_files}. "
-            "One potential reason is that at least one of them contains add_link_to_catalog of an ArtifactLink "
-            "that links to an artifact that is added to the catalog only down that prepare_file. "
-            "To fix this: swap the order: first add_to_catalog the artifact linked to, and then add_link_to_catalog."
+            "One potential reason is a circular dependency among them, another is that at least one of them contains add_link_to_catalog "
+            "of an ArtifactLink that links to an artifact that is added to the catalog only down that prepare_file. "
+            "To fix: resolve dependency, or swap the order: first add_to_catalog the artifact linked to, and then add_link_to_catalog."
             raise RuntimeError(error_msg)
         prepare_files = failing_prepare_files
         failing_prepare_files = []
