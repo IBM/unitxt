@@ -29,17 +29,26 @@
             "by": ": "
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "src/0",
             "to_field": "instance_instruction"
         },
         {
-            "__type__": "slice",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Slice"
+            },
             "field": "src",
             "start": 1
         },
         {
-            "__type__": "join",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Join"
+            },
             "field": "src",
             "by": ": "
         },

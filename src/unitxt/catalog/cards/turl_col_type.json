@@ -6,17 +6,15 @@
     "loader": {
         "__type__": {
             "module": "unitxt.loaders",
-            "name": "LoadHF"
-        },
-        "path": "ibm/turl_table_col_type",
-        "data_classification_policy": [
-            "public"
-        ],
-        "streaming": true
+            "name": "TURLColumnTypeAnnotationLoader"
+        }
     },
     "preprocess_steps": [
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "vocab": [
                     "royalty.noble_person",

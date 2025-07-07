@@ -20,7 +20,10 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "load_json",
+            "__type__": {
+                "module": "unitxt.struct_data_operators",
+                "name": "LoadJson"
+            },
             "field": "table"
         },
         {

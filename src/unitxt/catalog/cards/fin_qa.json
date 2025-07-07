@@ -4,7 +4,10 @@
         "name": "TaskCard"
     },
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadJsonFile"
+        },
         "files": {
             "train": "https://raw.githubusercontent.com/czyssrs/FinQA/0f16e2867befa6840783e58be38c9efb9229d742/dataset/train.json",
             "validation": "https://raw.githubusercontent.com/czyssrs/FinQA/0f16e2867befa6840783e58be38c9efb9229d742/dataset/dev.json",
@@ -15,6 +18,39 @@
         ]
     },
     "preprocess_steps": [
+        {
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
+            "field": "qa/question",
+            "to_field": "question"
+        },
+        {
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
+            "field": "qa/answer",
+            "to_field": "answer"
+        },
+        {
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Cast"
+            },
+            "field": "qa/program",
+            "to": "str",
+            "to_field": "program_re"
+        },
+        {
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
+            "field": "pre_text/0",
+            "to_field": "pre_text"
+        },
         {
             "__type__": {
                 "module": "unitxt.collections_operators",
@@ -32,14 +68,6 @@
                 "table_length": 1
             },
             "condition": "gt"
-        },
-        {
-            "__type__": {
-                "module": "unitxt.operators",
-                "name": "Copy"
-            },
-            "field": "pre_text/0",
-            "to_field": "pre_text"
         },
         {
             "__type__": {

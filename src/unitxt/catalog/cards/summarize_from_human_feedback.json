@@ -32,12 +32,18 @@
             }
         },
         {
-            "__type__": "cast",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Cast"
+            },
             "field": "input",
             "to": "str"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "choice": "output_choice"
             }

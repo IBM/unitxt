@@ -6,20 +6,49 @@
     "loader": {
         "__type__": {
             "module": "unitxt.loaders",
-            "name": "LoadHF"
+            "name": "MultipleSourceLoader"
         },
-        "path": "gsarti/flores_101",
-        "name": "all"
+        "sources": [
+            {
+                "__type__": {
+                    "module": "unitxt.loaders",
+                    "name": "LoadHF"
+                },
+                "path": "gsarti/flores_101",
+                "data_dir": "all/devtest",
+                "data_classification_policy": [
+                    "public"
+                ],
+                "revision": "refs/convert/parquet",
+                "splits": [
+                    "train"
+                ]
+            },
+            {
+                "__type__": {
+                    "module": "unitxt.loaders",
+                    "name": "LoadHF"
+                },
+                "path": "gsarti/flores_101",
+                "data_dir": "all",
+                "data_classification_policy": [
+                    "public"
+                ],
+                "revision": "refs/convert/parquet",
+                "splits": [
+                    "validation"
+                ]
+            }
+        ]
     },
     "preprocess_steps": [
         {
             "__type__": {
                 "module": "unitxt.splitters",
-                "name": "SplitRandomMix"
+                "name": "RenameSplits"
             },
-            "mix": {
-                "validation": "dev",
-                "test": "devtest"
+            "mapper": {
+                "train": "test"
             }
         },
         {

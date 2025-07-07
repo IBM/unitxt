@@ -1,63 +1,27 @@
 {
     "__type__": {
         "module": "unitxt.metrics",
-        "name": "MetricPipeline"
+        "name": "NormalizedSacrebleu"
     },
-    "main_score": "sacrebleu",
-    "prediction_type": "str",
-    "preprocess_steps": [
-        {
-            "__type__": {
-                "module": "unitxt.operators",
-                "name": "Copy"
-            },
-            "field": "task_data/target_language",
-            "to_field": "task_data/tokenize",
-            "not_exist_ok": true,
-            "get_default": "en"
-        },
-        {
-            "__type__": {
-                "module": "unitxt.processors",
-                "name": "Lower"
-            },
-            "field": "task_data/tokenize"
-        },
-        {
-            "__type__": {
-                "module": "unitxt.operators",
-                "name": "MapInstanceValues"
-            },
-            "mappers": {
-                "task_data/tokenize": {
-                    "german": null,
-                    "deutch": null,
-                    "de": null,
-                    "french": null,
-                    "fr": null,
-                    "romanian": null,
-                    "ro": null,
-                    "english": null,
-                    "en": null,
-                    "spanish": null,
-                    "es": null,
-                    "portuguese": null,
-                    "pt": null,
-                    "arabic": "intl",
-                    "ar": "intl",
-                    "korean": "ko-mecab",
-                    "ko": "ko-mecab",
-                    "japanese": "ja-mecab",
-                    "ja": "ja-mecab"
-                }
-            },
-            "strict": true
-        }
-    ],
-    "metric": {
-        "__type__": {
-            "module": "unitxt.metrics",
-            "name": "NormalizedSacrebleu"
-        }
+    "language_to_tokenizer": {
+        "german": null,
+        "deutch": null,
+        "de": null,
+        "french": null,
+        "fr": null,
+        "romanian": null,
+        "ro": null,
+        "english": null,
+        "en": null,
+        "spanish": null,
+        "es": null,
+        "portuguese": null,
+        "pt": null,
+        "arabic": "intl",
+        "ar": "intl",
+        "korean": "ko-mecab",
+        "ko": "ko-mecab",
+        "japanese": "ja-mecab",
+        "ja": "ja-mecab"
     }
 }
