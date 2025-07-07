@@ -80,7 +80,7 @@ def depraction_wrapper(obj, version, alt_text):
                 and issubclass(obj, Artifact)
                 and obj is not Artifact
             ):
-                obj.register_class(obj)
+                obj.register_class()
         elif constants.version >= version:
             raise DeprecationError(f"{obj.__name__} is no longer supported.{alt_text}")
         return obj(*args, **kwargs)

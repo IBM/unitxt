@@ -19,8 +19,8 @@
     "preprocess_steps": [
         {
             "__type__": {
-                "module": "unitxt.operators",
-                "name": "Rename"
+                "module": "unitxt.processors",
+                "name": "GroupDictWithRegex"
             },
             "field": "instance",
             "pattern": ".*?### PROBLEM STATEMENT\\s+(?P<problem_statement>.*?)\\s+Statements:\\s+(?P<statements>.*?)\\s+Let\\'s think step by step\\.\\s*### MODEL RESPONSE\\s+(?P<model_reasoning>.*)",
@@ -37,7 +37,6 @@
                 "instance/model_reasoning": "model reasoning",
                 "annotations/Sound Reasoning/majority_human": "label"
             }
-
         },
         {
             "__type__": {

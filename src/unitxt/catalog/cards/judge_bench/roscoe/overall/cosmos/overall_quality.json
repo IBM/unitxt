@@ -19,22 +19,6 @@
     "preprocess_steps": [
         {
             "__type__": {
-                "module": "unitxt.operators",
-                "name": "Rename"
-            },
-            "field": "annotations/Overall Quality/mean_human",
-            "to_field": "mean_score"
-        },
-        {
-            "__type__": {
-                "module": "unitxt.operators",
-                "name": "Cast"
-            },
-            "field": "mean_score",
-            "to": "float"
-        },
-        {
-            "__type__": {
                 "module": "unitxt.processors",
                 "name": "GroupDictWithRegex"
             },
@@ -54,6 +38,14 @@
                 "instance/correct_answer": "correct answer",
                 "annotations/Overall Quality/mean_human": "mean_score"
             }
+        },
+        {
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Cast"
+            },
+            "field": "mean_score",
+            "to": "float"
         },
         {
             "__type__": {
