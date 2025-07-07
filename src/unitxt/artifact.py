@@ -446,6 +446,14 @@ class Artifact(Dataclass):
         default=None, required=False, also_positional=False
     )
 
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        module = inspect.getmodule(cls)
+        # standardize module name
+        module_name = getattr(module, "__name__", None)
+        if not is_library_module(module_name):
+            cls.register_class()
+
     @classmethod
     def is_possible_identifier(cls, obj):
         return isinstance(obj, str) or is_artifact_dict(obj)
@@ -458,18 +466,15 @@ class Artifact(Dataclass):
         if not is_library_module(module_name):
             non_library_module_warning = f"module named {module_name} is not importable. Class {cls} is thus registered into Artifact.class_register, indexed by {cls.__name__}, accessible there as long as this class_register lives."
             warnings.warn(non_library_module_warning, ImportWarning, stacklevel=2)
-            cls.register_class(cls)
+            cls.register_class()
             return {"module": "class_register", "name": cls.__name__}
         if hasattr(cls, "__qualname__") and "." in cls.__qualname__:
             return {"module": module_name, "name": cls.__qualname__}
         return {"module": module_name, "name": cls.__name__}
 
     @classmethod
-    def register_class(cls, artifact_class):
-        Artifact._class_register[artifact_class.__name__] = artifact_class
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
+    def register_class(cls):
+        Artifact._class_register[cls.__name__] = cls
 
     @classmethod
     def is_artifact_file(cls, path):
@@ -603,7 +608,7 @@ class Artifact(Dataclass):
             not is_library_module(self.__type__["module"])
             or "<locals>" in self.__type__["name"]
         ):
-            self.__class__.register_class(self.__class__)
+            self.__class__.register_class()
             self.__type__ = {
                 "module": "class_register",
                 "name": self.__class__.__name__,

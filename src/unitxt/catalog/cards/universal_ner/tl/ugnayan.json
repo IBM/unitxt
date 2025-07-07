@@ -6,12 +6,13 @@
     "loader": {
         "__type__": {
             "module": "unitxt.loaders",
-            "name": "LoadHF"
+            "name": "LoadIOB"
         },
-        "path": "universalner/universal_ner",
-        "name": "tl_ugnayan",
-        "requirements": [
-            "conllu"
+        "files": {
+            "test": "https://raw.githubusercontent.com/UniversalNER/UNER_Tagalog-Ugnayan/master/tl_ugnayan-ud-test.iob2"
+        },
+        "data_classification_policy": [
+            "public"
         ]
     },
     "preprocess_steps": [
@@ -30,23 +31,6 @@
             "field_to_field": {
                 "ner_tags": "labels"
             }
-        },
-        {
-            "__type__": {
-                "module": "unitxt.operators",
-                "name": "GetItemByIndex"
-            },
-            "field": "labels",
-            "items_list": [
-                "O",
-                "B-PER",
-                "I-PER",
-                "B-ORG",
-                "I-ORG",
-                "B-LOC",
-                "I-LOC"
-            ],
-            "process_every_value": true
         },
         {
             "__type__": {

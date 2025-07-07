@@ -20,12 +20,10 @@
         {
             "__type__": {
                 "module": "unitxt.splitters",
-                "name": "SplitRandomMix"
+                "name": "RenameSplits"
             },
-            "mix": {
-                "train": "train",
-                "validation": "val",
-                "test": "test"
+            "mapper": {
+                "val": "validation"
             }
         },
         {
