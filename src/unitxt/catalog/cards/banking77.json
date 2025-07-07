@@ -8,7 +8,12 @@
             "module": "unitxt.loaders",
             "name": "LoadHF"
         },
-        "path": "PolyAI/banking77"
+        "path": "PolyAI/banking77",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "test"
+        ]
     },
     "preprocess_steps": [
         {

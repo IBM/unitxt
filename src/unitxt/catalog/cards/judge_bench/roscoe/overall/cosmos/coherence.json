@@ -19,22 +19,6 @@
     "preprocess_steps": [
         {
             "__type__": {
-                "module": "unitxt.operators",
-                "name": "Rename"
-            },
-            "field": "annotations/Coherency/mean_human",
-            "to_field": "mean_score"
-        },
-        {
-            "__type__": {
-                "module": "unitxt.operators",
-                "name": "Cast"
-            },
-            "field": "mean_score",
-            "to": "float"
-        },
-        {
-            "__type__": {
                 "module": "unitxt.processors",
                 "name": "GroupDictWithRegex"
             },
@@ -56,17 +40,26 @@
             }
         },
         {
-            "__type__": "cast",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Cast"
+            },
             "field": "mean_score",
             "to": "float"
         },
         {
-            "__type__": "execute_expression",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ExecuteExpression"
+            },
             "expression": "(mean_score - 1) / 4",
             "to_field": "mean_score"
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "criteria": "metrics.llm_as_judge.direct.criteria.step_by_step_reasoning_coherency",
                 "question": "Is the Hypothesis supported by the Premise?"

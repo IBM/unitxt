@@ -60,7 +60,10 @@
             "new_stream_name": "test"
         },
         {
-            "__type__": "delete_splits",
+            "__type__": {
+                "module": "unitxt.stream_operators",
+                "name": "DeleteSplits"
+            },
             "splits": [
                 "judge_prompts"
             ]

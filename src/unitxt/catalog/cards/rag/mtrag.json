@@ -18,7 +18,10 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "filter_by_condition",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FilterByCondition"
+            },
             "values": {
                 "Answerability": [
                     [
@@ -35,7 +38,10 @@
             "condition": "in"
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "Answerability": {
                     "['UNANSWERABLE']": false,

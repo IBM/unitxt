@@ -8,7 +8,16 @@
             "module": "unitxt.loaders",
             "name": "LoadHF"
         },
-        "path": "EdinburghNLP/xsum"
+        "path": "EdinburghNLP/xsum",
+        "revision": "refs/convert/parquet",
+        "data_classification_policy": [
+            "public"
+        ],
+        "splits": [
+            "train",
+            "validation",
+            "test"
+        ]
     },
     "task": "tasks.summarization.abstractive",
     "preprocess_steps": [

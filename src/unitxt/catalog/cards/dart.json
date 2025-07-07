@@ -8,7 +8,15 @@
             "module": "unitxt.loaders",
             "name": "LoadHF"
         },
-        "path": "dart"
+        "path": "Yale-LILY/dart",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "validation"
+        ],
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         "splitters.small_no_test",

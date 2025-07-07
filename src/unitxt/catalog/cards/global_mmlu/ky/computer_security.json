@@ -16,16 +16,6 @@
         {
             "__type__": {
                 "module": "unitxt.operators",
-                "name": "FilterByCondition"
-            },
-            "values": {
-                "subject": "computer_security"
-            },
-            "condition": "eq"
-        },
-        {
-            "__type__": {
-                "module": "unitxt.operators",
                 "name": "Deduplicate"
             },
             "by": [

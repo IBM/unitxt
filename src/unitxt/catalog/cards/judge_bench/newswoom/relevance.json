@@ -34,12 +34,18 @@
             "to": "float"
         },
         {
-            "__type__": "execute_expression",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ExecuteExpression"
+            },
             "expression": "(mean_score - 1) / 4",
             "to_field": "mean_score"
         },
         {
-            "__type__": "group_dict_with_regex",
+            "__type__": {
+                "module": "unitxt.processors",
+                "name": "GroupDictWithRegex"
+            },
             "field": "instance",
             "pattern": "### Generated Summary\\s+(?P<generated_summary>.*?)\\s+### Source Article\\s+(?P<source_article>.*)",
             "flags": 16

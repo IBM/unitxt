@@ -16,16 +16,6 @@
         {
             "__type__": {
                 "module": "unitxt.operators",
-                "name": "FilterByCondition"
-            },
-            "values": {
-                "subject": "high_school_mathematics"
-            },
-            "condition": "eq"
-        },
-        {
-            "__type__": {
-                "module": "unitxt.operators",
                 "name": "Deduplicate"
             },
             "by": [

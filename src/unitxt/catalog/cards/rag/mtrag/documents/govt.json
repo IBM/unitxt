@@ -19,12 +19,18 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "cast",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Cast"
+            },
             "field": "title",
             "to": "str"
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "text",
             "inside": "list",
             "to_field": "passages"

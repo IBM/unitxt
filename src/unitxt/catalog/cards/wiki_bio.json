@@ -18,7 +18,10 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "list_to_key_val_pairs",
+            "__type__": {
+                "module": "unitxt.struct_data_operators",
+                "name": "ListToKeyValPairs"
+            },
             "fields": [
                 "input_text/table/column_header",
                 "input_text/table/content"

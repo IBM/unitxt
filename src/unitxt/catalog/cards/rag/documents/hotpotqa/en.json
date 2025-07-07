@@ -8,9 +8,13 @@
             "module": "unitxt.loaders",
             "name": "LoadHF"
         },
-        "path": "vincentkoc/hotpot_qa_archive",
-        "revision": "c060661",
-        "name": "distractor",
+        "path": "hotpotqa/hotpot_qa",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "test",
+            "validation"
+        ],
         "data_classification_policy": [
             "public"
         ]

@@ -6,9 +6,14 @@
     "loader": {
         "__type__": {
             "module": "unitxt.loaders",
-            "name": "LoadHF"
+            "name": "LoadCSV"
         },
-        "path": "wikitablequestions",
+        "files": {
+            "train": "https://raw.githubusercontent.com/ppasupat/WikiTableQuestions/master/data/random-split-1-train.tsv",
+            "validation": "https://raw.githubusercontent.com/ppasupat/WikiTableQuestions/master/data/random-split-1-dev.tsv",
+            "test": "https://raw.githubusercontent.com/ppasupat/WikiTableQuestions/master/data/pristine-unseen-tables.tsv"
+        },
+        "sep": "\t",
         "data_classification_policy": [
             "public"
         ]
@@ -17,11 +22,64 @@
         {
             "__type__": {
                 "module": "unitxt.operators",
+                "name": "Rename"
+            },
+            "field": "utterance",
+            "to_field": "question"
+        },
+        {
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Split"
+            },
+            "field": "targetValue",
+            "to_field": "answers",
+            "by": "|"
+        },
+        {
+            "__type__": {
+                "module": "unitxt.operators",
                 "name": "Set"
             },
             "fields": {
                 "context_type": "table"
             }
+        },
+        {
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Replace"
+            },
+            "field": "context",
+            "old": ".csv",
+            "new": ".tsv"
+        },
+        {
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "FormatText"
+            },
+            "text": "https://raw.githubusercontent.com/ppasupat/WikiTableQuestions/refs/heads/master/{context}",
+            "to_field": "table_url"
+        },
+        {
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ReadFile"
+            },
+            "field": "table_url",
+            "to_field": "table_content"
+        },
+        {
+            "__type__": {
+                "module": "unitxt.struct_data_operators",
+                "name": "ParseCSV"
+            },
+            "field": "table_content",
+            "to_field": "table",
+            "separator": "\t",
+            "dtype": "str",
+            "strip_cells": true
         },
         {
             "__type__": {

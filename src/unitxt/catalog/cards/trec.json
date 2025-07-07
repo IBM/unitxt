@@ -8,7 +8,12 @@
             "module": "unitxt.loaders",
             "name": "LoadHF"
         },
-        "path": "trec"
+        "path": "trec",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "test"
+        ]
     },
     "preprocess_steps": [
         {

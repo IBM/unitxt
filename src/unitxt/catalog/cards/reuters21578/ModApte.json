@@ -8,8 +8,16 @@
             "module": "unitxt.loaders",
             "name": "LoadHF"
         },
-        "path": "reuters21578",
-        "name": "ModApte"
+        "path": "ucirvine/reuters21578",
+        "data_dir": "ModApte",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "test"
+        ],
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {
