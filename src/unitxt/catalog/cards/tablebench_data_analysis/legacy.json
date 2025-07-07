@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "Multilingual-Multimodal-NLP/TableBench",
         "revision": "90593ad8",
         "data_classification_policy": [
@@ -14,7 +20,10 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "SplitRandomMix"
+            },
             "mix": {
                 "train": "test[20%]",
                 "validation": "test[20%]",
@@ -22,14 +31,20 @@
             }
         },
         {
-            "__type__": "filter_by_condition",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FilterByCondition"
+            },
             "values": {
                 "instruction_type": "DP"
             },
             "condition": "eq"
         },
         {
-            "__type__": "filter_by_condition",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FilterByCondition"
+            },
             "values": {
                 "qtype": [
                     "DataAnalysis"
@@ -38,7 +53,10 @@
             "condition": "in"
         },
         {
-            "__type__": "apply",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Apply"
+            },
             "function": "json.loads",
             "to_field": "table",
             "_argv": [
@@ -46,34 +64,49 @@
             ]
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "table/columns": "table/header",
                 "table/data": "table/rows"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "context_type": "Table"
             }
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "table": "context",
                 "answer": "answers"
             }
         },
         {
-            "__type__": "remove_fields",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "RemoveFields"
+            },
             "fields": [
                 "instruction"
             ]
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "context": "Table",
             "context_type": "str",
@@ -94,7 +127,10 @@
     },
     "templates": [
         {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "instruction": "You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter}\nOutput only the final answer without any explanations, extra information, or introductory text.\nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.",
             "input_format": "{context_type}: {context} \nQuestion: {question}",
             "target_prefix": "Final Answer: ",

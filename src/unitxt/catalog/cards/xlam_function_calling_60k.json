@@ -70,20 +70,29 @@
             "to_field": "properties"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "properties",
             "to_field": "tools/*/parameters/properties",
             "set_every_value": true
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "tools/*/parameters/type": "object"
             },
             "use_deepcopy": true
         },
         {
-            "__type__": "execute_expression",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ExecuteExpression"
+            },
             "to_field": "required",
             "expression": "[[p for p, c in tool['parameters']['properties'].items() if 'optional' not in c['type'].lower()] for tool in tools]"
         },
@@ -97,7 +106,10 @@
             "set_every_value": true
         },
         {
-            "__type__": "fix_json_schema_of_parameter_types",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FixJsonSchemaOfParameterTypes"
+            },
             "main_field": "tools"
         }
     ],
