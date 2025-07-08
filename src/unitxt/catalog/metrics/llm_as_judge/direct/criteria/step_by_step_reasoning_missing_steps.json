@@ -1,0 +1,28 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "step_by_step_reasoning_missing_steps",
+    "description": "Is the reasoning in the generated response incomplete and lacking required information to produce the correct answer? Specifically, does this response contain steps that, if added in, would make for a well-supported chain?",
+    "prediction_field": "generated response",
+    "context_fields": [
+        "question",
+        "premise",
+        "hypothesis",
+        "correct answer"
+    ],
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": ""
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": ""
+        }
+    ],
+    "option_map": {
+        "Yes": 0.0,
+        "No": 1.0
+    }
+}

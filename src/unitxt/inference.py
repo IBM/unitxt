@@ -2091,6 +2091,7 @@ class RITSInferenceEngine(
         "meta-llama/llama-4-maverick-17b-128e-instruct-fp8": "llama-4-mvk-17b-128e-fp8",
         "deepseek-ai/DeepSeek-V3": "deepseek-v3-h200",
         "meta-llama/Llama-3.1-8B-Instruct": "llama-3-1-8b-instruct",
+        "meta-llama/Llama-4-Scout-17B-16E-Instruct": "llama-4-scout-17b-16e-instruct",
     }
 
     def get_default_headers(self):
@@ -3572,7 +3573,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-11b-vision-instruct": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "llama-3-2-90b-vision-instruct": "meta-llama/Llama-3.2-90B-Vision-Instruct",
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
-            "llama-4-scout": "meta-llama/llama-4-scout-17b-16e",
+            "llama-4-scout": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
             "llama-4-maverick": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
@@ -3882,7 +3883,7 @@ class MetricInferenceEngine(InferenceEngine):
     """
 
     metric: Metric
-    prediction_field: str
+    prediction_field: Optional[str] = None
 
     def _infer(
         self,
@@ -3893,7 +3894,11 @@ class MetricInferenceEngine(InferenceEngine):
             json.loads(instance["task_data"]) if "task_data" in instance else {}
             for instance in dataset
         ]
-        predictions = [td[self.prediction_field] for td in task_data]
+        predictions = (
+            [td[self.prediction_field] for td in task_data]
+            if self.prediction_field
+            else []
+        )
         references = [instance["references"] for instance in dataset]
         return self.metric.compute(
             task_data=task_data,

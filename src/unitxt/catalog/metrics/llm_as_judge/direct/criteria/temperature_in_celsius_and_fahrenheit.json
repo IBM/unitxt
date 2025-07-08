@@ -2,6 +2,8 @@
     "__type__": "criteria_with_options",
     "name": "temperature_in_celsius_and_fahrenheit",
     "description": "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
+    "prediction_field": "response",
+    "context_fields": [],
     "options": [
         {
             "__type__": "criteria_option",

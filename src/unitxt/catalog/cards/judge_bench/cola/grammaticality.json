@@ -3,8 +3,7 @@
     "loader": {
         "__type__": "load_json_file",
         "files": {
-            "train": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/toxic_chat/toxic_chat_train.json",
-            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/toxic_chat/toxic_chat_test.json"
+            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/cola/cola.json"
         },
         "data_classification_policy": [
             "public"
@@ -15,21 +14,12 @@
         {
             "__type__": "rename",
             "field": "instance",
-            "to_field": "text"
+            "to_field": "response"
         },
         {
             "__type__": "rename",
-            "field": "annotations/toxicity/majority_human",
+            "field": "annotations/grammaticality/majority_human",
             "to_field": "label"
-        },
-        {
-            "__type__": "map_instance_values",
-            "mappers": {
-                "label": {
-                    "0": "No",
-                    "1": "Yes"
-                }
-            }
         },
         {
             "__type__": "copy",
@@ -44,13 +34,20 @@
                     "No": 0.0
                 }
             }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "criteria": "metrics.llm_as_judge.direct.criteria.grammar_and_punctuation"
+            }
         }
     ],
     "task": {
         "__type__": "task",
         "input_fields": {
-            "text": "str",
-            "label": "str"
+            "response": "str",
+            "label": "str",
+            "criteria": "Any"
         },
         "reference_fields": {
             "label_value": "float"

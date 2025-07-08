@@ -1,7 +1,12 @@
 {
     "__type__": "criteria_with_options",
     "name": "context_context_relevance",
-    "description": "Context is not relevant to the User message.",
+    "description": "Context is not relevant to the 'User' message. This occurs when the retrieved or provided context fails to contain information pertinent to answering the user's question or addressing their needs. Irrelevant context may be on a different topic, from an unrelated domain, or contain information that doesn't help in formulating an appropriate response to the user.",
+    "prediction_field": "context",
+    "context_fields": [
+        "user message",
+        "assistant message"
+    ],
     "options": [
         {
             "__type__": "criteria_option",

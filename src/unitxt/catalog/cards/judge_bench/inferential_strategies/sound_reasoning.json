@@ -1,0 +1,74 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_json_file",
+        "files": {
+            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/inferential-strategies/inferential_strategies.json"
+        },
+        "data_classification_policy": [
+            "public"
+        ],
+        "data_field": "instances"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename",
+            "field": "instance",
+            "to_field": "reasoning"
+        },
+        {
+            "__type__": "rename",
+            "field": "annotations/Sound Reasoning/majority_human",
+            "to_field": "label"
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "no": "No",
+                    "yes": "Yes"
+                }
+            }
+        },
+        {
+            "__type__": "copy",
+            "field": "label",
+            "to_field": "label_value"
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "label_value": {
+                    "Yes": 1.0,
+                    "No": 0.0
+                }
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "criteria": "metrics.llm_as_judge.direct.criteria.logical_validity_of_reasoning"
+            }
+        }
+    ],
+    "task": {
+        "__type__": "task",
+        "input_fields": {
+            "reasoning": "str",
+            "label": "str",
+            "criteria": "Any"
+        },
+        "reference_fields": {
+            "label_value": "float"
+        },
+        "prediction_type": "float",
+        "metrics": [
+            "metrics.spearman",
+            "metrics.accuracy"
+        ],
+        "default_template": "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
+    },
+    "templates": [
+        "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
+    ]
+}

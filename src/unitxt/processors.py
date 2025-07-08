@@ -99,10 +99,27 @@ class ExtractWithRegex(RegexParser):
 
 
 class GroupDictWithRegex(FieldOperator):
+    r"""Extracts named groups from a string using a regular expression pattern, returning a dictionary of group names to values.
+
+    Args:
+        pattern (str): A regular expression with named groups (using (?P<name>...)).
+
+    Example:
+        >>> op = GroupDictWithRegex(pattern=r"(?P<name>\\w+):(?P<age>\\d+)")
+        >>> op.process_value("alice:23")
+        {'name': 'alice', 'age': '23'}
+        >>> op.process_value("not_a_match")
+        {}
+
+    Returns:
+        dict: A dictionary mapping group names to matched values, or an empty dict if no match.
+    """
+
     pattern: str
+    flags: int = 0
 
     def process_value(self, value: Any) -> Any:
-        match = re.match(self.pattern, value)
+        match = re.match(self.pattern, value, flags=self.flags)
         if match:
             return match.groupdict()
         return {}
