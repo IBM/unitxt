@@ -54,12 +54,10 @@
         },
         "prediction_type": "float",
         "metrics": [
-            "metrics.spearman",
-            "metrics.accuracy"
+            "metrics.accuracy",
+            "metrics.f1_macro"
         ],
         "default_template": "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
     },
-    "templates": [
-        "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
-    ]
+    "templates": []
 }

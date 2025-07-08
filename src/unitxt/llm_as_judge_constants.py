@@ -1032,6 +1032,126 @@ class DirectCriteriaCatalogEnum(Enum):
         bigger_is_better=False,
     )
 
+    STEP_BY_STEP_REASONING_BAD_GRAMMAR = get_yes_no_criteria(
+        name="step_by_step_reasoning_bad_grammar",
+        description="Does this step contain any faulty, unconventional, or controversial grammar usage? In other words, does the language in this step sounds unnatural?",
+        prediction_field="step",
+        context_fields=[],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_REASONING_NON_FACTUAL = get_yes_no_criteria(
+        name="step_by_step_reasoning_non_factual",
+        description="Does this step contain any information that contradicts the context while still largely talking about the same concepts? (Ex. Characteristics of named objects are wrong, named entities changed.)",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_NON_COHERENT = get_yes_no_criteria(
+        name="step_by_step_reasoning_non_coherent",
+        description="Does this step contain any logical deduction errors (Ie, makes a conclusion contradictory to previously stated clauses, including clauses within this step itself; makes a conclusion while not having enough support to make the conclusion)",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_BAD_FINAL_ANSWER = get_yes_no_criteria(
+        name="step_by_step_reasoning_bad_final_answer",
+        description="Does this step contain a final step with an incorrect final answer? (If an explicit 'yes/no' is not provided, an exact match of the correct answer with respect to the question in the context must be given.)",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_REASONING_HALLUCINATION = get_yes_no_criteria(
+        name="step_by_step_reasoning_hallucination",
+        description="Does this step contain any information not provided in the problem statement that is irrelevant or wrong?",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_REASONING_REDUNDANCY = get_yes_no_criteria(
+        name="step_by_step_reasoning_redundancy",
+        description="Does this step contain any information not required to answer the question asked despite being factual and consistent with the context?",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_REASONING_REPETITION = get_yes_no_criteria(
+        name="step_by_step_reasoning_repetition",
+        description="Does this step contain any information, possibly paraphrased, already mentioned in previous step (and thus could be dropped without impacting correctness)?",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_REASONING_COMMONSENSE = get_yes_no_criteria(
+        name="step_by_step_reasoning_commonsense",
+        description="Does this step contain any errors in relation to general knowledge about the world (i.e. how to compute velocity, how many inches in one foot, etc) not explicitly provided in the context?",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_REASONING_ARITHMETIC = get_yes_no_criteria(
+        name="step_by_step_reasoning_arithmetic",
+        description="Does this step contain any math equation errors? Note that you should consider only current step in isolation, rather than issues propagated from prior steps.",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
     REFERENCE_DOCUMENT_FAITHFULNESS = CriteriaWithOptions(
         name="reference_document_faithfulness",
         description="Is the response faithful according to reference document?",
@@ -1412,12 +1532,12 @@ class DirectCriteriaCatalogEnum(Enum):
     LOGICAL_VALIDITY_OF_REASONING = CriteriaWithOptions(
         name="logical_validity_of_reasoning",
         description=(
-            "Assess whether the model's reasoning is logically valid when solving problems "
+            "Assess whether the model reasoning is logically valid when solving problems "
             "in propositional logic. The reasoning should follow correct logical principles "
             "and lead to a valid conclusion based on the given premises."
         ),
-        prediction_field="reasoning",
-        context_fields=[],
+        prediction_field="model reasoning",
+        context_fields=["problem statement", "statements"],
         options=[
             CriteriaOption(
                 name="Yes",

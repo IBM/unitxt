@@ -12,9 +12,20 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "group_dict_with_regex",
+            "field": "instance",
+            "pattern": ".*?Situation \\(Premise\\):\\s+(?P<premise>.*?)\\s+Claim \\(Hypothesis\\):\\s+(?P<hypothesis>.*?)\\s+Is the Claim supported by the Situation\\?\\s+Correct Relationship \\(Yes or No\\):\\s(?P<correct_answer>.*?)\\s+GENERATED RESPONSE:\\s+(?P<model_reasoning>.*?)\\s+Judge the generated response:",
+            "flags": 16
+        },
+        {
             "__type__": "rename",
-            "field": "annotations/Contradiction/majority_human",
-            "to_field": "label"
+            "field_to_field": {
+                "instance/premise": "premise",
+                "instance/hypothesis": "hypothesis",
+                "instance/model_reasoning": "generated response",
+                "instance/correct_answer": "correct answer",
+                "annotations/Contradiction/majority_human": "label"
+            }
         },
         {
             "__type__": "map_instance_values",
@@ -29,21 +40,6 @@
             "__type__": "copy",
             "field": "label",
             "to_field": "label_value"
-        },
-        {
-            "__type__": "group_dict_with_regex",
-            "field": "instance",
-            "pattern": ".*?Situation \\(Premise\\):\\s+(?P<premise>.*?)\\s+Claim \\(Hypothesis\\):\\s+(?P<hypothesis>.*?)\\s+Is the Claim supported by the Situation\\?\\s+Correct Relationship \\(Yes or No\\):\\s(?P<correct_answer>.*?)\\s+GENERATED RESPONSE:\\s+(?P<generated_response>.*?)\\s+Judge the generated response:",
-            "flags": 16
-        },
-        {
-            "__type__": "rename",
-            "field_to_field": {
-                "instance/premise": "premise",
-                "instance/hypothesis": "hypothesis",
-                "instance/generated_response": "generated response",
-                "instance/correct_answer": "correct answer"
-            }
         },
         {
             "__type__": "map_instance_values",
@@ -77,12 +73,10 @@
         },
         "prediction_type": "float",
         "metrics": [
-            "metrics.spearman",
-            "metrics.accuracy"
+            "metrics.accuracy",
+            "metrics.f1_macro"
         ],
         "default_template": "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
     },
-    "templates": [
-        "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
-    ]
+    "templates": []
 }

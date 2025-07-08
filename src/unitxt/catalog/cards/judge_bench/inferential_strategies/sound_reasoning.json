@@ -12,14 +12,19 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename",
+            "__type__": "group_dict_with_regex",
             "field": "instance",
-            "to_field": "reasoning"
+            "pattern": ".*?### PROBLEM STATEMENT\\s+(?P<problem_statement>.*?)\\s+Statements:\\s+(?P<statements>.*?)\\s+Let\\'s think step by step\\.\\s*### MODEL RESPONSE\\s+(?P<model_reasoning>.*)",
+            "flags": 16
         },
         {
             "__type__": "rename",
-            "field": "annotations/Sound Reasoning/majority_human",
-            "to_field": "label"
+            "field_to_field": {
+                "instance/problem_statement": "problem statement",
+                "instance/statements": "statements",
+                "instance/model_reasoning": "model reasoning",
+                "annotations/Sound Reasoning/majority_human": "label"
+            }
         },
         {
             "__type__": "map_instance_values",
@@ -54,7 +59,9 @@
     "task": {
         "__type__": "task",
         "input_fields": {
-            "reasoning": "str",
+            "problem statement": "str",
+            "statements": "str",
+            "model reasoning": "str",
             "label": "str",
             "criteria": "Any"
         },
@@ -63,12 +70,10 @@
         },
         "prediction_type": "float",
         "metrics": [
-            "metrics.spearman",
-            "metrics.accuracy"
+            "metrics.accuracy",
+            "metrics.f1_macro"
         ],
         "default_template": "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
     },
-    "templates": [
-        "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
-    ]
+    "templates": []
 }
