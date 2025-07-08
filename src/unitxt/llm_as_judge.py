@@ -245,13 +245,21 @@ class LLMJudge(BulkInstanceMetric):
         criteria: List[Criteria],
         predictions: List[str],
     ) -> List[str]:
-        if not predictions:
-            return [
-                dict_get(td, criteria[i].prediction_field)
-                if criteria[i].prediction_field
-                else None
-                for i, td in enumerate(task_data)
-            ]
+        if not predictions or all(
+            prediction is None or prediction == "" for prediction in predictions
+        ):
+            predictions_from_task_data = []
+            for i, td in enumerate(task_data):
+                if criteria[i].prediction_field:
+                    predictions_from_task_data.append(
+                        dict_get(td, criteria[i].prediction_field)
+                    )
+                else:
+                    raise UnitxtError(
+                        "You must set either the predictions in the evaluate() call or specify the prediction field name to be taken from the task_data using the `Criteria`'s prediction_field field."
+                    )
+            return predictions_from_task_data
+
         return predictions
 
 
