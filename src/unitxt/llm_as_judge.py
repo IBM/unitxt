@@ -107,7 +107,7 @@ class LLMJudge(BulkInstanceMetric):
             )
         return
 
-    def get_context_fields_as_dict(self, context_fields: str | List | Dict):
+    def get_context_fields_as_dict(self, context_fields: Union[str, List, Dict]):
         result = context_fields if context_fields else {}
         if isinstance(result, str):
             result = [result]
