@@ -3,13 +3,25 @@ from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
     Copy,
-    ExecuteExpression,
     Move,
     Set,
 )
 from unitxt.splitters import RenameSplits
 from unitxt.struct_data_operators import LoadJson
 from unitxt.test_utils.card import test_card
+
+
+def extract_required_parameters(instance, stream_name=None):
+    result = []
+    for tool in instance["tools"]:
+        required_params = []
+        for param_name, param_info in tool["parameters"]["properties"].items():
+            if "optional" not in param_info["type"]:
+                required_params.append(param_name)
+        result.append(required_params)
+    instance["required"] = result
+    return instance
+
 
 card = TaskCard(
     loader=LoadHF(
@@ -30,10 +42,7 @@ card = TaskCard(
             to_field="tools/*/parameters/properties",
             set_every_value=True,
         ),
-        ExecuteExpression(
-            to_field="required",
-            expression="[[p for p, c in tool['parameters']['properties'].items() if 'optional' not in c['type']] for tool in tools]",
-        ),
+        extract_required_parameters,
         Copy(
             field="required",
             to_field="tools/*/parameters/required",
