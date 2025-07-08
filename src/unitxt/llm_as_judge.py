@@ -66,7 +66,7 @@ class LLMJudge(BulkInstanceMetric):
     """Flag to check for positional bias. Detecting for positional bias duplicates the amount of inference calls."""
 
     context_fields: Union[str, List[str], Dict[str, str]] = ["context"]
-    """Fields to be used as context. If a dict is provided, the keys are used as the final names in the prompts, while the values are used to access the context variable values in the `task_data` object."""
+    """Fields to be used as context. If a dict is provided, the keys are used as the final names in the prompts, while the values are used to access the context variable values in the `task_data` object (it is recommended to provide the context_fields in the Criteria `context_fields` field as this field will be deprecated in the future)."""
 
     generate_summaries: bool = False
     """Flag to generate summaries of the assessments. Defaults to `False`."""
@@ -78,10 +78,10 @@ class LLMJudge(BulkInstanceMetric):
     """Flag to include prompts in the result. Defaults to `True`."""
 
     criteria_field: str = None
-    """The field specifying the evaluation criteria in the `task_data` object."""
+    """The field specifying the evaluation criteria in the `task_data` object. If the `criteria` is provided, it will take precedence."""
 
     criteria: Criteria = None
-    """The criteria used for evaluation. If the `criteria_field` is provided, it will take precedence."""
+    """The criteria used for evaluation."""
 
     def prepare(self):
         """Prepares the `LLMJudge` instance by setting up context fields and evaluator name."""
