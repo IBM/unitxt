@@ -935,3 +935,88 @@ class TestRecipes(UnitxtTestCase):
         result = next(iter(recipe()["train"]))["source"]
         target = "Solve: {'header': ['col1', 'col2'], 'rows': [['val1', 'val2'], ['val3'], ['val4']]}\nAnswer: \n"
         self.assertEqual(result, target)
+
+    def test_dataset_recipe_with_demos_sampling_seed(self):
+        recipe = DatasetRecipe(
+            card="cards.mmlu.marketing",
+            system_prompt="system_prompts.models.llama",
+            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
+            format="formats.user_agent",
+            demos_pool_size=5,
+            num_demos=3,
+            demos_sampling_seed=1,
+        )
+
+        source_seed_1_first = recipe.produce(
+            [
+                {
+                    "question": "what?",
+                    "choices": ["yes", "not", "maybe"],
+                    "topic": "testing",
+                }
+            ]
+        )[0]["source"]
+
+        recipe = DatasetRecipe(
+            card="cards.mmlu.marketing",
+            system_prompt="system_prompts.models.llama",
+            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
+            format="formats.user_agent",
+            demos_pool_size=5,
+            num_demos=3,
+            demos_sampling_seed=1,
+        )
+
+        source_seed_1_second = recipe.produce(
+            [
+                {
+                    "question": "what?",
+                    "choices": ["yes", "not", "maybe"],
+                    "topic": "testing",
+                }
+            ]
+        )[0]["source"]
+
+        recipe = DatasetRecipe(
+            card="cards.mmlu.marketing",
+            system_prompt="system_prompts.models.llama",
+            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
+            format="formats.user_agent",
+            demos_pool_size=5,
+            num_demos=3,
+            demos_sampling_seed=2,
+        )
+
+        source_seed_2_first = recipe.produce(
+            [
+                {
+                    "question": "what?",
+                    "choices": ["yes", "not", "maybe"],
+                    "topic": "testing",
+                }
+            ]
+        )[0]["source"]
+
+        recipe = DatasetRecipe(
+            card="cards.mmlu.marketing",
+            system_prompt="system_prompts.models.llama",
+            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
+            format="formats.user_agent",
+            demos_pool_size=5,
+            num_demos=3,
+            demos_sampling_seed=2,
+        )
+
+        source_seed_2_second = recipe.produce(
+            [
+                {
+                    "question": "what?",
+                    "choices": ["yes", "not", "maybe"],
+                    "topic": "testing",
+                }
+            ]
+        )[0]["source"]
+
+        self.assertEqual(source_seed_1_first, source_seed_1_second)
+        self.assertEqual(source_seed_2_first, source_seed_2_second)
+        self.assertNotEqual(source_seed_1_first, source_seed_2_second)
