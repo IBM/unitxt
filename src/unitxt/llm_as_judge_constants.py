@@ -1281,6 +1281,7 @@ class DirectCriteriaCatalogEnum(Enum):
     COMPLIANCE_ASSISTANT_MESSAGE = CriteriaWithOptions(
         name="assistant_message_compliance",
         description="The Assistant message complies with the User message.",
+        context_fields=["user message"],
         prediction_field="assistant message",
         options=[
             CriteriaOption(
