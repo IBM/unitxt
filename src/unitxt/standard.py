@@ -278,6 +278,7 @@ class DatasetRecipe(SourceSequentialOperator):
     demos_taken_from: str = "train"
     demos_field: str = constants.demos_field
     sampler: Sampler = None
+    demos_sampling_seed: Optional[int] = None
 
     # do not push demos to instances whose "demos" field is already populated
     skip_demoed_instances: bool = False
@@ -586,6 +587,7 @@ class DatasetRecipe(SourceSequentialOperator):
                         sampler=self.sampler,
                         sample_size=self.num_demos,
                         skip_demoed_instances=self.skip_demoed_instances,
+                        sampling_seed=self.demos_sampling_seed,
                     )
                 )
                 self.verbalization.steps.append(
@@ -605,6 +607,7 @@ class DatasetRecipe(SourceSequentialOperator):
                         sampler=self.sampler,
                         sample_sizes=self.num_demos,
                         skip_demoed_instances=self.skip_demoed_instances,
+                        sampling_seed=self.demos_sampling_seed,
                     )
                 )
                 self.verbalization.steps.append(

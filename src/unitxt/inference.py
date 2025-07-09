@@ -255,7 +255,7 @@ class InferenceEngine(Artifact):
         """
         self.verify_infer_inputs(dataset, return_meta_data)
         if settings.mock_inference_mode:
-            result = self._mock_infer(dataset)
+            result = self._mock_infer(dataset, return_meta_data)
         else:
             if self.use_cache:
                 with error_context(
@@ -333,8 +333,20 @@ class InferenceEngine(Artifact):
     def _mock_infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return [str(instance["source"]) for instance in dataset]
+        result = []
+        for instance in dataset:
+            prediction = str(instance["source"])
+            if return_meta_data:
+                result.append(
+                    TextGenerationInferenceOutput(
+                        prediction=prediction, generated_text=prediction
+                    )
+                )
+            else:
+                result.append(prediction)
+        return result
 
     @abc.abstractmethod
     def get_engine_id(self):
@@ -1299,8 +1311,20 @@ class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
     def _mock_infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return [self.default_inference_value for _ in dataset]
+        result = []
+        for _ in dataset:
+            if return_meta_data:
+                result.append(
+                    TextGenerationInferenceOutput(
+                        prediction=self.default_inference_value,
+                        generated_text=self.default_inference_value,
+                    )
+                )
+            else:
+                result.append(self.default_inference_value)
+        return result
 
     def _infer(
         self,
@@ -2067,6 +2091,7 @@ class RITSInferenceEngine(
         "meta-llama/llama-4-maverick-17b-128e-instruct-fp8": "llama-4-mvk-17b-128e-fp8",
         "deepseek-ai/DeepSeek-V3": "deepseek-v3-h200",
         "meta-llama/Llama-3.1-8B-Instruct": "llama-3-1-8b-instruct",
+        "meta-llama/Llama-4-Scout-17B-16E-Instruct": "llama-4-scout-17b-16e-instruct",
     }
 
     def get_default_headers(self):
@@ -3548,7 +3573,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-11b-vision-instruct": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "llama-3-2-90b-vision-instruct": "meta-llama/Llama-3.2-90B-Vision-Instruct",
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
-            "llama-4-scout": "meta-llama/llama-4-scout-17b-16e",
+            "llama-4-scout": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
             "llama-4-maverick": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",

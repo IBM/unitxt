@@ -109,8 +109,11 @@ class SliceSplit(Splitter):
         return MultiStream.from_generators(generators)
 
 
-def get_random_generator_based_on_instance(instance):
-    return new_random_generator(sub_seed={**instance["input_fields"]})
+def get_random_generator_based_on_instance(instance, local_seed=None):
+    sub_seed = {**instance["input_fields"]}
+    if local_seed is not None:
+        sub_seed["local_seed"] = local_seed
+    return new_random_generator(sub_seed=sub_seed)
 
 
 class Sampler(Artifact):
@@ -120,6 +123,7 @@ class Sampler(Artifact):
         sample_size: int,
         instances_pool: List[Dict[str, Any]],
         instance: Dict[str, Any],
+        sampling_seed: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         pass
 
@@ -146,9 +150,12 @@ class RandomSampler(Sampler):
         sample_size,
         instances_pool: List[Dict[str, object]],
         instance: Optional[Dict[str, object]],
+        sampling_seed: Optional[int] = None,
     ) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
-        random_generator = get_random_generator_based_on_instance(instance)
+        random_generator = get_random_generator_based_on_instance(
+            instance, local_seed=sampling_seed
+        )
         return random_generator.sample(instances_pool, sample_size)
 
 
@@ -168,6 +175,7 @@ class FixedIndicesSampler(Sampler):
         sample_size,
         instances_pool: List[Dict[str, object]],
         instance: Optional[Dict[str, object]],
+        sampling_seed: Optional[int] = None,
     ) -> List[Dict[str, object]]:
         num_instances = len(instances_pool)
 
@@ -195,6 +203,7 @@ class CloseTextSampler(Sampler):
         sample_size: int,
         instances_pool: List[Dict[str, object]],
         instance: Dict[str, object],
+        sampling_seed: Optional[int] = None,
     ) -> List[Dict[str, object]]:
         field = f"input_fields/{self.field}"
         value = dict_get(instance, field)
@@ -341,6 +350,7 @@ class AssignDemosToInstance(InstanceOperator):
     to_field: str
     sampler: Sampler
     skip_demoed_instances: bool = False
+    sampling_seed: Optional[int] = None
 
     def prepare(self):
         self.local_cache = None
@@ -366,7 +376,10 @@ class AssignDemosToInstance(InstanceOperator):
                 f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {sample_size}. Please consider increasing increasing the demos pool, for which you may need to increase loader_limit or employ a less strict stream filtering."
             )
         sampled_instances = self.sampler.sample(
-            sample_size=sample_size, instances_pool=source_stream, instance=instance
+            sample_size=sample_size,
+            instances_pool=source_stream,
+            instance=instance,
+            sampling_seed=self.sampling_seed,
         )
         instance[self.to_field] = recursive_copy(sampled_instances)
         instance.pop(self.from_field)  # pop the field pointing to the demos_pool
