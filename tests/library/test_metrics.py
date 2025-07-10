@@ -55,6 +55,7 @@ from unitxt.metrics import (
     MaxAccuracy,
     MeanSquaredError,
     MeteorFast,
+    MetricBasedNer,
     MetricsEnsemble,
     NormalizedSacrebleu,
     Perplexity,
@@ -1759,6 +1760,67 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(
             global_target, outputs[0]["score"]["global"]["f1_Location"]
         )
+        metric.report_per_group_scores = False
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertTrue("f1_Person" not in outputs[0]["score"]["global"])
+        self.assertTrue("f1_Location" not in outputs[0]["score"]["global"])
+
+    def test_metric_based_ner(self):
+        metric = MetricBasedNer(metric=Rouge())
+        metric = MetricBasedNer(
+            metric="metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.correctness_based_on_ground_truth,context_fields=ground_truth]"
+        )
+        metric.set_confidence_interval_calculation(False)
+        predictions = [
+            [
+                ("jar", "Person"),
+                ("Marathahalli", "Location"),
+                ("IBM", "Org"),
+            ],
+            [
+                ("jar htaras", "Person"),
+                ("Marathahalli ring road", "Location"),
+                ("IBM", "Org"),
+            ],
+        ]
+        references = [
+            [
+                [
+                    ("jar htaras", "Person"),
+                    ("John Smith", "Person"),
+                    ("Marathahalli ring road", "Location"),
+                ]
+            ],
+            [
+                [
+                    ("jar htaras", "Person"),
+                    ("John Smith", "Person"),
+                    ("Marathahalli ring road", "Location"),
+                ]
+            ],
+        ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        # precision 0/1, recall 0/2 , f1 = 0
+        self.assertAlmostEqual(0.0, outputs[0]["score"]["instance"]["f1_Person"])
+
+        # precision 1/1, recall 1/2 , f1 = 2/3
+        self.assertAlmostEqual(2 / 3, outputs[1]["score"]["instance"]["f1_Person"])
+
+        # precision 0/1, recall 0/2 , f1 = 0
+        self.assertAlmostEqual(0.0, outputs[0]["score"]["instance"]["f1_Location"])
+        # precision 0/1, recall 0/2 , f1 = 0
+        self.assertAlmostEqual(1.0, outputs[1]["score"]["instance"]["f1_Location"])
+
+        # precision 1/2, recall 1/4, f1 = 1/3
+        global_target = 1 / 3
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["f1_Person"]
+        )
+
         metric.report_per_group_scores = False
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
