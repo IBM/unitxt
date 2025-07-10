@@ -19,7 +19,7 @@ test_set = [
         "labels": ["Person", "Location"],
     },
     {
-        "text": "Phil works at Apple and eats an apple.",
+        "text": "Phil works at Apple Inc. and eats an apple.",
         "entity_types": entity_types,
         "spans_starts": [0, 14],
         "spans_ends": [5, 19],
@@ -33,6 +33,10 @@ dataset = create_dataset(
     test_set=test_set,
     split="test",
     format="formats.chat_api",
+    metrics=[
+        "metrics.ner[score_prefix=exact_match_]",
+        "metrics.metric_based_ner[score_prefix=llm_judge_,min_score_for_match=0.5,metric=metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.correctness_based_on_ground_truth,context_fields=ground_truth]]",
+    ],
 )
 
 # Infer using SmolLM2 using HF API
@@ -56,15 +60,4 @@ print("Example prompt:")
 print(json.dumps(results.instance_scores[0]["source"], indent=4))
 
 print("Instance Results:")
-print(
-    results.instance_scores.to_markdown(
-        columns=[
-            "text",
-            "prediction",
-            "processed_prediction",
-            "processed_references",
-            "score",
-            "score_name",
-        ]
-    )
-)
+print(results.instance_scores.summary)
