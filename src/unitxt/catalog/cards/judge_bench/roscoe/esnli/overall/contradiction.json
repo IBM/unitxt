@@ -3,7 +3,7 @@
     "loader": {
         "__type__": "load_json_file",
         "files": {
-            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/roscoe/roscoe-cosmos-overall.json"
+            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/roscoe/roscoe-esnli-overall.json"
         },
         "data_classification_policy": [
             "public"
@@ -24,7 +24,7 @@
                 "instance/hypothesis": "hypothesis",
                 "instance/generated_response": "generated response",
                 "instance/correct_answer": "correct answer",
-                "annotations/Missing Steps/majority_human": "label"
+                "annotations/Contradiction/majority_human": "label"
             }
         },
         {
@@ -53,7 +53,7 @@
         {
             "__type__": "set",
             "fields": {
-                "criteria": "metrics.llm_as_judge.direct.criteria.step_by_step_reasoning_missing_steps",
+                "criteria": "metrics.llm_as_judge.direct.criteria.step_by_step_reasoning_contradiction",
                 "question": "Is the Hypothesis supported by the Premise?"
             }
         }
