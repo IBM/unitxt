@@ -1,11 +1,12 @@
 import re
 from pathlib import Path
+from typing import List
 
 from .deprecation_utils import compare_versions
 from .file_utils import get_all_files_in_dir
 
 
-def get_internal_imports(file_path: str) -> list[str]:
+def get_internal_imports(file_path: str) -> List[str]:
     """Return a list of local (relative) modules directly imported in the given Python file."""
     internal_imports = []
     is_in_docstring = False
