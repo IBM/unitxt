@@ -6164,7 +6164,7 @@ class CustomF1Fuzzy(CustomF1):
 
                 if tup_ac[1] == tup_to[1]:
                     score = self.score(tup_ac[0], tup_to[0])
-                    if score > max_score:
+                    if score >= max_score:
                         max_score = score
                         best_total_key = total_key
 
