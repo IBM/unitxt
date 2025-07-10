@@ -251,8 +251,8 @@ class LLMJudge(BulkInstanceMetric):
             predictions_from_task_data = []
             for i, td in enumerate(task_data):
                 if (
-                    criteria[i].prediction_field
-                    and criteria[i].prediction_field in task_data
+                    criteria[i].prediction_field is not None
+                    and criteria[i].prediction_field in td
                 ):
                     predictions_from_task_data.append(
                         dict_get(td, criteria[i].prediction_field)
