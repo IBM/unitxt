@@ -1769,19 +1769,23 @@ class TestMetrics(UnitxtTestCase):
 
     def test_metric_based_ner(self):
         metric = MetricBasedNer(metric=Rouge())
-        metric = MetricBasedNer(
-            metric="metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.correctness_based_on_ground_truth,context_fields=ground_truth]"
-        )
+        # Uncomment to use LLM as Judge
+        # import unitxt
+        # unitxt.settings.mock_inference_mode = False
+        # metric = MetricBasedNer(
+        #    metric="metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.correctness_based_on_ground_truth,context_fields=ground_truth]"
+        # )
         metric.set_confidence_interval_calculation(False)
+
         predictions = [
             [
-                ("jar", "Person"),
-                ("Marathahalli", "Location"),
+                ("jar", "Person"),  # Partial match
+                ("Marathahalli", "Location"),  # Partial match
                 ("IBM", "Org"),
             ],
             [
-                ("jar htaras", "Person"),
-                ("Marathahalli ring road", "Location"),
+                ("jar htaras", "Person"),  # Exact match
+                ("Marathahalli ring road", "Location"),  # Exact match
                 ("IBM", "Org"),
             ],
         ]
@@ -1827,6 +1831,21 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertTrue("f1_Person" not in outputs[0]["score"]["global"])
         self.assertTrue("f1_Location" not in outputs[0]["score"]["global"])
+
+        metric = MetricBasedNer(metric=Rouge(), min_score_for_match=0.5)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        # precision 1/1, recall 1/2 , f1 = 2/3 ("jar" =~ "jar htaras")
+        self.assertAlmostEqual(2 / 3, outputs[0]["score"]["instance"]["f1_Person"])
+
+        # precision 1/1, recall 1/2 , f1 = 2/3 ("")
+        self.assertAlmostEqual(2 / 3, outputs[1]["score"]["instance"]["f1_Person"])
+
+        # precision 0/1, recall 0/2 , f1 = 0
+        self.assertAlmostEqual(0.0, outputs[0]["score"]["instance"]["f1_Location"])
+        # precision 0/1, recall 0/2 , f1 = 0
+        self.assertAlmostEqual(1.0, outputs[1]["score"]["instance"]["f1_Location"])
 
     def test_perplexity_with_prefix(self):
         prediction = ["who are we?"]

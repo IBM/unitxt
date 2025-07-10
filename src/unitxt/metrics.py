@@ -6146,6 +6146,8 @@ class NormalizedSacrebleu(HuggingfaceMetric):
 
 
 class CustomF1Fuzzy(CustomF1):
+    min_score_for_match: float
+
     @abstractmethod
     def score(self, val1, val2) -> float:
         pass
@@ -6200,7 +6202,7 @@ class MetricBasedNer(CustomF1Fuzzy):
     Example:
     MetricBasedNer(metric=Rouge(), min_score_for_match=0.9)
 
-    MetricBasedNer(metric="metrics.llm_as_judge.direct.watsonx.llama3_3_70b[category=metrics.llm_as_judge.direct.criteria.correctness_based_on_ground_truth]]")
+    MetricBasedNer(metric="metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.correctness_based_on_ground_truth,context_fields=ground_truth]")
     """
 
     prediction_type = List[Tuple[str, str]]
@@ -6222,11 +6224,9 @@ class MetricBasedNer(CustomF1Fuzzy):
                 ]
             }
         )
-        # print(val1, val2)
         output_multi_stream = self.metric(multi_stream)
         output_stream = output_multi_stream["test"]
         result = next(iter(output_stream))
-        # print(json.dumps(result, indent=5))
         return result["score"]["global"]["score"]
 
     def get_element_group(self, element, additional_input):
