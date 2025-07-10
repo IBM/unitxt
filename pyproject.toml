@@ -17,7 +17,7 @@ classifiers = [
     "Operating System :: OS Independent"
 ]
 dependencies = [
-    "datasets>=2.16.0",
+    "datasets>=2.16.0,<4.0",
     "evaluate",
     "scipy>=1.10.1",
     "diskcache"
@@ -57,7 +57,7 @@ docs = [
     "sphinx_rtd_theme",
     "piccolo_theme",
     "sphinxext-opengraph",
-    "datasets",
+    "datasets>=2.16.0,<4.0",
     "evaluate",
     "nltk",
     "rouge_score",
