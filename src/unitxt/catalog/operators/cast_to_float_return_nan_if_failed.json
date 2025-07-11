@@ -1,5 +1,8 @@
 {
-    "__type__": "cast",
+    "__type__": {
+        "module": "unitxt.operators",
+        "name": "Cast"
+    },
     "to": "float",
     "failure_default": NaN
 }

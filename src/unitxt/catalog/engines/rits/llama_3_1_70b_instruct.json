@@ -1,5 +1,8 @@
 {
-    "__type__": "rits_inference_engine",
+    "__type__": {
+        "module": "unitxt.inference",
+        "name": "RITSInferenceEngine"
+    },
     "model_name": "meta-llama/llama-3-1-70b-instruct",
     "max_tokens": 2048,
     "seed": 42

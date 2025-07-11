@@ -1,24 +1,42 @@
 {
-    "__type__": "benchmark",
+    "__type__": {
+        "module": "unitxt.benchmark",
+        "name": "Benchmark"
+    },
     "subsets": {
         "doc_vqa": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.doc_vqa.lmms_eval"
         },
         "info_vqa": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.info_vqa_lmms_eval"
         },
         "chart_qa": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.chart_qa_lmms_eval"
         },
         "ai2d": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.ai2d"
         },
         "websrc": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.websrc"
         }
     }

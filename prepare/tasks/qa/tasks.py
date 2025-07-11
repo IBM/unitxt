@@ -13,11 +13,6 @@ from unitxt.types import (
     Text,
 )
 
-add_link_to_catalog(
-    artifact_linked_to="tasks.qa.extractive",
-    name="tasks.qa.with_context.extractive",
-    overwrite=True,
-)
 add_to_catalog(
     Task(
         __description__="""This is the Question Answering Task with provided context , where the answer must be extracted verbatim from the context.
@@ -37,6 +32,12 @@ By default, classical Squad metric is used , but list of additional applicable m
         augmentable_inputs=["context", "question"],
     ),
     "tasks.qa.extractive",
+    overwrite=True,
+)
+
+add_link_to_catalog(
+    artifact_linked_to="tasks.qa.extractive",
+    name="tasks.qa.with_context.extractive",
     overwrite=True,
 )
 

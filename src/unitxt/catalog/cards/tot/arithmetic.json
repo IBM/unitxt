@@ -1,29 +1,47 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "baharef/ToT",
         "name": "tot_arithmetic"
     },
     "preprocess_steps": [
         {
-            "__type__": "replace",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Replace"
+            },
             "field": "label",
             "old": "'",
             "new": "\""
         },
         {
-            "__type__": "load_json",
+            "__type__": {
+                "module": "unitxt.struct_data_operators",
+                "name": "LoadJson"
+            },
             "field": "label"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "label/answer",
             "to_field": "label"
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "question": "str"
         },
@@ -37,14 +55,23 @@
     },
     "templates": [
         {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "{question}",
             "output_format": "{{\"answer\": \"{label}\"}}",
             "postprocessors": [
                 {
-                    "__type__": "post_process",
+                    "__type__": {
+                        "module": "unitxt.processors",
+                        "name": "PostProcess"
+                    },
                     "operator": {
-                        "__type__": "extract_with_regex",
+                        "__type__": {
+                            "module": "unitxt.processors",
+                            "name": "ExtractWithRegex"
+                        },
                         "regex": "\"answer\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\""
                     }
                 }

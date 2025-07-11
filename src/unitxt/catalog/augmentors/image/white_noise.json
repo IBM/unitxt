@@ -1,3 +1,6 @@
 {
-    "__type__": "pixel_noise"
+    "__type__": {
+        "module": "unitxt.image_operators",
+        "name": "PixelNoise"
+    }
 }

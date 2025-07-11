@@ -1,3 +1,6 @@
 {
-    "__type__": "mrr"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MRR"
+    }
 }

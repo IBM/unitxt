@@ -1,19 +1,31 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricPipeline"
+    },
     "main_score": "perplexity",
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "contexts",
             "to_field": "references"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "question",
             "to_field": "prediction"
         },
         {
-            "__type__": "multi_type_serializer",
+            "__type__": {
+                "module": "unitxt.serializers",
+                "name": "MultiTypeSerializer"
+            },
             "field": "prediction"
         }
     ],
