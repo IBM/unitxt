@@ -3658,6 +3658,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "hf": {
             "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
             "llama-3-3-8b-instruct": "meta-llama/Llama-3.3-8B-Instruct",
+            "SmolLM2-1.7B-Instruct": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
         },
     }
     provider_model_map["watsonx"] = {
