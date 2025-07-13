@@ -3,9 +3,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.collections_operators import Wrap
-from unitxt.inference import (
-    HFPipelineBasedInferenceEngine,
-)
+from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.loaders import LoadFromDictionary
 from unitxt.operators import Rename, Set
 from unitxt.templates import MultiReferenceTemplate, TemplatesDict
@@ -78,13 +76,8 @@ dataset = load_dataset(
 )
 
 
-# Infer using Llama-3.2-1B base using HF API
-model = HFPipelineBasedInferenceEngine(
-    model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
-)
-# Change to this to infer with external APIs:
-# CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
-# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
+model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "hf"]
 
 predictions = model(dataset)
 results = evaluate(predictions=predictions, data=dataset)
