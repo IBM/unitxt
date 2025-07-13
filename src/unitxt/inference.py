@@ -79,7 +79,7 @@ class StandardAPIParamsMixin(Artifact):
     n: Optional[int] = None
     parallel_tool_calls: Optional[bool] = None
     service_tier: Optional[Literal["auto", "default"]] = None
-    credentials: Optional[Dict[str, str]] = {}
+    credentials: Optional[Dict[str, str]] = None
     extra_headers: Optional[Dict[str, str]] = None
 
 
@@ -468,7 +468,7 @@ class LazyLoadMixin(Artifact):
 
 
 class HFGenerationParamsMixin(Artifact):
-    max_new_tokens: int
+    max_new_tokens: Optional[int] = None
     do_sample: bool = False
     temperature: Optional[float] = None
     top_p: Optional[float] = None
@@ -3359,6 +3359,8 @@ class LiteLLMInferenceEngine(
         return get_model_and_label_id(self.model, self.label)
 
     def prepare_engine(self):
+        if self.credentials is None:
+            self.credentials = {}
         # Initialize the token bucket rate limiter
         self._rate_limiter = AsyncTokenBucket(
             rate=self.max_requests_per_second,
@@ -3474,7 +3476,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     user requests.
 
     Current _supported_apis = ["watsonx", "together-ai", "open-ai", "aws", "ollama",
-    "bam", "watsonx-sdk", "rits", "vertex-ai"]
+    "bam", "watsonx-sdk", "rits", "vertex-ai","hf"]
 
     Args:
         provider (Optional):
@@ -3653,33 +3655,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "gemini-2.5-flash": "gemini-2.5-flash-preview-05-20",
             "gemini-2.5-flash-preview-05-20": "gemini-2.5-flash-preview-05-20",
         },
-        "replicate": {
-            "granite-3-2-8b-instruct": "replicate/ibm-granite/granite-3.2-8b-instruct",
-            "granite-vision-3-2-2b": "replicate/ibm-granite/granite-vision-3.2-2b",
-            "granite-3-1-8b-instruct": "replicate/ibm-granite/granite-3.1-8b-instruct",
-            "granite-3-1-2b-instruct": "replicate/ibm-granite/granite-3.1-2b-instruct",
-            "granite-3-8b-instruct": "replicate/ibm-granite/granite-3.0-8b-instruct",
-            "granite-3-2b-instruct": "replicate/ibm-granite/granite-3.0-2b-instruct",
-            "granite-8b-code-instruct-128k": "replicate/ibm-granite/granite-8b-code-instruct-128k",
-            "granite-20b-code-instruct-8k": "replicate/ibm-granite/granite-20b-code-instruct-8k",
-            "llama-2-13b": "replicate/meta/llama-2-13b",
-            "llama-2-13b-chat": "replicate/meta/llama-2-13b-chat",
-            "llama-2-70b": "replicate/meta/llama-2-70b",
-            "llama-2-70b-chat": "replicate/meta/llama-2-70b-chat",
-            "llama-2-7b": "replicate/meta/llama-2-7b",
-            "llama-2-7b-chat": "replicate/meta/llama-2-7b-chat",
-            "llama-3-1-405b-instruct": "replicate/meta/meta-llama-3.1-405b-instruct",
-            "llama-3-70b": "replicate/meta/meta-llama-3-70b",
-            "llama-3-70b-instruct": "replicate/meta/meta-llama-3-70b-instruct",
-            "llama-3-8b": "replicate/meta/meta-llama-3-8b",
-            "llama-3-8b-instruct": "replicate/meta/meta-llama-3-8b-instruct",
-            "llama-3-3-70b-instruct": "replicate/meta/meta-llama-3.3-70b-instruct",
-            "llama-4-maverick": "replicate/meta/llama-4-maverick-instruct",
-            "llama-4-scout": "replicate/meta/llama-4-scout-instruct",
-            "mistral-7b-instruct-v0.2": "replicate/mistralai/mistral-7b-instruct-v0.2",
-            "mistral-7b-v0.1": "replicate/mistralai/mistral-7b-v0.1",
-            "mixtral-8x7b-instruct-v0.1": "replicate/mistralai/mixtral-8x7b-instruct-v0.1",
-            "gpt-4-1": "replicate/openai/gpt-4.1",
+        "hf": {
+            "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
+            "llama-3-3-8b-instruct": "meta-llama/Llama-3.3-8B-Instruct",
         },
     }
     provider_model_map["watsonx"] = {
@@ -3698,12 +3676,14 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "azure": LiteLLMInferenceEngine,
         "vertex-ai": LiteLLMInferenceEngine,
         "replicate": LiteLLMInferenceEngine,
+        "hf": HFAutoModelInferenceEngine,
     }
 
     _provider_param_renaming = {
         "bam": {"max_tokens": "max_new_tokens", "model": "model_name"},
         "watsonx-sdk": {"model": "model_name"},
         "rits": {"model": "model_name"},
+        "hf": {"model": "model_name"},
     }
 
     def get_return_object(self, **kwargs):
