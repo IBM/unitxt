@@ -79,7 +79,7 @@ class StandardAPIParamsMixin(Artifact):
     n: Optional[int] = None
     parallel_tool_calls: Optional[bool] = None
     service_tier: Optional[Literal["auto", "default"]] = None
-    credentials: Optional[Dict[str, str]] = {}
+    credentials: Optional[Dict[str, str]] = None
     extra_headers: Optional[Dict[str, str]] = None
 
 
@@ -468,7 +468,7 @@ class LazyLoadMixin(Artifact):
 
 
 class HFGenerationParamsMixin(Artifact):
-    max_new_tokens: int
+    max_new_tokens: Optional[int] = None
     do_sample: bool = False
     temperature: Optional[float] = None
     top_p: Optional[float] = None
@@ -3362,6 +3362,8 @@ class LiteLLMInferenceEngine(
         return get_model_and_label_id(self.model, self.label)
 
     def prepare_engine(self):
+        if self.credentials is None:
+            self.credentials = {}
         # Initialize the token bucket rate limiter
         self._rate_limiter = AsyncTokenBucket(
             rate=self.max_requests_per_second,
@@ -3477,7 +3479,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     user requests.
 
     Current _supported_apis = ["watsonx", "together-ai", "open-ai", "aws", "ollama",
-    "bam", "watsonx-sdk", "rits", "vertex-ai"]
+    "bam", "watsonx-sdk", "rits", "vertex-ai","hf-local"]
 
     Args:
         provider (Optional):
@@ -3684,6 +3686,11 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mixtral-8x7b-instruct-v0.1": "replicate/mistralai/mixtral-8x7b-instruct-v0.1",
             "gpt-4-1": "replicate/openai/gpt-4.1",
         },
+        "hf-local": {
+            "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
+            "llama-3-3-8b-instruct": "meta-llama/Llama-3.3-8B-Instruct",
+            "SmolLM2-1.7B-Instruct": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+        },
     }
     provider_model_map["watsonx"] = {
         k: f"watsonx/{v}" for k, v in provider_model_map["watsonx-sdk"].items()
@@ -3701,12 +3708,14 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "azure": LiteLLMInferenceEngine,
         "vertex-ai": LiteLLMInferenceEngine,
         "replicate": LiteLLMInferenceEngine,
+        "hf-local": HFAutoModelInferenceEngine,
     }
 
     _provider_param_renaming = {
         "bam": {"max_tokens": "max_new_tokens", "model": "model_name"},
         "watsonx-sdk": {"model": "model_name"},
         "rits": {"model": "model_name"},
+        "hf-local": {"model": "model_name"},
     }
 
     def get_return_object(self, **kwargs):

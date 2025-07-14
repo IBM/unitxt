@@ -3,7 +3,7 @@ import json
 from unitxt import get_logger, load_dataset
 from unitxt.api import LoadFromDictionary, TaskCard, evaluate
 from unitxt.blocks import Rename
-from unitxt.inference import HFPipelineBasedInferenceEngine
+from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.operators import IndexOf, ListFieldValues
 from unitxt.templates import MultipleChoiceTemplate
 
@@ -61,14 +61,8 @@ dataset = load_dataset(
     format="formats.chat_api",
 )
 
-# Infer using Llama-3.2-1B base using HF API
-model = HFPipelineBasedInferenceEngine(
-    model_name="HuggingFaceTB/SmolLM2-1.7B-Instruct", max_new_tokens=32
-)
-# Change to this to infer with external APIs:
-# from unitxt.inference import CrossProviderInferenceEngine
-# model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
-# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
+model = CrossProviderInferenceEngine(model="SmolLM2-1.7B-Instruct", provider="hf-local")
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama","hf-local"]
 
 
 predictions = model(dataset)
@@ -79,7 +73,7 @@ print(json.dumps(results.instance_scores[0]["source"], indent=4))
 
 
 print("Instance Results:")
-print(results.instance_scores)
+print(results.instance_scores.summary)
 
 print("Global Results:")
 print(results.global_scores.summary)
