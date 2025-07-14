@@ -3476,7 +3476,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     user requests.
 
     Current _supported_apis = ["watsonx", "together-ai", "open-ai", "aws", "ollama",
-    "bam", "watsonx-sdk", "rits", "vertex-ai","hf"]
+    "bam", "watsonx-sdk", "rits", "vertex-ai","hf-local"]
 
     Args:
         provider (Optional):
@@ -3683,7 +3683,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mixtral-8x7b-instruct-v0.1": "replicate/mistralai/mixtral-8x7b-instruct-v0.1",
             "gpt-4-1": "replicate/openai/gpt-4.1",
         },
-        "hf": {
+        "hf-local": {
             "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
             "llama-3-3-8b-instruct": "meta-llama/Llama-3.3-8B-Instruct",
             "SmolLM2-1.7B-Instruct": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
@@ -3705,14 +3705,14 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "azure": LiteLLMInferenceEngine,
         "vertex-ai": LiteLLMInferenceEngine,
         "replicate": LiteLLMInferenceEngine,
-        "hf": HFAutoModelInferenceEngine,
+        "hf-local": HFAutoModelInferenceEngine,
     }
 
     _provider_param_renaming = {
         "bam": {"max_tokens": "max_new_tokens", "model": "model_name"},
         "watsonx-sdk": {"model": "model_name"},
         "rits": {"model": "model_name"},
-        "hf": {"model": "model_name"},
+        "hf-local": {"model": "model_name"},
     }
 
     def get_return_object(self, **kwargs):

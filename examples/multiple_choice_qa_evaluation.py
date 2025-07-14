@@ -61,8 +61,8 @@ dataset = load_dataset(
     format="formats.chat_api",
 )
 
-model = CrossProviderInferenceEngine(model="SmolLM2-1.7B-Instruct", provider="hf")
-# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "hf"]
+model = CrossProviderInferenceEngine(model="SmolLM2-1.7B-Instruct", provider="hf-local")
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama","hf-local"]
 
 
 predictions = model(dataset)

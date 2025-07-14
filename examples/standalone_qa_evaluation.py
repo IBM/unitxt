@@ -38,9 +38,9 @@ dataset = create_dataset(
 
 
 model = CrossProviderInferenceEngine(
-    model="SmolLM2-1.7B-Instruct", provider="hf", use_cache=False
+    model="SmolLM2-1.7B-Instruct", provider="hf-local", use_cache=False
 )
-# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "rits", "hf"]
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "rits", "hf-local"]
 # (model must be available in the provider service)
 
 predictions = model(dataset)

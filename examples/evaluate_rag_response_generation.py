@@ -77,7 +77,7 @@ dataset = load_dataset(
 
 
 model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
-# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "hf"]
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "hf-local"]
 
 predictions = model(dataset)
 results = evaluate(predictions=predictions, data=dataset)

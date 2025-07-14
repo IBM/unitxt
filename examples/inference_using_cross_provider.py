@@ -2,7 +2,7 @@ from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.text_utils import print_dict
 
 if __name__ == "__main__":
-    for provider in ["watsonx", "rits", "watsonx-sdk", "hf"]:
+    for provider in ["watsonx", "rits", "watsonx-sdk", "hf-local"]:
         print()
         print("------------------------------------------------ ")
         print("PROVIDER:", provider)
