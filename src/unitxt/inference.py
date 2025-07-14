@@ -488,6 +488,7 @@ class HFInferenceEngineBase(
     TorchDeviceMixin,
 ):
     model_name: str
+    tokenizer_name: Optional[str] = None
     label: str
 
     n_top_tokens: int = 5
@@ -710,8 +711,9 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
     def _init_processor(self):
         from transformers import AutoTokenizer
 
+        tokenizer_name = self.tokenizer_name or self.model_name
         self.processor = AutoTokenizer.from_pretrained(
-            pretrained_model_name_or_path=self.model_name,
+            pretrained_model_name_or_path=tokenizer_name,
             use_fast=self.use_fast_tokenizer,
         )
 
@@ -1120,6 +1122,7 @@ class HFPipelineBasedInferenceEngine(
     TorchDeviceMixin,
 ):
     model_name: str
+    tokenizer_name: Optional[str] = None
     label: str = "hf_pipeline_inference_engine"
 
     use_fast_tokenizer: bool = True
@@ -1217,8 +1220,8 @@ class HFPipelineBasedInferenceEngine(
         path = self.model_name
         if settings.hf_offline_models_path is not None:
             path = os.path.join(settings.hf_offline_models_path, path)
-
-        tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        tokenizer_name = self.tokenizer_name or self.model_name
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
         self.model = pipeline(
             model=path,
             task=self.task,
