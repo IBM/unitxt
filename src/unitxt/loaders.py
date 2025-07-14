@@ -96,21 +96,16 @@ def hf_load_dataset(path: str, *args, **kwargs):
     ):
         if settings.hf_offline_datasets_path is not None:
             path = os.path.join(settings.hf_offline_datasets_path, path)
-        try:
-            return _hf_load_dataset(
-                path,
-                *args,
-                **kwargs,
-                verification_mode="no_checks",
-                trust_remote_code=settings.allow_unverified_code,
-                download_mode="force_redownload"
-                if settings.disable_hf_datasets_cache
-                else "reuse_dataset_if_exists",
-            )
-        except ValueError as e:
-            if "trust_remote_code" in str(e):
-                raise UnitxtUnverifiedCodeError(path) from e
-            raise e  # Re raise
+
+        return _hf_load_dataset(
+            path,
+            *args,
+            **kwargs,
+            verification_mode="no_checks",
+            download_mode="force_redownload"
+            if settings.disable_hf_datasets_cache
+            else "reuse_dataset_if_exists",
+        )
 
 
 @retry_connection_with_exponential_backoff(backoff_factor=2)
@@ -119,13 +114,9 @@ def hf_get_dataset_splits(path: str, name: str, revision=None):
         return get_dataset_split_names(
             path=path,
             config_name=name,
-            trust_remote_code=settings.allow_unverified_code,
             revision=revision,
         )
     except Exception as e:
-        if "trust_remote_code" in str(e):
-            raise UnitxtUnverifiedCodeError(path) from e
-
         if "Couldn't find cache" in str(e):
             raise FileNotFoundError(
                 f"Dataset cache path={path}, name={name} was not found."
