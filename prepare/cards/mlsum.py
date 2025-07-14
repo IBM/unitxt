@@ -1,4 +1,3 @@
-from datasets import get_dataset_config_names
 from unitxt.blocks import (
     LoadHF,
     Rename,
@@ -6,19 +5,18 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
-from unitxt.settings_utils import get_settings
 from unitxt.test_utils.card import test_card
 
-settings = get_settings()
-
-langs = get_dataset_config_names(
-    "mlsum", trust_remote_code=settings.allow_unverified_code
-)  # the languages
-
+langs = ["de", "es", "fr", "ru", "tu"]
 
 for lang in langs:
     card = TaskCard(
-        loader=LoadHF(path="mlsum", name=lang),
+        loader=LoadHF(
+            path="mlsum",
+            revision="refs/convert/parquet",
+            data_dir=lang,
+            splits=["train", "test", "validation"],
+        ),
         preprocess_steps=[
             Rename(field_to_field={"text": "document"}),
             Wrap(field="summary", inside="list", to_field="summaries"),
@@ -50,6 +48,6 @@ for lang in langs:
             "These highlight existing biases which motivate the use of a multi-lingual dataset."
         ),
     )
-    if lang == langs[0]:
+    if lang == langs[-1]:
         test_card(card, debug=False)
     add_to_catalog(card, f"cards.mlsum.{lang}", overwrite=True)
