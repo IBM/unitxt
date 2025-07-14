@@ -1779,14 +1779,14 @@ class TestMetrics(UnitxtTestCase):
 
         predictions = [
             [
-                ("jar", "Person"),  # Partial match
-                ("Marathahalli", "Location"),  # Partial match
-                ("IBM", "Org"),
+                ("jar", "Person"),  # Partial match of one of two names
+                ("Marathahalli", "Location"),  # Partial match of one location
+                ("IBM", "Org"),  # No match for org
             ],
             [
-                ("jar htaras", "Person"),  # Exact match
-                ("Marathahalli ring road", "Location"),  # Exact match
-                ("IBM", "Org"),
+                ("jar htaras", "Person"),  # Exact match of one of of two names
+                ("Marathahalli ring road", "Location"),  # Exact match of one location
+                ("IBM", "Org"),  # No match for org
             ],
         ]
         references = [
@@ -1808,15 +1808,15 @@ class TestMetrics(UnitxtTestCase):
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
-        # precision 0/1, recall 0/2 , f1 = 0
+        # precision 0/1, recall 0/2 , f1 = 0 , Similarity not high to pass 0.75 rouge threshold
         self.assertAlmostEqual(0.0, outputs[0]["score"]["instance"]["f1_Person"])
 
         # precision 1/1, recall 1/2 , f1 = 2/3
         self.assertAlmostEqual(2 / 3, outputs[1]["score"]["instance"]["f1_Person"])
 
-        # precision 0/1, recall 0/2 , f1 = 0
+        # precision 0/1, recall 0/1 , f1 = 0 , Similarity not high to pass 0.75 rouge threshold
         self.assertAlmostEqual(0.0, outputs[0]["score"]["instance"]["f1_Location"])
-        # precision 0/1, recall 0/2 , f1 = 0
+        # precision 1/1, recall 1/1 , f1 = 1
         self.assertAlmostEqual(1.0, outputs[1]["score"]["instance"]["f1_Location"])
 
         # precision 1/2, recall 1/4, f1 = 1/3
@@ -1836,15 +1836,15 @@ class TestMetrics(UnitxtTestCase):
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
-        # precision 1/1, recall 1/2 , f1 = 2/3 ("jar" =~ "jar htaras")
+        # precision 1/1, recall 1/2 , f1 = 2/3 ,  similarity high enough to reach threshold
         self.assertAlmostEqual(2 / 3, outputs[0]["score"]["instance"]["f1_Person"])
 
-        # precision 1/1, recall 1/2 , f1 = 2/3 ("")
+        # precision 1/1, recall 1/2 , f1 = 2/3
         self.assertAlmostEqual(2 / 3, outputs[1]["score"]["instance"]["f1_Person"])
 
-        # precision 0/1, recall 0/2 , f1 = 0
-        self.assertAlmostEqual(0.0, outputs[0]["score"]["instance"]["f1_Location"])
-        # precision 0/1, recall 0/2 , f1 = 0
+        # precision 1/1, recall 0/2 , f1 = 0, similarity high enough to reach threshold
+        self.assertAlmostEqual(1.0, outputs[0]["score"]["instance"]["f1_Location"])
+        # precision 1/1, recall 0/2 , f1 = 0
         self.assertAlmostEqual(1.0, outputs[1]["score"]["instance"]["f1_Location"])
 
     def test_perplexity_with_prefix(self):
