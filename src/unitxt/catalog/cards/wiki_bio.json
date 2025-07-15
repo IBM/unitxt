@@ -3,15 +3,18 @@
     "loader": {
         "__type__": "load_hf",
         "path": "wiki_bio",
-        "streaming": true
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "val",
+            "test"
+        ]
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
-            "mix": {
-                "train": "train",
-                "validation": "val",
-                "test": "test"
+            "__type__": "rename_splits",
+            "mapper": {
+                "val": "validation"
             }
         },
         {

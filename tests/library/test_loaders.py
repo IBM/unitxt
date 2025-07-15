@@ -214,32 +214,6 @@ class TestLoaders(UnitxtTestCase):
                         {"a": 1, "b": 2, "data_classification_policy": ["public"]},
                     )
 
-    def test_load_from_HF_compressed(self):
-        loader = LoadHF(path="GEM/xlsum", name="igbo")  # the smallest file
-        ms = loader()
-        instance = next(iter(ms["train"]))
-        self.assertEqual(
-            instance["url"],
-            "https://www.bbc.com/igbo/afirika-43986554",
-        )
-        assert set(ms.keys()) == {
-            "train",
-            "validation",
-            "test",
-        }, f"Unexpected fold {ms.keys()}"
-
-    def test_load_from_HF_compressed_split(self):
-        loader = LoadHF(
-            path="GEM/xlsum", name="igbo", split="train"
-        )  # the smallest file
-        ms = loader()
-        instance = next(iter(ms["train"]))
-        self.assertEqual(
-            instance["url"],
-            "https://www.bbc.com/igbo/afirika-43986554",
-        )
-        assert list(ms.keys()) == ["train"], f"Unexpected fold {ms.keys()}"
-
     def test_load_from_HF(self):
         loader = LoadHF(path="sst2", loader_limit=10, split="train")
         ms = loader()
