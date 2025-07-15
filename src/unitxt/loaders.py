@@ -24,6 +24,7 @@ Available Loaders Overview:
     - :class:`MultipleSourceLoader <unitxt.loaders.MultipleSourceLoader>` - Combines data from multiple different sources.
     - :class:`LoadFromDictionary <unitxt.loaders.LoadFromDictionary>` - Loads data from a user-defined Python dictionary.
     - :class:`LoadFromHFSpace <unitxt.loaders.LoadFromHFSpace>` - Downloads and loads data from HuggingFace Spaces.
+    - :class:`LoadIOB <unitxt.loaders.LoadIOB>` - Loads data from IOB format files for named entity recognition tasks.
 
 
 
@@ -1224,3 +1225,148 @@ class LoadFromAPI(Loader):
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[str(self)] = iterables
         return MultiStream.from_iterables(iterables, copying=True)
+
+
+class LoadIOB(LazyLoader):
+    """Loads data from IOB format files.
+
+    This loader can parse IOB (Inside-Outside-Begin) format files commonly used for
+    named entity recognition tasks. It supports both local files and remote URLs,
+    and can handle various IOB formats including CoNLL-U style files.
+
+    Args:
+        files (Dict[str, str]):
+            A dictionary mapping split names to file paths or URLs.
+        column_names (tuple, optional):
+            Column names for the IOB format. Defaults to ('id', 'token', 'tag', 'misc', 'annotator').
+        fix_tags (bool, optional):
+            Whether to apply tag fixing for OTH and B-O tags. Defaults to True.
+        encoding (str, optional):
+            File encoding. Defaults to 'utf-8'.
+
+    Example:
+        Loading IOB files
+
+        .. code-block:: python
+
+            load_iob = LoadIOB(files={'train': 'path/to/train.iob2', 'test': 'path/to/test.iob2'})
+    """
+
+    files: Dict[str, str]
+    column_names: tuple = ("id", "token", "tag", "misc", "annotator")
+    fix_tags: bool = True
+    encoding: str = "utf-8"
+
+    _requirements_list: List[str] = ["conllu"]
+
+    def _maybe_set_classification_policy(self):
+        self.set_default_data_classification(
+            ["proprietary"], "when loading from local files"
+        )
+
+    def get_splits(self) -> List[str]:
+        return list(self.files.keys())
+
+    def split_generator(self, split: str) -> Generator:
+        import conllu
+
+        dataset_id = str(self) + "_" + split
+        dataset = self.__class__._loader_cache.get(dataset_id, None)
+
+        if dataset is None:
+            if self.get_limit() is not None:
+                self.log_limited_loading()
+
+            file_path = self.files[split]
+            dataset = []
+            id_counter = 0
+
+            try:
+                # Handle remote URLs
+                if file_path.startswith(("http://", "https://")):
+                    import io
+                    import urllib.request
+
+                    with urllib.request.urlopen(file_path) as response:
+                        content = response.read().decode(self.encoding)
+                        # Use StringIO to create a file-like object
+                        content_file = io.StringIO(content)
+                        sentences = list(
+                            conllu.parse_incr(content_file, fields=self.column_names)
+                        )
+                else:
+                    # Handle local files
+                    with open(file_path, encoding=self.encoding) as data_file:
+                        sentences = list(
+                            conllu.parse_incr(data_file, fields=self.column_names)
+                        )
+
+                limit = self.get_limit()
+                processed_count = 0
+
+                for sent in sentences:
+                    if limit is not None and processed_count >= limit:
+                        break
+
+                    # Get sentence ID
+                    if "sent_id" in sent.metadata:
+                        idx = sent.metadata["sent_id"]
+                    else:
+                        idx = id_counter
+
+                    # Extract tokens and tags
+                    tokens = [token["token"] for token in sent]
+                    actual_tags = [token["tag"] for token in sent]
+
+                    # Apply tag fixing if enabled
+                    if self.fix_tags:
+                        fixed_tags = []
+                        for actual_tag in actual_tags:
+                            if "OTH" in actual_tag or actual_tag == "B-O":
+                                actual_tag = "O"
+                            fixed_tags.append(actual_tag)
+                    else:
+                        fixed_tags = actual_tags
+
+                    # Extract annotator info if available
+                    annotator = []
+                    for token in sent:
+                        if "annotator" in token and token["annotator"] is not None:
+                            annotator.append(token["annotator"])
+                        else:
+                            annotator.append("")
+
+                    # Get text from metadata or reconstruct from tokens
+                    if "text" in sent.metadata:
+                        text = sent.metadata["text"]
+                    else:
+                        text = " ".join(tokens)
+
+                    instance = {
+                        "idx": str(idx),
+                        "text": text,
+                        "tokens": tokens,
+                        "ner_tags": fixed_tags,
+                        "annotator": annotator,
+                    }
+
+                    dataset.append(instance)
+                    processed_count += 1
+                    id_counter += 1
+
+            except Exception as e:
+                with error_context(
+                    stage="Raw Dataset Loading",
+                    help="https://www.unitxt.ai/en/latest/unitxt.loaders.html#module-unitxt.loaders",
+                ):
+                    raise UnitxtError(
+                        f"Failed to load IOB file {file_path}: {e!s}"
+                    ) from e
+
+            # Cache the dataset
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[dataset_id] = dataset
+
+        # Yield instances from cached dataset
+        for instance in dataset:
+            yield recursive_copy(instance)

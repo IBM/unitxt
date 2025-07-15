@@ -10,6 +10,7 @@ from unitxt.loaders import (
     LoadFromHFSpace,
     LoadFromIBMCloud,
     LoadHF,
+    LoadIOB,
     LoadJsonFile,
     MultipleSourceLoader,
 )
@@ -550,3 +551,69 @@ class TestLoaders(UnitxtTestCase):
         )
         ms = loader.process().to_dataset()
         assert ms.shape["train"] == (10, 6) and ms.shape["test"] == (10, 6)
+
+    def test_load_iob(self):
+        """Test IOB loading functionality end-to-end including tag fixing."""
+        sample_iob_content = """# sent_id = 1
+# text = John Doe lives in New York.
+1	John	B-PER	_	annotator1
+2	Doe	I-PER	_	annotator1
+3	lives	O	_	annotator1
+4	in	O	_	annotator1
+5	New	B-LOC	_	annotator1
+6	York	I-LOC	_	annotator1
+7	.	O	_	annotator1
+
+# sent_id = 2
+# text = Test with problematic tags
+1	Test	B-OTH	_	annotator2
+2	with	O	_	annotator2
+3	tag	B-O	_	annotator2
+4	normal	B-PER	_	annotator2
+"""
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            temp_file = os.path.join(tmp_dir, "test.iob2")
+            with open(temp_file, "w") as f:
+                f.write(sample_iob_content)
+
+            # Test basic loading with tag fixing
+            loader = LoadIOB(files={"test": temp_file})
+            ms = loader.process()
+            instances = list(ms["test"])
+
+            # Check we have 2 instances
+            self.assertEqual(len(instances), 2)
+
+            # Check first instance
+            first_instance = instances[0]
+            self.assertEqual(first_instance["idx"], "1")
+            self.assertEqual(first_instance["text"], "John Doe lives in New York.")
+            self.assertEqual(
+                first_instance["tokens"],
+                ["John", "Doe", "lives", "in", "New", "York", "."],
+            )
+            self.assertEqual(
+                first_instance["ner_tags"],
+                ["B-PER", "I-PER", "O", "O", "B-LOC", "I-LOC", "O"],
+            )
+            self.assertEqual(first_instance["annotator"], ["annotator1"] * 7)
+            self.assertEqual(
+                first_instance["data_classification_policy"], ["proprietary"]
+            )
+
+            # Check second instance with tag fixing
+            second_instance = instances[1]
+            self.assertEqual(second_instance["idx"], "2")
+            # B-OTH and B-O should be fixed to O
+            self.assertEqual(second_instance["ner_tags"], ["O", "O", "O", "B-PER"])
+
+            # Test without tag fixing
+            loader_no_fix = LoadIOB(files={"test": temp_file}, fix_tags=False)
+            ms_no_fix = loader_no_fix.process()
+            instances_no_fix = list(ms_no_fix["test"])
+
+            # Tags should not be fixed
+            self.assertEqual(
+                instances_no_fix[1]["ner_tags"], ["B-OTH", "O", "B-O", "B-PER"]
+            )
