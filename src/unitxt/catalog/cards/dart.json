@@ -2,7 +2,12 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "dart"
+        "path": "Yale-LILY/dart",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "validation"
+        ]
     },
     "preprocess_steps": [
         "splitters.small_no_test",

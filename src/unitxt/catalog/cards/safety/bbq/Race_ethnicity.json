@@ -3,7 +3,11 @@
     "loader": {
         "__type__": "load_hf",
         "path": "heegyu/bbq",
-        "name": "Race_ethnicity",
+        "revision": "refs/convert/parquet",
+        "data_dir": "Race_ethnicity",
+        "splits": [
+            "test"
+        ],
         "data_classification_policy": [
             "public"
         ]

@@ -3,7 +3,11 @@
     "loader": {
         "__type__": "load_hf",
         "path": "heegyu/bbq",
-        "name": "Physical_appearance",
+        "revision": "refs/convert/parquet",
+        "data_dir": "Physical_appearance",
+        "splits": [
+            "test"
+        ],
         "data_classification_policy": [
             "public"
         ]

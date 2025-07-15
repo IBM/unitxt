@@ -3,7 +3,11 @@
     "loader": {
         "__type__": "load_hf",
         "path": "heegyu/bbq",
-        "name": "Gender_identity",
+        "revision": "refs/convert/parquet",
+        "data_dir": "Gender_identity",
+        "splits": [
+            "test"
+        ],
         "data_classification_policy": [
             "public"
         ]

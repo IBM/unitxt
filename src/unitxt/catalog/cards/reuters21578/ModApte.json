@@ -2,8 +2,13 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "reuters21578",
-        "name": "ModApte"
+        "path": "ucirvine/reuters21578",
+        "data_dir": "ModApte",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "test"
+        ]
     },
     "preprocess_steps": [
         {

@@ -3,7 +3,11 @@
     "loader": {
         "__type__": "load_hf",
         "path": "heegyu/bbq",
-        "name": "SES",
+        "revision": "refs/convert/parquet",
+        "data_dir": "SES",
+        "splits": [
+            "test"
+        ],
         "data_classification_policy": [
             "public"
         ]
