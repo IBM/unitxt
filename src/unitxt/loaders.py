@@ -490,7 +490,7 @@ class LoadWithPandas(LazyLoader):
 
 
 class LoadCSV(LoadWithPandas):
-    """Loads data from CSV files.
+    r"""Loads data from CSV files.
 
     Supports streaming and can handle large files by loading them in chunks.
 
@@ -500,6 +500,7 @@ class LoadCSV(LoadWithPandas):
         loader_limit: Optional integer to specify a limit on the number of records to load.
         streaming: Bool indicating if streaming should be used.
         sep: String specifying the separator used in the CSV files.
+        column_names: Optional list of column names to use instead of header row.
 
     Example:
         Loading csv
@@ -507,18 +508,31 @@ class LoadCSV(LoadWithPandas):
         .. code-block:: python
 
             load_csv = LoadCSV(files={'train': 'path/to/train.csv'}, chunksize=100)
+
+        Loading TSV with custom column names
+
+        .. code-block:: python
+
+            load_csv = LoadCSV(
+                files={'train': 'path/to/train.tsv'},
+                sep='\t',
+                column_names=['id', 'question', 'table_name', 'answer']
+            )
     """
 
     sep: str = ","
+    column_names: Optional[List[str]] = None
 
     def read_dataframe(self, file) -> pd.DataFrame:
         with error_context(
             stage="Raw Dataset Loading",
             help="https://www.unitxt.ai/en/latest/unitxt.loaders.html#module-unitxt.loaders",
         ):
-            return pd.read_csv(
-                file, sep=self.sep, low_memory=self.streaming, **self.get_args()
-            )
+            args = self.get_args()
+            if self.column_names is not None:
+                args["names"] = self.column_names
+                args["header"] = None  # Don't use first row as header
+            return pd.read_csv(file, sep=self.sep, low_memory=self.streaming, **args)
 
 
 def read_file(source) -> bytes:

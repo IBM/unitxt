@@ -218,7 +218,7 @@ class MapInstanceValues(InstanceOperator):
         if val_as_str in mapper:
             return recursive_copy(mapper[val_as_str])
         if self.strict:
-            raise KeyError(
+            raise ValueError(
                 f"value '{val_as_str}', the string representation of the value in field '{key}', is not found in mapper '{mapper}'"
             )
         return val
@@ -2555,3 +2555,40 @@ class Fillna(FieldOperator):
         except TypeError:
             return value
         return value
+
+
+class ReadFile(FieldOperator):
+    """Reads file content from local path or URL.
+
+    This operator can read files from local filesystem paths or remote URLs.
+    The content is returned as a string.
+
+    Args:
+        encoding (str): Text encoding to use when reading the file. Defaults to 'utf-8'.
+
+    Example:
+        Reading a local file
+
+        .. code-block:: python
+
+            ReadFile(field="file_path", to_field="content")
+
+        Reading from URL
+
+        .. code-block:: python
+
+            ReadFile(field="url", to_field="content")
+    """
+
+    encoding: str = "utf-8"
+
+    def process_value(self, value: str) -> str:
+        """Read file content from local path or URL."""
+        if value.startswith(("http://", "https://")):
+            # Read from URL
+            response = requests.get(value)
+            response.raise_for_status()
+            return response.text
+        # Read from local file
+        with open(value, encoding=self.encoding) as f:
+            return f.read()
