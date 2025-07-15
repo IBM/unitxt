@@ -14,7 +14,7 @@ from unitxt.types import Table
 
 settings = get_settings()
 
-url = "https://raw.githubusercontent.com/czyssrs/FinQA/refs/heads/main/dataset/{}.json"
+url = "https://raw.githubusercontent.com/czyssrs/FinQA/0f16e2867befa6840783e58be38c9efb9229d742/dataset/{}.json"
 
 card = TaskCard(
     loader=LoadJsonFile(

@@ -3,9 +3,9 @@
     "loader": {
         "__type__": "load_json_file",
         "files": {
-            "train": "https://raw.githubusercontent.com/czyssrs/FinQA/refs/heads/main/dataset/train.json",
-            "validation": "https://raw.githubusercontent.com/czyssrs/FinQA/refs/heads/main/dataset/dev.json",
-            "test": "https://raw.githubusercontent.com/czyssrs/FinQA/refs/heads/main/dataset/test.json"
+            "train": "https://raw.githubusercontent.com/czyssrs/FinQA/0f16e2867befa6840783e58be38c9efb9229d742/dataset/train.json",
+            "validation": "https://raw.githubusercontent.com/czyssrs/FinQA/0f16e2867befa6840783e58be38c9efb9229d742/dataset/dev.json",
+            "test": "https://raw.githubusercontent.com/czyssrs/FinQA/0f16e2867befa6840783e58be38c9efb9229d742/dataset/test.json"
         }
     },
     "preprocess_steps": [
