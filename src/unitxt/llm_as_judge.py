@@ -43,6 +43,7 @@ from .llm_as_judge_utils import (
     rank_indexes,
 )
 from .logging_utils import get_logger
+from .metric_utils import EmptyPrediction
 from .metrics import BulkInstanceMetric
 from .task import Task
 from .templates import Template
@@ -246,7 +247,11 @@ class LLMJudge(BulkInstanceMetric):
         predictions: List[str],
     ) -> List[str]:
         if not predictions or all(
-            prediction is None or prediction == "" for prediction in predictions
+            (
+                isinstance(prediction, EmptyPrediction)
+                or prediction == str(EmptyPrediction())
+            )
+            for prediction in predictions
         ):
             predictions_from_task_data = []
             for i, td in enumerate(task_data):
