@@ -7,6 +7,7 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.settings_utils import get_settings
+from unitxt.struct_data_operators import ParseCSV
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
@@ -15,10 +16,15 @@ settings = get_settings()
 with settings.context(allow_unverified_code=True):
     card = TaskCard(
         loader=LoadHF(
-            path="ibm/tab_fact", streaming=False, data_classification_policy=["public"]
+            path="wenhu/tab_fact",
+            revision="refs/convert/parquet",
+            data_dir="tab_fact",
+            splits=["train", "test", "validation"],
+            data_classification_policy=["public"],
         ),
         preprocess_steps=[
-            Rename(field_to_field={"table": "text_a", "statement": "text_b"}),
+            ParseCSV(field="table_text", to_field="text_a", separator="#"),
+            Rename(field="statement", to_field="text_b"),
             MapInstanceValues(mappers={"label": {"0": "refuted", "1": "entailed"}}),
             Set(
                 fields={
