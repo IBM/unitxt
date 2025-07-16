@@ -1553,6 +1553,54 @@ class DirectCriteriaCatalogEnum(Enum):
             "No": 0.0,
         },
     )
+    TRANSLATION_QUALITY = CriteriaWithOptions(
+        name="translation_quality",
+        description=(
+            "On a scale from 0 to 6, is the translation of the source text accurate, fluent, comprenhencible and free of errors?\n"
+            """Accuracy: How well does the translation convey the original meaning and content of the source text?
+Fluency: How natural and idiomatic is the translation in terms of grammar, syntax, and phrasing?
+Comprehensibility: How easily can the translation be understood by a native speaker of the target language?
+Errors: Are there any errors in grammar, vocabulary, punctuation, or formatting that affect the overall quality of the translation?"""
+        ),
+        prediction_field="translation",
+        context_fields=[
+            "source language",
+            "target language",
+            "source text",
+            "reference translation",
+        ],
+        options=[
+            CriteriaOption(
+                name="0",
+                description="Nonsense/No meaning preserved: Nearly all information is lost between the translation and the source text. Grammar is irrelevant.",
+            ),
+            CriteriaOption(
+                name="1",
+                description="",
+            ),
+            CriteriaOption(
+                name="2",
+                description="Some Meaning Preserved: The translation preserves some of the meaning of the source text but misses significant parts. The narrative is hard to follow due to fundamental errors. Grammar may be poor.",
+            ),
+            CriteriaOption(
+                name="3",
+                description="",
+            ),
+            CriteriaOption(
+                name="4",
+                description="Most Meaning Preserved and Few Grammar Mistakes: The translation retains most of the meaning of the source text. It may have some grammar mistakes or minor contextual inconsistencies.",
+            ),
+            CriteriaOption(
+                name="5",
+                description="",
+            ),
+            CriteriaOption(
+                name="6",
+                description="Perfect Meaning and Grammar: The meaning of the translation is completely consistent with the source text and the surrounding context (if applicable). The grammar is also correct.",
+            ),
+        ],
+        option_map={str(i): i / 6 for i in range(7)},
+    )
 
 
 DIRECT_CRITERIA = [c.value for c in DirectCriteriaCatalogEnum]
