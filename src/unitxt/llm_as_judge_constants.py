@@ -1576,7 +1576,7 @@ Errors: Are there any errors in grammar, vocabulary, punctuation, or formatting 
             ),
             CriteriaOption(
                 name="1",
-                description="",
+                description="Minimal Meaning Preserved: Only isolated fragments of meaning are retained. The translation is largely incoherent and fails to convey the main ideas. Grammar is poor or broken.",
             ),
             CriteriaOption(
                 name="2",
@@ -1584,7 +1584,7 @@ Errors: Are there any errors in grammar, vocabulary, punctuation, or formatting 
             ),
             CriteriaOption(
                 name="3",
-                description="",
+                description="Moderate Meaning Preserved: The core message is partially conveyed, but there are frequent issues with grammar, fluency, or comprehension that impact the overall readability and accuracy.",
             ),
             CriteriaOption(
                 name="4",
@@ -1592,7 +1592,7 @@ Errors: Are there any errors in grammar, vocabulary, punctuation, or formatting 
             ),
             CriteriaOption(
                 name="5",
-                description="",
+                description="Nearly Perfect: The translation is highly accurate and mostly fluent. Only very minor grammar or phrasing issues are present, and they do not hinder understanding.",
             ),
             CriteriaOption(
                 name="6",

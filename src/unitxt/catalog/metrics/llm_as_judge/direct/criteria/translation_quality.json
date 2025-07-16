@@ -1,7 +1,7 @@
 {
     "__type__": "criteria_with_options",
     "name": "translation_quality",
-    "description": "Is the translation of the source text accurate, fluent, comprenhencible and free of errors?\nAccuracy: How well does the translation convey the original meaning and content of the source text?\nFluency: How natural and idiomatic is the translation in terms of grammar, syntax, and phrasing?\nComprehensibility: How easily can the translation be understood by a native speaker of the target language?\nErrors: Are there any errors in grammar, vocabulary, punctuation, or formatting that affect the overall quality of the translation?",
+    "description": "On a scale from 0 to 6, is the translation of the source text accurate, fluent, comprenhencible and free of errors?\nAccuracy: How well does the translation convey the original meaning and content of the source text?\nFluency: How natural and idiomatic is the translation in terms of grammar, syntax, and phrasing?\nComprehensibility: How easily can the translation be understood by a native speaker of the target language?\nErrors: Are there any errors in grammar, vocabulary, punctuation, or formatting that affect the overall quality of the translation?",
     "prediction_field": "translation",
     "context_fields": [
         "source language",
@@ -18,7 +18,7 @@
         {
             "__type__": "criteria_option",
             "name": "1",
-            "description": ""
+            "description": "Minimal Meaning Preserved: Only isolated fragments of meaning are retained. The translation is largely incoherent and fails to convey the main ideas. Grammar is poor or broken."
         },
         {
             "__type__": "criteria_option",
@@ -28,7 +28,7 @@
         {
             "__type__": "criteria_option",
             "name": "3",
-            "description": ""
+            "description": "Moderate Meaning Preserved: The core message is partially conveyed, but there are frequent issues with grammar, fluency, or comprehension that impact the overall readability and accuracy."
         },
         {
             "__type__": "criteria_option",
@@ -38,7 +38,7 @@
         {
             "__type__": "criteria_option",
             "name": "5",
-            "description": ""
+            "description": "Nearly Perfect: The translation is highly accurate and mostly fluent. Only very minor grammar or phrasing issues are present, and they do not hinder understanding."
         },
         {
             "__type__": "criteria_option",
