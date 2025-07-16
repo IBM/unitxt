@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "chinese_traditional",
+        "revision": "refs/convert/parquet",
+        "data_dir": "chinese_traditional",
         "splits": [
             "test",
             "train",

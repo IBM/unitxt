@@ -2,7 +2,12 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "trec"
+        "path": "trec",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "test"
+        ]
     },
     "preprocess_steps": [
         {

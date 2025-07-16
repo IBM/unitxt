@@ -1,10 +1,10 @@
 import sys
 
 from unitxt import add_to_catalog
-from unitxt.blocks import LoadHF, TaskCard
+from unitxt.blocks import TaskCard
+from unitxt.loaders import LoadIOB
 from unitxt.operators import (
     Copy,
-    GetItemByIndex,
     Rename,
     Set,
     Shuffle,
@@ -33,6 +33,83 @@ sub_tasks = [
     "tl_ugnayan",
 ]
 
+# URL mapping for IOB files based on Universal NER GitHub structure
+UNER_PREFIX = "https://raw.githubusercontent.com/UniversalNER/"
+UNER_DATASETS = {
+    "ceb_gja": {
+        "test": "UNER_Cebuano-GJA/master/ceb_gja-ud-test.iob2",
+    },
+    "zh_gsd": {
+        "train": "UNER_Chinese-GSD/master/zh_gsd-ud-train.iob2",
+        "dev": "UNER_Chinese-GSD/master/zh_gsd-ud-dev.iob2",
+        "test": "UNER_Chinese-GSD/master/zh_gsd-ud-test.iob2",
+    },
+    "zh_gsdsimp": {
+        "train": "UNER_Chinese-GSDSIMP/master/zh_gsdsimp-ud-train.iob2",
+        "dev": "UNER_Chinese-GSDSIMP/master/zh_gsdsimp-ud-dev.iob2",
+        "test": "UNER_Chinese-GSDSIMP/master/zh_gsdsimp-ud-test.iob2",
+    },
+    "zh_pud": {
+        "test": "UNER_Chinese-PUD/master/zh_pud-ud-test.iob2",
+    },
+    "hr_set": {
+        "train": "UNER_Croatian-SET/main/hr_set-ud-train.iob2",
+        "dev": "UNER_Croatian-SET/main/hr_set-ud-dev.iob2",
+        "test": "UNER_Croatian-SET/main/hr_set-ud-test.iob2",
+    },
+    "da_ddt": {
+        "train": "UNER_Danish-DDT/main/da_ddt-ud-train.iob2",
+        "dev": "UNER_Danish-DDT/main/da_ddt-ud-dev.iob2",
+        "test": "UNER_Danish-DDT/main/da_ddt-ud-test.iob2",
+    },
+    "en_ewt": {
+        "train": "UNER_English-EWT/master/en_ewt-ud-train.iob2",
+        "dev": "UNER_English-EWT/master/en_ewt-ud-dev.iob2",
+        "test": "UNER_English-EWT/master/en_ewt-ud-test.iob2",
+    },
+    "en_pud": {
+        "test": "UNER_English-PUD/master/en_pud-ud-test.iob2",
+    },
+    "de_pud": {
+        "test": "UNER_German-PUD/master/de_pud-ud-test.iob2",
+    },
+    "pt_bosque": {
+        "train": "UNER_Portuguese-Bosque/master/pt_bosque-ud-train.iob2",
+        "dev": "UNER_Portuguese-Bosque/master/pt_bosque-ud-dev.iob2",
+        "test": "UNER_Portuguese-Bosque/master/pt_bosque-ud-test.iob2",
+    },
+    "pt_pud": {
+        "test": "UNER_Portuguese-PUD/master/pt_pud-ud-test.iob2",
+    },
+    "ru_pud": {
+        "test": "UNER_Russian-PUD/master/ru_pud-ud-test.iob2",
+    },
+    "sr_set": {
+        "train": "UNER_Serbian-SET/main/sr_set-ud-train.iob2",
+        "dev": "UNER_Serbian-SET/main/sr_set-ud-dev.iob2",
+        "test": "UNER_Serbian-SET/main/sr_set-ud-test.iob2",
+    },
+    "sk_snk": {
+        "train": "UNER_Slovak-SNK/master/sk_snk-ud-train.iob2",
+        "dev": "UNER_Slovak-SNK/master/sk_snk-ud-dev.iob2",
+        "test": "UNER_Slovak-SNK/master/sk_snk-ud-test.iob2",
+    },
+    "sv_pud": {
+        "test": "UNER_Swedish-PUD/master/sv_pud-ud-test.iob2",
+    },
+    "sv_talbanken": {
+        "train": "UNER_Swedish-Talbanken/master/sv_talbanken-ud-train.iob2",
+        "dev": "UNER_Swedish-Talbanken/master/sv_talbanken-ud-dev.iob2",
+        "test": "UNER_Swedish-Talbanken/master/sv_talbanken-ud-test.iob2",
+    },
+    "tl_trg": {
+        "test": "UNER_Tagalog-TRG/master/tl_trg-ud-test.iob2",
+    },
+    "tl_ugnayan": {
+        "test": "UNER_Tagalog-Ugnayan/master/tl_ugnayan-ud-test.iob2",
+    },
+}
+
 classes = [
     "O",
     "B-PER",
@@ -44,11 +121,15 @@ classes = [
 ]
 
 for sub_task in sub_tasks:
+    # Build file URLs for this sub_task
+    files = {}
+    for split, file_path in UNER_DATASETS[sub_task].items():
+        files[split] = UNER_PREFIX + file_path
+
     card = TaskCard(
-        loader=LoadHF(
-            path="universalner/universal_ner",
-            name=sub_task,
-            requirements=["conllu"],
+        loader=LoadIOB(
+            files=files,
+            data_classification_policy=["public"],
         ),
         preprocess_steps=[
             # The dataset is sorted by classes
@@ -56,9 +137,7 @@ for sub_task in sub_tasks:
             Rename(
                 field_to_field={"ner_tags": "labels"},
             ),
-            GetItemByIndex(
-                field="labels", items_list=classes, process_every_value=True
-            ),
+            # IOB loader already provides string labels, no need to map indices
             IobExtractor(
                 labels=["Person", "Organization", "Location"],
                 begin_labels=["B-PER", "B-ORG", "B-LOC"],

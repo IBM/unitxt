@@ -3,7 +3,11 @@
     "loader": {
         "__type__": "load_hf",
         "path": "heegyu/bbq",
-        "name": "Nationality",
+        "revision": "refs/convert/parquet",
+        "data_dir": "Nationality",
+        "splits": [
+            "test"
+        ],
         "data_classification_policy": [
             "public"
         ]

@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "tamil",
+        "revision": "refs/convert/parquet",
+        "data_dir": "tamil",
         "splits": [
             "test",
             "train",

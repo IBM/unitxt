@@ -1,6 +1,5 @@
 import sys
 
-from datasets import load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
@@ -11,17 +10,60 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.operators import Shuffle
-from unitxt.settings_utils import get_settings
 from unitxt.test_utils.card import test_card
 
-settings = get_settings()
-dataset_name = "trec"
-
-ds_builder = load_dataset_builder(
-    dataset_name, trust_remote_code=settings.allow_unverified_code
-)
-classlabels = ds_builder.info.features["fine_label"]
-
+classes = [
+    "ABBR:abb",
+    "ABBR:exp",
+    "ENTY:animal",
+    "ENTY:body",
+    "ENTY:color",
+    "ENTY:cremat",
+    "ENTY:currency",
+    "ENTY:dismed",
+    "ENTY:event",
+    "ENTY:food",
+    "ENTY:instru",
+    "ENTY:lang",
+    "ENTY:letter",
+    "ENTY:other",
+    "ENTY:plant",
+    "ENTY:product",
+    "ENTY:religion",
+    "ENTY:sport",
+    "ENTY:substance",
+    "ENTY:symbol",
+    "ENTY:techmeth",
+    "ENTY:termeq",
+    "ENTY:veh",
+    "ENTY:word",
+    "DESC:def",
+    "DESC:desc",
+    "DESC:manner",
+    "DESC:reason",
+    "HUM:gr",
+    "HUM:ind",
+    "HUM:title",
+    "HUM:desc",
+    "LOC:city",
+    "LOC:country",
+    "LOC:mount",
+    "LOC:other",
+    "LOC:state",
+    "NUM:code",
+    "NUM:count",
+    "NUM:date",
+    "NUM:dist",
+    "NUM:money",
+    "NUM:ord",
+    "NUM:other",
+    "NUM:period",
+    "NUM:perc",
+    "NUM:speed",
+    "NUM:temp",
+    "NUM:volsize",
+    "NUM:weight",
+]
 expand_label_text = {
     "ABBR:abb": "Abbreviation: Abbreviation.",
     "ABBR:exp": "Abbreviation: Expression abbreviated.",
@@ -76,12 +118,14 @@ expand_label_text = {
 }
 
 map_label_to_text = {
-    str(i): expand_label_text[label] for i, label in enumerate(classlabels.names)
+    str(i): expand_label_text[label] for i, label in enumerate(classes)
 }
-classes = [expand_label_text[label] for label in classlabels.names]
+classes = [expand_label_text[label] for label in classes]
 
 card = TaskCard(
-    loader=LoadHF(path=dataset_name),
+    loader=LoadHF(
+        path="trec", revision="refs/convert/parquet", splits=["train", "test"]
+    ),
     preprocess_steps=[
         Shuffle(page_size=sys.maxsize),
         SplitRandomMix(
@@ -117,4 +161,4 @@ card = TaskCard(
     ),
 )
 test_card(card, debug=False)
-add_to_catalog(artifact=card, name=f"cards.{dataset_name}", overwrite=True)
+add_to_catalog(artifact=card, name="cards.trec", overwrite=True)

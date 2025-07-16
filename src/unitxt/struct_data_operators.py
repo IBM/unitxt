@@ -1116,3 +1116,64 @@ class JsonStrToDict(FieldOperator):
             )
             dict_value = {}
         return {str(k): str(v) for k, v in dict_value.items() if v is not None}
+
+
+class ParseCSV(FieldOperator):
+    r"""Parse CSV/TSV text content into table format.
+
+    This operator converts CSV or TSV text content into the standard table format
+    used by Unitxt with header and rows fields.
+
+    Args:
+        separator (str): Field separator character. Defaults to ','.
+        has_header (bool): Whether the first row contains column headers. Defaults to True.
+        skip_header (bool): Whether to skip the first row entirely. Defaults to False.
+
+    Example:
+        Parsing CSV content
+
+        .. code-block:: python
+
+            ParseCSV(field="csv_content", to_field="table", separator=",")
+
+        Parsing TSV content
+
+        .. code-block:: python
+
+            ParseCSV(field="tsv_content", to_field="table", separator="\t")
+    """
+
+    separator: str = ","
+    has_header: bool = True
+    skip_header: bool = False
+
+    def process_value(self, value: str) -> Dict[str, Any]:
+        """Parse CSV/TSV text content into table format."""
+        import csv
+        import io
+
+        # Create a StringIO object to read the CSV content
+        csv_reader = csv.reader(io.StringIO(value), delimiter=self.separator)
+        rows = list(csv_reader)
+
+        if not rows:
+            return {"header": [], "rows": []}
+
+        if self.skip_header:
+            # Skip the first row entirely
+            rows = rows[1:]
+            if not rows:
+                return {"header": [], "rows": []}
+            # Generate generic column names
+            header = [f"col_{i}" for i in range(len(rows[0]))]
+            table_rows = rows
+        elif self.has_header:
+            # First row is header
+            header = rows[0]
+            table_rows = rows[1:]
+        else:
+            # No header, generate generic column names
+            header = [f"col_{i}" for i in range(len(rows[0]))]
+            table_rows = rows
+
+        return {"header": header, "rows": table_rows}

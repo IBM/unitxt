@@ -42,6 +42,7 @@ class CatalogPreparationTestCase(unittest.TestCase):
         unitxt.settings.disable_hf_datasets_cache = True
         unitxt.settings.stream_hf_datasets_by_default = True
         unitxt.settings.max_connection_retries = 10
+        unitxt.settings.max_templates_tests_for_card_test = 1
         if settings.default_verbosity in ["error", "critical"]:
             if not sys.warnoptions:
                 warnings.simplefilter("ignore")

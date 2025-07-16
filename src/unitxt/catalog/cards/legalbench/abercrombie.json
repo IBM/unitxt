@@ -3,7 +3,15 @@
     "loader": {
         "__type__": "load_hf",
         "path": "nguha/legalbench",
-        "name": "abercrombie"
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "test"
+        ],
+        "data_dir": "abercrombie",
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {

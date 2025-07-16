@@ -6,12 +6,7 @@ from unitxt.blocks import (
     SplitRandomMix,
     TaskCard,
 )
-from unitxt.settings_utils import get_settings
 from unitxt.test_utils.card import test_card
-
-settings = get_settings()
-
-dataset_name = "reuters21578"
 
 classlabels = {
     "ModApte": [
@@ -140,7 +135,13 @@ classlabels["ModHayes"] = sorted(classlabels["ModApte"] + ["bfr", "hk"])
 
 for subset in classlabels:
     card = TaskCard(
-        loader=LoadHF(path=f"{dataset_name}", name=subset),
+        loader=LoadHF(
+            path="ucirvine/reuters21578",
+            data_dir=subset,
+            revision="refs/convert/parquet",
+            splits=["train", "test"],
+            data_classification_policy=["public"],
+        ),
         preprocess_steps=[
             SplitRandomMix(
                 {"train": "train[85%]", "validation": "train[15%]", "test": "test"}
@@ -157,4 +158,4 @@ for subset in classlabels:
     )
     if subset == "ModHayes":
         test_card(card, debug=False)
-    add_to_catalog(card, f"cards.{dataset_name}.{subset}", overwrite=True)
+    add_to_catalog(card, f"cards.reuters21578.{subset}", overwrite=True)

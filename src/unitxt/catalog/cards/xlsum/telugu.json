@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "telugu",
+        "revision": "refs/convert/parquet",
+        "data_dir": "telugu",
         "splits": [
             "test",
             "train",

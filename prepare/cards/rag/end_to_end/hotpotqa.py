@@ -18,9 +18,10 @@ from unitxt.test_utils.card import test_card
 # Benchmark
 benchmark_card = TaskCard(
     loader=LoadHF(
-        path="vincentkoc/hotpot_qa_archive",
-        name="distractor",
-        revision="c060661",
+        path="hotpotqa/hotpot_qa",
+        data_dir="distractor",
+        revision="refs/convert/parquet",
+        splits=["train", "validation"],
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
@@ -90,9 +91,9 @@ add_to_catalog(benchmark_card, "cards.rag.benchmark.hotpotqa.en", overwrite=True
 # Documents
 documents_card = TaskCard(
     loader=LoadHF(
-        path="vincentkoc/hotpot_qa_archive",
-        revision="c060661",
-        name="distractor",
+        path="hotpotqa/hotpot_qa",
+        revision="refs/convert/parquet",
+        splits=["train", "test", "validation"],
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
