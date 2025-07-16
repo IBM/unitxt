@@ -43,6 +43,7 @@ from .llm_as_judge_utils import (
     rank_indexes,
 )
 from .logging_utils import get_logger
+from .metric_utils import EmptyPrediction
 from .metrics import BulkInstanceMetric
 from .task import Task
 from .templates import Template
@@ -66,7 +67,7 @@ class LLMJudge(BulkInstanceMetric):
     """Flag to check for positional bias. Detecting for positional bias duplicates the amount of inference calls."""
 
     context_fields: Union[str, List[str], Dict[str, str]] = ["context"]
-    """Fields to be used as context. If a dict is provided, the keys are used as the final names in the prompts, while the values are used to access the context variable values in the `task_data` object."""
+    """Fields to be used as context. If a dict is provided, the keys are used as the final names in the prompts, while the values are used to access the context variable values in the `task_data` object (it is recommended to provide the context_fields in the Criteria `context_fields` field as this field will be deprecated in the future)."""
 
     generate_summaries: bool = False
     """Flag to generate summaries of the assessments. Defaults to `False`."""
@@ -78,20 +79,15 @@ class LLMJudge(BulkInstanceMetric):
     """Flag to include prompts in the result. Defaults to `True`."""
 
     criteria_field: str = None
-    """The field specifying the evaluation criteria in the `task_data` object."""
+    """The field specifying the evaluation criteria in the `task_data` object. If the `criteria` is provided, it will take precedence."""
 
     criteria: Criteria = None
-    """The criteria used for evaluation. If the `criteria_field` is provided, it will take precedence."""
+    """The criteria used for evaluation."""
 
     def prepare(self):
         """Prepares the `LLMJudge` instance by setting up context fields and evaluator name."""
         super().prepare()
-        if isinstance(self.context_fields, str):
-            self.context_fields = [self.context_fields]
-        if isinstance(self.context_fields, List):
-            self.context_fields = {
-                context_field: context_field for context_field in self.context_fields
-            }
+        self.context_fields = self.get_context_fields_as_dict(self.context_fields)
 
         if self.evaluator_name is None:
             self.evaluator_name = self.inference_engine.get_engine_id()
@@ -112,24 +108,43 @@ class LLMJudge(BulkInstanceMetric):
             )
         return
 
-    def get_contexts(self, task_data: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    def get_context_fields_as_dict(self, context_fields: Union[str, List, Dict]):
+        result = context_fields if context_fields else {}
+        if isinstance(result, str):
+            result = [result]
+        if isinstance(result, List):
+            result = {context_field: context_field for context_field in result}
+        return result
+
+    def get_contexts(
+        self, task_data: List[Dict[str, Any]], criteria: List[Criteria]
+    ) -> List[Dict[str, str]]:
         """Extracts and parses context fields from task data.
 
         Args:
             task_data (List[Dict[str, Any]]): The task data containing context information.
+            criteria ( List[Criteria]): The criteria list from which to take the context fields if they weren't provided in the self.context_fields field
 
         Returns:
             List[Dict[str, str]]: A list of parsed context dictionaries.
         """
-        return [
-            get_parsed_context(
-                {
-                    context_field_name: dict_get(td, context_field)
-                    for context_field_name, context_field in self.context_fields.items()
-                }
+        parsed_contexts = []
+        for i, td in enumerate(task_data):
+            context_fields_for_td = self.context_fields
+            if not context_fields_for_td and criteria[i].context_fields:
+                context_fields_for_td = self.get_context_fields_as_dict(
+                    criteria[i].context_fields
+                )
+
+            parsed_contexts.append(
+                get_parsed_context(
+                    {
+                        context_field_name: dict_get(td, context_field)
+                        for context_field_name, context_field in context_fields_for_td.items()
+                    }
+                )
             )
-            for td in task_data
-        ]
+        return parsed_contexts
 
     def perform_evaluation_step(
         self,
@@ -211,7 +226,7 @@ class LLMJudge(BulkInstanceMetric):
             logger.info(
                 f"Reading criteria from the task_data field '{self.criteria_field}'"
             )
-            criterias = [
+            criteria_list = [
                 fetch_artifact(task_data_instance[self.criteria_field])[0]
                 for task_data_instance in task_data
             ]
@@ -219,18 +234,11 @@ class LLMJudge(BulkInstanceMetric):
             logger.info(
                 "Reading criteria from self. Criteria is a single CriteriaWithOptions, replicating it for all predictions"
             )
-            criterias: List[Criteria] = [self.criteria] * eval_count
-        unique_criteria_names = list({criteria.name for criteria in criterias})
+            criteria_list: List[Criteria] = [self.criteria] * eval_count
+        unique_criteria_names = list({criteria.name for criteria in criteria_list})
 
         logger.info(f"Criteria names are '{', '.join(unique_criteria_names)}'")
-        return criterias
-
-    def update_eval_fields_from_criteria(self, criteria: List[Criteria]):
-        if not self.context_fields:
-            self.context_fields = {
-                context_field: context_field
-                for context_field in criteria[0].context_fields
-            }
+        return criteria_list
 
     def get_predictions(
         self,
@@ -238,11 +246,28 @@ class LLMJudge(BulkInstanceMetric):
         criteria: List[Criteria],
         predictions: List[str],
     ) -> List[str]:
-        if not predictions and criteria[0].prediction_field:
-            return [
-                dict_get(td, criteria[i].prediction_field)
-                for i, td in enumerate(task_data)
-            ]
+        if not predictions or all(
+            (
+                isinstance(prediction, EmptyPrediction)
+                or prediction == str(EmptyPrediction())
+            )
+            for prediction in predictions
+        ):
+            predictions_from_task_data = []
+            for i, td in enumerate(task_data):
+                if (
+                    criteria[i].prediction_field is not None
+                    and criteria[i].prediction_field in td
+                ):
+                    predictions_from_task_data.append(
+                        dict_get(td, criteria[i].prediction_field)
+                    )
+                else:
+                    raise UnitxtError(
+                        "You must set either the predictions in the evaluate() call or specify the prediction field name to be taken from the task_data using the `Criteria`'s prediction_field field."
+                    )
+            return predictions_from_task_data
+
         return predictions
 
 
@@ -540,26 +565,25 @@ class LLMJudgeDirect(LLMJudge):
 
         evaluations_count = len(task_data)
         # TODO: find out how to serialize and deserialize enums
-        criterias = self.get_criteria(task_data, evaluations_count)
-        self.update_eval_fields_from_criteria(criterias)
-        predictions = self.get_predictions(task_data, criterias, predictions)
-        self.__set_main_score(criterias)
-        contexts = self.get_contexts(task_data)
+        criteria_list = self.get_criteria(task_data, evaluations_count)
+        predictions = self.get_predictions(task_data, criteria_list, predictions)
+        contexts = self.get_contexts(task_data, criteria_list)
+        self.__set_main_score(criteria_list)
         if self.check_positional_bias:
-            criterias += [
+            criteria_list += [
                 CriteriaWithOptions(
                     name=criteria.name,
                     description=criteria.description,
                     option_map=criteria.option_map,
                     options=list(reversed(criteria.options)),
                 )
-                for criteria in criterias
+                for criteria in criteria_list
             ]
             contexts += contexts
             predictions += predictions
 
         parsed_criterias = [
-            self.__get_parsed_criteria(criteria) for criteria in criterias
+            self.__get_parsed_criteria(criteria) for criteria in criteria_list
         ]
 
         (
@@ -659,7 +683,7 @@ class LLMJudgeDirect(LLMJudge):
             option_selection_outputs,
             selections,
             evaluations_count,
-            criterias,
+            criteria_list,
         )
 
         return self.clean_results(results)
@@ -1384,9 +1408,13 @@ class LLMJudgePairwise(LLMJudge):
         logger.info(
             f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
         )
+
+        instances_count = len(predictions)
+        criteria_list = self.get_criteria(task_data, instances_count)
+        contexts = self.get_contexts(task_data, criteria_list)
+        predictions = self.get_predictions(task_data, criteria_list, predictions)
         predictions = self.__convert_predictions_to_dicts(predictions)
         self.__set_main_score(predictions)
-        instances_count = len(predictions)
         self.reduction_map = {"mean": ["score"]}
         self.reduction_map["mean"].extend(
             [f"{key}_winrate" for key in predictions[0].keys()]
@@ -1432,10 +1460,8 @@ class LLMJudgePairwise(LLMJudge):
             response_pairs_list.append(response_pairs)
             option_pairs_list.append(option_pairs)
 
-        criterias = self.get_criteria(task_data, instances_count)
-        contexts = self.get_contexts(task_data)
         if self.check_positional_bias:
-            criterias.extend(criterias)
+            criteria_list.extend(criteria_list)
             contexts.extend(contexts)
             for response_pairs, option_pairs in zip(
                 response_pairs_list, option_pairs_list
@@ -1454,8 +1480,8 @@ class LLMJudgePairwise(LLMJudge):
                 "response_b": response_pair[1],
                 "option_a": option_pair[0],
                 "option_b": option_pair[1],
-                "criteria_name": criterias[i].name,
-                "criteria_description": criterias[i].description,
+                "criteria_name": criteria_list[i].name,
+                "criteria_description": criteria_list[i].description,
                 "data_classification_policy": ["public"],
             }
             for i, (response_pairs, option_pairs) in enumerate(
@@ -1592,7 +1618,7 @@ class LLMJudgePairwise(LLMJudge):
                 selections[sli],
                 contests_count_list[i],
                 combination_indexes_list[i],
-                criterias[i],
+                criteria_list[i],
             )
             results.append(instance_results)
             slice_start = slice_end
