@@ -107,6 +107,6 @@ for criteria_name, criteria_artifact in criteria_to_artifact.items():
 
         add_to_catalog(
             card,
-            f"cards.judge_bench.roscoe.{roscoe_dataset}.stepwise.{criteria_name.lower().replace(' ', '_')}",
+            f"cards.judge_bench.roscoe.stepwise.{roscoe_dataset}.{criteria_name.lower().replace(' ', '_')}",
             overwrite=True,
         )

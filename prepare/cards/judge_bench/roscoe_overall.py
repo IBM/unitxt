@@ -143,6 +143,6 @@ for criteria_name, config in criteria_to_config.items():
 
         add_to_catalog(
             card,
-            f"cards.judge_bench.roscoe.{roscoe_dataset}.overall.{criteria_name}",
+            f"cards.judge_bench.roscoe.overall.{roscoe_dataset}.{criteria_name}",
             overwrite=True,
         )
