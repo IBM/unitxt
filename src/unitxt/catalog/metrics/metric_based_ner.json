@@ -1,0 +1,7 @@
+{
+    "__type__": "metric_based_ner",
+    "metric": "metrics.accuracy",
+    "n_resamples": 0,
+    "min_score_for_match": 0.75,
+    "__description__": "\n    Calculates f1 metrics for NER , by comparing entity using a provided Unitxt metric.\n\n    This customizable metric can use any Unitxt metric to compare entities, including LLM as Judge.\n    The metric must accept string prediction and references as input.  The similarity threshold is\n    set by the 'min_score_for_match' attribute.\n\n    By default it uses accuracy (exact match), but the metic can be overridden.\n\n    metrics.metric_based_ner[metric=metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.correctness_based_on_ground_truth,context_fields=ground_truth]]\n\n     "
+}
