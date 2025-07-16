@@ -310,7 +310,7 @@ def fill_metadata(**kwargs):
 
 
 def evaluate(
-    predictions,
+    predictions: Optional[List[str]] = None,
     dataset: Union[Dataset, IterableDataset] = None,
     data=None,
     calc_confidence_intervals: bool = True,

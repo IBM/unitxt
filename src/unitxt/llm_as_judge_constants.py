@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from .artifact import Artifact
 
@@ -11,15 +11,29 @@ class OptionSelectionStrategyEnum(str, Enum):
 
 
 class CriteriaOption(Artifact):
+    """A criteria option."""
+
     name: str
+    """The name of the criteria option"""
+
     description: str
+    """The description of the criteria option"""
 
 
 class Criteria(Artifact):
+    """Criteria used by PairwiseLLMJudge to run evaluations."""
+
     name: str
+    """The name of the crieria"""
+
     description: str
+    """The description of the crieria"""
+
     prediction_field: Optional[str] = None
-    context_fields: Optional[List[str]] = None
+    """The prediction field name this criteria expects and refers to, e.g. answer/model response/summary"""
+
+    context_fields: Union[str, List[str], Dict[str, str]] = None
+    """The context field names this criteria expects, i.e. [context]/[source article, user questions]"""
 
     @staticmethod
     def from_jsons(s: str):
@@ -36,8 +50,13 @@ class Criteria(Artifact):
 
 
 class CriteriaWithOptions(Criteria):
+    """Criteria used by DirectLLMJudge to run evaluations."""
+
     options: List[CriteriaOption]
+    """The options that the judge can choose between"""
+
     option_map: Optional[Dict[str, float]] = None
+    """A mapping from the option names to numerical values to use as scores"""
 
     @staticmethod
     def from_jsons(s: str):
@@ -1262,6 +1281,7 @@ class DirectCriteriaCatalogEnum(Enum):
     COMPLIANCE_ASSISTANT_MESSAGE = CriteriaWithOptions(
         name="assistant_message_compliance",
         description="The Assistant message complies with the User message.",
+        context_fields=["user message"],
         prediction_field="assistant message",
         options=[
             CriteriaOption(

@@ -281,7 +281,7 @@ class InferenceEngine(Artifact):
                                 missing_examples.append(
                                     (i, item)
                                 )  # each element is index in batch and example
-                        # infare on missing examples only, without indices
+                        # infere on missing examples only, without indices
 
                         logger.info(
                             f"Inferring batch {batch_index + 1} / {number_of_batches} with {len(missing_examples)} instances (found {len(cached_results)} instances in {self._cache.directory})"
