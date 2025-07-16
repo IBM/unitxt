@@ -3,7 +3,7 @@
     "loader": {
         "__type__": "load_json_file",
         "files": {
-            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/newsroom/newsroom.json"
+            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/wmt-human/wmt-human_zh_en.json"
         },
         "data_classification_policy": [
             "public"
@@ -13,7 +13,7 @@
     "preprocess_steps": [
         {
             "__type__": "rename",
-            "field": "annotations/Coherence/mean_human",
+            "field": "annotations/quality/mean_human",
             "to_field": "mean_score"
         },
         {
@@ -22,33 +22,30 @@
             "to": "float"
         },
         {
-            "__type__": "group_dict_with_regex",
-            "field": "instance",
-            "pattern": "### Generated Summary\\s+(?P<generated_summary>.*?)\\s+### Source Article\\s+(?P<source_article>.*)",
-            "flags": 16
-        },
-        {
             "__type__": "rename",
-            "field": "instance/generated_summary",
-            "to_field": "summary"
-        },
-        {
-            "__type__": "rename",
-            "field": "instance/source_article",
-            "to_field": "article"
+            "field_to_field": {
+                "instance/source": "source text",
+                "instance/reference": "reference translation",
+                "instance/translation": "translation"
+            }
         },
         {
             "__type__": "set",
             "fields": {
-                "criteria": "metrics.llm_as_judge.direct.criteria.summarization_coherence"
+                "criteria": "metrics.llm_as_judge.direct.criteria.translation_quality",
+                "source language": "chinese",
+                "target language": "english"
             }
         }
     ],
     "task": {
         "__type__": "task",
         "input_fields": {
-            "summary": "str",
-            "article": "str",
+            "source text": "str",
+            "source language": "str",
+            "target language": "str",
+            "reference translation": "str",
+            "translation": "str",
             "criteria": "Any"
         },
         "reference_fields": {
@@ -60,5 +57,7 @@
         ],
         "default_template": "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
     },
-    "templates": []
+    "templates": [
+        "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
+    ]
 }

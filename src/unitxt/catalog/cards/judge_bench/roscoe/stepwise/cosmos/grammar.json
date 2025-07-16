@@ -3,7 +3,7 @@
     "loader": {
         "__type__": "load_json_file",
         "files": {
-            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/inferential-strategies/inferential_strategies.json"
+            "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/roscoe/roscoe-cosmos-stepwise.json"
         },
         "data_classification_policy": [
             "public"
@@ -14,16 +14,18 @@
         {
             "__type__": "group_dict_with_regex",
             "field": "instance",
-            "pattern": ".*?### PROBLEM STATEMENT\\s+(?P<problem_statement>.*?)\\s+Statements:\\s+(?P<statements>.*?)\\s+Let\\'s think step by step\\.\\s*### MODEL RESPONSE\\s+(?P<model_reasoning>.*)",
+            "pattern": ".*?Situation \\(Premise\\):\\s+(?P<premise>.*?)\\s+Claim \\(Hypothesis\\):\\s+(?P<hypothesis>.*?)\\s+Is the Claim supported by the Situation\\?\\s+Correct Relationship \\(Yes or No\\):\\s(?P<correct_answer>.*?)\\s+GENERATED RESPONSE:\\s+(?P<model_reasoning>.*?)\\s+JUDGE:\\s+(?P<judged_step>.*)\\s+",
             "flags": 16
         },
         {
             "__type__": "rename",
             "field_to_field": {
-                "instance/problem_statement": "problem statement",
-                "instance/statements": "statements",
+                "instance/premise": "premise",
+                "instance/hypothesis": "hypothesis",
                 "instance/model_reasoning": "model reasoning",
-                "annotations/Sound Reasoning/majority_human": "label"
+                "instance/correct_answer": "correct answer",
+                "instance/judged_step": "step",
+                "annotations/Grammar/majority_human": "label"
             }
         },
         {
@@ -44,26 +46,29 @@
             "__type__": "map_instance_values",
             "mappers": {
                 "label_value": {
-                    "Yes": 1.0,
-                    "No": 0.0
+                    "Yes": 0.0,
+                    "No": 1.0
                 }
             }
         },
         {
             "__type__": "set",
             "fields": {
-                "criteria": "metrics.llm_as_judge.direct.criteria.logical_validity_of_reasoning"
+                "criteria": "metrics.llm_as_judge.direct.criteria.step_by_step_reasoning_bad_grammar",
+                "question": "Is the Hypothesis supported by the Premise?"
             }
         }
     ],
     "task": {
         "__type__": "task",
         "input_fields": {
-            "problem statement": "str",
-            "statements": "str",
+            "premise": "str",
+            "hypothesis": "str",
+            "question": "str",
             "model reasoning": "str",
-            "label": "str",
-            "criteria": "Any"
+            "correct answer": "str",
+            "criteria": "Any",
+            "step": "str"
         },
         "reference_fields": {
             "label_value": "float"
