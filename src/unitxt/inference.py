@@ -825,11 +825,14 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             tools = []
             for instance in batch:
                 sources.append(instance["source"])
-                if "task_data" in instance and "__tools__" in instance["task_data"]:
+                if "task_data" in instance:
                     task_data = instance["task_data"]
                     if isinstance(task_data, str):
                         task_data = json.loads(task_data)
-                    tools.append(task_data["__tools__"])
+                    if "__tools__" in task_data:
+                        tools.append(task_data["__tools__"])
+                    else:
+                        tools.append(None)
                 else:
                     tools.append(None)
             # Tokenize inputs for the batch
@@ -3715,7 +3718,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "bam": {"max_tokens": "max_new_tokens", "model": "model_name"},
         "watsonx-sdk": {"model": "model_name"},
         "rits": {"model": "model_name"},
-        "hf-local": {"model": "model_name"},
+        "hf-local": {"model": "model_name", "max_tokens": "max_new_tokens"},
     }
 
     def get_return_object(self, **kwargs):
