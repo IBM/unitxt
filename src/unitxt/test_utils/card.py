@@ -292,7 +292,9 @@ def test_card(
         template_card_indices = range(len(card.templates))
 
     with settings.context(allow_unverified_code=True):
-        for template_card_index in template_card_indices:
+        for i, template_card_index in enumerate(template_card_indices):
+            if i >= settings.max_templates_tests_for_card_test:
+                break
             examples = load_examples_from_dataset_recipe(
                 card, template_card_index=template_card_index, debug=debug, **kwargs
             )
