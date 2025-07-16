@@ -32,7 +32,7 @@ def get_judgebench_cards():
 
 cards = get_judgebench_cards()
 
-for card in cards:
+for card in [cards[0]]:
     print("Running card ", card)
     dataset = load_dataset(card=card, split="test", loader_limit=3)
 
