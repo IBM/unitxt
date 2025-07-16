@@ -27,7 +27,7 @@ data = {
 
 metric = LLMJudgePairwise(
     inference_engine=CrossProviderInferenceEngine(
-        model="llama-3-1-70b-instruct", max_tokens=1024
+        model="llama-3-3-70b-instruct", max_tokens=1024
     ),
     context_fields=["question"],
     criteria_field="criteria",
