@@ -6177,7 +6177,7 @@ class CustomF1Fuzzy(CustomF1):
 
 class FuzzyNer(CustomF1Fuzzy):
     prediction_type = List[Tuple[str, str]]
-    min_score_for_match = 0.75
+    min_score_for_match = 0.750001  # Used to be > 0.75, and now changed to >= 0.750001
 
     def score(self, val1, val2):
         from fuzzywuzzy import fuzz
