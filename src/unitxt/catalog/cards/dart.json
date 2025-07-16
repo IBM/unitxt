@@ -7,6 +7,9 @@
         "splits": [
             "train",
             "validation"
+        ],
+        "data_classification_policy": [
+            "public"
         ]
     },
     "preprocess_steps": [

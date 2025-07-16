@@ -8,6 +8,9 @@
         "splits": [
             "train",
             "test"
+        ],
+        "data_classification_policy": [
+            "public"
         ]
     },
     "preprocess_steps": [
