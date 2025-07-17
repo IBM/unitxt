@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "truthfulqa/truthful_qa",
         "name": "multiple_choice",
         "data_classification_policy": [
@@ -10,26 +16,38 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_splits",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "RenameSplits"
+            },
             "mapper": {
                 "validation": "test"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "_label": 1
             }
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "mc1_targets/choices": "choices",
                 "mc1_targets/labels": "labels"
             }
         },
         {
-            "__type__": "index_of",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "IndexOf"
+            },
             "search_in": "labels",
             "index_of": "_label",
             "to_field": "answer"

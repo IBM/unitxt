@@ -1,5 +1,8 @@
 {
-    "__type__": "criteria_with_options",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_constants",
+        "name": "CriteriaWithOptions"
+    },
     "name": "logical_validity_of_reasoning",
     "description": "Assess whether the model reasoning is logically valid when solving problems in propositional logic. The reasoning should follow correct logical principles and lead to a valid conclusion based on the given premises.",
     "prediction_field": "model reasoning",
@@ -9,12 +12,18 @@
     ],
     "options": [
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "Yes",
             "description": "The reasoning is logically valid and correctly applies propositional logic principles."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "No",
             "description": "The reasoning is logically invalid or contains errors in applying propositional logic principles."
         }
