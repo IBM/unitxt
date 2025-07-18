@@ -2,6 +2,7 @@ import copy
 import dataclasses
 import functools
 import inspect
+import json
 from abc import ABCMeta
 from inspect import Parameter, Signature
 from typing import Any, Dict, List, Optional, final
@@ -320,6 +321,10 @@ def to_dict(obj, func=copy.deepcopy, _visited=None):
 
     # Get object ID to track visited objects
     obj_id = id(obj)
+
+    if isinstance(obj, (int, float, bool)):
+        # normalize constants like re.DOTALL
+        obj = json.loads(json.dumps(obj))
 
     # If we've seen this object before, return a placeholder to avoid infinite recursion
     if obj_id in _visited:
