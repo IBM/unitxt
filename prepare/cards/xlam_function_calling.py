@@ -39,7 +39,6 @@ card = TaskCard(
             to_field="tools/*/parameters/required",
             set_every_value=True,
         ),
-        "operators.fix_json_schema",
     ],
     task="tasks.tool_calling.multi_turn",
     templates=["templates.tool_calling.multi_turn"],

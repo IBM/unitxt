@@ -70,8 +70,7 @@
             "field": "required",
             "to_field": "tools/*/parameters/required",
             "set_every_value": true
-        },
-        "operators.fix_json_schema"
+        }
     ],
     "task": "tasks.tool_calling.multi_turn",
     "templates": [

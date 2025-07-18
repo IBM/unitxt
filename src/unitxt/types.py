@@ -11,9 +11,10 @@ class JsonSchema:
     def __verify_type__(cls, object):
         if not isinstance(object, dict):
             return False
+        import jsonschema_extractor
         import jsonschema_rs
 
-        jsonschema_rs.meta.validate(object)
+        jsonschema_rs.meta.validate(jsonschema_extractor.extract(object))
         return True
 
 
