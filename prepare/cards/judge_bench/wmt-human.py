@@ -6,7 +6,7 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadJsonFile
-from unitxt.operators import Cast, Set
+from unitxt.operators import Cast, ExecuteExpression, Set
 from unitxt.task import Task
 from unitxt.test_utils.card import test_card
 
@@ -30,9 +30,7 @@ for dataset_name, config in dataset_to_config.items():
         preprocess_steps=[
             Rename(field="annotations/quality/mean_human", to_field="mean_score"),
             Cast(field="mean_score", to="float"),
-            # Apply(
-            #     "mean_score", function=lambda x: x/6, to_field="mean_score"
-            # ),
+            ExecuteExpression(expression="mean_score/6", to_field="mean_score"),
             Rename(
                 field_to_field={
                     "instance/source": "source text",
@@ -71,6 +69,6 @@ for dataset_name, config in dataset_to_config.items():
 
     add_to_catalog(
         card,
-        f"cards.judge_bench.wmt_human.{config['source_language']}_to_{config['target_language']}",
+        f"cards.judge_bench.wmt_human.{config['source_language']}_to_{config['target_language']}.quality",
         overwrite=True,
     )
