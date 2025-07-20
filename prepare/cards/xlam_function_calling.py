@@ -3,6 +3,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
     Copy,
+    FixJsonSchemaOfToolParameterType,
     Move,
     Set,
 )
@@ -12,14 +13,12 @@ from unitxt.test_utils.card import test_card
 
 
 def extract_required_parameters(instance, stream_name=None):
-    result = []
     for tool in instance["tools"]:
         required_params = []
         for param_name, param_info in tool["parameters"]["properties"].items():
-            if "optional" not in param_info["type"]:
+            if "optional" not in param_info["type"].lower():
                 required_params.append(param_name)
-        result.append(required_params)
-    instance["required"] = result
+        tool["parameters"]["required"] = required_params
     return instance
 
 
@@ -36,19 +35,16 @@ card = TaskCard(
         LoadJson(field="answers", to_field="reference_calls"),
         LoadJson(field="tools"),
         Move(field="tools/*/parameters", to_field="properties"),
-        Set(fields={"tools/*/parameters": {"type": "object"}}, use_deepcopy=True),
         Copy(
             field="properties",
             to_field="tools/*/parameters/properties",
             set_every_value=True,
         ),
+        Set(fields={"tools/*/parameters/type": "object"}),
         extract_required_parameters,
-        Copy(
-            field="required",
-            to_field="tools/*/parameters/required",
-            set_every_value=True,
+        FixJsonSchemaOfToolParameterType(
+            path_to_parameter="tools/*/parameters/properties/*"
         ),
-        "operators.fix_json_schema",
     ],
     task="tasks.tool_calling.multi_turn",
     templates=["templates.tool_calling.multi_turn"],
