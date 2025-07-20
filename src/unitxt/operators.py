@@ -522,6 +522,10 @@ class InstanceFieldOperator(InstanceOperator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        def _limited_repr(obj, limit=196):
+            r = repr(obj)
+            return r if len(r) <= limit else r[: limit - 3] + "..."
+
         self.verify_field_definition()
         for from_field, to_field in self._field_to_field:
             with error_context(self, field=from_field, action="Read Field"):
@@ -537,7 +541,10 @@ class InstanceFieldOperator(InstanceOperator):
                     old_value = self.get_default
 
             with error_context(
-                self, field=from_field, action="Process Field", value=old_value
+                self,
+                field=from_field,
+                action="Process Field",
+                value=_limited_repr(old_value),
             ):
                 if self.process_every_value:
                     new_value = [
