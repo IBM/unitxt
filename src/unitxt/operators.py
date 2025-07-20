@@ -2774,25 +2774,61 @@ class FunctionOperator(StreamOperator):
                 yield self.function(instance, stream_name)
 
 
-class FixJsonSchemaOfToolParameterType(InstanceOperator):
-    path_to_parameter: str  # the dict(s) that contain(s) the 'type' to be fixed
-
+class FixJsonSchemaOfToolParameterTypes(InstanceOperator):
     def prepare(self):
         self.simple_mapping = {
-            "str": "string",
-            "int": "integer",
-            "List": "array",
-            "list": "array",
-            "set": "array",
-            "Set": "array",
-            "float": "number",
+            "": "object",
+            "any": "object",
+            "Any": "object",
+            "Array": "array",
+            "array": "array",
+            "ArrayList": "array",
+            "Bigint": "integer",
             "bool": "boolean",
+            "Boolean": "boolean",
+            "byte": "integer",
+            "char": "string",
             "dict": "object",
             "Dict": "object",
+            "double": "number",
+            "float": "number",
+            "HashMap": "object",
+            "Hashtable": "object",
+            "int": "integer",
+            "integer": "integer",
+            "list": "array",
+            "List": "array",
+            "long": "integer",
+            "number": "number",
+            "Queue": "array",
+            "short": "integer",
+            "Stack": "array",
+            "tuple": "array",
+            "Set": "array",
+            "set": "array",
+            "str": "string",
+            "String": "string",
+            "string": "string",
         }
 
     def dict_type_of(self, type_str: str) -> dict:
         return {"type": type_str}
+
+    def recursive_trace_for_type_fields(self, containing_element):
+        if isinstance(containing_element, dict):
+            keys = list(containing_element.keys())
+            for key in keys:
+                if key == "type" and isinstance(containing_element["type"], str):
+                    jsonschema_dict = self.type_str_to_jsonschema_dict(
+                        containing_element["type"]
+                    )
+                    containing_element.pop("type")
+                    containing_element.update(jsonschema_dict)
+                else:
+                    self.recursive_trace_for_type_fields(containing_element[key])
+        elif isinstance(containing_element, list):
+            for list_element in containing_element:
+                self.recursive_trace_for_type_fields(list_element)
 
     def type_str_to_jsonschema_dict(self, type_str: str) -> dict:
         if type_str in self.simple_mapping:
@@ -2833,23 +2869,8 @@ class FixJsonSchemaOfToolParameterType(InstanceOperator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        # get a list of sub_dicts to fix (if self.path_to_parameter contains *) or a single sub_dict (if not)
-        parameters_to_fix = dict_get(instance, self.path_to_parameter)
-        if not isinstance(parameters_to_fix, list):
-            parameters_to_fix = [parameters_to_fix]
-        for parameter_to_fix in parameters_to_fix:
-            if not isinstance(parameter_to_fix, list):
-                parameter_to_fix = [parameter_to_fix]
-            for property_to_fix in parameter_to_fix:
-                assert isinstance(
-                    property_to_fix, dict
-                ), f"property to fix should be a dict, got {property_to_fix}"
-                assert (
-                    "type" in property_to_fix
-                ), f"field 'type' should be in property to fix, got {property_to_fix}"
-                jsonschema_dict = self.type_str_to_jsonschema_dict(
-                    property_to_fix["type"]
-                )
-                property_to_fix.pop("type")
-                property_to_fix.update(jsonschema_dict)
+        assert (
+            "tools" in instance
+        ), f"field 'tools' must reside in instance in order to verify its jsonschema correctness. got {instance}"
+        self.recursive_trace_for_type_fields(instance["tools"])
         return instance

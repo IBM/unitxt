@@ -21,7 +21,9 @@
             "field": "function",
             "to_field": "tools"
         },
-        "operators.fix_json_schema",
+        {
+            "__type__": "fix_json_schema_of_tool_parameter_types"
+        },
         {
             "__type__": "set",
             "fields": {
