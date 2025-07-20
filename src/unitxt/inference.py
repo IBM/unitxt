@@ -79,7 +79,7 @@ class StandardAPIParamsMixin(Artifact):
     n: Optional[int] = None
     parallel_tool_calls: Optional[bool] = None
     service_tier: Optional[Literal["auto", "default"]] = None
-    credentials: Optional[Dict[str, str]] = {}
+    credentials: Optional[Dict[str, str]] = None
     extra_headers: Optional[Dict[str, str]] = None
 
 
@@ -255,7 +255,7 @@ class InferenceEngine(Artifact):
         """
         self.verify_infer_inputs(dataset, return_meta_data)
         if settings.mock_inference_mode:
-            result = self._mock_infer(dataset)
+            result = self._mock_infer(dataset, return_meta_data)
         else:
             if self.use_cache:
                 with error_context(
@@ -281,7 +281,7 @@ class InferenceEngine(Artifact):
                                 missing_examples.append(
                                     (i, item)
                                 )  # each element is index in batch and example
-                        # infare on missing examples only, without indices
+                        # infere on missing examples only, without indices
 
                         logger.info(
                             f"Inferring batch {batch_index + 1} / {number_of_batches} with {len(missing_examples)} instances (found {len(cached_results)} instances in {self._cache.directory})"
@@ -333,8 +333,20 @@ class InferenceEngine(Artifact):
     def _mock_infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return [str(instance["source"]) for instance in dataset]
+        result = []
+        for instance in dataset:
+            prediction = str(instance["source"])
+            if return_meta_data:
+                result.append(
+                    TextGenerationInferenceOutput(
+                        prediction=prediction, generated_text=prediction
+                    )
+                )
+            else:
+                result.append(prediction)
+        return result
 
     @abc.abstractmethod
     def get_engine_id(self):
@@ -456,7 +468,7 @@ class LazyLoadMixin(Artifact):
 
 
 class HFGenerationParamsMixin(Artifact):
-    max_new_tokens: int
+    max_new_tokens: Optional[int] = None
     do_sample: bool = False
     temperature: Optional[float] = None
     top_p: Optional[float] = None
@@ -476,6 +488,7 @@ class HFInferenceEngineBase(
     TorchDeviceMixin,
 ):
     model_name: str
+    tokenizer_name: Optional[str] = None
     label: str
 
     n_top_tokens: int = 5
@@ -698,8 +711,9 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
     def _init_processor(self):
         from transformers import AutoTokenizer
 
+        tokenizer_name = self.tokenizer_name or self.model_name
         self.processor = AutoTokenizer.from_pretrained(
-            pretrained_model_name_or_path=self.model_name,
+            pretrained_model_name_or_path=tokenizer_name,
             use_fast=self.use_fast_tokenizer,
         )
 
@@ -811,11 +825,14 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             tools = []
             for instance in batch:
                 sources.append(instance["source"])
-                if "task_data" in instance and "__tools__" in instance["task_data"]:
+                if "task_data" in instance:
                     task_data = instance["task_data"]
                     if isinstance(task_data, str):
                         task_data = json.loads(task_data)
-                    tools.append(task_data["__tools__"])
+                    if "__tools__" in task_data:
+                        tools.append(task_data["__tools__"])
+                    else:
+                        tools.append(None)
                 else:
                     tools.append(None)
             # Tokenize inputs for the batch
@@ -1108,6 +1125,7 @@ class HFPipelineBasedInferenceEngine(
     TorchDeviceMixin,
 ):
     model_name: str
+    tokenizer_name: Optional[str] = None
     label: str = "hf_pipeline_inference_engine"
 
     use_fast_tokenizer: bool = True
@@ -1205,8 +1223,8 @@ class HFPipelineBasedInferenceEngine(
         path = self.model_name
         if settings.hf_offline_models_path is not None:
             path = os.path.join(settings.hf_offline_models_path, path)
-
-        tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        tokenizer_name = self.tokenizer_name or self.model_name
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
         self.model = pipeline(
             model=path,
             task=self.task,
@@ -1299,8 +1317,20 @@ class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
     def _mock_infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return [self.default_inference_value for _ in dataset]
+        result = []
+        for _ in dataset:
+            if return_meta_data:
+                result.append(
+                    TextGenerationInferenceOutput(
+                        prediction=self.default_inference_value,
+                        generated_text=self.default_inference_value,
+                    )
+                )
+            else:
+                result.append(self.default_inference_value)
+        return result
 
     def _infer(
         self,
@@ -1820,6 +1850,7 @@ class RITSInferenceEngine(
         "meta-llama/llama-4-maverick-17b-128e-instruct-fp8": "llama-4-mvk-17b-128e-fp8",
         "deepseek-ai/DeepSeek-V3": "deepseek-v3-h200",
         "meta-llama/Llama-3.1-8B-Instruct": "llama-3-1-8b-instruct",
+        "meta-llama/Llama-4-Scout-17B-16E-Instruct": "llama-4-scout-17b-16e-instruct",
     }
 
     def get_default_headers(self):
@@ -3087,6 +3118,8 @@ class LiteLLMInferenceEngine(
         return get_model_and_label_id(self.model, self.label)
 
     def prepare_engine(self):
+        if self.credentials is None:
+            self.credentials = {}
         # Initialize the token bucket rate limiter
         self._rate_limiter = AsyncTokenBucket(
             rate=self.max_requests_per_second,
@@ -3201,7 +3234,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     user requests.
 
     Current _supported_apis = ["watsonx", "together-ai", "open-ai", "aws", "ollama",
-    "bam", "watsonx-sdk", "rits", "vertex-ai"]
+    "bam", "watsonx-sdk", "rits", "vertex-ai","hf-local"]
 
     Args:
         provider (Optional):
@@ -3294,7 +3327,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-11b-vision-instruct": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "llama-3-2-90b-vision-instruct": "meta-llama/Llama-3.2-90B-Vision-Instruct",
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
-            "llama-4-scout": "meta-llama/llama-4-scout-17b-16e",
+            "llama-4-scout": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
             "llama-4-maverick": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
@@ -3402,6 +3435,11 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mixtral-8x7b-instruct-v0.1": "replicate/mistralai/mixtral-8x7b-instruct-v0.1",
             "gpt-4-1": "replicate/openai/gpt-4.1",
         },
+        "hf-local": {
+            "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
+            "llama-3-3-8b-instruct": "meta-llama/Llama-3.3-8B-Instruct",
+            "SmolLM2-1.7B-Instruct": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+        },
     }
     provider_model_map["watsonx"] = {
         k: f"watsonx/{v}" for k, v in provider_model_map["watsonx-sdk"].items()
@@ -3418,11 +3456,13 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "azure": LiteLLMInferenceEngine,
         "vertex-ai": LiteLLMInferenceEngine,
         "replicate": LiteLLMInferenceEngine,
+        "hf-local": HFAutoModelInferenceEngine,
     }
 
     _provider_param_renaming = {
         "watsonx-sdk": {"model": "model_name"},
         "rits": {"model": "model_name"},
+        "hf-local": {"model": "model_name", "max_tokens": "max_new_tokens"},
     }
 
     def get_return_object(self, **kwargs):
@@ -3602,7 +3642,7 @@ class MetricInferenceEngine(InferenceEngine):
     """
 
     metric: Metric
-    prediction_field: str
+    prediction_field: Optional[str] = None
 
     def _infer(
         self,
@@ -3613,7 +3653,11 @@ class MetricInferenceEngine(InferenceEngine):
             json.loads(instance["task_data"]) if "task_data" in instance else {}
             for instance in dataset
         ]
-        predictions = [td[self.prediction_field] for td in task_data]
+        predictions = (
+            [td[self.prediction_field] for td in task_data]
+            if self.prediction_field
+            else []
+        )
         references = [instance["references"] for instance in dataset]
         return self.metric.compute(
             task_data=task_data,

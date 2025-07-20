@@ -2,6 +2,10 @@
     "__type__": "criteria_with_options",
     "name": "assistant_message_compliance",
     "description": "The Assistant message complies with the User message.",
+    "context_fields": [
+        "user message"
+    ],
+    "prediction_field": "assistant message",
     "options": [
         {
             "__type__": "criteria_option",

@@ -1,3 +1,5 @@
+from typing import Any
+
 from unitxt.blocks import (
     MapInstanceValues,
     Rename,
@@ -6,7 +8,7 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.llm_as_judge_constants import DirectCriteriaCatalogEnum
 from unitxt.loaders import LoadJsonFile
-from unitxt.operators import Copy
+from unitxt.operators import Copy, Set
 from unitxt.task import Task
 from unitxt.test_utils.card import test_card
 
@@ -33,12 +35,13 @@ card = TaskCard(
                 "label_value": DirectCriteriaCatalogEnum.TOXICITY.value.option_map,
             }
         ),
+        Set(fields={"criteria": "metrics.llm_as_judge.direct.criteria.toxicity"}),
     ],
     task=Task(
-        input_fields={"text": str, "label": str},
+        input_fields={"text": str, "label": str, "criteria": Any},
         reference_fields={"label_value": float},
         prediction_type=float,
-        metrics=["metrics.spearman", "metrics.accuracy"],
+        metrics=["metrics.accuracy", "metrics.f1_macro"],
         default_template="templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]",
     ),
     templates=[
@@ -50,6 +53,6 @@ test_card(card, demos_taken_from="test", strict=False)
 
 add_to_catalog(
     card,
-    "cards.judege_bench.toxic_chat.toxicity",
+    "cards.judge_bench.toxic_chat.toxicity",
     overwrite=True,
 )

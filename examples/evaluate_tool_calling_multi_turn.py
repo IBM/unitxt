@@ -37,7 +37,7 @@ data = [
         "dialog": [
             {
                 "role": "user",
-                "content": "What is the sum of  1 and 3?",
+                "content": "What is the sum of  23098082, 32709872 and 2329398? Use tool call for each math operation",
             },
             {
                 "role": "assistant",
@@ -48,7 +48,7 @@ data = [
                         "id": "tool_call_0",
                         "function": {
                             "name": "add_numbers",
-                            "arguments": {"num1": 1, "num2": 3},
+                            "arguments": {"num1": 23098082, "num2": 32709872},
                         },
                     }
                 ],
@@ -57,22 +57,18 @@ data = [
                 "role": "tool",
                 "name": "add_numbers",
                 "tool_call_id": "tool_call_0",
-                "content": "4",
-            },
-            {
-                "role": "user",
-                "content": "What is the sum of  1212382312231231 and 834672468234768234?",
+                "content": "55807954",
             },
         ],
         "tools": [sum_tool, subtract_tool],
         "reference_calls": [
             {
                 "name": "add_numbers",
-                "arguments": {"num1": 1212382312231231, "num2": 834672468234768234},
+                "arguments": {"num1": 55807954, "num2": 2329398},
             },
             {
                 "name": "add_numbers",
-                "arguments": {"num1": 834672468234768234, "num2": 1212382312231231},
+                "arguments": {"num1": 2329398, "num2": 55807954},
             },
         ],
     },

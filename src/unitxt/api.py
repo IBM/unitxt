@@ -2,7 +2,6 @@ import hashlib
 import inspect
 import json
 from datetime import datetime
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
@@ -27,6 +26,7 @@ from .schema import loads_batch
 from .settings_utils import get_constants, get_settings
 from .standard import DatasetRecipe
 from .task import Task
+from .utils import lru_cache_decorator
 
 logger = get_logger()
 constants = get_constants()
@@ -310,7 +310,7 @@ def fill_metadata(**kwargs):
 
 
 def evaluate(
-    predictions,
+    predictions: Optional[List[str]] = None,
     dataset: Union[Dataset, IterableDataset] = None,
     data=None,
     calc_confidence_intervals: bool = True,
@@ -338,9 +338,9 @@ def post_process(predictions, data) -> List[Dict[str, Any]]:
     return _inference_post_process(predictions=predictions, references=data)
 
 
-@lru_cache
-def _get_produce_with_cache(dataset_query: Optional[str] = None, **kwargs):
-    return load_recipe(dataset_query, **kwargs).produce
+@lru_cache_decorator(max_size=128)
+def _get_recipe_with_cache(dataset_query: Optional[str] = None, **kwargs):
+    return load_recipe(dataset_query, **kwargs)
 
 
 def produce(
@@ -349,7 +349,8 @@ def produce(
     is_list = isinstance(instance_or_instances, list)
     if not is_list:
         instance_or_instances = [instance_or_instances]
-    result = _get_produce_with_cache(dataset_query, **kwargs)(instance_or_instances)
+    dataset_recipe = _get_recipe_with_cache(dataset_query, **kwargs)
+    result = dataset_recipe.produce(instance_or_instances)
     if not is_list:
         return result[0]
     return Dataset.from_list(result).with_transform(loads_batch)

@@ -1,8 +1,6 @@
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import (
-    HFPipelineBasedInferenceEngine,
-)
+from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.metrics import MetricsEnsemble
 
 logger = get_logger()
@@ -10,8 +8,8 @@ logger = get_logger()
 # define the metrics ensemble
 ensemble_metric = MetricsEnsemble(
     metrics=[
-        "metrics.llm_as_judge.rating.llama_3_70b_instruct.generic_single_turn",
-        "metrics.llm_as_judge.rating.llama_3_8b_instruct.mt_bench_single_turn",
+        "metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.answer_relevance, context_fields=[question]]",
+        "metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.correctness_based_on_ground_truth, context_fields=[question,answers]]",
     ],
     weights=[0.75, 0.25],
 )
@@ -27,13 +25,8 @@ dataset = load_dataset(
     split="test",
 )
 
-# Infer using SmolLM2 using HF API
-model = HFPipelineBasedInferenceEngine(
-    model_name="HuggingFaceTB/SmolLM2-1.7B-Instruct", max_new_tokens=32
-)
 # Change to this to infer with external APIs:
-# CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
-# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
+model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
 
 predictions = model(dataset)
 

@@ -55,6 +55,7 @@ from unitxt.metrics import (
     MaxAccuracy,
     MeanSquaredError,
     MeteorFast,
+    MetricBasedNer,
     MetricsEnsemble,
     NormalizedSacrebleu,
     Perplexity,
@@ -1765,6 +1766,86 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertTrue("f1_Person" not in outputs[0]["score"]["global"])
         self.assertTrue("f1_Location" not in outputs[0]["score"]["global"])
+
+    def test_metric_based_ner(self):
+        metric = MetricBasedNer(metric=Rouge())
+        # Uncomment to use LLM as Judge
+        # import unitxt
+        # unitxt.settings.mock_inference_mode = False
+        # metric = MetricBasedNer(
+        #    metric="metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.correctness_based_on_ground_truth,context_fields=ground_truth]"
+        # )
+        metric.set_confidence_interval_calculation(False)
+
+        predictions = [
+            [
+                ("jar", "Person"),  # Partial match of one of two names
+                ("Marathahalli", "Location"),  # Partial match of one location
+                ("IBM", "Org"),  # No match for org
+            ],
+            [
+                ("jar htaras", "Person"),  # Exact match of one of of two names
+                ("Marathahalli ring road", "Location"),  # Exact match of one location
+                ("IBM", "Org"),  # No match for org
+            ],
+        ]
+        references = [
+            [
+                [
+                    ("jar htaras", "Person"),
+                    ("John Smith", "Person"),
+                    ("Marathahalli ring road", "Location"),
+                ]
+            ],
+            [
+                [
+                    ("jar htaras", "Person"),
+                    ("John Smith", "Person"),
+                    ("Marathahalli ring road", "Location"),
+                ]
+            ],
+        ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        # precision 0/1, recall 0/2 , f1 = 0 , Similarity not high to pass 0.75 rouge threshold
+        self.assertAlmostEqual(0.0, outputs[0]["score"]["instance"]["f1_Person"])
+
+        # precision 1/1, recall 1/2 , f1 = 2/3
+        self.assertAlmostEqual(2 / 3, outputs[1]["score"]["instance"]["f1_Person"])
+
+        # precision 0/1, recall 0/1 , f1 = 0 , Similarity not high to pass 0.75 rouge threshold
+        self.assertAlmostEqual(0.0, outputs[0]["score"]["instance"]["f1_Location"])
+        # precision 1/1, recall 1/1 , f1 = 1
+        self.assertAlmostEqual(1.0, outputs[1]["score"]["instance"]["f1_Location"])
+
+        # precision 1/2, recall 1/4, f1 = 1/3
+        global_target = 1 / 3
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["f1_Person"]
+        )
+
+        metric.report_per_group_scores = False
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertTrue("f1_Person" not in outputs[0]["score"]["global"])
+        self.assertTrue("f1_Location" not in outputs[0]["score"]["global"])
+
+        metric = MetricBasedNer(metric=Rouge(), min_score_for_match=0.5)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        # precision 1/1, recall 1/2 , f1 = 2/3 ,  similarity high enough to reach threshold
+        self.assertAlmostEqual(2 / 3, outputs[0]["score"]["instance"]["f1_Person"])
+
+        # precision 1/1, recall 1/2 , f1 = 2/3
+        self.assertAlmostEqual(2 / 3, outputs[1]["score"]["instance"]["f1_Person"])
+
+        # precision 1/1, recall 0/2 , f1 = 0, similarity high enough to reach threshold
+        self.assertAlmostEqual(1.0, outputs[0]["score"]["instance"]["f1_Location"])
+        # precision 1/1, recall 0/2 , f1 = 0
+        self.assertAlmostEqual(1.0, outputs[1]["score"]["instance"]["f1_Location"])
 
     def test_perplexity_with_prefix(self):
         prediction = ["who are we?"]
