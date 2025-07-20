@@ -5,6 +5,7 @@ from unitxt.loaders import LoadJsonFile
 from unitxt.operators import (
     Copy,
     ExecuteExpression,
+    FixJsonSchemaOfToolParameterTypes,
     Set,
 )
 from unitxt.stream_operators import JoinStreams
@@ -33,7 +34,7 @@ with unitxt.settings.context(allow_unverified_code=True):
                 ),
                 Copy(field="question/0/0/content", to_field="query"),
                 Copy(field="function", to_field="tools"),
-                "operators.fix_json_schema",
+                FixJsonSchemaOfToolParameterTypes(),
                 # Process ground truth data in this dataset, which is a provided as a list of options per field,
                 # and convert it into a list of explicit tool calls
                 #
@@ -102,7 +103,7 @@ with unitxt.settings.context(allow_unverified_code=True):
                 ),
                 Copy(field="question/*/0", to_field="dialog"),
                 Copy(field="function", to_field="tools"),
-                "operators.fix_json_schema",
+                FixJsonSchemaOfToolParameterTypes(),
                 ExecuteExpression(
                     expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]',
                     to_field="reference_calls",
@@ -138,52 +139,52 @@ with unitxt.settings.context(allow_unverified_code=True):
         test_card(card, strict=False)
         add_to_catalog(card, f"cards.bfcl.multi_turn.{subset}_v3", overwrite=True)
 
-        for subset in [
-            "live_relevance",
-            "live_irrelevance",
-        ]:
-            card = TaskCard(
-                loader=LoadJsonFile(
-                    files={
-                        "test": base_path + f"BFCL_v3_{subset}.json",
-                    },
-                    lines=True,
-                    data_classification_policy=["public"],
-                ),
-                preprocess_steps=[
-                    Copy(field="question/*/0", to_field="dialog"),
-                    Copy(field="function", to_field="tools"),
-                    "operators.fix_json_schema",
-                    Set(fields={"reference_calls": []}),
-                ],
-                task="tasks.tool_calling.multi_turn",
-                templates=["templates.tool_calling.multi_turn"],
-                __description__=(
-                    """The Berkeley function calling leaderboard is a live leaderboard to evaluate the ability of different LLMs to call functions (also referred to as tools). We built this dataset from our learnings to be representative of most users' function calling use-cases, for example, in agents, as a part of enterprise workflows, etc. To this end, our evaluation dataset spans diverse categories, and across multiple languages."""
-                ),
-                __title__=f"""Berkeley Function Calling Leaderboard (Multi Turn Setup) - {subset.replace("_", " ").title()} V3""",
-                __tags__={
-                    "annotations_creators": "expert-generated",
-                    "language": ["en"],
-                    "license": "apache-2.0",
-                    "size_categories": ["10K<n<100K"],
-                    "task_categories": [
-                        "question-answering",
-                        "reading-comprehension",
-                        "tool-calling",
-                        "multi-turn-tool-calling",
-                    ],
-                    "task_ids": [
-                        "tool-calling",
-                        "multi-turn-tool-calling",
-                        "reading-comprehension",
-                    ],
+    for subset in [
+        "live_relevance",
+        "live_irrelevance",
+    ]:
+        card = TaskCard(
+            loader=LoadJsonFile(
+                files={
+                    "test": base_path + f"BFCL_v3_{subset}.json",
                 },
-            )
+                lines=True,
+                data_classification_policy=["public"],
+            ),
+            preprocess_steps=[
+                Copy(field="question/*/0", to_field="dialog"),
+                Copy(field="function", to_field="tools"),
+                FixJsonSchemaOfToolParameterTypes(),
+                Set(fields={"reference_calls": []}),
+            ],
+            task="tasks.tool_calling.multi_turn",
+            templates=["templates.tool_calling.multi_turn"],
+            __description__=(
+                """The Berkeley function calling leaderboard is a live leaderboard to evaluate the ability of different LLMs to call functions (also referred to as tools). We built this dataset from our learnings to be representative of most users' function calling use-cases, for example, in agents, as a part of enterprise workflows, etc. To this end, our evaluation dataset spans diverse categories, and across multiple languages."""
+            ),
+            __title__=f"""Berkeley Function Calling Leaderboard (Multi Turn Setup) - {subset.replace("_", " ").title()} V3""",
+            __tags__={
+                "annotations_creators": "expert-generated",
+                "language": ["en"],
+                "license": "apache-2.0",
+                "size_categories": ["10K<n<100K"],
+                "task_categories": [
+                    "question-answering",
+                    "reading-comprehension",
+                    "tool-calling",
+                    "multi-turn-tool-calling",
+                ],
+                "task_ids": [
+                    "tool-calling",
+                    "multi-turn-tool-calling",
+                    "reading-comprehension",
+                ],
+            },
+        )
 
-            # Test and add the card to the catalog
-            test_card(card, strict=False)
-            add_to_catalog(card, f"cards.bfcl.multi_turn.{subset}_v3", overwrite=True)
+        # Test and add the card to the catalog
+        test_card(card, strict=False)
+        add_to_catalog(card, f"cards.bfcl.multi_turn.{subset}_v3", overwrite=True)
 
     # card = TaskCard(
     #     loader=LoadJsonFile(
