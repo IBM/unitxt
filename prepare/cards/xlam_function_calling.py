@@ -3,7 +3,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
     Copy,
-    FixJsonSchemaOfToolParameterType,
+    FixJsonSchemaOfToolParameterTypes,
     Move,
     Set,
 )
@@ -42,9 +42,7 @@ card = TaskCard(
         ),
         Set(fields={"tools/*/parameters/type": "object"}),
         extract_required_parameters,
-        FixJsonSchemaOfToolParameterType(
-            path_to_parameter="tools/*/parameters/properties/*"
-        ),
+        FixJsonSchemaOfToolParameterTypes(),
     ],
     task="tasks.tool_calling.multi_turn",
     templates=["templates.tool_calling.multi_turn"],
