@@ -7,6 +7,7 @@ model_list = ["llama-3-70b-instruct"]
 format = "formats.llama3_instruct"
 template = "templates.response_assessment.rating.table2text_single_turn_with_reference"
 task = "rating.single_turn_with_reference"
+
 for model_id in model_list:
     inference_model = CrossProviderInferenceEngine(
         model=model_id, max_tokens=252, seed=get_seed()
@@ -25,6 +26,6 @@ for model_id in model_list:
 
     add_to_catalog(
         metric,
-        f"metrics.llm_as_judge.rating.{model_label}.{template_label}",
+        f"metrics.llm_as_judge.rating.{model_label}_template_{template_label}",
         overwrite=True,
     )
