@@ -46,31 +46,25 @@
             "to_field": "properties"
         },
         {
-            "__type__": "set",
-            "fields": {
-                "tools/*/parameters": {
-                    "type": "object"
-                }
-            },
-            "use_deepcopy": true
-        },
-        {
             "__type__": "copy",
             "field": "properties",
             "to_field": "tools/*/parameters/properties",
             "set_every_value": true
         },
         {
-            "__function__": "extract_required_parameters",
-            "source": "def extract_required_parameters(instance, stream_name=None):\n    result = []\n    for tool in instance[\"tools\"]:\n        required_params = []\n        for param_name, param_info in tool[\"parameters\"][\"properties\"].items():\n            if \"optional\" not in param_info[\"type\"]:\n                required_params.append(param_name)\n        result.append(required_params)\n    instance[\"required\"] = result\n    return instance\n"
+            "__type__": "set",
+            "fields": {
+                "tools/*/parameters/type": "object"
+            }
         },
         {
-            "__type__": "copy",
-            "field": "required",
-            "to_field": "tools/*/parameters/required",
-            "set_every_value": true
+            "__function__": "extract_required_parameters",
+            "source": "def extract_required_parameters(instance, stream_name=None):\n    for tool in instance[\"tools\"]:\n        required_params = []\n        for param_name, param_info in tool[\"parameters\"][\"properties\"].items():\n            if \"optional\" not in param_info[\"type\"].lower():\n                required_params.append(param_name)\n        tool[\"parameters\"][\"required\"] = required_params\n    return instance\n"
         },
-        "operators.fix_json_schema"
+        {
+            "__type__": "fix_json_schema_of_tool_parameter_type",
+            "path_to_parameter": "tools/*/parameters/properties/*"
+        }
     ],
     "task": "tasks.tool_calling.multi_turn",
     "templates": [
