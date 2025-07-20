@@ -14,14 +14,12 @@ from unitxt.test_utils.card import test_card
 
 
 def extract_required_parameters(instance, stream_name=None):
-    result = []
     for tool in instance["tools"]:
         required_params = []
         for param_name, param_info in tool["parameters"]["properties"].items():
-            if "optional" not in param_info["type"]:
+            if "optional" not in param_info["type"].lower():
                 required_params.append(param_name)
-        result.append(required_params)
-    instance["required"] = result
+        tool["parameters"]["required"] = required_params
     return instance
 
 

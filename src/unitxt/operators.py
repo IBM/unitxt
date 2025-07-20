@@ -2772,3 +2772,84 @@ class FunctionOperator(StreamOperator):
         if self._mode == "instance":
             for instance in stream:
                 yield self.function(instance, stream_name)
+
+
+class FixJsonSchemaOfToolParameterType(InstanceOperator):
+    path_to_parameter: str  # the dict(s) that contain(s) the 'type' to be fixed
+
+    def prepare(self):
+        self.simple_mapping = {
+            "str": "string",
+            "int": "integer",
+            "List": "array",
+            "list": "array",
+            "set": "array",
+            "Set": "array",
+            "float": "number",
+            "bool": "boolean",
+            "dict": "object",
+            "Dict": "object",
+        }
+
+    def dict_type_of(self, type_str: str) -> dict:
+        return {"type": type_str}
+
+    def type_str_to_jsonschema_dict(self, type_str: str) -> dict:
+        if type_str in self.simple_mapping:
+            return self.dict_type_of(self.simple_mapping[type_str])
+        m = re.match(r"^(List|Tuple)\[(.*?)\]$", type_str)
+        if m:
+            basic_type = self.dict_type_of("array")
+            basic_type["items"] = self.type_str_to_jsonschema_dict(
+                m.group(2) if m.group(1) == "List" else m.group(2).split(",")[0].strip()
+            )
+            return basic_type
+
+        m = re.match(r"^(Union)\[(.*?)\]$", type_str)
+        if m:
+            args = m.group(2).split(",")
+            for i in range(len(args)):
+                args[i] = args[i].strip()
+            return {"anyOf": [self.type_str_to_jsonschema_dict(arg) for arg in args]}
+        if "," in type_str:
+            sub_types = type_str.split(",")
+            for i in range(len(sub_types)):
+                sub_types[i] = sub_types[i].strip()
+            assert len(sub_types) in [
+                2,
+                3,
+            ], f"num of subtypes should be 2 or 3, got {type_str}"
+            basic_type = self.type_str_to_jsonschema_dict(sub_types[0])
+            for sub_type in sub_types[1:]:
+                if sub_type.lower().startswith("default"):
+                    basic_type["default"] = re.split(r"[= ]", sub_type, maxsplit=1)[1]
+            for sub_type in sub_types[1:]:
+                if sub_type.lower().startswith("optional"):
+                    return {"anyOf": [basic_type, self.dict_type_of("null")]}
+            return basic_type
+
+        return self.dict_type_of("object")  # otherwise - fall back to a safe zone
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        # get a list of sub_dicts to fix (if self.path_to_parameter contains *) or a single sub_dict (if not)
+        parameters_to_fix = dict_get(instance, self.path_to_parameter)
+        if not isinstance(parameters_to_fix, list):
+            parameters_to_fix = [parameters_to_fix]
+        for parameter_to_fix in parameters_to_fix:
+            if not isinstance(parameter_to_fix, list):
+                parameter_to_fix = [parameter_to_fix]
+            for property_to_fix in parameter_to_fix:
+                assert isinstance(
+                    property_to_fix, dict
+                ), f"property to fix should be a dict, got {property_to_fix}"
+                assert (
+                    "type" in property_to_fix
+                ), f"field 'type' should be in property to fix, got {property_to_fix}"
+                jsonschema_dict = self.type_str_to_jsonschema_dict(
+                    property_to_fix["type"]
+                )
+                property_to_fix.pop("type")
+                property_to_fix.update(jsonschema_dict)
+        return instance
