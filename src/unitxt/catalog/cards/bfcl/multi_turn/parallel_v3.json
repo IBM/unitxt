@@ -35,7 +35,7 @@
         },
         {
             "__type__": "execute_expression",
-            "expression": "[{\"name\": k, \"arguments\": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]",
+            "expression": "[{\"name\": k, \"arguments\": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() if isinstance(v, dict) for vals in itertools.product(*v.values())]",
             "to_field": "reference_calls",
             "imports_list": [
                 "itertools"

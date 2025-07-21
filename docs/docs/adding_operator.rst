@@ -40,11 +40,11 @@ There are several types of operators.
 1. Field Operators - Operators that modify individual fields of the instances in the input streams.  Example of such operators are operators that
 cast field values, uppercase string fields, or translate text between languages.
 
-1. Instance Operators - Operators that modify individual instances in the input streams. For example, operators that add or remove fields.
+2. Instance Operators - Operators that modify individual instances in the input streams. For example, operators that add or remove fields.
 
-2. Stream Operators - Operators that perform operations on full streams. For example, operators that remove instances based on some condition.
+3. Stream Operators - Operators that perform operations on full streams. For example, operators that remove instances based on some condition.
 
-3. MultiStream Operators - Operator that perform operations on multiple streams.  For example, operators that repartition the instances between train and test splits.
+4. MultiStream Operators - Operator that perform operations on multiple streams.  For example, operators that repartition the instances between train and test splits.
 
 Unitxt comes with a large collection of built in operators - that were design to cover most common requirements of dataset processing.
 

@@ -2781,7 +2781,6 @@ class FixJsonSchemaOfToolParameterTypes(InstanceOperator):
             "any": "object",
             "Any": "object",
             "Array": "array",
-            "array": "array",
             "ArrayList": "array",
             "Bigint": "integer",
             "bool": "boolean",
@@ -2795,11 +2794,9 @@ class FixJsonSchemaOfToolParameterTypes(InstanceOperator):
             "HashMap": "object",
             "Hashtable": "object",
             "int": "integer",
-            "integer": "integer",
             "list": "array",
             "List": "array",
             "long": "integer",
-            "number": "number",
             "Queue": "array",
             "short": "integer",
             "Stack": "array",
@@ -2808,7 +2805,6 @@ class FixJsonSchemaOfToolParameterTypes(InstanceOperator):
             "set": "array",
             "str": "string",
             "String": "string",
-            "string": "string",
         }
 
     def dict_type_of(self, type_str: str) -> dict:
@@ -2847,6 +2843,8 @@ class FixJsonSchemaOfToolParameterTypes(InstanceOperator):
             for i in range(len(args)):
                 args[i] = args[i].strip()
             return {"anyOf": [self.type_str_to_jsonschema_dict(arg) for arg in args]}
+        if re.match(r"^(Callable)\[(.*?)\]$", type_str):
+            return self.dict_type_of("object")
         if "," in type_str:
             sub_types = type_str.split(",")
             for i in range(len(sub_types)):
@@ -2864,7 +2862,7 @@ class FixJsonSchemaOfToolParameterTypes(InstanceOperator):
                     return {"anyOf": [basic_type, self.dict_type_of("null")]}
             return basic_type
 
-        return self.dict_type_of("object")  # otherwise - fall back to a safe zone
+        return self.dict_type_of(type_str)  # otherwise - return what arrived
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
