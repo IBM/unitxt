@@ -20,6 +20,12 @@ class CriteriaOption(Artifact):
     """The description of the criteria option"""
 
 
+class Example(Artifact):
+    context: Optional[Dict[str, str]]
+    prediction: str
+    target_option: str  # will be an option name in Direct or Response n in Pairwise
+
+
 class Criteria(Artifact):
     """Criteria used by PairwiseLLMJudge to run evaluations."""
 
@@ -34,6 +40,8 @@ class Criteria(Artifact):
 
     context_fields: Union[str, List[str], Dict[str, str]] = None
     """The context field names this criteria expects, i.e. [context]/[source article, user questions]"""
+
+    examples: Optional[List[Example]] = None
 
     @staticmethod
     def from_jsons(s: str):
