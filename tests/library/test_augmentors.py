@@ -84,9 +84,9 @@ class TestOperators(UnitxtTestCase):
         with self.assertRaises(AssertionError) as ae:
             AugmentPrefixSuffix(prefixes=prefixes, suffixes=None)
 
-        self.assertEqual(
-            str(ae.exception),
+        self.assertIn(
             "Argument prefixes should be either None or a list of strings or a dictionary str->int. [10, 20, 'O', 'P'] is none of the above.",
+            str(ae.exception),
         )
 
     def test_test_operator_unexpected_pass(self):

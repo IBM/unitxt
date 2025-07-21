@@ -1,8 +1,6 @@
 from unitxt import get_logger
 from unitxt.api import create_dataset, evaluate
-from unitxt.inference import (
-    HFPipelineBasedInferenceEngine,
-)
+from unitxt.inference import CrossProviderInferenceEngine
 
 logger = get_logger()
 
@@ -30,14 +28,9 @@ dataset = create_dataset(
     format="formats.chat_api",
 )
 
-# Infer using SmolLM2 using HF API
-model = HFPipelineBasedInferenceEngine(
-    model_name="HuggingFaceTB/SmolLM2-1.7B-Instruct", max_new_tokens=32
-)
-# Change to this to infer with external APIs:
-# from unitxt.inference import CrossProviderInferenceEngine
-# engine = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
-# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
+model = CrossProviderInferenceEngine(model="SmolLM2-1.7B-Instruct", provider="hf-local")
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "hf-local"]
+# (model must be available in the provider service)
 
 
 predictions = model(dataset)

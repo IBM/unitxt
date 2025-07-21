@@ -1,6 +1,8 @@
-from typing import Any, Generator, List, Optional
+from itertools import zip_longest
+from typing import Any, Dict, Generator, List, Optional
 
 from .dict_utils import dict_get, dict_set
+from .operator import InstanceOperator
 from .operators import FieldOperator, StreamOperator
 from .stream import Stream
 from .utils import recursive_shallow_copy
@@ -11,6 +13,52 @@ class Dictify(FieldOperator):
 
     def process_value(self, tup: Any) -> Any:
         return dict(zip(self.with_keys, tup))
+
+
+class Zip(InstanceOperator):
+    fields: List[str]
+    to_field: str
+
+    def zip(self, values):
+        return list(zip(*values))
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        values = []
+        for field in self.fields:
+            values.append(dict_get(instance, field))
+        dict_set(instance, self.to_field, self.zip(values))
+        return instance
+
+
+class ZipLongest(Zip):
+    fields: List[str]
+    fill_value: Any = None
+
+    def zip(self, values):
+        return list(zip_longest(*values, fillvalue=self.fill_value))
+
+
+class DictToTuplesList(FieldOperator):
+    def process_value(self, dic: Dict) -> Any:
+        return list(dic.items())
+
+
+def flatten(container):
+    def _flat_gen(x):
+        for item in x:
+            if isinstance(item, (list, tuple)):
+                yield from _flat_gen(item)
+            else:
+                yield item
+
+    return type(container)(_flat_gen(container))
+
+
+class Flatten(FieldOperator):
+    def process_value(self, value: Any) -> Any:
+        return flatten(value)
 
 
 class Wrap(FieldOperator):
@@ -59,6 +107,13 @@ class Get(FieldOperator):
         return collection[self.item]
 
 
+class Pop(FieldOperator):
+    item: Any = None
+
+    def process_value(self, collection: Any) -> Any:
+        return collection.pop(self.item)
+
+
 class DuplicateByList(StreamOperator):
     field: str
     to_field: Optional[str] = None
@@ -86,12 +141,16 @@ class DuplicateBySubLists(StreamOperator):
     field: str
     to_field: Optional[str] = None
     use_deep_copy: bool = False
+    start: int = 1
+    end: int = 0
+    step: int = 1
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         to_field = self.field if self.to_field is None else self.to_field
         for instance in stream:
-            elements = instance[self.field]
-            for i in range(1, len(elements) + 1):
+            elements = dict_get(instance, self.field)
+            end = len(elements) + 1 + self.end
+            for i in range(self.start, end, self.step):
                 if self.use_deep_copy:
                     instance_copy = recursive_shallow_copy(instance)
                     instance_copy[to_field] = elements[:i]
@@ -102,6 +161,10 @@ class DuplicateBySubLists(StreamOperator):
                         to_field: elements[:i],
                     }
                 yield instance_copy
+
+
+class ExplodeSubLists(DuplicateBySubLists):
+    pass
 
 
 class GetLength(FieldOperator):

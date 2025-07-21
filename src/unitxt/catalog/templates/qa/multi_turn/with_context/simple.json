@@ -1,0 +1,13 @@
+{
+    "__type__": "multi_turn_template",
+    "instruction": "Read the context and answer the last question in the conversation. Answer with the minimal span from the context answering the question.\n Context:{context}",
+    "references_field": "answers",
+    "turns_field": "conversation/dialog",
+    "postprocessors": [
+        "processors.take_first_non_empty_line",
+        "processors.lower_case",
+        "processors.remove_punctuations",
+        "processors.remove_articles",
+        "processors.fix_whitespace"
+    ]
+}

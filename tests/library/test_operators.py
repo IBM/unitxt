@@ -2,8 +2,10 @@ import json
 from collections import Counter
 from typing import Any
 
+from unitxt.error_utils import UnitxtError
 from unitxt.formats import SystemFormat
 from unitxt.metrics import MetricsList
+from unitxt.normalizers import NormalizeListFields
 from unitxt.operators import (
     AddConstant,
     Apply,
@@ -40,6 +42,7 @@ from unitxt.operators import (
     MergeStreams,
     MinimumOneExamplePerLabelRefiner,
     Perturb,
+    RecursiveReplace,
     RemoveFields,
     RemoveValues,
     Rename,
@@ -47,12 +50,11 @@ from unitxt.operators import (
     Set,
     Shuffle,
     ShuffleFieldValues,
-    SplitByValue,
     StreamRefiner,
     TakeByField,
-    Unique,
     ZipFieldValues,
 )
+from unitxt.processors import ExtractMtBenchRatingJudgment
 from unitxt.stream import MultiStream
 from unitxt.stream_operators import DeleteSplits, JoinStreams
 from unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
@@ -97,8 +99,7 @@ class TestOperators(UnitxtTestCase):
             operator=MapInstanceValues(mappers=mappers, process_every_value=True),
             inputs=inputs,
             exception_texts=[
-                "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
-                "'process_every_field' == True is allowed only for fields whose values are lists, but value of field 'a' is '1'",
+                "is allowed only for fields whose values are lists",
             ],
             tester=self,
         )
@@ -108,8 +109,7 @@ class TestOperators(UnitxtTestCase):
             operator=MapInstanceValues(mappers=mappers),
             inputs=[{"a": "3", "b": "4"}],
             exception_texts=[
-                "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
-                "\"value '3', the string representation of the value in field 'a', is not found in mapper '{'1': 'hi', '2': 'bye'}'\"",
+                "is not found in mapper",
             ],
             tester=self,
         )
@@ -139,8 +139,7 @@ class TestOperators(UnitxtTestCase):
             operator=MapInstanceValues(mappers=mappers, process_every_value=True),
             inputs=[{"a": [1, 2, 3, 4], "b": 2}],
             exception_texts=[
-                "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
-                "\"value '3', the string representation of the value in field 'a', is not found in mapper '{'1': 'hi', '2': 'bye'}'\"",
+                "is not found in mapper",
             ],
             tester=self,
         )
@@ -519,9 +518,9 @@ class TestOperators(UnitxtTestCase):
                 targets=targets,
                 tester=self,
             )
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "The filter for key ('b') in FilterByCondition with condition 'in' must be list but is not : '5'",
+            str(cm.exception),
         )
 
         with self.assertRaises(ValueError) as cm:
@@ -531,9 +530,9 @@ class TestOperators(UnitxtTestCase):
                 targets=targets,
                 tester=self,
             )
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "Required filter field ('c') in FilterByCondition is not found in instance.",
+            str(cm.exception),
         )
         with self.assertRaises(Exception) as ne:
             check_operator(
@@ -542,7 +541,7 @@ class TestOperators(UnitxtTestCase):
                 targets=targets,
                 tester=self,
             )
-        self.assertEqual("name 'c' is not defined", str(ne.exception))
+        self.assertIn("name 'c' is not defined", str(ne.exception))
 
     def test_filter_by_condition_error_when_the_entire_stream_is_filtered(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
@@ -555,9 +554,9 @@ class TestOperators(UnitxtTestCase):
                 targets=[],
                 tester=self,
             )
-        self.assertEqual(
-            str(e.exception),
+        self.assertIn(
             "FilterByCondition filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
+            str(e.exception),
         )
 
     def test_execute_expression(self):
@@ -575,7 +574,6 @@ class TestOperators(UnitxtTestCase):
             operator=operator,
             inputs=[{"x": 2, "y": 3}],
             exception_texts=[
-                "Error processing instance '0' from stream 'test' in ExecuteExpression due to the exception above.",
                 "name 'a' is not defined",
             ],
             tester=self,
@@ -628,7 +626,7 @@ class TestOperators(UnitxtTestCase):
                 targets=targets,
                 tester=self,
             )
-        self.assertEqual(str(cm.exception), "The allowed_values is not a list but '3'")
+        self.assertIn("The allowed_values is not a list but '3'", str(cm.exception))
 
         with self.assertRaises(ValueError) as cm:
             check_operator(
@@ -639,17 +637,15 @@ class TestOperators(UnitxtTestCase):
                 targets=targets,
                 tester=self,
             )
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "'process_every_value=True' is not supported in Intersect operator",
+            str(cm.exception),
         )
 
         inputs = [
             {"label": "b"},
         ]
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in Intersect due to the exception above.",
-            "Failed to process field 'label' from instance due to the exception above.",
             "The value in field is not a list but 'b'",
         ]
         check_operator_exception(
@@ -684,7 +680,6 @@ class TestOperators(UnitxtTestCase):
         )
 
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
             """Field 'acme_field' is not in provided instance.
 label (list):
     [0] (str):
@@ -712,7 +707,6 @@ other (str):
         )
 
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
             """Field 'acme_field' is not in provided instance.
 label (list):
     [0] (str):
@@ -740,7 +734,6 @@ other (str):
         )
 
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
             "Value of field 'other' is not a list, so IntersectCorrespondingFields can not intersect with allowed values. Field value:\nother (str):\n    not\n",
         ]
         check_operator_exception(
@@ -760,7 +753,6 @@ other (str):
             {"label": ["a", "b", "f"], "position": [0, 1, 2], "other": "field"},
         ]
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
             """Number of elements in field 'position' is not the same as the number of elements in field 'label' so the IntersectCorrespondingFields can not remove corresponding values.
 label (list):
     [0] (str):
@@ -863,16 +855,15 @@ position (list):
                 targets=targets,
                 tester=self,
             )
-        self.assertEqual(
-            str(cm.exception), "The unallowed_values is not a list but '3'"
+        self.assertIn(
+            "The unallowed_values is not a list but '3'",
+            str(cm.exception),
         )
 
         inputs = [
             {"label": "b"},
         ]
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in RemoveValues due to the exception above.",
-            "Failed to process field 'label' from instance due to the exception above.",
             "The value in field is not a list but 'b'",
         ]
         check_operator_exception(
@@ -883,8 +874,6 @@ position (list):
         )
 
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in RemoveValues due to the exception above.",
-            "Failed to get 'label2' from instance due to the exception above.",
             """query "label2" did not match any item in dict:
 label (str):
     b
@@ -942,7 +931,6 @@ label (str):
             operator=ApplyOperatorsField(operators_field="d"),
             inputs=inputs,
             exception_texts=[
-                "Error processing instance '0' from stream 'test' in ApplyOperatorsField due to the exception above.",
                 "No operators found in field 'd', and no default operators provided.",
             ],
             tester=self,
@@ -1059,22 +1047,6 @@ label (str):
             tester=self,
         )
 
-    def test_unique_on_single_field(self):
-        inputs = [
-            {"a": [1, 5], "b": 2},
-            {"a": [2, 5], "b": 3},
-            {"a": [2, 5], "b": 4},
-        ]
-
-        targets = {((1, 5),), ((2, 5),)}
-
-        outputs = apply_operator(
-            operator=Unique(fields=["a"]),
-            inputs=inputs,
-        )
-
-        self.assertSetEqual(set(outputs), targets)
-
     def test_apply_stream_operators_field(self):
         inputs = [
             {
@@ -1103,48 +1075,6 @@ label (str):
             ],
             outputs,
         )
-
-    def test_unique_on_multiple_fields(self):
-        inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
-            {"a": 2, "b": 4},
-            {"a": 1, "b": 2},
-        ]
-        fields = ["a", "b"]
-        targets = {(1, 2), (2, 3), (2, 4)}
-
-        outputs = apply_operator(
-            operator=Unique(fields=fields),
-            inputs=inputs,
-        )
-
-        self.assertSetEqual(set(outputs), targets)
-
-    def test_split_by_value(self):
-        inputs = [
-            {"a": 1, "b": 4},
-            {"a": 2, "b": 3},
-            {"a": 2, "b": 4},
-        ]
-
-        outputs = apply_operator(
-            operator=SplitByValue(fields="a"), inputs=inputs, return_multi_stream=True
-        )
-
-        self.assertSetEqual(set(outputs.keys()), {"test_1", "test_2"})
-
-        outputs_1 = list(outputs["test_1"])
-        self.assertEqual(len(outputs_1), 1)
-
-        outputs_2 = list(outputs["test_2"])
-        self.assertEqual(len(outputs_2), 2)
-
-        for input_dict, output_dict in zip(inputs, outputs_1):
-            self.assertDictEqual(input_dict, output_dict)
-
-        for input_dict, output_dict in zip(inputs[1:], outputs_2):
-            self.assertDictEqual(input_dict, output_dict)
 
     def test_merge(self):
         # Test with default params
@@ -2247,7 +2177,6 @@ label (str):
                 fields={"a/d": "float", "b": "int"},
                 failure_defaults={"a/d": 0.0, "b": 0},
                 process_every_value=True,
-                use_nested_query=True,
             ),
             inputs=[{"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}],
             targets=[{"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}],
@@ -2498,7 +2427,6 @@ label (str):
 
         inputs = [{"prediction": "red", "references": "blue"}]
         exception_texts = [
-            """Error processing instance '0' from stream 'test' in EncodeLabels due to the exception above.""",
             """query \"references/*\" did not match any item in dict:
 prediction (str):
     red
@@ -2526,6 +2454,22 @@ references (str):
 
         check_operator(
             operator=JoinStr(field_to_field={"a": "b"}, separator=","),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_extract_mt_bench_rating_judgment(self):
+        inputs = [
+            {"a": "Verdict [[ 9.0 / 10 ]]"},
+            {"a": "Verdict [[3]]"},
+            {"a": "Verdict [[3.2]]"},
+        ]
+
+        targets = [{"a": 0.9}, {"a": 0.3}, {"a": 0.32}]
+
+        check_operator(
+            operator=ExtractMtBenchRatingJudgment(field="a"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -3266,7 +3210,7 @@ Agent:"""
         self.assertNotEqual(out["target"], out["prediction"])
         with self.assertRaises(AssertionError) as ae:
             operator = Perturb(field="target", percentage_to_perturb=200)
-        self.assertEqual(
+        self.assertIn(
             "'percentage_to_perturb' should be in the range 0..100. Received 200",
             str(ae.exception),
         )
@@ -3335,6 +3279,79 @@ Agent:"""
         ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
 
+    def test_join_errors(self):
+        input_multi_stream = MultiStream(
+            {
+                "questions": [
+                    {
+                        "question": "question_1",
+                        "id": "1",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                ],
+                "answers": [
+                    {
+                        "answer": "answer_1",
+                        "id": "2",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                ],
+                "train": [{"field": "train1"}],
+            }
+        )
+
+        with self.assertRaises(UnitxtError) as cm:
+            JoinStreams(
+                left_stream="questions",
+                right_stream="answers",
+                how="inner",
+                on=["id"],
+                new_stream_name="questions_and_answers",
+            )(input_multi_stream)
+
+        self.assertEqual(
+            str(cm.exception),
+            "JoinStreams resulted in an empty stream. It means that that keys in fields '['id']' on the left and on right streams do not match the merge policy of 'inner'.",
+        )
+
+        input_multi_stream = MultiStream(
+            {
+                "questions": [
+                    {
+                        "question": "question_1",
+                        "id": "1",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                ],
+                "answers": [
+                    {
+                        "answer": "answer_1",
+                        "id": "1",
+                        "data_classification_policy": ["confidential"],
+                        "recipe_metadata": [],
+                    },
+                ],
+                "train": [{"field": "train1"}],
+            }
+        )
+
+        with self.assertRaises(UnitxtError) as cm:
+            JoinStreams(
+                left_stream="questions",
+                right_stream="answers",
+                how="inner",
+                on=["id"],
+                new_stream_name="questions_and_answers",
+            )(input_multi_stream)
+
+        self.assertEqual(
+            str(cm.exception),
+            "'data_classification_policy' field is not identical in both left and right instances merged in JoinStreams.",
+        )
+
     def test_delete_split(self):
         input_multi_stream = MultiStream(
             {
@@ -3386,3 +3403,24 @@ Agent:"""
             }
         ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
+
+    def test_recursive_replace(self):
+        operator = RecursiveReplace(
+            key="type",
+            map_values={"int": "integer", "float": "number"},
+            remove_values=["any"],
+        )
+
+        inputs = [{"pro": {"type": "int"}, "bro": [{"type": "float"}, {"type": "any"}]}]
+
+        targets = [{"pro": {"type": "integer"}, "bro": [{"type": "number"}, {}]}]
+
+        check_operator(operator=operator, inputs=inputs, targets=targets)
+
+    def test_normalizers(self):
+        normalizer = NormalizeListFields(fields=["field_containing_a_list"])
+        instance = {"field_containing_a_list": ["a", "b", "c", "d"]}
+        processed_instance = normalizer.process(instance)
+        self.assertDictEqual(
+            {"field_containing_a_list": "a, b, c, d"}, processed_instance
+        )

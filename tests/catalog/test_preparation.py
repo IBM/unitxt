@@ -57,9 +57,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                 "\n_____________________________________________\n"
             )
             process = psutil.Process()
-            start_memory = process.memory_info().rss / (
-                1024**3
-            )  # Convert bytes to GB
+            start_memory = process.memory_info().rss / (1024**3)  # Convert bytes to GB
             disk_start = psutil.disk_io_counters()
             start_time = time.time()
             tracemalloc.start()
@@ -75,16 +73,27 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                         if isinstance(current_exception, (GatedRepoError)):
                             passed = False
                             break
-                        if isinstance(current_exception, (ReadTimeout, HfHubHTTPError, MissingKaggleCredentialsError)):
+                        if isinstance(
+                            current_exception,
+                            (
+                                ReadTimeout,
+                                HfHubHTTPError,
+                                MissingKaggleCredentialsError,
+                            ),
+                        ):
                             passed = True
                             break
-                        current_exception = current_exception.__cause__ or current_exception.__context__
+                        current_exception = (
+                            current_exception.__cause__ or current_exception.__context__
+                        )
 
                 if passed:
                     if error is None:
                         logger.info(f"Testing preparation file: {file} passed")
                     else:
-                        logger.critical(f"Testing preparation file: {file} failed with ignored error: {error}\n{traceback.format_exc()}")
+                        logger.critical(
+                            f"Testing preparation file: {file} failed with ignored error: {error}\n{traceback.format_exc()}"
+                        )
                 else:
                     raise error
 
@@ -119,7 +128,6 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
             stats[
                 file.split("prepare")[-1][1:]
             ] = f"Time: {formatted_time}, RAM: {peak_memory_system:.2f} GB, Disk: {write_gb:.2f} GB"
-
 
         logger.critical(f"Preparation times table for {len(stats)} files:")
         times = dict(sorted(stats.items(), key=lambda item: item[1], reverse=True))

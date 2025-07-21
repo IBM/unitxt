@@ -278,6 +278,7 @@ class DatasetRecipe(SourceSequentialOperator):
     demos_taken_from: str = "train"
     demos_field: str = constants.demos_field
     sampler: Sampler = None
+    demos_sampling_seed: Optional[int] = None
 
     # do not push demos to instances whose "demos" field is already populated
     skip_demoed_instances: bool = False
@@ -503,7 +504,7 @@ class DatasetRecipe(SourceSequentialOperator):
             loader = self.card.loader
             if self.loader_limit:
                 loader.loader_limit = self.loader_limit
-                logger.info(f"Loader line limit was set to  {self.loader_limit}")
+                # logger.info(f"Loader line limit was set to  {self.loader_limit}")
             self.loading.steps.append(loader)
 
             # This is required in case loader_limit is not enforced by the loader
@@ -586,6 +587,7 @@ class DatasetRecipe(SourceSequentialOperator):
                         sampler=self.sampler,
                         sample_size=self.num_demos,
                         skip_demoed_instances=self.skip_demoed_instances,
+                        sampling_seed=self.demos_sampling_seed,
                     )
                 )
                 self.verbalization.steps.append(
@@ -605,10 +607,14 @@ class DatasetRecipe(SourceSequentialOperator):
                         sampler=self.sampler,
                         sample_sizes=self.num_demos,
                         skip_demoed_instances=self.skip_demoed_instances,
+                        sampling_seed=self.demos_sampling_seed,
                     )
                 )
                 self.verbalization.steps.append(
-                    GetLength(field=constants.demos_field, to_field="recipe_metadata/num_demos")
+                    GetLength(
+                        field=constants.demos_field,
+                        to_field="recipe_metadata/num_demos",
+                    )
                 )
                 self.verbalization.steps.append(
                     Set(
@@ -665,7 +671,11 @@ class DatasetRecipe(SourceSequentialOperator):
 
     @property
     def has_card_templates(self):
-        return self.card is not None and self.card.templates is not None and len(self.card.templates) > 0
+        return (
+            self.card is not None
+            and self.card.templates is not None
+            and len(self.card.templates) > 0
+        )
 
     @property
     def has_no_templates(self):
@@ -687,7 +697,6 @@ class DatasetRecipe(SourceSequentialOperator):
                 )
             else:
                 self.template = self.card.task.default_template
-
 
         if self.template is None and self.template_card_index is not None:
             try:

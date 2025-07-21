@@ -53,7 +53,10 @@ dataset = create_dataset(
     test_set=test_set,
     split="test",
     format="formats.chat_api",
-    metrics=["metrics.key_value_extraction.accuracy","metrics.key_value_extraction.token_overlap"]
+    metrics=[
+        "metrics.key_value_extraction.accuracy",
+        "metrics.key_value_extraction.token_overlap",
+    ],
 )
 
 model = CrossProviderInferenceEngine(
@@ -68,7 +71,7 @@ print("Example prompt:")
 print(json.dumps(results.instance_scores[0]["source"], indent=4))
 
 print("Instance Results:")
-print(results.instance_scores)
+print(results.instance_scores.summary)
 
 print("Global Results:")
 print(results.global_scores.summary)

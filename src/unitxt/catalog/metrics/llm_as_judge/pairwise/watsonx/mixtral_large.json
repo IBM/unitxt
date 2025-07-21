@@ -5,6 +5,7 @@
         "max_tokens": 1024,
         "seed": 42,
         "temperature": 0,
+        "provider": "watsonx",
         "model": "mistral-large-instruct"
     },
     "evaluator_name": "MIXTRAL_LARGE",

@@ -10,6 +10,7 @@ from .settings_utils import get_constants
 from .type_utils import isoftype, to_type_string
 from .types import (
     Audio,
+    Conversation,
     Dialog,
     Document,
     Image,
@@ -17,6 +18,8 @@ from .types import (
     Number,
     SQLDatabase,
     Table,
+    Tool,
+    ToolCall,
     Video,
 )
 
@@ -74,7 +77,22 @@ class DialogSerializer(SingleTypeSerializer):
 
     def serialize(self, value: Dialog, instance: Dict[str, Any]) -> str:
         # Convert the Dialog into a string representation, typically combining roles and content
-        return "\n".join(f"{turn['role']}: {turn['content']}" for turn in value)
+        turns = []
+        for turn in value:
+            turn_str = f"{turn['role']}: "
+            if "content" in turn:
+                turn_str += str(turn["content"])
+            if "tool_calls" in turn:
+                turn_str += "\n" + json.dumps(turn["tool_calls"])
+            turns.append(turn_str)
+        return "\n".join(turns)
+
+
+class ConversationSerializer(DialogSerializer):
+    serialized_type = Conversation
+
+    def serialize(self, value: Conversation, instance: Dict[str, Any]) -> str:
+        return super().serialize(value["dialog"], instance)
 
 
 class NumberSerializer(SingleTypeSerializer):
@@ -133,6 +151,7 @@ class ImageSerializer(SingleTypeSerializer):
         value["image"] = f"media/images/{idx}"
         return f'<{constants.image_tag} src="media/images/{idx}">'
 
+
 class AudioSerializer(SingleTypeSerializer):
     serialized_type = Audio
 
@@ -142,11 +161,10 @@ class AudioSerializer(SingleTypeSerializer):
         if "audios" not in instance["media"]:
             instance["media"]["audios"] = []
         idx = len(instance["media"]["audios"])
-        instance["media"]["audios"].append(
-            {"audio": value["audio"]}
-        )
+        instance["media"]["audios"].append({"audio": value["audio"]})
         value["audio"] = f"media/audios/{idx}"
         return f'<{constants.audio_tag} src="media/audios/{idx}">'
+
 
 class VideoSerializer(ImageSerializer):
     serialized_type = Video
@@ -176,15 +194,36 @@ class MultiDocumentSerializer(DocumentSerializer):
         return "\n\n".join(documents)
 
 
+class ToolsSerializer(SingleTypeSerializer):
+    serialized_type = List[Tool]
+
+    def serialize(self, value: List[Tool], instance: Dict[str, Any]) -> str:
+        if "__tools__" not in instance:
+            instance["__tools__"] = []
+        tool = []
+        for tool in value:
+            instance["__tools__"].append({"type": "function", "function": tool})
+        return json.dumps(instance["__tools__"], indent=4)
+
+
+class ToolCallSerializer(SingleTypeSerializer):
+    serialized_type = ToolCall
+
+    def serialize(self, value: ToolCall, instance: Dict[str, Any]) -> str:
+        return json.dumps(value)
+
+
 class MultiTypeSerializer(Serializer):
     serializers: List[SingleTypeSerializer] = Field(
         default_factory=lambda: [
             DocumentSerializer(),
+            ToolCallSerializer(),
             DialogSerializer(),
             MultiDocumentSerializer(),
             ImageSerializer(),
             VideoSerializer(),
             TableSerializer(),
+            ToolsSerializer(),
             DialogSerializer(),
         ]
     )
@@ -217,7 +256,7 @@ class SQLDatabaseAsSchemaSerializer(SingleTypeSerializer):
     serialized_type = SQLDatabase
 
     def serialize(self, value: SQLDatabase, instance: Dict[str, Any]) -> str:
-        from .sql_utils import get_db_connector
+        from .text2sql_utils import get_db_connector
 
         connector = get_db_connector(value["db_type"])(value)
         return connector.get_table_schema()

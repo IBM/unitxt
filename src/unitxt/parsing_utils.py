@@ -51,9 +51,9 @@ def consume_name_val(instring: str) -> Tuple[Any, str]:
     instring = instring[len(name_val) :].strip()
     name_val = name_val.strip()
 
-    if name_val == "True":
+    if name_val.lower() == "true":
         return (True, instring)
-    if name_val == "False":
+    if name_val.lower() == "false":
         return (False, instring)
     if name_val == "None":
         return (None, instring)

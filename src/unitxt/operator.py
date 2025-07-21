@@ -6,6 +6,7 @@ from pkg_resources import DistributionNotFound, VersionConflict, require
 
 from .artifact import Artifact
 from .dataclass import FinalField, InternalField, NonPositionalField
+from .error_utils import error_context
 from .settings_utils import get_constants
 from .stream import DynamicStream, EmptyStreamError, MultiStream, Stream
 
@@ -157,7 +158,6 @@ class StreamingOperator(Operator, PackageRequirementsMixin):
         """
 
 
-
 class SideEffectOperator(StreamingOperator):
     """Base class for operators that does not affect the stream."""
 
@@ -249,9 +249,9 @@ class SourceOperator(MultiStreamOperator):
     def process(self) -> MultiStream:
         pass
 
-
     def get_splits(self):
         return list(self.process().keys())
+
 
 class StreamInitializerOperator(SourceOperator):
     """A class representing a stream initializer operator in the streaming system.
@@ -347,7 +347,8 @@ class StreamOperator(MultiStreamOperator):
     def _process_stream(
         self, stream: Stream, stream_name: Optional[str] = None
     ) -> Generator:
-        yield from self.process(stream, stream_name)
+        with error_context(self, stream=stream_name):
+            yield from self.process(stream, stream_name)
 
     @abstractmethod
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
@@ -385,12 +386,28 @@ class PagedStreamOperator(StreamOperator):
         self, stream: Stream, stream_name: Optional[str] = None
     ) -> Generator:
         page = []
+        page_number = 0
         for instance in stream:
             page.append(instance)
             if len(page) >= self.page_size:
-                yield from self.process(page, stream_name)
+                with error_context(
+                    self,
+                    stream=stream_name,
+                    page=page_number,
+                    page_size=len(page),
+                ):
+                    yield from self.process(page, stream_name)
                 page = []
-        yield from self._process_page(page, stream_name)
+                page_number += 1
+        if page:  # Handle any remaining instances in the last partial page
+            with error_context(
+                self,
+                stream=stream_name,
+                page=page_number,
+                page_size=len(page),
+                final_page=True,
+            ):
+                yield from self._process_page(page, stream_name)
 
     def _process_page(
         self, page: List[Dict], stream_name: Optional[str] = None
@@ -443,17 +460,9 @@ class InstanceOperator(StreamOperator):
     def _process_stream(
         self, stream: Stream, stream_name: Optional[str] = None
     ) -> Generator:
-        try:
-            _index = None
-            for _index, instance in enumerate(stream):
+        for _index, instance in enumerate(stream):
+            with error_context(self, stream=stream_name, instance=_index):
                 yield self._process_instance(instance, stream_name)
-        except Exception as e:
-            if _index is None:
-                raise e
-            else:
-                raise ValueError(
-                    f"Error processing instance '{_index}' from stream '{stream_name}' in {self.__class__.__name__} due to the exception above."
-                ) from e
 
     def _process_instance(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None

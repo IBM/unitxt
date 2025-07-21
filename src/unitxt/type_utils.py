@@ -25,9 +25,11 @@ _registered_types = {
 
 
 def register_type(new_type):
-    assert is_new_type(new_type) or is_typed_dict(
-        new_type
-    ), "Can register only typing.NewType or typing.TypedDict"
+    assert (
+        is_new_type(new_type)
+        or is_typed_dict(new_type)
+        or hasattr(new_type, "__verify_type__")
+    ), "Can register only typing.NewType or typing.TypedDict or object with __verify_type__ class function"
     _registered_types[new_type.__name__] = new_type
 
 
@@ -69,6 +71,8 @@ def is_typed_dict(object):
 
 def is_type(object):
     """Checks if the provided object is a type, including generics, Literal, TypedDict, and NewType."""
+    if object is typing.Type:
+        return True
     return (
         isinstance(object, (type, *_generics_types))
         or is_new_type(object)
@@ -487,15 +491,37 @@ def isoftype(object, typing_type):
     if not is_type(typing_type):
         raise UnsupportedTypeError(typing_type)
 
+    if hasattr(typing_type, "__verify_type__"):
+        return typing_type.__verify_type__(object)
+
+    if typing_type is typing.Type:
+        return is_type(object)
+
     if is_new_type(typing_type):
         typing_type = typing_type.__supertype__
 
     if is_typed_dict(typing_type):
         if not isinstance(object, dict):
             return False
+
+        # Only support total=True, check each field
         for key, expected_type in typing_type.__annotations__.items():
-            if key not in object or not isoftype(object[key], expected_type):
-                return False
+            # Check if field is Optional (Union with None)
+            is_optional = (
+                hasattr(expected_type, "__origin__")
+                and expected_type.__origin__ is Union
+                and type(None) in expected_type.__args__
+            )
+
+            if key not in object:
+                # Field is missing - only allowed if it's Optional
+                if not is_optional:
+                    return False
+            else:
+                # Field is present - check type
+                if not isoftype(object[key], expected_type):
+                    return False
+
         return True
 
     if typing_type == typing.Any:
@@ -1061,9 +1087,18 @@ def verify_required_schema(
                 f"{class_name} description: {description}"
             ) from e
 
-        if not isoftype(value, data_type):
+        try:
+            valid = isoftype(value, data_type)
+        except Exception as e:
             raise ValueError(
-                f"Passed value '{value}' of field '{field_name}' is not "
+                f"Passed value {value} of field '{field_name}' is not "
+                f"of required type: ({to_type_string(data_type)}) in {class_name} ('{id}').\n"
+                f"{class_name} description: {description}\nReason:\n{e}"
+            ) from e
+
+        if not valid:
+            raise ValueError(
+                f"Passed value {value} of field '{field_name}' is not "
                 f"of required type: ({to_type_string(data_type)}) in {class_name} ('{id}').\n"
                 f"{class_name} description: {description}"
             )

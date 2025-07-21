@@ -1,3 +1,4 @@
+import json
 import re
 from abc import abstractmethod
 from typing import (
@@ -19,6 +20,8 @@ from .image_operators import image_to_data_url
 from .operator import InstanceOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype
+from .types import Dialog
+from .utils import retry_connection_with_exponential_backoff
 
 constants = get_constants()
 
@@ -34,6 +37,7 @@ class GraniteDocumentsFormat(Format):
 
     _requirements_list = ["transformers"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer
@@ -134,7 +138,15 @@ class BaseFormat(Format):
     def _prepare_instance_fields(self, instance) -> Tuple[str]:
         instance_fields = {}
 
-        for field in "source", constants.instruction_field, constants.system_prompt_field, "target_prefix":
+        if "__turns__" in instance:
+            instance_fields["turns"] = instance["__turns__"]
+
+        for field in (
+            "source",
+            constants.instruction_field,
+            constants.system_prompt_field,
+            "target_prefix",
+        ):
             instance_fields[field] = self._pop_field(instance, field)
 
         instance_fields["media"] = self._pop_field(instance, "media", do_pop=False)
@@ -164,6 +176,7 @@ class BaseFormat(Format):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
+        turns: Optional[Dialog] = None,
     ) -> str:
         """Abstract method for formatting instances in different subclasses.
 
@@ -250,7 +263,10 @@ class SystemFormat(BaseFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
+        turns: Optional[Dialog] = None,
     ) -> str:
+        if turns is not None and not source:
+            source = json.dumps(turns)
         demos_string = ""
         for demo in demos:
             demo_str = self.demo_format.format(
@@ -281,17 +297,21 @@ class ImageUrlContent(TypedDict):
     type: Literal["image_url"]
     image_url: Dict[Literal["url"], str]
 
+
 class ImageFileContent(TypedDict):
     type: Literal["image_file"]
     image_file: Dict[Literal["file_id"], str]
+
 
 class DataFormat(TypedDict):
     data: str
     format: Literal["wav"]
 
+
 class AudioInputContent(TypedDict):
     type: Literal["input_audio"]
     input_audio: DataFormat
+
 
 Content = Union[TextContent, ImageUrlContent, ImageFileContent]
 
@@ -356,7 +376,17 @@ class ChatAPIFormat(BaseFormat):
             )
 
         The resulting `messages` is now a dictionary ready for sending to the OpenAI API.
+
+        By default, the instruction in the template is placed in a turn with a 'system' role.
+        However, some chat tokenizers, will not place the default system prompt for the model,
+        if there is turn with an explicit 'system' role.   To keep the default system prompt,
+        set 'place_instruction_in_user_turns=True'.  This will cause the instruction of the template
+        to be placed in a turn with a 'user' role.  Note the instruction will also be placed
+        in every demo turn (if demos are generated.)
+
     """
+
+    place_instruction_in_user_turns: bool = False
 
     def to_content(self, text: str, media: Dict[str, Any]) -> Union[str, List[Content]]:
         image_tag = constants.image_tag
@@ -394,10 +424,12 @@ class ChatAPIFormat(BaseFormat):
                     data_url = image_to_data_url(image)
                 else:
                     data_url = src
-                contents.append({
-                    "type": "image_url",
-                    "image_url": {"url": data_url, "detail": "low"},
-                })
+                contents.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": data_url, "detail": "low"},
+                    }
+                )
 
             elif tag == audio_tag:
                 if is_local:
@@ -405,10 +437,12 @@ class ChatAPIFormat(BaseFormat):
                     data_url = audio_to_base64(audio)
                 else:
                     data_url = src
-                contents.append({
-                    "type": "input_audio",
-                    "input_audio": {"data": data_url, "format": "wav"},
-                })
+                contents.append(
+                    {
+                        "type": "input_audio",
+                        "input_audio": {"data": data_url, "format": "wav"},
+                    }
+                )
 
             last_pos = end
 
@@ -426,12 +460,15 @@ class ChatAPIFormat(BaseFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
+        turns: Optional[Dialog] = None,
     ) -> List[Message]:
         messages = []
 
-        if system_prompt or instruction:
+        if system_prompt or (instruction and not self.place_instruction_in_user_turns):
             system_content = self.to_content(
-                system_prompt + ("\n" if system_prompt != "" else "") + instruction,
+                system_prompt
+                + ("\n" if system_prompt != "" else "")
+                + (instruction if not self.place_instruction_in_user_turns else ""),
                 media,
             )
             messages.append(
@@ -442,13 +479,22 @@ class ChatAPIFormat(BaseFormat):
             )
 
         for demo_instance in demos:
-            user_content = self.to_content(demo_instance["source"], media)
+            if "__turns__" in demo_instance:
+                messages.extend(demo_instance["__turns__"])
+            else:
+                text = demo_instance["source"]
+
+                if instruction and self.place_instruction_in_user_turns:
+                    text = f"{instruction}\n{text}"
+                source_content = self.to_content(text, media)
+                messages.extend([{"role": "user", "content": source_content}])
+
             assistant_content = self.to_content(
-                target_prefix + demo_instance["target"], media
+                target_prefix + demo_instance["target"],
+                media,
             )
             messages.extend(
                 [
-                    {"role": "user", "content": user_content},
                     {
                         "role": "assistant",
                         "content": assistant_content,
@@ -456,9 +502,15 @@ class ChatAPIFormat(BaseFormat):
                 ]
             )
 
-        last_user_content = self.to_content(source, media)
+        text = source
+        if instruction and self.place_instruction_in_user_turns:
+            text = f"{instruction}\n{text}"
 
-        messages.extend([{"role": "user", "content": last_user_content}])
+        if turns is None:
+            last_user_content = self.to_content(text, media)
+            messages.extend([{"role": "user", "content": last_user_content}])
+        else:
+            messages.extend(turns)
 
         return messages
 
@@ -470,6 +522,7 @@ class ChatAPIFormat(BaseFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
+        turns: Optional[Dialog] = None,
     ) -> Union[str, List[Message]]:
         chat = self.to_chat(
             system_prompt,
@@ -478,6 +531,7 @@ class ChatAPIFormat(BaseFormat):
             target_prefix,
             demos,
             media,
+            turns,
         )
         media["images"] = []
         media["audios"] = []
@@ -500,8 +554,10 @@ class HFSystemFormat(ChatAPIFormat):
     """
 
     model_name: str
+    chat_kwargs_dict: Dict[str, str] = {}
     _requirements_list = ["transformers", "Jinja2"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer
@@ -516,13 +572,17 @@ class HFSystemFormat(ChatAPIFormat):
         target_prefix: str,
         demos: List[Dict[str, Any]],
         media: Optional[Dict[str, Any]] = None,
+        turns: Optional[Dialog] = None,
     ) -> str:
         chat = self.to_chat(
-            system_prompt, instruction, source, target_prefix, demos, media
+            system_prompt, instruction, source, target_prefix, demos, media, turns
         )
         return (
             self.tokenizer.apply_chat_template(
-                chat, tokenize=False, add_generation_prompt=True
+                chat,
+                tokenize=False,
+                add_generation_prompt=True,
+                **self.chat_kwargs_dict,
             )
             + target_prefix
         )

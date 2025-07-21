@@ -1,5 +1,9 @@
 {
     "__type__": "criteria",
     "name": "reference_document_faithfulness",
-    "description": "The response is faithful according to the reference document."
+    "description": "The response is faithful according to the reference document.",
+    "prediction_field": "response",
+    "context_fields": [
+        "reference document"
+    ]
 }

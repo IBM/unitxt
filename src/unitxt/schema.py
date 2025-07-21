@@ -59,13 +59,14 @@ def get_schema(stream_name):
 def load_chat_source(chat_str):
     chat = json.loads(chat_str)
     for turn in chat:
-        if isinstance(turn["content"], list):
+        if "content" in turn and isinstance(turn["content"], list):
             for content in turn["content"]:
                 if content["type"] == "image_url":
                     content["image_url"]["url"] = ImageDataString(
                         content["image_url"]["url"]
                     )
     return chat
+
 
 def loads_batch(batch):
     if (
@@ -84,6 +85,7 @@ def loads_batch(batch):
     ):
         batch["task_data"] = [json.loads(d) for d in batch["task_data"]]
     return batch
+
 
 def loads_instance(instance):
     if (
@@ -144,6 +146,9 @@ class FinalizeDataset(InstanceOperatorValidator):
         }
         if use_reference_fields:
             task_data = {**task_data, **instance["reference_fields"]}
+
+        if "__tools__" in instance:
+            task_data["__tools__"] = instance["__tools__"]
         return task_data
 
     def serialize_instance_fields(self, instance, task_data):

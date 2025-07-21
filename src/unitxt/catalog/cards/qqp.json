@@ -2,8 +2,13 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "glue",
-        "name": "qqp"
+        "path": "nyu-mll/glue",
+        "name": "qqp",
+        "splits": [
+            "train",
+            "validation",
+            "test"
+        ]
     },
     "preprocess_steps": [
         "splitters.large_no_test",

@@ -6,12 +6,13 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from .artifact import Artifact
 from .collections import DictCollection, ListCollection
 from .dataclass import NonPositionalField
-from .dict_utils import dict_set
+from .dict_utils import dict_get, dict_set
 from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator, Operator
 from .random_utils import new_random_generator
 from .serializers import (
     AudioSerializer,
+    ConversationSerializer,
     DialogSerializer,
     ImageSerializer,
     ListSerializer,
@@ -20,6 +21,8 @@ from .serializers import (
     Serializer,
     SQLDatabaseAsSchemaSerializer,
     TableSerializer,
+    ToolCallSerializer,
+    ToolsSerializer,
     VideoSerializer,
 )
 from .settings_utils import get_constants
@@ -65,7 +68,10 @@ class Template(InstanceOperator):
                 ImageSerializer(),
                 VideoSerializer(),
                 TableSerializer(),
+                ToolCallSerializer(),
+                ToolsSerializer(),
                 DialogSerializer(),
+                ConversationSerializer(),
                 ListSerializer(),
                 SQLDatabaseAsSchemaSerializer(),
             ]
@@ -128,7 +134,8 @@ class Template(InstanceOperator):
 
         source = self.input_fields_to_source(serialized_inputs)
         instruction, target_prefix = self.input_fields_to_instruction_and_target_prefix(
-            serialized_inputs, instance.get(constants.instruction_field, self.instruction)
+            serialized_inputs,
+            instance.get(constants.instruction_field, self.instruction),
         )
 
         result = {
@@ -937,6 +944,16 @@ class MultiReferenceTemplate(InputOutputTemplate):
             target = references[0]
 
         return target, references
+
+
+class MultiTurnTemplate(MultiReferenceTemplate):
+    input_format = ""
+    turns_field: str
+
+    def post_process_instance(self, instance):
+        turns = dict_get(instance["input_fields"], self.turns_field)
+        instance["__turns__"] = turns
+        return super().post_process_instance(instance)
 
 
 def escape_chars(s, chars_to_escape):

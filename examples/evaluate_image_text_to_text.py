@@ -7,7 +7,7 @@ with settings.context(disable_hf_datasets_cache=False):
         model_type="llama_vision",
         model_args={"pretrained": "meta-llama/Llama-3.2-11B-Vision-Instruct"},
         max_new_tokens=512,
-        image_token=""
+        image_token="",
     )
 
     dataset = load_dataset(

@@ -1,5 +1,5 @@
 import typing
-from typing import Literal, NewType, TypedDict
+from typing import Literal, NewType, Type, TypedDict
 
 from unitxt.type_utils import (
     UnsupportedTypeError,
@@ -43,6 +43,78 @@ class TestAssertTyping(UnitxtTestCase):
 
         incomplete_person = {"name": "Alice"}  # Missing age
         self.assertEqual(isoftype(incomplete_person, Person), False)
+
+    def test_typed_dict_with_optional_fields(self):
+        from typing import Optional
+
+        class PersonWithOptionalFields(TypedDict):
+            name: str  # Required field
+            age: int  # Required field
+            email: Optional[str]  # Optional field that can be missing or None
+
+        # All required fields must be present
+        complete_person = {"name": "Alice", "age": 30, "email": "alice@example.com"}
+        self.assertEqual(isoftype(complete_person, PersonWithOptionalFields), True)
+
+        # Optional field can be missing
+        without_email = {"name": "Alice", "age": 30}
+        self.assertEqual(isoftype(without_email, PersonWithOptionalFields), True)
+
+        # Optional field can be None
+        with_none_email = {"name": "Alice", "age": 30, "email": None}
+        self.assertEqual(isoftype(with_none_email, PersonWithOptionalFields), True)
+
+        # Required fields cannot be missing
+        missing_name = {"age": 30, "email": "alice@example.com"}
+        self.assertEqual(isoftype(missing_name, PersonWithOptionalFields), False)
+
+        missing_age = {"name": "Alice", "email": "alice@example.com"}
+        self.assertEqual(isoftype(missing_age, PersonWithOptionalFields), False)
+
+        # Wrong types should be invalid
+        invalid_age = {"name": "Alice", "age": "thirty", "email": "alice@example.com"}
+        self.assertEqual(isoftype(invalid_age, PersonWithOptionalFields), False)
+
+        invalid_name = {"name": 123, "age": 30, "email": "alice@example.com"}
+        self.assertEqual(isoftype(invalid_name, PersonWithOptionalFields), False)
+
+    def test_typed_dict_complex_optional(self):
+        from typing import Dict, List, Optional
+
+        class ComplexTypes(TypedDict):
+            items: List[str]  # Required field
+            metadata: Optional[Dict[str, int]]  # Optional field
+            tags: Optional[List[str]]  # Optional field
+
+        # All fields present
+        complete = {
+            "items": ["a", "b", "c"],
+            "metadata": {"count": 3, "size": 100},
+            "tags": ["important", "test"],
+        }
+        self.assertEqual(isoftype(complete, ComplexTypes), True)
+
+        # Only required field present
+        minimal = {"items": ["a", "b"]}
+        self.assertEqual(isoftype(minimal, ComplexTypes), True)
+
+        # Optional field can be None
+        with_none_metadata = {"items": ["a", "b"], "metadata": None, "tags": ["test"]}
+        self.assertEqual(isoftype(with_none_metadata, ComplexTypes), True)
+
+        # Required field cannot be missing
+        missing_items = {"metadata": {"count": 1}, "tags": ["test"]}
+        self.assertEqual(isoftype(missing_items, ComplexTypes), False)
+
+        # Invalid nested types
+        invalid_items = {"items": ["a", 123]}  # 123 is not str
+        self.assertEqual(isoftype(invalid_items, ComplexTypes), False)
+
+        invalid_metadata = {
+            "items": ["a"],
+            "metadata": {"count": "three"},
+        }  # "three" is not int
+        self.assertEqual(isoftype(invalid_metadata, ComplexTypes), False)
 
     def test_literal(self):
         valid_literal: Literal[1, 2, 3] = 2
@@ -352,7 +424,7 @@ class TestAssertTyping(UnitxtTestCase):
             )
         self.assertEqual(
             str(e.exception),
-            """Passed value '{'a': 'b'}' of field 'field_1' is not of required type: (Dict[str, float]) in Task ('my_task').
+            """Passed value {'a': 'b'} of field 'field_1' is not of required type: (Dict[str, float]) in Task ('my_task').
 Task description: This is my task.""",
         )
 
@@ -428,6 +500,7 @@ Task description: This is my task.""",
         self.assertTrue(is_type(int))
         self.assertTrue(is_type(list))
         self.assertTrue(is_type(dict))
+        self.assertTrue(is_type(Type))
         self.assertTrue(is_type(Literal[1, 2, 3]))
         self.assertFalse(is_type([1, 2]))
         self.assertFalse(is_type(print))
@@ -529,3 +602,14 @@ class TestToTypeString(UnitxtTestCase):
     def test_invalid_type(self):
         with self.assertRaises(ValueError):
             to_type_string(object)
+
+    def test_custom_type_validation(self):
+        class CustomValidation:
+            @classmethod
+            def __verify_type__(cls, object):
+                return len(object) == 2
+
+        register_type(CustomValidation)
+
+        self.assertTrue(isoftype([1, 2], CustomValidation))
+        self.assertFalse(isoftype([1], CustomValidation))

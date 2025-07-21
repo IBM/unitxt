@@ -5,7 +5,7 @@
     To follow this tutorial, ensure you have :ref:`unitxt installed <install_unitxt>`.
 
 =====================================
-LLM as a Judge Metrics Guide 📊
+LLM as a Judge Metrics Guide 
 =====================================
 
 This section will walk you through harnessing the power of LLM as judge (LLMaJ) metrics using the Unitxt package. LLM as a judge

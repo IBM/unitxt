@@ -5,6 +5,7 @@ import evaluate
 from .api import __file__ as _
 from .artifact import __file__ as _
 from .augmentors import __file__ as _
+from .base_metric import __file__ as _
 from .benchmark import __file__ as _
 from .blocks import __file__ as _
 from .card import __file__ as _
@@ -50,7 +51,6 @@ from .settings_utils import get_constants
 from .span_lableing_operators import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
-from .sql_utils import __file__ as _
 from .standard import __file__ as _
 from .stream import __file__ as _
 from .stream_operators import __file__ as _
@@ -59,6 +59,7 @@ from .struct_data_operators import __file__ as _
 from .system_prompts import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
+from .text2sql_utils import __file__ as _
 from .text_utils import __file__ as _
 from .type_utils import __file__ as _
 from .types import __file__ as _

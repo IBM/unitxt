@@ -1,0 +1,11 @@
+{
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "tool_call_post_processor",
+        "allow_failure": true,
+        "failure_value": {
+            "name": "null",
+            "arguments": {}
+        }
+    }
+}

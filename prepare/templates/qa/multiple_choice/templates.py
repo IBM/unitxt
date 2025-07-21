@@ -426,8 +426,6 @@ add_to_catalog(
 )
 
 
-
-
 def remove_duplicates(input_list):
     seen = set()
     result = []

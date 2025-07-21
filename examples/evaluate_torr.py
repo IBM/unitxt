@@ -5,7 +5,6 @@ from unitxt.inference import (
 
 with settings.context(
     allow_unverified_code=True,
-    mock_inference_mode=True,
 ):
     test_dataset = load_dataset(
         "benchmarks.torr",
@@ -13,9 +12,9 @@ with settings.context(
         use_cache=True,
     )
     # Infer
-    model = CrossProviderInferenceEngine(
+    model = CrossProviderInferenceEngine(  # We used Together AI as inference engine
         model="llama-3-8b-instruct",
-        max_tokens=30,
+        max_tokens=512,
     )
     """
     We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:

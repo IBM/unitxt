@@ -4,13 +4,13 @@ import tempfile
 from unittest.mock import patch
 
 import pandas as pd
-from unitxt.error_utils import UnitxtError
 from unitxt.loaders import (
     LoadCSV,
     LoadFromDictionary,
     LoadFromHFSpace,
     LoadFromIBMCloud,
     LoadHF,
+    LoadJsonFile,
     MultipleSourceLoader,
 )
 from unitxt.logging_utils import get_logger
@@ -81,13 +81,8 @@ class TestLoaders(UnitxtTestCase):
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
 
     def test_failed_load_csv(self):
-        if settings.use_eager_execution:
-            with self.assertRaises(UnitxtError):
-                list(LoadCSV(files={"test": "not_exist.csv"})()["test"])
-        else:
-            with self.assertRaises(FileNotFoundError):
-                list(LoadCSV(files={"test": "not_exist.csv"})()["test"])
-
+        with self.assertRaises(FileNotFoundError):
+            list(LoadCSV(files={"test": "not_exist.csv"})()["test"])
 
     def test_load_csv_with_pandas_args(self):
         # Using a context for the temporary directory
@@ -117,12 +112,79 @@ class TestLoaders(UnitxtTestCase):
                 ):
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
 
+    def test_load_json_list(self):
+        data = [
+            {"id": 0},
+            {"id": 1},
+            {"id": 2},
+        ]
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = os.path.join(tmp_dir, "json_list.json")
+            with open(path, mode="w+") as f:
+                json.dump(data, f)
+
+            result = list(LoadJsonFile(files={"train": path})()["train"])
+
+        for i, instance in enumerate(result):
+            self.assertEqual(instance["id"], i)
+
+    def test_load_json_single_object(self):
+        data = {"id": 0, "name": ["test1", "test2"]}
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = os.path.join(tmp_dir, "json_object.json")
+            with open(path, mode="w+") as f:
+                json.dump(data, f)
+            result = list(LoadJsonFile(files={"train": path})()["train"])
+
+        self.assertEqual(len(result), 1)
+        final_data = {
+            "id": 0,
+            "name": ["test1", "test2"],
+            "data_classification_policy": ["proprietary"],
+        }
+        self.assertEqual(result[0], final_data)
+
+    def test_load_json_lines(self):
+        data = [
+            {"id": 0},
+            {"id": 1},
+            {"id": 2},
+        ]
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = os.path.join(tmp_dir, "json_lines.jsonl")
+            pd.DataFrame(data).to_json(path, orient="records", lines=True)
+            result = list(LoadJsonFile(files={"train": path}, lines=True)()["train"])
+
+        for i, instance in enumerate(result):
+            self.assertEqual(instance["id"], i)
+
+    def test_load_json_record_path(self):
+        data = {
+            "data": [
+                {"id": 0},
+                {"id": 1},
+                {"id": 2},
+            ],
+            "x": [{"id": 3}, {"id": 4}],
+        }
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = os.path.join(tmp_dir, "json_file.json")
+            with open(path, mode="w+") as f:
+                json.dump(data, f)
+
+            result = list(
+                LoadJsonFile(files={"train": path}, data_field="data")()["train"]
+            )
+
+        for i, instance in enumerate(result):
+            self.assertEqual(instance["id"], i)
+
     def test_load_from_ibm_cos(self):
         import ibm_boto3
 
         os.environ["DUMMY_URL_ENV"] = "DUMMY_URL"
         os.environ["DUMMY_KEY_ENV"] = "DUMMY_KEY"
-        os.environ["DUMMY_SECRET_ENV"] = "DUMMY_SECRET" # pragma: allowlist-secret
+        os.environ["DUMMY_SECRET_ENV"] = "DUMMY_SECRET"  # pragma: allowlist-secret
         for data_files in [
             ["train.jsonl", "test.jsonl"],
             {"train": "train.jsonl", "test": "test.jsonl"},
@@ -132,7 +194,7 @@ class TestLoaders(UnitxtTestCase):
                 loader = LoadFromIBMCloud(
                     endpoint_url_env="DUMMY_URL_ENV",
                     aws_access_key_id_env="DUMMY_KEY_ENV",
-                    aws_secret_access_key_env="DUMMY_SECRET_ENV", # pragma: allowlist-secret
+                    aws_secret_access_key_env="DUMMY_SECRET_ENV",  # pragma: allowlist-secret
                     bucket_name="DUMMY_BUCKET",
                     data_dir="DUMMY_DATA_DIR",
                     data_files=data_files,
@@ -167,7 +229,9 @@ class TestLoaders(UnitxtTestCase):
         }, f"Unexpected fold {ms.keys()}"
 
     def test_load_from_HF_compressed_split(self):
-        loader = LoadHF(path="GEM/xlsum", name="igbo", split="train")  # the smallest file
+        loader = LoadHF(
+            path="GEM/xlsum", name="igbo", split="train"
+        )  # the smallest file
         ms = loader()
         instance = next(iter(ms["train"]))
         self.assertEqual(
@@ -255,6 +319,124 @@ class TestLoaders(UnitxtTestCase):
         )  # that HF dataset only has the 'test' split
         self.assertEqual(instance["language"], "eng")
 
+    def test_load_from_hf_with_data_files_dict(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dummy_dir = os.path.join(temp_dir, "dummy")
+            os.makedirs(dummy_dir, exist_ok=True)
+
+            dummy_test_file_path = os.path.join(dummy_dir, "dummy_test_file.jsonl")
+            dummy_random_file_path = os.path.join(dummy_dir, "dummy_random_file.jsonl")
+
+            sample_data = [
+                {"id": 1, "text": "Sample text 1", "label": "A"},
+            ]
+
+            with open(dummy_test_file_path, "w") as f:
+                for item in sample_data:
+                    f.write(json.dumps(item) + "\n")
+
+            with open(dummy_random_file_path, "w") as f:
+                for item in sample_data:
+                    f.write(json.dumps(item) + "\n")
+
+            loader = LoadHF(
+                path=dummy_dir,
+                data_files={
+                    "test": "dummy_test_file.jsonl",
+                    "random": "dummy_random_file.jsonl",
+                },
+            )
+
+            dataset = loader.process()
+
+            self.assertIn("test", dataset)
+            self.assertIn("random", dataset)
+
+            test = list(dataset["test"])
+
+            self.assertEqual(len(test), 1)
+
+            random = list(dataset["random"])
+            self.assertEqual(len(random), 1)
+
+            self.assertIn("text", random[0])
+            self.assertIn("label", random[0])
+            self.assertIn("text", test[0])
+            self.assertIn("label", test[0])
+
+    def test_load_from_hf_with_data_files_list(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dummy_dir = os.path.join(temp_dir, "dummy")
+            os.makedirs(dummy_dir, exist_ok=True)
+
+            dummy_test_file_path = os.path.join(dummy_dir, "dummy_test_file.jsonl")
+            dummy_random_file_path = os.path.join(dummy_dir, "dummy_random_file.jsonl")
+
+            sample_data = [
+                {"id": 1, "text": "Sample text 1", "label": "A"},
+            ]
+
+            with open(dummy_test_file_path, "w") as f:
+                for item in sample_data:
+                    f.write(json.dumps(item) + "\n")
+
+            with open(dummy_random_file_path, "w") as f:
+                for item in sample_data:
+                    f.write(json.dumps(item) + "\n")
+
+            loader = LoadHF(
+                path=dummy_dir,
+                data_files=[
+                    "dummy_test_file.jsonl",
+                    "dummy_random_file.jsonl",
+                ],
+            )
+
+            dataset = loader.process()
+
+            self.assertIn("train", dataset)
+
+            train = list(dataset["train"])
+
+            self.assertEqual(len(train), 2)
+
+            self.assertIn("text", train[0])
+            self.assertIn("label", train[0])
+            self.assertIn("text", train[1])
+            self.assertIn("label", train[1])
+
+    def test_load_from_hf_with_data_files_str(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dummy_dir = os.path.join(temp_dir, "dummy")
+            os.makedirs(dummy_dir, exist_ok=True)
+
+            dummy_test_file_path = os.path.join(dummy_dir, "dummy_test_file.jsonl")
+
+            sample_data = [
+                {"id": 1, "text": "Sample text 1", "label": "A"},
+            ]
+
+            with open(dummy_test_file_path, "w") as f:
+                for item in sample_data:
+                    f.write(json.dumps(item) + "\n")
+
+            loader = LoadHF(
+                path=dummy_dir,
+                data_files="dummy_test_file.jsonl",
+            )
+
+            # Load the dataset
+            dataset = loader.process()
+
+            self.assertIn("train", dataset)
+
+            train = list(dataset["train"])
+
+            self.assertEqual(len(train), 1)
+
+            self.assertIn("text", train[0])
+            self.assertIn("label", train[0])
+
     def test_multiple_source_loader(self):
         # Using a context for the temporary directory
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -335,11 +517,11 @@ class TestLoaders(UnitxtTestCase):
 
         with self.assertRaises(ValueError) as cm:
             LoadFromDictionary(data=data)
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             f"Passed data to LoadFromDictionary is not of type Dict[str, List[Dict[str, Any]]].\n"
             f"Expected data should map between split name and list of instances.\n"
             f"Received value: {data}\n",
+            str(cm.exception),
         )
 
         data = {
@@ -350,14 +532,13 @@ class TestLoaders(UnitxtTestCase):
         }
         with self.assertRaises(ValueError) as cm:
             LoadFromDictionary(data=data)
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             f"Not all instances in split 'train' have the same fields.\n"
             f"instance {data['train'][1]} has different fields different from {data['train'][0]}",
+            str(cm.exception),
         )
 
     def test_load_from_hf_space(self):
-
         loader = LoadFromHFSpace(
             space_name="lmsys/mt-bench",
             data_files={
