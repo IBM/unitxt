@@ -566,3 +566,19 @@ class ExtractVerbalJudgment(FieldOperator):
 
 class ExtractVerbalJudgementBadGood(ExtractVerbalJudgment):
     classes = ["very bad", "bad", "mediocre", "good", "very good"]
+
+
+class NormalizeTextWithWhisper(FieldOperator):
+    """A processor that uses uses whisper english normalizer."""
+
+    _requirements_list = ["transformers"]
+
+    def prepare(self):
+        super().prepare()
+        from transformers import WhisperTokenizer
+
+        self.tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-base")
+        self._normalize = self.tokenizer.normalize
+
+    def process_value(self, value: str) -> str:
+        return self._normalize(value)

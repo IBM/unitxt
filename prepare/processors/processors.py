@@ -21,6 +21,7 @@ from unitxt.processors import (
     Lower,
     LowerCaseTillPunc,
     MatchClosestOption,
+    NormalizeTextWithWhisper,
     PostProcess,
     RegexParser,
     RemoveArticles,
@@ -301,4 +302,10 @@ add_processor_and_operator_to_catalog(
     operator=ExtractVerbalJudgementBadGood(),
     overwrite=True,
     process_references=False,
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="normalize_text_with_whisper",
+    operator=NormalizeTextWithWhisper(),
+    overwrite=True,
 )

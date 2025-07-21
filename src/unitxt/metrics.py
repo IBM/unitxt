@@ -3387,6 +3387,74 @@ class Wer(HuggingfaceMetric):
         return {self.main_score: result}
 
 
+class WerFast(MapReduceMetric[Tuple[float, float], float]):
+    """Computes mean squared error between predictions and references.
+
+    Range: [0, ∞) (lower is better)
+    Measures average squared differences between predicted and true values.
+    """
+
+    main_score = "wer"
+    prediction_type = str
+    single_reference_per_prediction = True
+    _requirements_list = ["jiwer>=3.0.0"]  # added process_words function
+
+    def prepare(self):
+        super().prepare()
+        import jiwer
+
+        self._metric = jiwer.process_words
+
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Tuple[float, float]:
+        measures = self._metric(references[0], prediction)
+        incorrect = measures.substitutions + measures.deletions + measures.insertions
+        total = measures.substitutions + measures.deletions + measures.hits
+        return incorrect, total
+
+    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
+        incorrect, total = map(sum, zip(*intermediates))
+        return {self.main_score: incorrect / total if total > 0 else np.nan}
+
+
+class NormalizedWer(MapReduceMetric[Tuple[float, float], float]):
+    """Computes mean squared error between predictions and references.
+
+    Range: [0, ∞) (lower is better)
+    Measures average squared differences between predicted and true values.
+    """
+
+    main_score = "normalized_wer"
+    prediction_type = str
+    single_reference_per_prediction = True
+    _requirements_list = ["jiwer>=3.0.0"]  # added process_words function
+
+    def prepare(self):
+        super().prepare()
+        import jiwer
+        from transformers import WhisperTokenizer
+
+        self.tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-base")
+
+        self._metric = jiwer.process_words
+        self._normalize = self.tokenizer.normalize
+
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Tuple[float, float]:
+        normalized_reference = self._normalize(references[0])
+        normalized_prediction = self._normalize(prediction)
+        measures = self._metric(normalized_reference, normalized_prediction)
+        incorrect = measures.substitutions + measures.deletions + measures.insertions
+        total = measures.substitutions + measures.deletions + measures.hits
+        return incorrect, total
+
+    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
+        incorrect, total = map(sum, zip(*intermediates))
+        return {self.main_score: incorrect / total}
+
+
 class MeanSquaredError(MapReduceMetric[float, float]):
     """Computes mean squared error between predictions and references.
 

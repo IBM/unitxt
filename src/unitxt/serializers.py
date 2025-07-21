@@ -220,6 +220,7 @@ class MultiTypeSerializer(Serializer):
             ToolCallSerializer(),
             DialogSerializer(),
             MultiDocumentSerializer(),
+            AudioSerializer(),
             ImageSerializer(),
             VideoSerializer(),
             TableSerializer(),

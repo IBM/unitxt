@@ -1,0 +1,55 @@
+{
+    "__type__": "benchmark",
+    "subsets": {
+        "voxpopuli_en": {
+            "__type__": "dataset_recipe",
+            "card": "cards.voxpopuli.en",
+            "format": "formats.chat_api"
+        },
+        "ami_ihm": {
+            "__type__": "dataset_recipe",
+            "card": "cards.ami.ihm",
+            "format": "formats.chat_api"
+        },
+        "ami_sdm": {
+            "__type__": "dataset_recipe",
+            "card": "cards.ami.sdm",
+            "format": "formats.chat_api"
+        },
+        "gigaspeech_xs": {
+            "__type__": "dataset_recipe",
+            "card": "cards.gigaspeech.xs",
+            "format": "formats.chat_api"
+        },
+        "librispeech_test_clean": {
+            "__type__": "dataset_recipe",
+            "card": "cards.librispeech.test_clean",
+            "format": "formats.chat_api"
+        },
+        "librispeech_test": {
+            "__type__": "dataset_recipe",
+            "card": "cards.librispeech.test",
+            "format": "formats.chat_api"
+        },
+        "spgispeech_s": {
+            "__type__": "dataset_recipe",
+            "card": "cards.spgispeech.s",
+            "format": "formats.chat_api"
+        },
+        "tedlium_release1": {
+            "__type__": "dataset_recipe",
+            "card": "cards.tedlium.release1",
+            "format": "formats.chat_api"
+        },
+        "tedlium_release2": {
+            "__type__": "dataset_recipe",
+            "card": "cards.tedlium.release2",
+            "format": "formats.chat_api"
+        },
+        "tedlium_release3": {
+            "__type__": "dataset_recipe",
+            "card": "cards.tedlium.release3",
+            "format": "formats.chat_api"
+        }
+    }
+}
