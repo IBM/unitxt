@@ -13,7 +13,6 @@ for model_id in model_list:
         model=model_id, max_tokens=252, seed=get_seed()
     )
     model_label = model_id.replace("-", "_").replace(".", ",").lower()
-    model_label = f"{model_label}"
     template_label = template.split(".")[-1]
     metric_label = f"{model_label}_template_{template_label}"
     metric = LLMAsJudge(
