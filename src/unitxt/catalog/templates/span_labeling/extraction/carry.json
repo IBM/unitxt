@@ -1,5 +1,8 @@
 {
-    "__type__": "span_labeling_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "SpanLabelingTemplate"
+    },
     "input_format": "{text_type}: {text}\nFrom this {text_type}, extract entities that carry one of the following types: {entity_types}.",
     "postprocessors": [
         "processors.to_span_label_pairs"

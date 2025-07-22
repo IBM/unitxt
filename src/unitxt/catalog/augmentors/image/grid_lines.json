@@ -1,3 +1,6 @@
 {
-    "__type__": "grid_lines"
+    "__type__": {
+        "module": "unitxt.image_operators",
+        "name": "GridLines"
+    }
 }

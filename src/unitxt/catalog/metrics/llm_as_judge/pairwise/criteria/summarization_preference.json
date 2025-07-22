@@ -1,5 +1,8 @@
 {
-    "__type__": "criteria",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_constants",
+        "name": "Criteria"
+    },
     "name": "summarization_preference",
     "description": "The summary should be accurate and concise. It covers all the article and accurately summarizes it. Keeps the length of summary reasonable. Has no fake data generated outside of the reference article.",
     "prediction_field": "summary",

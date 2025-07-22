@@ -1,5 +1,8 @@
 {
-    "__type__": "input_output_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "InputOutputTemplate"
+    },
     "instruction": "Write the best {completion_type} to the {context_type}.",
     "input_format": "{context}",
     "output_format": "{completion}"

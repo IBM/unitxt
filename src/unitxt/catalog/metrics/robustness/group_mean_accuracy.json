@@ -1,3 +1,6 @@
 {
-    "__type__": "group_mean_accuracy"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "GroupMeanAccuracy"
+    }
 }

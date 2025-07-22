@@ -1,5 +1,8 @@
 {
-    "__type__": "templates_list",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "TemplatesList"
+    },
     "items": [
         "templates.qa.multiple_choice.open.ja.helm",
         "templates.qa.multiple_choice.open.ja.lm_eval_harness",

@@ -1,14 +1,23 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "mbpp",
         "name": "full",
         "split": "test"
     },
     "preprocess_steps": [
         {
-            "__type__": "join_str",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "JoinStr"
+            },
             "field_to_field": {
                 "test_list": "test_list_str"
             },
@@ -16,7 +25,10 @@
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": [
             "text",
             "test_list_str"
@@ -31,7 +43,10 @@
     },
     "templates": [
         {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "\"\"\"{text}\n\n{test_list_str}\"\"\"",
             "output_format": "{code}"
         }

@@ -1,3 +1,6 @@
 {
-    "__type__": "fin_qa_eval"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "FinQAEval"
+    }
 }

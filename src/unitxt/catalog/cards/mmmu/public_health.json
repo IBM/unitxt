@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "MMMU/MMMU",
         "name": "Public_Health",
         "data_classification_policy": [
@@ -10,14 +16,20 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_splits",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "RenameSplits"
+            },
             "mapper": {
                 "dev": "train",
                 "validation": "test"
             }
         },
         {
-            "__type__": "list_field_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ListFieldValues"
+            },
             "fields": [
                 "image_1",
                 "image_2",
@@ -30,14 +42,20 @@
             "to_field": "media/images"
         },
         {
-            "__type__": "filter",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Filter"
+            },
             "field": "media/images",
             "values": [
                 null
             ]
         },
         {
-            "__type__": "map_replace",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "MapReplace"
+            },
             "field_to_field": {
                 "question": "question",
                 "options": "choices"
@@ -53,16 +71,25 @@
             }
         },
         {
-            "__type__": "literal_eval",
+            "__type__": {
+                "module": "unitxt.processors",
+                "name": "LiteralEval"
+            },
             "field": "choices"
         },
         {
-            "__type__": "lower",
+            "__type__": {
+                "module": "unitxt.processors",
+                "name": "Lower"
+            },
             "field": "subfield",
             "to_field": "topic"
         },
         {
-            "__type__": "map_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapValues"
+            },
             "field": "answer",
             "mapping": {
                 "A": 0,

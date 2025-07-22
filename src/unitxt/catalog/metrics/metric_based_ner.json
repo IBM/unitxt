@@ -1,5 +1,8 @@
 {
-    "__type__": "metric_based_ner",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricBasedNer"
+    },
     "metric": "metrics.accuracy",
     "n_resamples": 0,
     "min_score_for_match": 0.75,

@@ -1,5 +1,8 @@
 {
-    "__type__": "input_output_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "InputOutputTemplate"
+    },
     "input_format": "You are given the following SQL schema\n\n```sql\n{db}\n```\n\n{utterance}\n",
     "instruction": "",
     "target_prefix": "",

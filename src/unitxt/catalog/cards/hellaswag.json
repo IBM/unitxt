@@ -1,13 +1,22 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "hellaswag"
     },
     "preprocess_steps": [
         "splitters.large_no_test",
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "ctx": "context",
                 "activity_label": "topic",
@@ -15,19 +24,28 @@
             }
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "label": "answer"
             }
         },
         {
-            "__type__": "cast_fields",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "CastFields"
+            },
             "fields": {
                 "answer": "int"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "context_type": "sentence"
             }
