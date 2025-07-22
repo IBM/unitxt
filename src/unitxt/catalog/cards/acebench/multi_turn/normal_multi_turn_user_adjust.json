@@ -1,0 +1,66 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_json_file",
+        "files": {
+            "questions": "https://raw.githubusercontent.com/ACEBench/ACEBench/main/data_all/data_en/data_normal_multi_turn_user_adjust.json",
+            "answers": "https://raw.githubusercontent.com/ACEBench/ACEBench/main/data_all/data_en/possible_answer/data_normal_multi_turn_user_adjust.json"
+        },
+        "lines": true,
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "join_streams",
+            "left_stream": "questions",
+            "right_stream": "answers",
+            "how": "inner",
+            "on": "id",
+            "new_stream_name": "test"
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "[{\"role\": turn.split(\":\", 1)[0].strip(), \"content\": turn.split(\":\", 1)[1].strip()} for turn in question.split(\"\\n\") if \":\" in turn and turn.split(\":\", 1)[0].strip() in [\"user\", \"system\"]]",
+            "to_field": "dialog"
+        },
+        {
+            "__type__": "copy",
+            "field": "function",
+            "to_field": "tools"
+        },
+        "operators.normalize_tool_schema",
+        "operators.fix_json_schema",
+        {
+            "__type__": "execute_expression",
+            "expression": "[{\"name\": k, \"arguments\": v} for k, v in ground_truth.items()] if isinstance(ground_truth, dict) else []",
+            "to_field": "reference_calls"
+        }
+    ],
+    "task": "tasks.tool_calling.multi_turn",
+    "templates": [
+        "templates.tool_calling.multi_turn"
+    ],
+    "__description__": "ACEBench is a comprehensive benchmark designed to evaluate Large Language Models' capabilities in tool use across various scenarios. This multi-turn variant tests models' ability to handle complex, interactive scenarios requiring multiple exchanges.",
+    "__title__": "ACEBench Multi-Turn - Normal Multi Turn User Adjust",
+    "__tags__": {
+        "annotations_creators": "expert-generated",
+        "language": [
+            "en"
+        ],
+        "license": "apache-2.0",
+        "size_categories": [
+            "1K<n<10K"
+        ],
+        "task_categories": [
+            "question-answering",
+            "tool-calling",
+            "multi-turn-tool-calling"
+        ],
+        "task_ids": [
+            "tool-calling",
+            "multi-turn-tool-calling"
+        ]
+    }
+}

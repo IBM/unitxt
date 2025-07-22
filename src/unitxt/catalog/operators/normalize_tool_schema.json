@@ -1,0 +1,5 @@
+{
+    "__type__": "execute_expression",
+    "expression": "[{(\"parameters\" if k == \"arguments\" else k): v for k, v in tool.items()} for tool in tools]",
+    "to_field": "tools"
+}
