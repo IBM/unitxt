@@ -6,10 +6,9 @@ from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(
-        path="speechcolab/gigaspeech",
-        data_dir="xs",
-        revision="refs/convert/parquet",
-        splits=["train", "validation", "test"],
+        path="hf-audio/esb-datasets-test-only-sorted",
+        name="gigaspeech",
+        splits=["test"],
         data_classification_policy=["public"],
         streaming=True,
     ),
@@ -27,16 +26,15 @@ card = TaskCard(
         "size_categories": ["100K<n<1M"],
         "modalities": ["audio", "text"],
         "source": "audiobooks, podcasts, YouTube",
+        "benchmark": "ESB",
     },
     __description__=(
-        "GigaSpeech is an evolving, multi-domain English speech recognition corpus with "
-        "10,000 hours of high quality labeled audio suitable for supervised training. "
-        "The transcribed audio data is collected from audiobooks, podcasts and YouTube, "
-        "covering both read and spontaneous speaking styles, and a variety of topics "
-        "such as arts, science, sports, etc."
+        "GigaSpeech from ESB (End-to-End Speech Benchmark) - Multi-domain English speech "
+        "corpus with standardized preprocessing and consistent formatting. Test-only split "
+        "from the unified ESB dataset collection."
     ),
-    __title__="GigaSpeech-XS",
+    __title__="ESB-GigaSpeech",
 )
 
 test_card(card, strict=False)
-add_to_catalog(card, "cards.gigaspeech.xs", overwrite=True)
+add_to_catalog(card, "cards.esb.gigaspeech", overwrite=True)

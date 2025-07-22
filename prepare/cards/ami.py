@@ -1,6 +1,7 @@
 from unitxt.audio_operators import ToAudio
-from unitxt.blocks import LoadHF, TaskCard
+from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
+from unitxt.loaders import LoadHF
 from unitxt.test_utils.card import test_card
 
 for subset in ["ihm", "sdm"]:
