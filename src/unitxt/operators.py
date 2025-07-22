@@ -3,6 +3,28 @@
 Operators: Building Blocks of Unitxt Processing Pipelines
 ==============================================================
 
+.. tip::
+
+    If you cannot find operators fit to your needs simply use instance function operator:
+
+    .. code-block:: python
+
+        def my_function(instance, stream_name=None):
+            instance["x"] += 42
+            return instance
+
+    Or stream function operator:
+
+    .. code-block:: python
+
+        def my_other_function(stream, stream_name=None):
+            for instance in stream:
+                instance["x"] += 42
+                yield instance
+
+    Both functions can be plugged in every place in unitxt requires operators, e.g pre-processing pipeline.
+
+
 Within the Unitxt framework, operators serve as the foundational elements used to assemble processing pipelines.
 Each operator is designed to perform specific manipulations on dictionary structures within a stream.
 These operators are callable entities that receive a MultiStream as input.
@@ -39,7 +61,9 @@ General Operators List:
 ------------------------
 """
 
+import inspect
 import operator
+import re
 import uuid
 import warnings
 import zipfile
@@ -2559,3 +2583,140 @@ class Fillna(FieldOperator):
         except TypeError:
             return value
         return value
+
+
+class FunctionOperator(StreamOperator):
+    function: Callable
+
+    def verify(self):
+        super().verify()
+
+        if not callable(self.function):
+            raise ValueError("Function must be callable.")
+        sig = inspect.signature(self.function)
+        param_names = set(sig.parameters)
+
+        if "stream_name" not in param_names:
+            raise TypeError(
+                "The provided function must have a 'stream_name' parameter."
+            )
+
+        if "stream" not in param_names and "instance" not in param_names:
+            raise TypeError(
+                "The provided function must have a 'stream' parameter or 'instance' parameter."
+            )
+
+        if len(param_names) != 2:
+            raise TypeError("The provided function must have only 2 parameters")
+
+        if "stream" in param_names:
+            self._mode = "stream"
+        if "instance" in param_names:
+            self._mode = "instance"
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None):
+        if self._mode == "stream":
+            yield from self.function(stream, stream_name)
+        if self._mode == "instance":
+            for instance in stream:
+                yield self.function(instance, stream_name)
+
+
+class FixJsonSchemaOfToolParameterTypes(InstanceOperator):
+    def prepare(self):
+        self.simple_mapping = {
+            "": "object",
+            "any": "object",
+            "Any": "object",
+            "Array": "array",
+            "ArrayList": "array",
+            "Bigint": "integer",
+            "bool": "boolean",
+            "Boolean": "boolean",
+            "byte": "integer",
+            "char": "string",
+            "dict": "object",
+            "Dict": "object",
+            "double": "number",
+            "float": "number",
+            "HashMap": "object",
+            "Hashtable": "object",
+            "int": "integer",
+            "list": "array",
+            "List": "array",
+            "long": "integer",
+            "Queue": "array",
+            "short": "integer",
+            "Stack": "array",
+            "tuple": "array",
+            "Set": "array",
+            "set": "array",
+            "str": "string",
+            "String": "string",
+        }
+
+    def dict_type_of(self, type_str: str) -> dict:
+        return {"type": type_str}
+
+    def recursive_trace_for_type_fields(self, containing_element):
+        if isinstance(containing_element, dict):
+            keys = list(containing_element.keys())
+            for key in keys:
+                if key == "type" and isinstance(containing_element["type"], str):
+                    jsonschema_dict = self.type_str_to_jsonschema_dict(
+                        containing_element["type"]
+                    )
+                    containing_element.pop("type")
+                    containing_element.update(jsonschema_dict)
+                else:
+                    self.recursive_trace_for_type_fields(containing_element[key])
+        elif isinstance(containing_element, list):
+            for list_element in containing_element:
+                self.recursive_trace_for_type_fields(list_element)
+
+    def type_str_to_jsonschema_dict(self, type_str: str) -> dict:
+        if type_str in self.simple_mapping:
+            return self.dict_type_of(self.simple_mapping[type_str])
+        m = re.match(r"^(List|Tuple)\[(.*?)\]$", type_str)
+        if m:
+            basic_type = self.dict_type_of("array")
+            basic_type["items"] = self.type_str_to_jsonschema_dict(
+                m.group(2) if m.group(1) == "List" else m.group(2).split(",")[0].strip()
+            )
+            return basic_type
+
+        m = re.match(r"^(Union)\[(.*?)\]$", type_str)
+        if m:
+            args = m.group(2).split(",")
+            for i in range(len(args)):
+                args[i] = args[i].strip()
+            return {"anyOf": [self.type_str_to_jsonschema_dict(arg) for arg in args]}
+        if re.match(r"^(Callable)\[(.*?)\]$", type_str):
+            return self.dict_type_of("object")
+        if "," in type_str:
+            sub_types = type_str.split(",")
+            for i in range(len(sub_types)):
+                sub_types[i] = sub_types[i].strip()
+            assert len(sub_types) in [
+                2,
+                3,
+            ], f"num of subtypes should be 2 or 3, got {type_str}"
+            basic_type = self.type_str_to_jsonschema_dict(sub_types[0])
+            for sub_type in sub_types[1:]:
+                if sub_type.lower().startswith("default"):
+                    basic_type["default"] = re.split(r"[= ]", sub_type, maxsplit=1)[1]
+            for sub_type in sub_types[1:]:
+                if sub_type.lower().startswith("optional"):
+                    return {"anyOf": [basic_type, self.dict_type_of("null")]}
+            return basic_type
+
+        return self.dict_type_of(type_str)  # otherwise - return what arrived
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        assert (
+            "tools" in instance
+        ), f"field 'tools' must reside in instance in order to verify its jsonschema correctness. got {instance}"
+        self.recursive_trace_for_type_fields(instance["tools"])
+        return instance
