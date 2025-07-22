@@ -22,6 +22,11 @@
             "to": "float"
         },
         {
+            "__type__": "execute_expression",
+            "expression": "mean_score/6",
+            "to_field": "mean_score"
+        },
+        {
             "__type__": "rename",
             "field_to_field": {
                 "instance/source": "source text",
