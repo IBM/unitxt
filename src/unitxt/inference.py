@@ -1851,6 +1851,7 @@ class RITSInferenceEngine(
         "deepseek-ai/DeepSeek-V3": "deepseek-v3-h200",
         "meta-llama/Llama-3.1-8B-Instruct": "llama-3-1-8b-instruct",
         "meta-llama/Llama-4-Scout-17B-16E-Instruct": "llama-4-scout-17b-16e-instruct",
+        "mistralai/Mistral-Small-3.1-24B-Instruct-2503": "mistral-small-3-1-24b-2503",
     }
 
     def get_default_headers(self):
@@ -3274,8 +3275,10 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-90b-vision-instruct": "meta-llama/llama-3-2-90b-vision-instruct",
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
             "llama-guard-3-11b-vision": "meta-llama/llama-guard-3-11b-vision",
-            "mistral-large-instruct": "mistralai/mistral-large",
             "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7b-instruct-v01",
+            "mistral-small-instruct": "mistralai/mistral-small-3-1-24b-instruct-2503",
+            "mistral-medium-instruct": "mistralai/mistral-medium-2505",
+            "mistral-large-instruct": "mistralai/mistral-large",
         },
         "together-ai": {  # checked from https://www.together.ai/models
             "llama-3-8b-instruct": "together_ai/meta-llama/Llama-3-8b-chat-hf",
@@ -3329,12 +3332,14 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
             "llama-4-scout": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
             "llama-4-maverick": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
+            "mistral-small-instruct": "mistralai/Mistral-Small-3.1-24B-Instruct-2503",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
             "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7B-instruct-v0.1",
             "deepseek-v3": "deepseek-ai/DeepSeek-V3",
             "granite-guardian-3-2-3b-a800m": "ibm-granite/granite-guardian-3.2-3b-a800m",
             "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
+            "phi-4": "microsoft/phi-4",
         },
         "open-ai": {
             "o1-mini": "o1-mini",
