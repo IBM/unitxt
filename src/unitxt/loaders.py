@@ -53,6 +53,7 @@ from typing import (
     Union,
 )
 
+import datasets
 import pandas as pd
 import requests
 from datasets import (
@@ -63,6 +64,7 @@ from datasets import (
 )
 from datasets import load_dataset as _hf_load_dataset
 from huggingface_hub import HfApi
+from packaging.version import Version
 from tqdm import tqdm
 
 from .dataclass import NonPositionalField
@@ -98,14 +100,17 @@ def hf_load_dataset(path: str, *args, **kwargs):
         if settings.hf_offline_datasets_path is not None:
             path = os.path.join(settings.hf_offline_datasets_path, path)
 
+        if settings.disable_hf_datasets_cache:
+            kwargs["download_mode"] = "force_redownload"
+
+        if Version(datasets.__version__) < Version("4.0.0"):
+            kwargs["trust_remote_code"] = True
+
         return _hf_load_dataset(
             path,
             *args,
             **kwargs,
             verification_mode="no_checks",
-            download_mode="force_redownload"
-            if settings.disable_hf_datasets_cache
-            else "reuse_dataset_if_exists",
         )
 
 
