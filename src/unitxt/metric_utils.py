@@ -49,6 +49,19 @@ def nan_mean(scores):
         return result
 
 
+class EmptyPrediction:
+    def __repr__(self):
+        return "<__empty_prediction__>"
+
+    def __str__(self):
+        return "<__empty_prediction__>"
+
+
+def empty_predictions_generator():
+    while True:
+        yield EmptyPrediction()
+
+
 class FromPredictionsAndOriginalData(StreamInitializerOperator):
     def zip(self, predictions, references):
         for prediction, original in zip(predictions, references):
@@ -61,10 +74,13 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
 
     def process(
         self,
-        predictions: List[str],
-        references: Iterable,
+        predictions: Optional[List[str]] = None,
+        references: Optional[Iterable] = None,
         split_name: str = DEFAULT_STREAM_NAME,
     ) -> MultiStream:
+        if predictions is None:
+            predictions = empty_predictions_generator()
+
         return MultiStream(
             {
                 split_name: DynamicStream(
@@ -86,7 +102,8 @@ class DeleteTargetPrefix(InstanceOperator, ArtifactFetcherMixin):
             if target_prefix is not None and len(target_prefix) > 0:
                 target_prefix = target_prefix.format(**instance["task_data"])
                 pattern = rf"^\s*{re.escape(target_prefix)}\s*"
-                instance["prediction"] = re.sub(pattern, "", instance["prediction"])
+                if isinstance(instance["prediction"], str):
+                    instance["prediction"] = re.sub(pattern, "", instance["prediction"])
         return instance
 
 

@@ -1,27 +1,38 @@
 import json
+import os
 
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import MetricInferenceEngine
-
-cards = [
-    "cards.judge_bench.newswoom.relevance",
-    "cards.judge_bench.newswoom.coherence",
-    "cards.judge_bench.newswoom.fluency",
-    "cards.judge_bench.newswoom.informativeness",
-    "cards.judge_bench.newswoom.relevance",
-    "cards.judge_bench.roscoe.cosmos.overall.contradiction",
-    "cards.judge_bench.roscoe.cosmos.overall.coherence",
-    "cards.judge_bench.roscoe.cosmos.overall.missing_steps",
-    "cards.judge_bench.roscoe.cosmos.overall.overall_quality",
-    "cards.judge_bench.toxic_chat.jailbreaking",
-    "cards.judge_bench.toxic_chat.toxicity",
-    "cards.judge_bench.dices.safety",
-    "cards.judge_bench.inferential_strategies.sound_reasoning",
-    "cards.judge_bench.cola.grammaticality",
-]
+from unitxt.settings_utils import get_constants
 
 
-for card in cards:
+def get_judgebench_cards():
+    constants = get_constants()
+    judgebench_dir = os.path.join(
+        constants.catalog_dir,
+        "cards",
+        "judge_bench",
+    )
+
+    judgebench_cards = []
+
+    for dirpath, _, filenames in os.walk(judgebench_dir):
+        for file in filenames:
+            if file.endswith(".json"):
+                # Get the relative path without the .json extension
+                relative_path = os.path.relpath(
+                    os.path.join(dirpath, file), judgebench_dir
+                )
+                without_extension = os.path.splitext(relative_path)[0]
+                dotted_path = without_extension.replace(os.path.sep, ".")
+                judgebench_cards.append(f"cards.judge_bench.{dotted_path}")
+
+    return judgebench_cards
+
+
+cards = get_judgebench_cards()
+
+for card in [cards[0]]:
     print("Running card ", card)
     dataset = load_dataset(card=card, split="test", loader_limit=3)
 

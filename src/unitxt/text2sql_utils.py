@@ -4,7 +4,6 @@ import hashlib
 import json
 import os
 import re
-import sqlite3
 import time
 from abc import ABC, abstractmethod
 from collections import Counter
@@ -20,6 +19,12 @@ from requests.exceptions import ConnectionError, ReadTimeout
 
 from .logging_utils import get_logger
 from .types import SQLDatabase
+
+try:
+    import sqlite3
+except ImportError:
+    sqlite3 = None
+
 
 logger = get_logger()
 
