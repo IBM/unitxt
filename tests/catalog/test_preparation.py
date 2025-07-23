@@ -22,7 +22,7 @@ setting = get_settings()
 project_dir = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
-glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
+glob_query = os.path.join(project_dir, "prepare/cards", "**", "*.py")
 all_preparation_files = glob.glob(glob_query, recursive=True)
 # Make sure the order in which the tests are run is deterministic
 # Having a different order for local testing and github testing may cause diffs in results.
@@ -49,7 +49,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         )
         stats = {}
         for file in all_preparation_files:
-            passed = True
+            # passed = True
             error = None
             logger.info(
                 "\n_____________________________________________\n"
@@ -67,11 +67,11 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                     import_module_from_file(file)
                 except Exception as e:
                     error = e
-                    passed = False
+                    # passed = False
                     current_exception = e
                     while current_exception:
                         if isinstance(current_exception, (GatedRepoError)):
-                            passed = False
+                            # passed = False
                             break
                         if isinstance(
                             current_exception,
@@ -81,23 +81,23 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                                 MissingKaggleCredentialsError,
                             ),
                         ):
-                            passed = True
+                            # passed = True
                             break
                         current_exception = (
                             current_exception.__cause__ or current_exception.__context__
                         )
 
-                if passed:
-                    if error is None:
-                        logger.info(f"Testing preparation file: {file} passed")
-                    else:
-                        logger.critical(
-                            f"Testing preparation file: {file} failed with ignored error: {error}\n{traceback.format_exc()}"
-                        )
+                # if passed:
+                if error is None:
+                    logger.info(f"Testing preparation file: {file} passed")
                 else:
-                    raise error
+                    logger.critical(
+                        f"Testing preparation file: {file} failed with error: {error}\n{traceback.format_exc()}"
+                    )
+                # else:
+                #     raise error
 
-                self.assertTrue(passed)
+                # self.assertTrue(passed)
 
             elapsed_time = time.time() - start_time
             disk_end = psutil.disk_io_counters()

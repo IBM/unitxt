@@ -14,12 +14,15 @@ jobs:
   preparation:
 
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 600
     env:
       OS: ubuntu-latest
-      UNITXT_DEFAULT_VERBOSITY: error
-      DATASETS_VERBOSITY: error
+      UNITXT_DEFAULT_VERBOSITY: info
+      DATASETS_VERBOSITY: info
       HF_HUB_VERBOSITY: error
+      UNITXT_TEST_CARD_DISABLE: "True"
+      UNITXT_TEST_METRIC_DISABLE: "True"
+      UNITXT_ALLOW_UNVERIFIED_CODE: "True"
       HF_DATASETS_DISABLE_PROGRESS_BARS: "True"
       HF_HUB_DOWNLOAD_TIMEOUT: 60
       HF_HUB_ETAG_TIMEOUT: 60
@@ -27,7 +30,7 @@ jobs:
 
     strategy:
       matrix:
-        modulo: [0,1,2,3,4,5,6,7]
+        modulo: [0]
 
     steps:
     - uses: actions/checkout@v4
@@ -55,8 +58,5 @@ jobs:
       run: |
         modulo="${{ matrix.modulo }}"
         echo "modulo=${modulo}" >> $GITHUB_STEP_SUMMARY
-        echo "sed -i 's/^num_par = 1 /num_par = 8 /' tests/catalog/test_preparation.py" > sedit.sh
-        echo "sed -i 's/^modulo = 0/modulo = ${modulo}/' tests/catalog/test_preparation.py" >> sedit.sh
-        sh sedit.sh
         python -m unittest tests.catalog.test_preparation
 

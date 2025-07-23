@@ -128,6 +128,8 @@ def add_to_catalog(
     catalog_path: Optional[str] = None,
     verbose=True,
 ):
+    from .api import load_recipe
+
     reset_artifacts_json_cache()
     if catalog is None:
         if catalog_path is None:
@@ -135,6 +137,18 @@ def add_to_catalog(
         catalog = LocalCatalog(location=catalog_path)
     verify_legal_catalog_name(name)
     catalog.save_artifact(artifact, name, overwrite=overwrite, verbose=verbose)
+    recipe = load_recipe(card=name)
+    ms = recipe()
+    keys = list(ms.keys())
+    logger.warning(f"card_name= {name}, ms_keys are {keys}")
+    if "test" in ms:
+        length = len(list(ms["test"]))
+        logger.warning(f"for split test, dataset_length = {length}")
+    else:
+        split = next(iter(ms.keys()))
+        length = len(list(ms[split]))
+        logger.warning(f"available split: {split}")
+        logger.warning(f"for split {split} dataset_length = {length}")
 
 
 def add_link_to_catalog(
