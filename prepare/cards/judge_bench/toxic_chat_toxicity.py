@@ -41,7 +41,7 @@ card = TaskCard(
         input_fields={"text": str, "label": str, "criteria": Any},
         reference_fields={"label_value": float},
         prediction_type=float,
-        metrics=["metrics.spearman", "metrics.accuracy"],
+        metrics=["metrics.accuracy", "metrics.f1_macro"],
         default_template="templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]",
     ),
     templates=[

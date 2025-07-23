@@ -6146,12 +6146,16 @@ class NormalizedSacrebleu(HuggingfaceMetric):
 
 
 class CustomF1Fuzzy(CustomF1):
-    def calculate_groups_ratio(self, actual_group, total_group):
-        from fuzzywuzzy import fuzz
+    min_score_for_match: float
 
+    @abstractmethod
+    def score(self, val1, val2) -> float:
+        pass
+
+    def calculate_groups_ratio(self, actual_group, total_group):
         tmp = []
         for actual_key in actual_group.keys():
-            max_score = self.fuzz_ratio
+            max_score = self.min_score_for_match
             best_total_key = None
 
             for total_key in total_group.keys():
@@ -6159,8 +6163,8 @@ class CustomF1Fuzzy(CustomF1):
                 tup_to = ast.literal_eval(total_key)
 
                 if tup_ac[1] == tup_to[1]:
-                    score = fuzz.ratio(tup_ac[0], tup_to[0])
-                    if score > max_score:
+                    score = self.score(tup_ac[0], tup_to[0])
+                    if score >= max_score:
                         max_score = score
                         best_total_key = total_key
 
@@ -6173,7 +6177,57 @@ class CustomF1Fuzzy(CustomF1):
 
 class FuzzyNer(CustomF1Fuzzy):
     prediction_type = List[Tuple[str, str]]
-    fuzz_ratio = 75
+    min_score_for_match = 0.750001  # Used to be > 0.75, and now changed to >= 0.750001
+
+    def score(self, val1, val2):
+        from fuzzywuzzy import fuzz
+
+        return fuzz.ratio(val1, val2) / 100.0
+
+    def get_element_group(self, element, additional_input):
+        return element[1]
+
+    def get_element_representation(self, element, additional_input):
+        return str(element)
+
+
+class MetricBasedNer(CustomF1Fuzzy):
+    """Calculates f1 metrics for NER , by comparing entity using a provided Unitxt metric.
+
+    While the Ner metric uses exact match to compare entities and FuzzyNer uses fuzzy matching,
+    this customiziable metric can use any Unitxt metric to compare entities, including LLM as Judge.
+    The metric must acceptstring prediction and references as input.  The similarity threshold is
+    set by the 'min_score_for_match' attribute.
+
+    Example:
+    MetricBasedNer(metric=Rouge(), min_score_for_match=0.9)
+
+    MetricBasedNer(metric="metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteria=metrics.llm_as_judge.direct.criteria.correctness_based_on_ground_truth,context_fields=ground_truth]")
+    """
+
+    prediction_type = List[Tuple[str, str]]
+    metric: Metric
+    min_score_for_match = 0.75
+
+    def score(self, val1, val2):
+        multi_stream = MultiStream.from_iterables(
+            {
+                "test": [
+                    {
+                        "prediction": val1,
+                        "references": [val2],
+                        "task_data": {
+                            "ground_truth": val2,
+                            "reference": val2,
+                        },
+                    }
+                ]
+            }
+        )
+        output_multi_stream = self.metric(multi_stream)
+        output_stream = output_multi_stream["test"]
+        result = next(iter(output_stream))
+        return result["score"]["global"]["score"]
 
     def get_element_group(self, element, additional_input):
         return element[1]

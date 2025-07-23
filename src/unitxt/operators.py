@@ -536,7 +536,11 @@ class InstanceFieldOperator(InstanceOperator):
                         continue
                     old_value = self.get_default
 
-            with error_context(self, field=from_field, action="Process Field"):
+            with error_context(
+                self,
+                field=from_field,
+                action="Process Field",
+            ):
                 if self.process_every_value:
                     new_value = [
                         self.process_instance_value(value, instance)

@@ -1,0 +1,29 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "step_by_step_reasoning_redundancy",
+    "description": "Does this step contain any information not required to answer the question asked despite being factual and consistent with the context?",
+    "prediction_field": "step",
+    "context_fields": [
+        "question",
+        "premise",
+        "hypothesis",
+        "model reasoning",
+        "correct answer"
+    ],
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": ""
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": ""
+        }
+    ],
+    "option_map": {
+        "Yes": 0.0,
+        "No": 1.0
+    }
+}
