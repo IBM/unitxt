@@ -1384,3 +1384,66 @@ class LoadIOB(LazyLoader):
         # Yield instances from cached dataset
         for instance in dataset:
             yield recursive_copy(instance)
+
+
+class TURLColumnTypeAnnotationLoader(LazyLoader):
+    data_classification_policy = ["public"]
+    _requirements_list = ["huggingface_hub"]
+
+    def prepare(self):
+        super().prepare()
+        from huggingface_hub import hf_hub_download
+
+        self._download = hf_hub_download
+
+    def get_splits(self) -> List[str]:
+        return ["train", "validation", "test"]
+
+    @staticmethod
+    def _load_table(table_data):
+        headers = table_data[5]
+        cols = table_data[6]
+        if not cols:
+            return {"header": headers, "rows": []}
+        row_count = max(x[-1][0][0] for x in cols)
+        rows = []
+        for i in range(row_count):
+            row = []
+            for col in cols:
+                cell = next((c[1][1] for c in col if c[0][0] == i), "")
+                row.append(cell)
+            if any(row):
+                rows.append(row)
+        return {"header": headers, "rows": rows}
+
+    def split_generator(self, split: str) -> Generator[Dict[str, Any], None, None]:
+        dataset_id = str(self) + "_" + split
+        dataset = self.__class__._loader_cache.get(dataset_id, None)
+        if split == "validation":
+            split = "dev"
+        if dataset is None:
+            file_path = self._download(
+                "stanford-crfm/helm-scenarios",
+                filename=f"turl-column-type-annotation/{split}.table_col_type.json",
+                repo_type="dataset",
+                revision="main",
+            )
+            with open(file_path, encoding="utf-8") as f:
+                data = json.load(f)
+            dataset = []
+            for table_data in data:
+                table_content = self._load_table(table_data)
+                for idx, colname in enumerate(table_data[5]):
+                    instance = {
+                        "page_title": table_data[1],
+                        "section_title": table_data[3],
+                        "table_caption": table_data[4],
+                        "table": table_content,
+                        "colname": colname,
+                        "annotations": table_data[7][idx],
+                    }
+                    dataset.append(instance)
+            self.__class__._loader_cache[dataset_id] = dataset
+
+        for instance in self.__class__._loader_cache[dataset_id]:
+            yield instance
