@@ -3,7 +3,9 @@ import threading
 import time
 
 from unitxt.utils import (
+    DistributionNotFound,
     LRUCache,
+    VersionConflict,
     deep_copy,
     is_module_available,
     is_package_installed,
@@ -11,6 +13,7 @@ from unitxt.utils import (
     recursive_deep_copy,
     recursive_shallow_copy,
     remove_numerics_and_quoted_texts,
+    require,
     shallow_copy,
 )
 
@@ -404,3 +407,17 @@ class TestUtils(UnitxtTestCase):
             cache_len, has_key = thread_states[thread_id]
             self.assertEqual(cache_len, 1)
             self.assertTrue(has_key)
+
+    def test_require_errors(self):
+        require("pip")
+        with self.assertRaises(DistributionNotFound):
+            require("definitely-not-a-package-xyz123")
+        with self.assertRaises(VersionConflict) as cm:
+            require("pip>=100.0.0")
+        e = cm.exception
+        self.assertEqual(e.dist.project_name, "pip")
+        self.assertEqual(e.req, "pip>=100.0.0")
+        try:
+            require("some-nonexistent-package; python_version<'0'")
+        except Exception as e:
+            self.fail(f"Unexpected error for marker-not-applicable: {e}")

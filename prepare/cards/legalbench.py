@@ -100,7 +100,13 @@ task_cfgs = {
 
 for task_name, task_cfg in task_cfgs.items():
     card = TaskCard(
-        loader=LoadHF(path="nguha/legalbench", name=task_name),
+        loader=LoadHF(
+            path="nguha/legalbench",
+            revision="refs/convert/parquet",
+            splits=["train", "test"],
+            data_dir=task_name,
+            data_classification_policy=["public"],
+        ),
         preprocess_steps=(
             [Shuffle(page_size=sys.maxsize)]
             + (

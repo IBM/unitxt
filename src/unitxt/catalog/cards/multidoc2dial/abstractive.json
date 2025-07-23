@@ -2,7 +2,17 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "multidoc2dial"
+        "path": "IBM/multidoc2dial",
+        "data_dir": "multidoc2dial",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "validation",
+            "test"
+        ],
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {

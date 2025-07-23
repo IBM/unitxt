@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "yoruba",
+        "revision": "refs/convert/parquet",
+        "data_dir": "yoruba",
         "splits": [
             "test",
             "train",

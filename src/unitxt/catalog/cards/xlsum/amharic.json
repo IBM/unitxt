@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "amharic",
+        "revision": "refs/convert/parquet",
+        "data_dir": "amharic",
         "splits": [
             "test",
             "train",

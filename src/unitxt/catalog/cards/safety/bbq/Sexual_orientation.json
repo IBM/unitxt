@@ -3,7 +3,11 @@
     "loader": {
         "__type__": "load_hf",
         "path": "heegyu/bbq",
-        "name": "Sexual_orientation",
+        "revision": "refs/convert/parquet",
+        "data_dir": "Sexual_orientation",
+        "splits": [
+            "test"
+        ],
         "data_classification_policy": [
             "public"
         ]

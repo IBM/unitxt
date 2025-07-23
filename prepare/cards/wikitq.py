@@ -1,26 +1,38 @@
 from unitxt.blocks import (
-    LoadHF,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import Copy, FilterByCondition, Set
-from unitxt.struct_data_operators import GetNumOfTableCells
+from unitxt.loaders import LoadCSV
+from unitxt.operators import Copy, FilterByCondition, ReadFile, Rename, Set
+from unitxt.string_operators import FormatText, Split
+from unitxt.struct_data_operators import GetNumOfTableCells, ParseCSV
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
+base_url = "https://raw.githubusercontent.com/ppasupat/WikiTableQuestions/master/data"
+table_url_format = "https://raw.githubusercontent.com/ppasupat/WikiTableQuestions/refs/heads/master/{context}"
+
 card = TaskCard(
-    # Adjust the num_proc value according to the number of CPU cores available for faster loading
-    loader=LoadHF(
-        path="wikitablequestions", data_classification_policy=["public"], num_proc=10
+    loader=LoadCSV(
+        files={
+            "train": f"{base_url}/random-split-1-train.tsv",
+            "validation": f"{base_url}/random-split-1-dev.tsv",
+            "test": f"{base_url}/pristine-unseen-tables.tsv",
+        },
+        sep="\t",
+        # column_names=["id", "question", "table_name", "answer"],
+        data_classification_policy=["public"],
     ),
     preprocess_steps=[
+        Rename(field="utterance", to_field="question"),
+        Split(field="targetValue", to_field="answers", by="|"),
         Set({"context_type": "table"}),
+        FormatText(text=table_url_format, to_field="table_url"),
+        ReadFile(field="table_url", to_field="table_content"),
+        ParseCSV(field="table_content", to_field="table", separator="\t"),
         GetNumOfTableCells(field="table", to_field="table_cell_size"),
-        FilterByCondition(
-            values={"table_cell_size": 200}, condition="le"
-        ),  # filter out tables with more than 200 cells
+        FilterByCondition(values={"table_cell_size": 200}, condition="le"),
         Copy(field="table", to_field="context"),
-        # TruncateTableRows(field="table", to_field="context"),
     ],
     task="tasks.qa.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
     templates=[

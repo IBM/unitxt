@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "sinhala",
+        "revision": "refs/convert/parquet",
+        "data_dir": "sinhala",
         "splits": [
             "test",
             "train",

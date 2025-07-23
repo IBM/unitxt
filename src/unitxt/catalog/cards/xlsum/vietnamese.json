@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "vietnamese",
+        "revision": "refs/convert/parquet",
+        "data_dir": "vietnamese",
         "splits": [
             "test",
             "train",

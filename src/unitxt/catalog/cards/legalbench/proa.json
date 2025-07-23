@@ -3,7 +3,15 @@
     "loader": {
         "__type__": "load_hf",
         "path": "nguha/legalbench",
-        "name": "proa"
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "test"
+        ],
+        "data_dir": "proa",
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {

@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "tigrinya",
+        "revision": "refs/convert/parquet",
+        "data_dir": "tigrinya",
         "splits": [
             "test",
             "train",

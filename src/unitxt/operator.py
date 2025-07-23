@@ -2,13 +2,12 @@ from abc import abstractmethod
 from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional, Union
 
-from pkg_resources import DistributionNotFound, VersionConflict, require
-
 from .artifact import Artifact
 from .dataclass import FinalField, InternalField, NonPositionalField
 from .error_utils import error_context
 from .settings_utils import get_constants
 from .stream import DynamicStream, EmptyStreamError, MultiStream, Stream
+from .utils import DistributionNotFound, VersionConflict, require
 
 constants = get_constants()
 
