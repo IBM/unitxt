@@ -32,7 +32,7 @@ logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
 # the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,.. num_par-1
-modulo = 6
+modulo = 7
 all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
 ]
@@ -195,8 +195,8 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/rag/end_to_end/real_mm_rag.py - gets stuck in the second set of cards
 # cards/safety/simple_safety_tests.py - passed
 # cards/tab_fact.py - passed
-# cards/translation/wmt/en_fr.py -
-# cards/xlam_function_calling.py -
+# cards/translation/wmt/en_fr.py - passed
+# cards/xlam_function_calling.py - cards.xlam_function_calling_60k fails on instance 15 for schema verification
 
 # mod 4
 # cards/ag_news.py - passed
@@ -219,13 +219,13 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/attaq.py - passed
 # cards/claim_stance_topic.py - passed
 # cards/doc_vqa.py - gets stuck, kills ubuntu
-# cards/gpqa.py -
-# cards/judge_bench/toxic_chat_jailbreak.py -
-# cards/mmlu.py -
-# cards/mt_bench/response_assessment/rating/multi_turn_gpt4_judgement.py -
-# cards/pop_qa_robust.py -
-# cards/ragbench.py -
-# cards/safety/xstest.py -
-# cards/tablebench_data_analysis.py -
-# cards/trec.py -
-# cards/xnli.py -
+# cards/gpqa.py - cards.gpqa.experts , instance 0 fails: query "Correct Answer" did not match any item in dict: (listFieldValues)
+# cards/judge_bench/toxic_chat_jailbreak.py - passed
+# cards/mmlu.py - passed
+# cards/mt_bench/response_assessment/rating/multi_turn_gpt4_judgement.py - passed
+# cards/pop_qa_robust.py - passed
+# cards/ragbench.py - passed
+# cards/safety/xstest.py - passed
+# cards/tablebench_data_analysis.py - passed
+# cards/trec.py - passed
+# cards/xnli.py - passed
