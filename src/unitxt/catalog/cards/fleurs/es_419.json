@@ -1,0 +1,34 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "google/fleurs",
+        "revision": "refs/convert/parquet",
+        "data_dir": "es_419",
+        "splits": [
+            "train",
+            "validation",
+            "test"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "to_audio",
+            "field": "audio"
+        },
+        {
+            "__type__": "rename",
+            "field": "transcription",
+            "to_field": "translation"
+        },
+        {
+            "__type__": "rename",
+            "field": "language",
+            "to_field": "target_language"
+        }
+    ],
+    "task": "tasks.translation.speech",
+    "templates": [
+        "templates.translation.speech.default"
+    ]
+}

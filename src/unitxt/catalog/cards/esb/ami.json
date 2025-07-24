@@ -1,0 +1,43 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "hf-audio/esb-datasets-test-only-sorted",
+        "name": "ami",
+        "splits": [
+            "test"
+        ],
+        "data_classification_policy": [
+            "public"
+        ],
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "to_audio",
+            "field": "audio"
+        }
+    ],
+    "task": "tasks.speech_recognition",
+    "templates": [
+        "templates.speech_recognition.default"
+    ],
+    "__tags__": {
+        "license": "cc-by-4.0",
+        "language": "en",
+        "task_categories": [
+            "automatic-speech-recognition"
+        ],
+        "size_categories": [
+            "10K<n<100K"
+        ],
+        "modalities": [
+            "audio",
+            "text"
+        ],
+        "source": "AMI Meeting Corpus",
+        "benchmark": "ESB"
+    },
+    "__description__": "AMI Meeting Corpus from ESB (End-to-End Speech Benchmark) - Meeting recordings with standardized preprocessing and consistent formatting. Test-only split from the unified ESB dataset collection.",
+    "__title__": "ESB-AMI"
+}
