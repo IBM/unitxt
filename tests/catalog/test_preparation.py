@@ -32,7 +32,7 @@ logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
 # the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,.. num_par-1
-modulo = 0
+modulo = 1
 all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
 ]
@@ -48,12 +48,12 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
             f"Testing {len(all_preparation_files)} preparation files: \n{all_preparation_files_as_string}\n"
         )
         stats = {}
-        for file in all_preparation_files:
+        for j, file in enumerate(all_preparation_files):
             # passed = True
             error = None
             logger.info(
                 "\n_____________________________________________\n"
-                f"  Testing preparation file:\n  {file}."
+                f"  Testing preparation file:\n  {file}. number {j}"
                 "\n_____________________________________________\n"
             )
             process = psutil.Process()
@@ -132,3 +132,19 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         logger.critical(f"Preparation times table for {len(stats)} files:")
         times = dict(sorted(stats.items(), key=lambda item: item[1], reverse=True))
         print_dict(times, log_level="critical")
+
+
+# cards/20_newsgroups.py - passed
+# cards/arena_hard/response_assessment/pairwise_comparative_rating/both_games_gpt4_judge.py  failed with error: The Huggingface space 'lmsys/arena-hard-browser' was not found.
+# cards/bold.py  - passed
+# cards/copa.py - passed
+# cards/financial_tweets.py - passed
+# cards/judge_bench/dices_safety.py - passed
+# cards/long_bench.py - passed
+# cards/mt_bench/generation/japanese_single_turn.py - passed
+# cards/numeric_nlg.py - passed
+# cards/rag/end_to_end/clapnq.py - passed
+# cards/safety/discrim_eval.py - passed
+# cards/sst2.py - passed
+# cards/toxigen.py - passed
+# cards/winogrande.py - passed
