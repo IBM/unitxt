@@ -32,7 +32,7 @@ logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
 # the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,.. num_par-1
-modulo = 5
+modulo = 6
 all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
 ]
@@ -49,8 +49,6 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         )
         stats = {}
         for j, file in enumerate(all_preparation_files):
-            if "cards/doc_vqa.py" in file:
-                continue
             # passed = True
             error = None
             logger.info(
@@ -220,7 +218,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/ai2d.py - passed
 # cards/attaq.py - passed
 # cards/claim_stance_topic.py - passed
-# cards/doc_vqa.py -
+# cards/doc_vqa.py - gets stuck, kills ubuntu
 # cards/gpqa.py -
 # cards/judge_bench/toxic_chat_jailbreak.py -
 # cards/mmlu.py -
