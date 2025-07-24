@@ -32,7 +32,7 @@ logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
 # the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,.. num_par-1
-modulo = 9
+modulo = 10
 all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
 ]
@@ -279,3 +279,16 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/yahoo_answers_topics.py - passed
 
 # mod 9:
+# cards/arc.py - passed
+# cards/belebele.py -
+# cards/coedit.py -
+# cards/ffqa_filtered.py -
+# cards/human_eval.py -
+# cards/law_stack_exchange.py -
+# cards/mrpc.py -
+# cards/mtrag.py -
+# cards/quality.py -
+# cards/rte.py -
+# cards/simple_qa.py -
+# cards/text2sql.py -
+# cards/websrc.py -
