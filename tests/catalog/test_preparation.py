@@ -27,7 +27,7 @@ all_preparation_files = glob.glob(glob_query, recursive=True)
 # Make sure the order in which the tests are run is deterministic
 # Having a different order for local testing and github testing may cause diffs in results.
 all_preparation_files.sort()
-num_par = 1  # num of parallel executions
+num_par = 12  # num of parallel executions
 logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
