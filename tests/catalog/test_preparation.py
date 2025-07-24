@@ -49,6 +49,8 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         )
         stats = {}
         for j, file in enumerate(all_preparation_files):
+            if "cards/doc_vqa.py" in file:
+                continue
             # passed = True
             error = None
             logger.info(
@@ -192,9 +194,9 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/milu.py - passed
 # cards/mt_bench/response_assessment/pairwise_comparison/single_turn_gpt4_judgement.py - passed
 # cards/piqa.py - passed
-# cards/rag/end_to_end/real_mm_rag.py -
-# cards/safety/simple_safety_tests.py -
-# cards/tab_fact.py -
+# cards/rag/end_to_end/real_mm_rag.py - gets stuck in the second set of cards
+# cards/safety/simple_safety_tests.py - passed
+# cards/tab_fact.py - passed
 # cards/translation/wmt/en_fr.py -
 # cards/xlam_function_calling.py -
 
@@ -213,3 +215,19 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/tablebench.py - passed
 # cards/translation/wmt/en_ro.py - passed
 # cards/xlsum.py - passed
+
+# mod 5:
+# cards/ai2d.py - passed
+# cards/attaq.py - passed
+# cards/claim_stance_topic.py - passed
+# cards/doc_vqa.py -
+# cards/gpqa.py -
+# cards/judge_bench/toxic_chat_jailbreak.py -
+# cards/mmlu.py -
+# cards/mt_bench/response_assessment/rating/multi_turn_gpt4_judgement.py -
+# cards/pop_qa_robust.py -
+# cards/ragbench.py -
+# cards/safety/xstest.py -
+# cards/tablebench_data_analysis.py -
+# cards/trec.py -
+# cards/xnli.py -

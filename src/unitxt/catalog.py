@@ -137,6 +137,7 @@ def add_to_catalog(
         catalog = LocalCatalog(location=catalog_path)
     verify_legal_catalog_name(name)
     catalog.save_artifact(artifact, name, overwrite=overwrite, verbose=verbose)
+    logger.warning(f"starting to check card at {name}")
     recipe = load_recipe(card=name)
     ms = recipe()
     keys = list(ms.keys())
