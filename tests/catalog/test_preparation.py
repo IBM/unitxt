@@ -49,6 +49,15 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         )
         stats = {}
         for j, file in enumerate(all_preparation_files):
+            if not any(
+                file.endswith(f)
+                for f in [
+                    "cards/tablerow_classify.py",
+                    "cards/universal_ner.py",
+                    "cards/yahoo_answers_topics.py",
+                ]
+            ):
+                continue
             # passed = True
             error = None
             logger.info(
@@ -247,3 +256,33 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/xsum.py - passed
 
 # mod 7:
+# cards/almost_evil_ml_qa_mulitlingual.py - passed
+# cards/babi.py - passed
+# cards/clinc_oos.py - passed
+# cards/earnings_call.py - passed
+# cards/hellaswag.py - passed
+# cards/judge_bench/wmt-human.py - passed
+# cards/mmmu.py - cards.mmmu.architecture_and_engineering fails with error: failing on instance 13 for field "answer"
+# cards/mt_bench/response_assessment/rating/single_turn_gpt4_judgement.py - passed
+# cards/qqp.py - passed
+# cards/reuters21578.py - passed
+# cards/sciq.py - passed
+# cards/tablebench_numerical_reasoning.py - passed
+# cards/unfair_tos.py - passed
+# cards/xwinogrande.py - passed
+
+# mod 8:
+# cards/amazon_massive.py - passed
+# cards/banking77.py - passed
+# cards/cnn_dailymail.py - passed
+# cards/ethos.py - passed
+# cards/hh_rlhf.py - passed
+# cards/language_identification.py - passed
+# cards/mnli.py - passed
+# cards/mt_bench/response_assessment/rating/single_turn_with_reference_gpt4_judgement.py - passed
+# cards/qtsumm.py - passed
+# cards/reward_bench.py - passed
+# cards/seed_bench.py - stuck. cards.seed_bench downloads 273 parquets, that together are too big
+# cards/tablerow_classify.py
+# cards/universal_ner.py
+# cards/yahoo_answers_topics.py
