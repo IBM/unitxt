@@ -32,7 +32,7 @@ logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
 # the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,.. num_par-1
-modulo = 1
+modulo = 2
 all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
 ]
@@ -134,6 +134,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         print_dict(times, log_level="critical")
 
 
+# mod 0
 # cards/20_newsgroups.py - passed
 # cards/arena_hard/response_assessment/pairwise_comparative_rating/both_games_gpt4_judge.py  failed with error: The Huggingface space 'lmsys/arena-hard-browser' was not found.
 # cards/bold.py  - passed
@@ -148,3 +149,21 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/sst2.py - passed
 # cards/toxigen.py - passed
 # cards/winogrande.py - passed
+
+# mod 1
+# cards/20_newsgroups_short.py - passed
+# cards/arena_hard/response_assessment/pairwise_comparative_rating/both_games_mean_judgment_gpt4_judge.py - failed with error: The Huggingface space 'lmsys/arena-hard-browser' was not found.
+# cards/boolq.py - passed
+# cards/coqa.py - passed
+# cards/frames_benchmark.py - passed
+# cards/judge_bench/inferential_strategies.py - fails on instance 240: query "instance/problem_statement" did not match any item in dict:
+# cards/mbpp.py - passed
+# cards/mt_bench/response_assessment/pairwise_comparison/multi_turn_gpt4_judgement.py - passed
+# cards/open_australian_legal_qa.py - passed
+# cards/rag/end_to_end/hotpotqa.py - passed
+# cards/safety/mlcommons_ailuminate.py - passed
+# cards/stsb.py - passed
+# cards/translation/flores101.py - passed
+# cards/wnli.py - passed
+
+# mod 2:
