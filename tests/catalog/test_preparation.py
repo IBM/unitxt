@@ -32,7 +32,7 @@ logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
 # the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,.. num_par-1
-modulo = 7
+modulo = 8
 all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
 ]
@@ -229,3 +229,21 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/tablebench_data_analysis.py - passed
 # cards/trec.py - passed
 # cards/xnli.py - passed
+
+# mod 6:
+# cards/almost_evil_ml_qa.py - passed
+# cards/attaq_500.py - passed
+# cards/clapnq.py - passed
+# cards/dynamic_cards_for_llm_judges/llm_as_judge_metrics.py - cards.dynamic_cards_for_llm_judges.rating.single_turn failed:   No template was specified in the the 'template' or 'template_card_index' recipe arguments, and no default templates are defined the card or task
+# cards/head_qa.py - passed
+# cards/judge_bench/toxic_chat_toxicity.py - passed
+# cards/mmlu_pro.py - passed
+# cards/mt_bench/response_assessment/rating/multi_turn_with_reference_gpt4_judgement.py - passed
+# cards/qnli.py - passed
+# cards/ragbench_faithfulness.py - passed
+# cards/scigen.py - passed
+# cards/tablebench_fact_checking.py - passed
+# cards/turl_col_type.py - passed
+# cards/xsum.py - passed
+
+# mod 7:
