@@ -167,3 +167,17 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/wnli.py - passed
 
 # mod 2:
+# cards/20newsgroups_sklearn.py - passed
+# cards/arena_hard/response_assessment/pairwise_comparative_rating/first_game_only_gpt4_judge.py - failed with error: The Huggingface space 'lmsys/arena-hard-browser' was not found.
+# cards/boolq_indic.py - passed
+# cards/coqa_multi_turn.py - passed
+# cards/global_mmlu.py -  cards.global_mmlu.am.clinical_knowledge fails on schema verification: Passed value [None, 'ኢንሱሊን ሲኖር ብቻ።', 'በሄክሶኪናሴስ በኩል።', 'በሞኖካርቢሊክ አሲድ ማጓጓዣዎች።'] of field 'choices' is not of required type: (List[str]) in Task ('tasks.qa.multiple_choice.with_topic').
+# cards/judge_bench/newsroom.py - passed
+# cards/medical_abstracts.py - passed
+# cards/mt_bench/response_assessment/pairwise_comparison/multi_turn_with_reference_gpt4_judgement.py - passed
+# cards/openbookqa.py - passed
+# cards/rag/end_to_end/miniwikipedia.py - passed
+# cards/safety/provoq.py - passed
+# cards/summarize_from_human_feedback.py - cards.summarize_from_human_feedback fails on schema verification: Passed value None of field 'input' is not of required type: (str) in Task ('tasks.evaluation.preference').
+# cards/translation/wmt/en_de.py - passed
+# cards/wsc.py - passed
