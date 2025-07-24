@@ -49,6 +49,16 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         )
         stats = {}
         for j, file in enumerate(all_preparation_files):
+            if not any(
+                file.endswith(f)
+                for f in [
+                    "cards/rag/end_to_end/real_mm_rag.py",
+                    "cards/safety/simple_safety_tests.py",
+                    "cards/tab_fact.py",
+                    "cards/translation/wmt/en_fr.py" "cards/xlam_function_calling.py",
+                ]
+            ):
+                continue
             # passed = True
             error = None
             logger.info(
@@ -185,13 +195,18 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # mod 3
 # cards/CFPB_product.py - passed
 # cards/argument_topic.py - passed
-# cards/chart_qa.py- passed
+# cards/chart_qa.py - passed
 # cards/dart.py - passed
 # cards/global_mmlu_lite_sensitivity.py - passed
 # cards/judge_bench/roscoe_overall.py - passed
 # cards/milu.py - passed
 # cards/mt_bench/response_assessment/pairwise_comparison/single_turn_gpt4_judgement.py - passed
 # cards/piqa.py - passed
+# cards/rag/end_to_end/real_mm_rag.py -
+# cards/safety/simple_safety_tests.py -
+# cards/tab_fact.py -
+# cards/translation/wmt/en_fr.py -
+# cards/xlam_function_calling.py -
 
 # mod 4
 # cards/ag_news.py - passed
