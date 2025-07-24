@@ -32,7 +32,7 @@ logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
 # the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,.. num_par-1
-modulo = 4
+modulo = 3
 all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
 ]
@@ -194,17 +194,17 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/piqa.py - passed
 
 # mod 4
-# cards/ag_news.py
-# cards/atis.py
-# cards/chat_rag_bench.py
-# cards/dbpedia_14.py
-# cards/go_emotions.py
-# cards/judge_bench/roscoe_stepwise.py
-# cards/mlsum.py
-# cards/mt_bench/response_assessment/pairwise_comparison/single_turn_with_reference_gpt4_judgement.py
-# cards/pop_qa.py
-# cards/rag/end_to_end/watsonx.py
-# cards/safety/truthful_qa.py
-# cards/tablebench.py
-# cards/translation/wmt/en_ro.py
-# cards/xlsum.py
+# cards/ag_news.py - passed
+# cards/atis.py - passed
+# cards/chat_rag_bench.py - passed
+# cards/dbpedia_14.py - passed
+# cards/go_emotions.py - passed
+# cards/judge_bench/roscoe_stepwise.py - passed
+# cards/mlsum.py - cards.mlsum.de fails: The HTTP server doesn't appear to support range requests. Only reading this file from the beginning is supported. Open with block_size=0 for a streaming file interface.
+# cards/mt_bench/response_assessment/pairwise_comparison/single_turn_with_reference_gpt4_judgement.py - passed
+# cards/pop_qa.py - passed
+# cards/rag/end_to_end/watsonx.py - passed
+# cards/safety/truthful_qa.py - passed
+# cards/tablebench.py - passed
+# cards/translation/wmt/en_ro.py - passed
+# cards/xlsum.py - passed
