@@ -32,7 +32,7 @@ logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
 # the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,.. num_par-1
-modulo = 2
+modulo = 3
 all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
 ]
