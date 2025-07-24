@@ -436,7 +436,7 @@ class GlobalScores(dict):
 
     @property
     def summary(self):
-        df = self.to_df().round(2).fillna("")
+        df = self.to_df().round(4).fillna("")
         df = df.sort_index()
         df = df.drop("num_of_instances", axis=0)
         df = df.reset_index()

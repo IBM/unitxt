@@ -5,7 +5,7 @@ from unitxt.inference import (
 from unitxt.system_prompts import TextualSystemPrompt
 
 test_dataset = load_dataset(
-    card="cards.ami",
+    card="cards.esb.ami",
     split="test",
     format="formats.chat_api",
     max_test_instances=10,

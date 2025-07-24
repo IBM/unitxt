@@ -7,6 +7,7 @@ from unitxt.system_prompts import TextualSystemPrompt
 dataset = load_dataset(
     "benchmarks.speech_recognition",
     max_samples_per_subset=5,
+    subset="ami",
     system_prompt=TextualSystemPrompt(
         text="Knowledge Cutoff Date: April 2024.\nToday's Date: December 19, 2024.\nYou are Granite, developed by IBM. You are a helpful AI assistant"
     ),
