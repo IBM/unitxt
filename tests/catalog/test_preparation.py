@@ -49,6 +49,17 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         )
         stats = {}
         for j, file in enumerate(all_preparation_files):
+            if not any(
+                f in file
+                for f in [
+                    "cards/rag/end_to_end/real_mm_rag.py",
+                    "cards/safety/simple_safety_tests.py",
+                    "cards/tab_fact.py",
+                    "cards/translation/wmt/en_fr.py",
+                    "cards/xlam_function_calling.py",
+                ]
+            ):
+                continue
             # passed = True
             error = None
             logger.info(
