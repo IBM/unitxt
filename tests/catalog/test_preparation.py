@@ -181,3 +181,30 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/summarize_from_human_feedback.py - cards.summarize_from_human_feedback fails on schema verification: Passed value None of field 'input' is not of required type: (str) in Task ('tasks.evaluation.preference').
 # cards/translation/wmt/en_de.py - passed
 # cards/wsc.py - passed
+
+# mod 3
+# cards/CFPB_product.py - passed
+# cards/argument_topic.py - passed
+# cards/chart_qa.py- passed
+# cards/dart.py - passed
+# cards/global_mmlu_lite_sensitivity.py - passed
+# cards/judge_bench/roscoe_overall.py - passed
+# cards/milu.py - passed
+# cards/mt_bench/response_assessment/pairwise_comparison/single_turn_gpt4_judgement.py - passed
+# cards/piqa.py - passed
+
+# mod 4
+# cards/ag_news.py
+# cards/atis.py
+# cards/chat_rag_bench.py
+# cards/dbpedia_14.py
+# cards/go_emotions.py
+# cards/judge_bench/roscoe_stepwise.py
+# cards/mlsum.py
+# cards/mt_bench/response_assessment/pairwise_comparison/single_turn_with_reference_gpt4_judgement.py
+# cards/pop_qa.py
+# cards/rag/end_to_end/watsonx.py
+# cards/safety/truthful_qa.py
+# cards/tablebench.py
+# cards/translation/wmt/en_ro.py
+# cards/xlsum.py
