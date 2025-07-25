@@ -55,6 +55,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                     "cards/cohere_for_ai.py",
                     "cards/info_vqa.py",
                     "cards/bfcl.py",
+                    "cards/safety/airbench2024.py",
                 ]
             ):
                 continue
@@ -308,11 +309,11 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/cohere_for_ai.py - fails, gets stuck for cards.cohere_for_ai.dolly_machine_translated.por
 # cards/fin_qa.py - passed
 # cards/info_vqa.py - stuck
-# cards/ledgar.py -
-# cards/mt_bench/common.py -
-# cards/multidoc2dial.py -
-# cards/race.py -
-# cards/safety/airbench2024.py -
+# cards/ledgar.py - passed
+# cards/mt_bench/common.py - fails, this, too, adds an operator to the catalog, not a card
+# cards/multidoc2dial.py - passed
+# cards/race.py - passed
+# cards/safety/airbench2024.py - stuck
 # cards/social_iqa.py -
 # cards/tldr.py -
 # cards/wiki_bio.py -
