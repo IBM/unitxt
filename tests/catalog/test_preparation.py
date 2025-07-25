@@ -32,7 +32,7 @@ logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
 # the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,.. num_par-1
-modulo = 10
+modulo = 11
 all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
 ]
@@ -49,17 +49,17 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         )
         stats = {}
         for j, file in enumerate(all_preparation_files):
-            if any(
-                file.endswith(f)
-                for f in [
-                    "cards/cohere_for_ai.py",
-                    "cards/info_vqa.py",
-                    "cards/bfcl.py",
-                    "cards/safety/airbench2024.py",
-                    "cards/social_iqa.py",
-                ]
-            ):
-                continue
+            # if any(
+            #     file.endswith(f)
+            #     for f in [
+            #         "cards/cohere_for_ai.py",
+            #         "cards/info_vqa.py",
+            #         "cards/bfcl.py",
+            #         "cards/safety/airbench2024.py",
+            #         "cards/social_iqa.py",
+            #     ]
+            # ):
+            #     continue
             # passed = True
             error = None
             logger.info(
@@ -315,6 +315,6 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/multidoc2dial.py - passed
 # cards/race.py - passed
 # cards/safety/airbench2024.py - stuck
-# cards/social_iqa.py - stuck
+# cards/social_iqa.py -
 # cards/tldr.py -
 # cards/wiki_bio.py -

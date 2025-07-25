@@ -30,7 +30,7 @@ jobs:
 
     strategy:
       matrix:
-        modulo: [10]
+        modulo: [11]
 
     steps:
     - uses: actions/checkout@v4
