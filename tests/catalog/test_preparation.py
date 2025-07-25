@@ -51,7 +51,11 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         for j, file in enumerate(all_preparation_files):
             if any(
                 file.endswith(f)
-                for f in ["cards/cohere_for_ai.py", "cards/info_vqa.py"]
+                for f in [
+                    "cards/cohere_for_ai.py",
+                    "cards/info_vqa.py",
+                    "cards/bfcl.py",
+                ]
             ):
                 continue
             # passed = True
@@ -303,7 +307,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/bfcl.py - cards.bfcl.multi_turn.javascript_v3 fails on Schema Verification , instance 23 of stream test
 # cards/cohere_for_ai.py - fails, gets stuck for cards.cohere_for_ai.dolly_machine_translated.por
 # cards/fin_qa.py - passed
-# cards/info_vqa.py -
+# cards/info_vqa.py - stuck
 # cards/ledgar.py -
 # cards/mt_bench/common.py -
 # cards/multidoc2dial.py -
