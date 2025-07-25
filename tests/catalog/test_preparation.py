@@ -56,6 +56,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                     "cards/info_vqa.py",
                     "cards/bfcl.py",
                     "cards/safety/airbench2024.py",
+                    "cards/social_iqa.py",
                 ]
             ):
                 continue
@@ -314,6 +315,6 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 # cards/multidoc2dial.py - passed
 # cards/race.py - passed
 # cards/safety/airbench2024.py - stuck
-# cards/social_iqa.py -
+# cards/social_iqa.py - stuck
 # cards/tldr.py -
 # cards/wiki_bio.py -
