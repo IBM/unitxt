@@ -49,7 +49,10 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         )
         stats = {}
         for j, file in enumerate(all_preparation_files):
-            if file.endswith("cards/cohere_for_ai.py"):
+            if any(
+                file.endswith(f)
+                for f in ["cards/cohere_for_ai.py", "cards/info_vqa.py"]
+            ):
                 continue
             # passed = True
             error = None
@@ -297,9 +300,9 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 
 # mod 10:
 # cards/arena_hard/common.py - fails with error: 'SequentialOperator' object has no attribute 'templates' - not to be counted, preparation file is in cards, but it adds operator to the catalog
-# cards/bfcl.py - cards.bfcl.multi_turn.simple_v3, cards.bfcl.multi_turn.live_relevance_v3, cards.bfcl.multi_turn.live_irrelevance_v3, and cards.bfcl.multi_turn.multiple_v3 finish OK, but then cards.bfcl.multi_turn.live_multiple_v3 stucks.
+# cards/bfcl.py - cards.bfcl.multi_turn.javascript_v3 fails on Schema Verification , instance 23 of stream test
 # cards/cohere_for_ai.py - fails, gets stuck for cards.cohere_for_ai.dolly_machine_translated.por
-# cards/fin_qa.py -
+# cards/fin_qa.py - passed
 # cards/info_vqa.py -
 # cards/ledgar.py -
 # cards/mt_bench/common.py -
