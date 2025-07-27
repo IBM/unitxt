@@ -375,6 +375,36 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
+    def test_filter_by_condition_exists(self):
+        inputs = [
+            {"a": 1, "b": {"c": 2}},
+            {"a": 2, "b": {"c": 3}, "d": 4},
+            {"a": 1, "b": {"c": 3}},
+        ]
+
+        targets = [
+            {"a": 2, "b": {"c": 3}, "d": 4},
+        ]
+
+        check_operator(
+            operator=FilterByCondition(values={"d": True}, condition="exists"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        targets = [
+            {"a": 1, "b": {"c": 2}},
+            {"a": 1, "b": {"c": 3}},
+        ]
+
+        check_operator(
+            operator=FilterByCondition(values={"d": False}, condition="exists"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
     def test_filter_by_condition_ne(self):
         inputs = [
             {"a": [0, 10], "b": 2},
