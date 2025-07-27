@@ -3528,6 +3528,16 @@ class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
 
         score, p_value = self.spearmanr(a=list_a, b=list_b)
 
+        try:
+            score = float(score)
+        except:
+            pass
+
+        try:
+            p_value = float(p_value)
+        except:
+            pass
+
         return {
             self.main_score: score,
             "spearmanr_p_value": p_value,
