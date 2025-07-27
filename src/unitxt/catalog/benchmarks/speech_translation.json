@@ -1,34 +1,34 @@
 {
     "__type__": "benchmark",
     "subsets": {
-        "voxpopuli": {
+        "en_de": {
             "__type__": "dataset_recipe",
-            "card": "cards.esb.voxpopuli",
+            "card": "cards.fleurs.en_us.de_de",
             "format": "formats.chat_api"
         },
-        "ami": {
+        "en_es": {
             "__type__": "dataset_recipe",
-            "card": "cards.esb.ami",
+            "card": "cards.fleurs.en_us.es_419",
             "format": "formats.chat_api"
         },
-        "librispeech": {
+        "en_fr": {
             "__type__": "dataset_recipe",
-            "card": "cards.esb.librispeech",
+            "card": "cards.fleurs.en_us.fr_fr",
             "format": "formats.chat_api"
         },
-        "spgispeech": {
+        "en_it": {
             "__type__": "dataset_recipe",
-            "card": "cards.esb.spgispeech",
+            "card": "cards.fleurs.en_us.it_it",
             "format": "formats.chat_api"
         },
-        "tedlium": {
+        "en_ja": {
             "__type__": "dataset_recipe",
-            "card": "cards.esb.tedlium",
+            "card": "cards.fleurs.en_us.ja_jp",
             "format": "formats.chat_api"
         },
-        "earnings22": {
+        "en_pt": {
             "__type__": "dataset_recipe",
-            "card": "cards.esb.earnings22",
+            "card": "cards.fleurs.en_us.pt_br",
             "format": "formats.chat_api"
         }
     }

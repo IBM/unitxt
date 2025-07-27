@@ -12,10 +12,10 @@ benchmark = Benchmark(
             card="cards.esb.ami",
             format="formats.chat_api",
         ),
-        "gigaspeech": DatasetRecipe(
-            card="cards.esb.gigaspeech",
-            format="formats.chat_api",
-        ),
+        # "gigaspeech": DatasetRecipe(
+        #     card="cards.esb.gigaspeech",
+        #     format="formats.chat_api",
+        # ),
         "librispeech": DatasetRecipe(
             card="cards.esb.librispeech",
             format="formats.chat_api",
