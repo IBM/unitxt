@@ -2420,11 +2420,11 @@ class WMLInferenceEngineBase(
         self._verify_wml_credentials(self.credentials)
         return APIClient(
             credentials=Credentials(
-                api_key=self.credentials.get("api_key"), 
+                api_key=self.credentials.get("api_key"),
                 url=self.credentials["url"],
                 username=self.credentials.get("username"),
                 password=self.credentials.get("password"),
-                instance_id=self.credentials.get("instance_id")
+                instance_id=self.credentials.get("instance_id"),
             ),
             project_id=self.credentials.get("project_id", None),
             space_id=self.credentials.get("space_id", None),
