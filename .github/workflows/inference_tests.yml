@@ -42,10 +42,6 @@ jobs:
 
       - run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - run: uv pip install --system ".[tests,watsonx,inference-tests]"
-      - run: |
-          pip install transformers==4.54.0
-          pip install openai==1.97.1
-
       - name: Hugging Face Login
         run: |
           for i in {1..5}; do
