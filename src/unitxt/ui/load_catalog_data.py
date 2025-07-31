@@ -1,9 +1,15 @@
+import atexit
+import json
+import logging
 import os
+import shutil
 
 from ..error_utils import Documentation, UnitxtError, UnitxtWarning
 from ..file_utils import get_all_files_in_dir
 from ..utils import load_json
 from .settings import AUGMENTABLE_STR, CATALOG_DIR
+
+logger = logging.getLogger(__name__)
 
 
 def get_catalog_dirs():
@@ -46,21 +52,26 @@ def safe_load_json(file):
     return json
 
 
-def get_templates(template_data):
-    def get_from_str(template_str):
-        if template_str.endswith(".all"):
-            template_file = get_file_from_item_name(template_str)
-            return set(load_json(template_file)["items"])
-        return {template_str}
-
+def get_templates(template_data, card):
     if isinstance(template_data, str):
-        templates = get_from_str(template_data)
+        return get_templates_from_str(template_data)
+
+    if isinstance(template_data, dict):
+        return get_templates_from_dict(template_data, card)
+
+    if isinstance(template_data, list):
+        return get_templates_from_list(template_data, card)
+
+    raise TypeError(f"Unsupported template_data type: {type(template_data)}")
+
+
+def get_templates_from_str(template_data):
+    if template_data.endswith(".all"):
+        template_file = get_file_from_item_name(template_data)
+        templates = set(load_json(template_file)["items"])
     else:
-        templates = set()
-        for item in template_data:
-            if isinstance(item, str):
-                templates.update(get_from_str(item))
-    # templates.add("templates.key_val_with_new_lines")
+        templates = set(template_data)
+
     templates_jsons = {
         template: safe_load_json(get_file_from_item_name(template))
         for template in templates
@@ -68,11 +79,111 @@ def get_templates(template_data):
     return templates, templates_jsons
 
 
+def get_templates_from_dict(template_data, card):
+    templates, templates_jsons = set(), {}
+    templates_type = template_data.get("__type__")
+
+    if templates_type == "templates_dict":
+        _handle_templates_dict(template_data["items"], card, templates, templates_jsons)
+
+    elif templates_type == "templates_list":
+        _handle_templates_list(template_data["items"], card, templates, templates_jsons)
+
+    else:
+        _handle_plain_dict(template_data, card, templates, templates_jsons)
+
+    return templates, templates_jsons
+
+
+def get_templates_from_list(template_data, card):
+    templates, templates_jsons = set(), {}
+    _handle_templates_list(template_data, card, templates, templates_jsons)
+    return templates, templates_jsons
+
+
+def _handle_templates_dict(items, card, templates, templates_jsons):
+    for template_name, template in items.items():
+        if isinstance(template, str):
+            register_existing_template(template, templates, templates_jsons)
+        elif isinstance(template, dict):
+            register_inline_template(
+                template_name, template, card, templates, templates_jsons
+            )
+
+
+def _handle_templates_list(items, card, templates, templates_jsons):
+    for i, template in enumerate(items):
+        if isinstance(template, str):
+            register_existing_template(template, templates, templates_jsons)
+        elif isinstance(template, dict):
+            template_name = f"default_{i}"
+            register_inline_template(
+                template_name, template, card, templates, templates_jsons
+            )
+
+
+def _handle_plain_dict(data, card, templates, templates_jsons):
+    for template_name, template in data.items():
+        if isinstance(template, str):
+            register_existing_template(template, templates, templates_jsons)
+        else:
+            register_inline_template(
+                template_name, template, card, templates, templates_jsons
+            )
+
+
+def register_existing_template(template, templates, templates_jsons):
+    templates.add(template)
+    templates_jsons[template] = safe_load_json(get_file_from_item_name(template))
+
+
+def register_inline_template(template_name, template, card, templates, templates_jsons):
+    template_name_prefix = card.replace("cards.", "templates.tmp.") + ".{template}"
+    template_name = template_name_prefix.format(template=template_name)
+    templates.add(template_name)
+    templates_jsons[template_name] = template
+    save_temporary_template(template_name, template)
+
+
+def save_temporary_template(template_name, template_json):
+    full_path = os.path.join(CATALOG_DIR, template_name).replace(".", "/") + ".json"
+    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+    with open(full_path, "w") as f:
+        json.dump(template_json, f, indent=2)
+
+
+def create_temporary_dict():
+    base_temp_path = os.path.join(CATALOG_DIR, "templates")
+    temporary_dir_path = os.path.join(base_temp_path, "tmp")
+
+    if os.path.exists(temporary_dir_path):
+        shutil.rmtree(temporary_dir_path, ignore_errors=True)
+
+    os.makedirs(temporary_dir_path, exist_ok=True)
+
+    readme_path = os.path.join(temporary_dir_path, "README.txt")
+    with open(readme_path, "w") as f:
+        f.write(
+            "This is a temporary directory used by the UI to store generated templates.\n"
+            "It is automatically deleted at the start or end of each run.\n"
+            "Safe to ignore or delete manually if needed.\n"
+        )
+
+    def cleanup(*args):
+        if os.path.exists(temporary_dir_path):
+            shutil.rmtree(temporary_dir_path, ignore_errors=True)
+
+    atexit.register(cleanup)
+
+
 def load_cards_data():
     def is_valid_data(data):
-        for item in ["task", "templates"]:
-            if item not in data or isinstance(data[item], dict):
-                return False
+        if (
+            "task" not in data
+            or isinstance(data["task"], dict)
+            or "templates" not in data
+        ):
+            return False
         return True
 
     cards_data = {}
@@ -81,13 +192,11 @@ def load_cards_data():
     private_card_jsons = {}
     if PRIVATE_DIR:
         private_card_jsons = get_catalog_items_from_dir("cards", PRIVATE_DIR)
-    card_jsons = private_card_jsons
-    for card in unitxt_card_jsons:
-        if card not in card_jsons:
-            card_jsons[card] = unitxt_card_jsons[card]
-
+    card_jsons = {**unitxt_card_jsons, **private_card_jsons}
     cards = card_jsons.keys()
     json_data.update(card_jsons)
+
+    create_temporary_dict()
     for card in cards:
         data = card_jsons[card]
         if not is_valid_data(data):
@@ -97,7 +206,8 @@ def load_cards_data():
             is_augmentable = check_augmentable(task)
         else:
             is_augmentable = cards_data[task][AUGMENTABLE_STR]
-        templates, templates_jsons = get_templates(data["templates"])
+
+        templates, templates_jsons = get_templates(data["templates"], card)
         json_data.update(templates_jsons)
         cards_data.setdefault(task, {}).update(
             {card: templates, AUGMENTABLE_STR: is_augmentable}
@@ -148,14 +258,15 @@ def get_catalog_items_from_dir(items_type, dir):
 
 
 def get_catalog_items(items_type):
+    private_items_to_jsons = {}
     unitxt_items_to_jsons = get_catalog_items_from_dir(items_type, UNITXT_DIR)
-    if not PRIVATE_DIR:
-        items_to_jsons = unitxt_items_to_jsons
-    else:
-        items_to_jsons = get_catalog_items_from_dir(items_type, PRIVATE_DIR)
-        for item in unitxt_items_to_jsons:
-            if item not in items_to_jsons:
-                items_to_jsons[item] = unitxt_items_to_jsons[item]
+    if PRIVATE_DIR:
+        try:
+            private_items_to_jsons = get_catalog_items_from_dir(items_type, PRIVATE_DIR)
+        except Exception as e:
+            logger.warning(f"Failed to get {items_type}: {e}")
+
+    items_to_jsons = {**unitxt_items_to_jsons, **private_items_to_jsons}
     items = items_to_jsons.keys()
     return sorted(items), items_to_jsons
 
