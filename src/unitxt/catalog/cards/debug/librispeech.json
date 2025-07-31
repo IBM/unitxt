@@ -1,0 +1,32 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "hf-audio/esb-datasets-test-only-sorted",
+        "name": "librispeech",
+        "splits": [
+            "test.clean"
+        ],
+        "data_classification_policy": [
+            "public"
+        ],
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "test.clean": "test"
+            }
+        },
+        {
+            "__type__": "to_audio",
+            "field": "audio"
+        }
+    ],
+    "task": "tasks.speech_recognition",
+    "templates": [
+        "templates.speech_recognition.default"
+    ],
+    "__title__": "Debug-LibriSpeech"
+}
