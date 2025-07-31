@@ -5,7 +5,11 @@
         "files": {
             "train": "https://raw.githubusercontent.com/IBM/watson-machine-learning-samples/master/cloud/data/cfpb_complaints/cfpb_compliants.csv"
         },
-        "streaming": false
+        "streaming": false,
+        "indirect_read": true,
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {
