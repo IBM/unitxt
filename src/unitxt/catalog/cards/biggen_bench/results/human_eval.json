@@ -1,0 +1,108 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "prometheus-eval/BiGGen-Bench-Results",
+        "splits": [
+            "human_eval",
+            "multilingual_human_eval"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "merge_streams",
+            "streams_to_merge": [
+                "human_eval",
+                "multilingual_human_eval"
+            ],
+            "new_stream_name": "test",
+            "add_origin_stream_name": true
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "criteria": {
+                    "name": "",
+                    "description": "",
+                    "options": [
+                        {
+                            "name": "score1_description",
+                            "description": ""
+                        },
+                        {
+                            "name": "score2_description",
+                            "description": ""
+                        },
+                        {
+                            "name": "score3_description",
+                            "description": ""
+                        },
+                        {
+                            "name": "score4_description",
+                            "description": ""
+                        },
+                        {
+                            "name": "score5_description",
+                            "description": ""
+                        }
+                    ],
+                    "prediction_field": "response",
+                    "context_fields": [
+                        "system_prompt",
+                        "input",
+                        "reference_answer"
+                    ],
+                    "option_map": {
+                        "score1_description": 0.0,
+                        "score2_description": 0.25,
+                        "score3_description": 0.5,
+                        "score4_description": 0.75,
+                        "score5_description": 1.0
+                    }
+                }
+            }
+        },
+        {
+            "__type__": "cast",
+            "field": "human_score",
+            "to": "float"
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "task": "criteria/name",
+                "score_rubric/criteria": "criteria/description",
+                "score_rubric/score1_description": "criteria/options/0/description",
+                "score_rubric/score2_description": "criteria/options/1/description",
+                "score_rubric/score3_description": "criteria/options/2/description",
+                "score_rubric/score4_description": "criteria/options/3/description",
+                "score_rubric/score5_description": "criteria/options/4/description"
+            }
+        },
+        {
+            "__type__": "create_criteria_with_options_from_dict",
+            "field": "criteria"
+        }
+    ],
+    "task": {
+        "__type__": "task",
+        "input_fields": {
+            "system_prompt": "str",
+            "input": "str",
+            "response": "str",
+            "reference_answer": "str",
+            "criteria": "Any"
+        },
+        "reference_fields": {
+            "human_score": "float"
+        },
+        "prediction_type": "float",
+        "metrics": [
+            "metrics.spearman",
+            "metrics.pearson"
+        ],
+        "default_template": "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
+    },
+    "templates": [],
+    "__description__": "BIGGEN-Bench (BiG Generation Benchmark) is a comprehensive evaluation benchmark designed to assess the capabilities of large language models (LLMs) across a wide range of tasks. This benchmark focuses on free-form text generation and employs fine-grained, instance-specific evaluation criteria. This card is aimed to be used to benchmark LLM judges using the human evaluations as the ground truth."
+}

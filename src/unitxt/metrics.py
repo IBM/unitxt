@@ -3420,7 +3420,7 @@ class RootMeanSquaredError(MeanSquaredError):
         return {self.main_score: nan_mean(intermediates) ** 0.5}
 
 
-class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
+class CorrelationMetric(MapReduceMetric[float, Tuple[float, float]]):
     """Computes Spearman rank correlation coefficient.
 
     Range: [-1, 1] (higher absolute value is better)
@@ -3429,16 +3429,8 @@ class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
     Reference: https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient
     """
 
-    main_score = "spearmanr"
-    ci_score_names = ["spearmanr"]
     prediction_type = float
     _requirements_list = ["scipy"]
-
-    def prepare(self):
-        super().prepare()
-        from scipy.stats import spearmanr
-
-        self.spearmanr = spearmanr
 
     def map(
         self,
@@ -3447,6 +3439,9 @@ class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
         task_data: Dict[str, Any],
     ) -> Tuple[float, float]:
         return (prediction, references[0])
+
+    def get_correlation_func(self):
+        raise NotImplementedError()
 
     def reduce_one(self, intermidate: Tuple[float, float]):
         return {self.main_score: np.nan}
@@ -3458,12 +3453,51 @@ class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
             list_a.append(a)
             list_b.append(b)
 
-        score, p_value = self.spearmanr(a=list_a, b=list_b)
+        score, p_value = self.get_correlation_func()(list_a, list_b)
 
         return {
             self.main_score: score,
-            "spearmanr_p_value": p_value,
+            f"{self.main_score}_p_value": p_value,
         }
+
+
+class Spearmanr(CorrelationMetric):
+    """Computes Spearman rank correlation coefficient.
+
+    Range: [-1, 1] (higher absolute value is better)
+    Measures monotonic relationship between predictions and references.
+
+    Reference: https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient
+    """
+
+    main_score = "spearmanr"
+    ci_score_names: List[str] = ["spearmanr"]
+
+    def get_correlation_func(self):
+        from scipy.stats import spearmanr
+
+        return spearmanr
+
+
+class Pearsonr(CorrelationMetric):
+    """Computes Pearson correlation coefficient.
+
+    Range: [-1, 1] (higher absolute value is better)
+    Measures linear relationship between predictions and references.
+
+    Reference: https://en.wikipedia.org/wiki/Pearson_correlation_coefficient
+    """
+
+    main_score = "pearsonr"
+    ci_score_names = ["pearsonr"]
+
+    def get_correlation_func(self):
+        from scipy.stats import pearsonr
+
+        return pearsonr
+
+    def prepare(self):
+        super().prepare()
 
 
 class KendallTauMetric(GlobalMetric):
