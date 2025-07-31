@@ -435,6 +435,7 @@ class LoadWithPandas(LazyLoader):
     loader_limit: Optional[int] = None
     streaming: bool = True
     compression: Optional[str] = None
+    indirect_read: bool = False
 
     def _maybe_set_classification_policy(self):
         self.set_default_data_classification(
@@ -508,6 +509,7 @@ class LoadCSV(LoadWithPandas):
         loader_limit: Optional integer to specify a limit on the number of records to load.
         streaming: Bool indicating if streaming should be used.
         sep: String specifying the separator used in the CSV files.
+        indirect_read: Bool indicating if to open a remote file with urllib first
 
     Example:
         Loading csv
@@ -524,6 +526,18 @@ class LoadCSV(LoadWithPandas):
             stage="Raw Dataset Loading",
             help="https://www.unitxt.ai/en/latest/unitxt.loaders.html#module-unitxt.loaders",
         ):
+            if self.indirect_read:
+                # Open the URL with urllib first to mitigate HTTP errors that sometime happen with the internal pandas implementation
+                from urllib import request
+
+                with request.urlopen(file) as response:
+                    return pd.read_csv(
+                        response,
+                        sep=self.sep,
+                        low_memory=self.streaming,
+                        **self.get_args(),
+                    )
+
             return pd.read_csv(
                 file, sep=self.sep, low_memory=self.streaming, **self.get_args()
             )
