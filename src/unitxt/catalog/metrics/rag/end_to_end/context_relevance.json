@@ -1,9 +1,15 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricPipeline"
+    },
     "main_score": "score",
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": [
                 [
                     "prediction/contexts",
@@ -12,7 +18,10 @@
             ]
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": [
                 [
                     "task_data/question",
@@ -21,7 +30,10 @@
             ]
         },
         {
-            "__type__": "multi_type_serializer",
+            "__type__": {
+                "module": "unitxt.serializers",
+                "name": "MultiTypeSerializer"
+            },
             "field": "prediction"
         }
     ],

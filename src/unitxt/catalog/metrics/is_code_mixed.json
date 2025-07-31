@@ -1,3 +1,6 @@
 {
-    "__type__": "is_code_mixed"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "IsCodeMixed"
+    }
 }

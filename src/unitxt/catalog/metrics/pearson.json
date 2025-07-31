@@ -1,4 +1,7 @@
 {
-    "__type__": "pearsonr",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "Pearsonr"
+    },
     "n_resamples": 100
 }

@@ -1,4 +1,7 @@
 {
-    "__type__": "regex_parser",
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "RegexParser"
+    },
     "regex": ".+"
 }

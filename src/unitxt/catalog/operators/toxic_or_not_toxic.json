@@ -1,4 +1,7 @@
 {
-    "__type__": "string_equals",
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "StringEquals"
+    },
     "string": "toxic"
 }

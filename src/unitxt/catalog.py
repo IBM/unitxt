@@ -11,6 +11,7 @@ from .artifact import (
     Artifact,
     ArtifactLink,
     Catalogs,
+    from_dict,
     get_catalog_name_and_args,
     reset_artifacts_json_cache,
     verify_legal_catalog_name,
@@ -110,7 +111,7 @@ class GithubCatalog(LocalCatalog):
         url = self.path(artifact_identifier)
         response = requests.get(url)
         data = response.json()
-        new_artifact = Artifact.from_dict(data, overwrite_args=overwrite_args)
+        new_artifact = from_dict(data, overwrite_args=overwrite_args)
         new_artifact.__id__ = artifact_identifier
         return new_artifact
 
