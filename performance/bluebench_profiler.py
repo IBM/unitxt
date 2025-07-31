@@ -9,7 +9,7 @@ from io import StringIO
 from time import time
 from typing import Dict, Generator
 
-from unitxt.api import _source_to_dataset, evaluate, load_dataset, load_recipe
+from unitxt.api import evaluate, load_dataset, load_recipe
 from unitxt.dataclass import Dataclass
 from unitxt.generator_utils import ReusableGenerator
 from unitxt.inference import (
@@ -127,40 +127,40 @@ class BlueBenchProfiler:
         t0_5 = time()
         # exhaust recipe to ensure all data is loaded, and hopefully saved in the expanded loader-cache
         ms = recipe()
-        for stream_name in ms:
-            len(list(ms[stream_name]))
-        dataset = _source_to_dataset(source=recipe)
+        total_production_of_recipe = {k: list(ms[k]) for k in ms}
+        lengths = {
+            k: len(total_production_of_recipe[k]) for k in total_production_of_recipe
+        }
         # and now begin again, with same recipe in which the loaders enjoy the cache
         t1 = time()
         ms = recipe()
         t2 = time()
-        dataset = _source_to_dataset(source=recipe)
+        total_production_of_recipe = {k: list(ms[k]) for k in ms}
+        lengths = {
+            k: len(total_production_of_recipe[k]) for k in total_production_of_recipe
+        }
+        # dataset = _source_to_dataset(source=recipe)
+        t2_5 = time()
+        logger.critical(f"lengths of total production of recipe: {lengths}")
         t3 = time()
         model = self.profiler_instantiate_model()
         t4 = time()
-        # reduce to one split, and infer
-        if isinstance(dataset, dict):
-            if "test" in dataset:
-                dataset = dataset["test"]
-            else:
-                split_name = next(iter(sorted(dataset.keys())))
-                dataset = dataset[split_name]
+        # reduce to one split, and infer, and then evaluate
+        if "test" in ms:
+            dataset = total_production_of_recipe["test"]
+        else:
+            split_name = next(iter(sorted(ms.keys())))
+            dataset = total_production_of_recipe[split_name]
         predictions = model.infer(dataset=dataset)
         t5 = time()
         evaluate(predictions=predictions, data=dataset)
         t6 = time()
-        # now just streaming through recipe, without generating an HF dataset:
-        ms = recipe()
-        total_production_length_of_recipe = {k: len(list(ms[k])) for k in ms}
-        logger.critical(
-            f"lengths of total production of recipe: {total_production_length_of_recipe}"
-        )
-
+        # return original value to loader_cache_size
         settings.loader_cache_size = current_loader_cache_size
         return {
             "load_recipe": t0_5 - t0,
             "recipe()": t2 - t1,
-            "source_to_dataset": t3 - t2,
+            "instances_from_recipe": t2_5 - t2,
             "instantiate_model": t4 - t3,
             "inference_time": t5 - t4,
             "evaluation_time": t6 - t5,

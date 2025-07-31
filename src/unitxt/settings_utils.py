@@ -1,8 +1,11 @@
+import asyncio
 import importlib.metadata
 import importlib.util
 import os
 import sys
+import threading
 from contextlib import contextmanager
+from contextvars import ContextVar
 
 from .version import version
 
@@ -31,6 +34,8 @@ class Settings:
     _settings = {}
     _types = {}
     _logger = None
+    _thread_local = threading.local()
+    _context_settings = ContextVar("settings", default=None)
 
     @classmethod
     def is_uninitilized(cls):
@@ -40,6 +45,23 @@ class Settings:
         if cls.is_uninitilized():
             cls._instance = super().__new__(cls)
         return cls._instance
+
+    def _is_async_context(self):
+        """Check if we're in an async context."""
+        try:
+            asyncio.current_task()
+            return True
+        except RuntimeError:
+            return False
+
+    def _get_context_stack(self):
+        """Get the current context stack (list of dicts)."""
+        if self._is_async_context():
+            stack = self._context_settings.get()
+            return stack if stack is not None else []
+        if not hasattr(self._thread_local, "stack"):
+            self._thread_local.stack = []
+        return self._thread_local.stack
 
     def __setattr__(self, key, value):
         if key.endswith("_key") or key in {"_instance", "_settings"}:
@@ -57,16 +79,27 @@ class Settings:
             value_type = self._types[key]
             value = cast_to_type(value, value_type)
 
-        if key in self._settings:
+        # Check if we're in a context
+        stack = self._get_context_stack()
+        if stack:
+            # Modify the innermost context
+            stack[-1][key] = value
             if self._logger is not None:
                 self._logger.info(
-                    f"unitxt.settings.{key} changed: {self._settings[key]} -> {value}"
+                    f"unitxt.settings.{key} (context-local) changed to: {value}"
                 )
-        self._settings[key] = value
+        else:
+            # Modify global settings
+            if key in self._settings:
+                if self._logger is not None:
+                    self._logger.info(
+                        f"unitxt.settings.{key} changed: {self._settings[key]} -> {value}"
+                    )
+            self._settings[key] = value
 
     def __getattr__(self, key):
         if key.endswith("_key"):
-            actual_key = key[:-4]  # Remove the "_key" suffix
+            actual_key = key[:-4]
             return self.environment_variable_key_name(actual_key)
 
         key_name = self.environment_variable_key_name(key)
@@ -77,6 +110,13 @@ class Settings:
                 env_value = cast_to_type(env_value, self._types[key])
             return env_value
 
+        # Check context stack from innermost to outermost
+        stack = self._get_context_stack()
+        for context in reversed(stack):
+            if key in context:
+                return context[key]
+
+        # Then check global settings
         if key in self._settings:
             return self._settings[key]
 
@@ -92,14 +132,36 @@ class Settings:
 
     @contextmanager
     def context(self, **kwargs):
-        old_values = {key: self._settings.get(key, None) for key in kwargs}
-        try:
-            for key, value in kwargs.items():
-                self.__setattr__(key, value)
-            yield
-        finally:
-            for key, value in old_values.items():
-                self.__setattr__(key, value)
+        """Context manager that uses thread-local or async-local storage with proper nesting."""
+        # Apply type conversion
+        for key, value in kwargs.items():
+            if key in self._types and value is not None:
+                kwargs[key] = cast_to_type(value, self._types[key])
+
+        if self._is_async_context():
+            # Handle async context
+            current_stack = self._context_settings.get()
+            if current_stack is None:
+                current_stack = []
+
+            # Create new stack with added context
+            new_stack = [*current_stack, kwargs.copy()]
+            token = self._context_settings.set(new_stack)
+
+            try:
+                yield
+            finally:
+                self._context_settings.reset(token)
+        else:
+            # Handle thread-local context
+            if not hasattr(self._thread_local, "stack"):
+                self._thread_local.stack = []
+
+            self._thread_local.stack.append(kwargs.copy())
+            try:
+                yield
+            finally:
+                self._thread_local.stack.pop()
 
 
 class Constants:
@@ -162,6 +224,7 @@ if Settings.is_uninitilized():
     settings.hf_offline_models_path = None
     settings.inference_engine_cache_path = "./inference_engine_cache/"
     settings.max_connection_retries = 3
+    settings.dataset_cache_default = (bool, False)
 
 if Constants.is_uninitilized():
     constants = Constants()

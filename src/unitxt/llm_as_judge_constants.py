@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from .artifact import Artifact
 
@@ -11,15 +11,29 @@ class OptionSelectionStrategyEnum(str, Enum):
 
 
 class CriteriaOption(Artifact):
+    """A criteria option."""
+
     name: str
+    """The name of the criteria option"""
+
     description: str
+    """The description of the criteria option"""
 
 
 class Criteria(Artifact):
+    """Criteria used by PairwiseLLMJudge to run evaluations."""
+
     name: str
+    """The name of the crieria"""
+
     description: str
+    """The description of the crieria"""
+
     prediction_field: Optional[str] = None
-    context_fields: Optional[List[str]] = None
+    """The prediction field name this criteria expects and refers to, e.g. answer/model response/summary"""
+
+    context_fields: Union[str, List[str], Dict[str, str]] = None
+    """The context field names this criteria expects, i.e. [context]/[source article, user questions]"""
 
     @staticmethod
     def from_jsons(s: str):
@@ -36,8 +50,13 @@ class Criteria(Artifact):
 
 
 class CriteriaWithOptions(Criteria):
+    """Criteria used by DirectLLMJudge to run evaluations."""
+
     options: List[CriteriaOption]
+    """The options that the judge can choose between"""
+
     option_map: Optional[Dict[str, float]] = None
+    """A mapping from the option names to numerical values to use as scores"""
 
     @staticmethod
     def from_jsons(s: str):
@@ -1013,6 +1032,126 @@ class DirectCriteriaCatalogEnum(Enum):
         bigger_is_better=False,
     )
 
+    STEP_BY_STEP_REASONING_BAD_GRAMMAR = get_yes_no_criteria(
+        name="step_by_step_reasoning_bad_grammar",
+        description="Does this step contain any faulty, unconventional, or controversial grammar usage? In other words, does the language in this step sounds unnatural?",
+        prediction_field="step",
+        context_fields=[],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_REASONING_NON_FACTUAL = get_yes_no_criteria(
+        name="step_by_step_reasoning_non_factual",
+        description="Does this step contain any information that contradicts the context while still largely talking about the same concepts? (Ex. Characteristics of named objects are wrong, named entities changed.)",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_NON_COHERENT = get_yes_no_criteria(
+        name="step_by_step_reasoning_non_coherent",
+        description="Does this step contain any logical deduction errors (Ie, makes a conclusion contradictory to previously stated clauses, including clauses within this step itself; makes a conclusion while not having enough support to make the conclusion)",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_BAD_FINAL_ANSWER = get_yes_no_criteria(
+        name="step_by_step_reasoning_bad_final_answer",
+        description="Does this step contain a final step with an incorrect final answer? (If an explicit 'yes/no' is not provided, an exact match of the correct answer with respect to the question in the context must be given.)",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_REASONING_HALLUCINATION = get_yes_no_criteria(
+        name="step_by_step_reasoning_hallucination",
+        description="Does this step contain any information not provided in the problem statement that is irrelevant or wrong?",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_REASONING_REDUNDANCY = get_yes_no_criteria(
+        name="step_by_step_reasoning_redundancy",
+        description="Does this step contain any information not required to answer the question asked despite being factual and consistent with the context?",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_REASONING_REPETITION = get_yes_no_criteria(
+        name="step_by_step_reasoning_repetition",
+        description="Does this step contain any information, possibly paraphrased, already mentioned in previous step (and thus could be dropped without impacting correctness)?",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_REASONING_COMMONSENSE = get_yes_no_criteria(
+        name="step_by_step_reasoning_commonsense",
+        description="Does this step contain any errors in relation to general knowledge about the world (i.e. how to compute velocity, how many inches in one foot, etc) not explicitly provided in the context?",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
+    STEP_BY_STEP_REASONING_ARITHMETIC = get_yes_no_criteria(
+        name="step_by_step_reasoning_arithmetic",
+        description="Does this step contain any math equation errors? Note that you should consider only current step in isolation, rather than issues propagated from prior steps.",
+        prediction_field="step",
+        context_fields=[
+            "question",
+            "premise",
+            "hypothesis",
+            "model reasoning",
+            "correct answer",
+        ],
+        bigger_is_better=False,
+    )
+
     REFERENCE_DOCUMENT_FAITHFULNESS = CriteriaWithOptions(
         name="reference_document_faithfulness",
         description="Is the response faithful according to reference document?",
@@ -1262,6 +1401,7 @@ class DirectCriteriaCatalogEnum(Enum):
     COMPLIANCE_ASSISTANT_MESSAGE = CriteriaWithOptions(
         name="assistant_message_compliance",
         description="The Assistant message complies with the User message.",
+        context_fields=["user message"],
         prediction_field="assistant message",
         options=[
             CriteriaOption(
@@ -1392,12 +1532,12 @@ class DirectCriteriaCatalogEnum(Enum):
     LOGICAL_VALIDITY_OF_REASONING = CriteriaWithOptions(
         name="logical_validity_of_reasoning",
         description=(
-            "Assess whether the model's reasoning is logically valid when solving problems "
+            "Assess whether the model reasoning is logically valid when solving problems "
             "in propositional logic. The reasoning should follow correct logical principles "
             "and lead to a valid conclusion based on the given premises."
         ),
-        prediction_field="reasoning",
-        context_fields=[],
+        prediction_field="model reasoning",
+        context_fields=["problem statement", "statements"],
         options=[
             CriteriaOption(
                 name="Yes",
@@ -1412,6 +1552,54 @@ class DirectCriteriaCatalogEnum(Enum):
             "Yes": 1.0,
             "No": 0.0,
         },
+    )
+    TRANSLATION_QUALITY = CriteriaWithOptions(
+        name="translation_quality",
+        description=(
+            "On a scale from 0 to 6, is the translation of the source text accurate, fluent, comprenhencible and free of errors?\n"
+            """Accuracy: How well does the translation convey the original meaning and content of the source text?
+Fluency: How natural and idiomatic is the translation in terms of grammar, syntax, and phrasing?
+Comprehensibility: How easily can the translation be understood by a native speaker of the target language?
+Errors: Are there any errors in grammar, vocabulary, punctuation, or formatting that affect the overall quality of the translation?"""
+        ),
+        prediction_field="translation",
+        context_fields=[
+            "source language",
+            "target language",
+            "source text",
+            "reference translation",
+        ],
+        options=[
+            CriteriaOption(
+                name="0",
+                description="Nonsense/No meaning preserved: Nearly all information is lost between the translation and the source text. Grammar is irrelevant.",
+            ),
+            CriteriaOption(
+                name="1",
+                description="Minimal Meaning Preserved: Only isolated fragments of meaning are retained. The translation is largely incoherent and fails to convey the main ideas. Grammar is poor or broken.",
+            ),
+            CriteriaOption(
+                name="2",
+                description="Some Meaning Preserved: The translation preserves some of the meaning of the source text but misses significant parts. The narrative is hard to follow due to fundamental errors. Grammar may be poor.",
+            ),
+            CriteriaOption(
+                name="3",
+                description="Moderate Meaning Preserved: The core message is partially conveyed, but there are frequent issues with grammar, fluency, or comprehension that impact the overall readability and accuracy.",
+            ),
+            CriteriaOption(
+                name="4",
+                description="Most Meaning Preserved and Few Grammar Mistakes: The translation retains most of the meaning of the source text. It may have some grammar mistakes or minor contextual inconsistencies.",
+            ),
+            CriteriaOption(
+                name="5",
+                description="Nearly Perfect: The translation is highly accurate and mostly fluent. Only very minor grammar or phrasing issues are present, and they do not hinder understanding.",
+            ),
+            CriteriaOption(
+                name="6",
+                description="Perfect Meaning and Grammar: The meaning of the translation is completely consistent with the source text and the surrounding context (if applicable). The grammar is also correct.",
+            ),
+        ],
+        option_map={str(i): i / 6 for i in range(7)},
     )
 
 
