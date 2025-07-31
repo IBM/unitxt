@@ -29,7 +29,7 @@ card = TaskCard(
         Set({"context_type": "table"}),
         FormatText(text=table_url_format, to_field="table_url"),
         ReadFile(field="table_url", to_field="table_content"),
-        ParseCSV(field="table_content", to_field="table", separator="\t"),
+        ParseCSV(field="table_content", to_field="table", separator=","),
         GetNumOfTableCells(field="table", to_field="table_cell_size"),
         FilterByCondition(values={"table_cell_size": 200}, condition="le"),
         Copy(field="table", to_field="context"),
