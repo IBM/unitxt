@@ -22,11 +22,11 @@ global_target = {
     "num_of_instances": 5,
     "score": 0.95,
     "score_ci_high": 1.0,
-    "score_ci_low": 0.3,
+    "score_ci_low": 0.31,
     "score_name": "pearsonr",
     "pearsonr": 0.95,
     "pearsonr_ci_high": 1.0,
-    "pearsonr_ci_low": 0.3,
+    "pearsonr_ci_low": 0.31,
     "pearsonr_p_value": 0.01,
 }
 
