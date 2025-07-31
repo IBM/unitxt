@@ -40,18 +40,18 @@ for k in pr_perf:
 
 # Markdown table formatting
 
-line1 = "  What is Measured    | Main Branch |  PR Branch  | PR/Main ratio \n"
-line2 = "----------------------|------------:|------------:|--------------:\n"
-line3 = f" Unitxt load_recipe   | {main_perf['load_recipe']} | {pr_perf['load_recipe']} | {ratios['load_recipe']:.2f}\n"
-line4 = f" Instances from recipe| {main_perf['instances_from_recipe']} | {pr_perf['instances_from_recipe']} | {ratios['instances_from_recipe']:.2f}\n"
-line7 = f" Inference time       | {main_perf['inference_time']} | {pr_perf['inference_time']} | {ratios['inference_time']:.2f}\n"
-line8 = f" Evaluate  time       | {main_perf['evaluation_time']} | {pr_perf['evaluation_time']} | {ratios['evaluation_time']:.2f}\n"
+line1 = "  What is Measured  | Main Branch |  PR Branch  | PR/Main ratio \n"
+line2 = "--------------------|------------:|------------:|--------------:\n"
+line3 = f" Unitxt load_recipe | {main_perf['load_recipe']} | {pr_perf['load_recipe']} | {ratios['load_recipe']:.2f}\n"
+line4 = f" Source_to_dataset  | {main_perf['source_to_dataset']} | {pr_perf['source_to_dataset']} | {ratios['source_to_dataset']:.2f}\n"
+line7 = f" Inference time     | {main_perf['inference_time']} | {pr_perf['inference_time']} | {ratios['inference_time']:.2f}\n"
+line8 = f" Evaluate  time     | {main_perf['evaluation_time']} | {pr_perf['evaluation_time']} | {ratios['evaluation_time']:.2f}\n"
 
 print("### Performance Comparison Results, time expressed in seconds:\n")
 print(line1 + line2 + line3 + line4 + line7 + line8)
 print("\n\n")
 # Performance degradation check (15% threshold)
-if (ratios["instances_from_recipe"] > 1.15) or (ratios["evaluation_time"] > 1.15):
+if (ratios["source_to_dataset"] > 1.15) or (ratios["evaluation_time"] > 1.15):
     print(
         "\n**Warning**: Performance degradation in Dataset Generation and/or Evaluation exceeds 15%!"
     )
