@@ -2635,6 +2635,8 @@ class ReadFile(FieldOperator):
         # Read from local file
         with open(value, encoding=self.encoding) as f:
             return f.read()
+
+
 class FunctionOperator(StreamOperator):
     function: Callable
 
