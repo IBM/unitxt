@@ -354,7 +354,7 @@ class LoadHF(LazyLoader):
                 raise NotImplementedError() from None
 
             if not disable_memory_caching:
-                self.__class__._loader_cache.max_size = settings.loader_cache_size
+                self.__class__._loader_cache._max_size = settings.loader_cache_size
                 self.__class__._loader_cache[dataset_id] = dataset
         self._already_logged_limited_loading = True
 
@@ -476,7 +476,7 @@ class LoadWithPandas(LazyLoader):
 
             dataset = dataframe.to_dict("records")
 
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache._max_size = settings.loader_cache_size
             self.__class__._loader_cache[dataset_id] = dataset
 
         for instance in self.__class__._loader_cache[dataset_id]:
@@ -668,7 +668,7 @@ class LoadFromSklearn(LazyLoader):
             df = pd.DataFrame([split_data["data"], targets]).T
             df.columns = ["data", "target"]
             dataset = df.to_dict("records")
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache._max_size = settings.loader_cache_size
             self.__class__._loader_cache[dataset_id] = dataset
         for instance in self.__class__._loader_cache[dataset_id]:
             yield recursive_copy(instance)
