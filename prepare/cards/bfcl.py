@@ -80,7 +80,7 @@ with unitxt.settings.context(allow_unverified_code=True):
         "java",
         "javascript",
         "parallel",
-        "parallel_multiple",  # error caused by instance 179, hence expression now constrains: if isinstance(v, dict)
+        "parallel_multiple",  # error caused by instance 179
         "live_parallel",
         "live_parallel_multiple",
     ]:
@@ -105,7 +105,7 @@ with unitxt.settings.context(allow_unverified_code=True):
                 Copy(field="function", to_field="tools"),
                 FixJsonSchemaOfToolParameterTypes(),
                 ExecuteExpression(
-                    expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() if isinstance(v, dict) for vals in itertools.product(*v.values())]',
+                    expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]',
                     to_field="reference_calls",
                     imports_list=["itertools"],
                 ),
