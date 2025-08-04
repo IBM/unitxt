@@ -4,7 +4,7 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadCSV
 from unitxt.operators import Copy, FilterByCondition, ReadFile, Rename, Set
-from unitxt.string_operators import FormatText, Split
+from unitxt.string_operators import FormatText, Replace, Split
 from unitxt.struct_data_operators import GetNumOfTableCells, ParseCSV
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
@@ -27,9 +27,16 @@ card = TaskCard(
         Rename(field="utterance", to_field="question"),
         Split(field="targetValue", to_field="answers", by="|"),
         Set({"context_type": "table"}),
+        Replace(field="context", old=".csv", new=".tsv"),
         FormatText(text=table_url_format, to_field="table_url"),
         ReadFile(field="table_url", to_field="table_content"),
-        ParseCSV(field="table_content", to_field="table", separator=","),
+        ParseCSV(
+            field="table_content",
+            to_field="table",
+            separator="\t",
+            dtype="str",
+            strip_cells=True,
+        ),
         GetNumOfTableCells(field="table", to_field="table_cell_size"),
         FilterByCondition(values={"table_cell_size": 200}, condition="le"),
         Copy(field="table", to_field="context"),

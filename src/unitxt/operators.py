@@ -2592,7 +2592,7 @@ class ReadFile(FieldOperator):
             # Read from URL
             response = requests.get(value)
             response.raise_for_status()
-            return response.text
+            return response.content.decode(self.encoding, errors="replace")
         # Read from local file
         with open(value, encoding=self.encoding) as f:
             return f.read()

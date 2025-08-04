@@ -19,7 +19,8 @@
             "__type__": "parse_csv",
             "field": "table_text",
             "to_field": "text_a",
-            "separator": "#"
+            "separator": "#",
+            "dtype": "str"
         },
         {
             "__type__": "rename",

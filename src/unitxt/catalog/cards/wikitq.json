@@ -31,6 +31,12 @@
             }
         },
         {
+            "__type__": "replace",
+            "field": "context",
+            "old": ".csv",
+            "new": ".tsv"
+        },
+        {
             "__type__": "format_text",
             "text": "https://raw.githubusercontent.com/ppasupat/WikiTableQuestions/refs/heads/master/{context}",
             "to_field": "table_url"
@@ -44,7 +50,9 @@
             "__type__": "parse_csv",
             "field": "table_content",
             "to_field": "table",
-            "separator": ","
+            "separator": "\t",
+            "dtype": "str",
+            "strip_cells": true
         },
         {
             "__type__": "get_num_of_table_cells",

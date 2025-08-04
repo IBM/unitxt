@@ -23,7 +23,7 @@ with settings.context(allow_unverified_code=True):
             data_classification_policy=["public"],
         ),
         preprocess_steps=[
-            ParseCSV(field="table_text", to_field="text_a", separator="#"),
+            ParseCSV(field="table_text", to_field="text_a", separator="#", dtype="str"),
             Rename(field="statement", to_field="text_b"),
             MapInstanceValues(mappers={"label": {"0": "refuted", "1": "entailed"}}),
             Set(

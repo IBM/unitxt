@@ -24,6 +24,8 @@ For key-value pairs, expected input format is:
 """
 
 import ast
+import csv
+import io
 import json
 import random
 from abc import ABC, abstractmethod
@@ -31,6 +33,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Optional,
     Tuple,
 )
@@ -1148,34 +1151,37 @@ class ParseCSV(FieldOperator):
     separator: str = ","
     has_header: bool = True
     skip_header: bool = False
+    dtype: Optional[Literal["str"]] = None
+    strip_cells: bool = False
 
     def process_value(self, value: str) -> Dict[str, Any]:
-        """Parse CSV/TSV text content into table format."""
-        import csv
-        import io
+        csv_reader = csv.reader(
+            io.StringIO(value), delimiter=self.separator, quotechar='"'
+        )
+        rows = []
+        header = []
+        for idx, row in enumerate(csv_reader):
+            if idx == 0 and self.has_header:
+                header = row
+                if self.skip_header:
+                    continue
+            else:
+                rows.append(row)
 
-        # Create a StringIO object to read the CSV content
-        csv_reader = csv.reader(io.StringIO(value), delimiter=self.separator)
-        rows = list(csv_reader)
-
-        if not rows:
-            return {"header": [], "rows": []}
-
-        if self.skip_header:
-            # Skip the first row entirely
-            rows = rows[1:]
-            if not rows:
-                return {"header": [], "rows": []}
-            # Generate generic column names
+        if not self.has_header or self.skip_header:
             header = [f"col_{i}" for i in range(len(rows[0]))]
-            table_rows = rows
-        elif self.has_header:
-            # First row is header
-            header = rows[0]
-            table_rows = rows[1:]
-        else:
-            # No header, generate generic column names
-            header = [f"col_{i}" for i in range(len(rows[0]))]
-            table_rows = rows
 
-        return {"header": header, "rows": table_rows}
+        if self.strip_cells:
+
+            def clean_cell(x):
+                if isinstance(x, str):
+                    return x.replace("\n", " ").strip()
+                return x
+
+            rows = [[clean_cell(cell) for cell in row] for row in rows]
+            header = [clean_cell(h) for h in header]
+
+        return {
+            "header": header,
+            "rows": rows,
+        }
