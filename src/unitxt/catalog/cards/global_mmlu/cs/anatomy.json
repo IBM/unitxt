@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "cs"
+        "name": "cs",
+        "filtering_lambda": "lambda x: x['subject'] == 'anatomy'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "anatomy"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [
