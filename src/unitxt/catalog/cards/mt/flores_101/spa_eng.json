@@ -1,16 +1,39 @@
 {
     "__type__": "task_card",
     "loader": {
-        "__type__": "load_hf",
-        "path": "gsarti/flores_101",
-        "name": "all"
+        "__type__": "multiple_source_loader",
+        "sources": [
+            {
+                "__type__": "load_hf",
+                "path": "gsarti/flores_101",
+                "data_dir": "all/devtest",
+                "data_classification_policy": [
+                    "public"
+                ],
+                "revision": "refs/convert/parquet",
+                "splits": [
+                    "train"
+                ]
+            },
+            {
+                "__type__": "load_hf",
+                "path": "gsarti/flores_101",
+                "data_dir": "all",
+                "data_classification_policy": [
+                    "public"
+                ],
+                "revision": "refs/convert/parquet",
+                "splits": [
+                    "validation"
+                ]
+            }
+        ]
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
-            "mix": {
-                "validation": "dev",
-                "test": "devtest"
+            "__type__": "rename_splits",
+            "mapper": {
+                "train": "test"
             }
         },
         {
