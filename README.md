@@ -79,13 +79,13 @@ dataset = load_dataset(
 )
 ```
 
-## 📊 Available Resources
+## 📊 Available on The Catalog
 
-![Abstract Tasks](https://img.shields.io/badge/Abstract_Tasks-64-blue)
-![Dataset Cards](https://img.shields.io/badge/Dataset_Cards-3174-blue)
-![Templates](https://img.shields.io/badge/Templates-342-blue)
-![Benchmarks](https://img.shields.io/badge/Benchmarks-6-blue)
-![Metrics](https://img.shields.io/badge/Metrics-462-blue)
+![Tasks](https://img.shields.io/badge/Abstract_Tasks-68-blue)
+![Datasets](https://img.shields.io/badge/Dataset_Cards-3254-blue)
+![Prompts](https://img.shields.io/badge/Templates-357-blue)
+![Benchmarks](https://img.shields.io/badge/Benchmarks-11-blue)
+![Metrics](https://img.shields.io/badge/Metrics-584-blue)
 
 ## 🚀 Interactive Dashboard
 
@@ -153,6 +153,8 @@ print("Instance Results:\n", results.instance_scores.summary)
 # Contributing
 
 Read the [contributing guide](./CONTRIBUTING.md) for details on how to contribute to Unitxt.
+
+#
 
 # Citation
 
