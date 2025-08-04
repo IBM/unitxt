@@ -81,9 +81,9 @@ dataset = load_dataset(
 
 ## 📊 Available on The Catalog
 
-![Tasks](https://img.shields.io/badge/Abstract_Tasks-68-blue)
-![Datasets](https://img.shields.io/badge/Dataset_Cards-3254-blue)
-![Prompts](https://img.shields.io/badge/Templates-357-blue)
+![Tasks](https://img.shields.io/badge/Tasks-68-blue)
+![Datasets](https://img.shields.io/badge/Datasets-3254-blue)
+![Prompts](https://img.shields.io/badge/Prompts-357-blue)
 ![Benchmarks](https://img.shields.io/badge/Benchmarks-11-blue)
 ![Metrics](https://img.shields.io/badge/Metrics-584-blue)
 
