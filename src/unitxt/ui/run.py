@@ -362,7 +362,7 @@ with demo:
         acknowledgement = gr.Markdown(config.ACK_TEXT)
     # INVISIBLE ELEMENTS FOR VALUE STORAGE
     run_model = gr.Checkbox(value=False, visible=False)
-    sample_choice = gr.Number(value=0, visible=False)
+    sample_choice = gr.State(value=0)
 
     # DROPDOWNS AND JSON BUTTONS LOGIC
     tasks.select(
@@ -470,9 +470,9 @@ with demo:
     )
 
     # SAMPLE CHOICE LOGIC
-    next_sample.click(increase_num, sample_choice, sample_choice)
-    previous_sample.click(decrease_num, sample_choice, sample_choice)
-    sample_choice.change(run_unitxt_entry, parameters, outputs=outputs)
+    next_sample.click(fn=increase_num, inputs=sample_choice, outputs=sample_choice)
+    previous_sample.click(fn=decrease_num, inputs=sample_choice, outputs=sample_choice)
+    sample_choice.change(fn=run_unitxt_entry, inputs=parameters, outputs=outputs)
 
 if __name__ == "__main__":
     demo.launch(debug=True)

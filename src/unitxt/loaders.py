@@ -351,7 +351,7 @@ class LoadHF(LazyLoader):
                 raise NotImplementedError() from None
 
             if not disable_memory_caching:
-                self.__class__._loader_cache.max_size = settings.loader_cache_size
+                self.__class__._loader_cache._max_size = settings.loader_cache_size
                 self.__class__._loader_cache[dataset_id] = dataset
         self._already_logged_limited_loading = True
 
@@ -432,6 +432,7 @@ class LoadWithPandas(LazyLoader):
     loader_limit: Optional[int] = None
     streaming: bool = True
     compression: Optional[str] = None
+    indirect_read: bool = False
 
     def _maybe_set_classification_policy(self):
         self.set_default_data_classification(
@@ -472,7 +473,7 @@ class LoadWithPandas(LazyLoader):
 
             dataset = dataframe.to_dict("records")
 
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache._max_size = settings.loader_cache_size
             self.__class__._loader_cache[dataset_id] = dataset
 
         for instance in self.__class__._loader_cache[dataset_id]:
@@ -505,6 +506,7 @@ class LoadCSV(LoadWithPandas):
         loader_limit: Optional integer to specify a limit on the number of records to load.
         streaming: Bool indicating if streaming should be used.
         sep: String specifying the separator used in the CSV files.
+        indirect_read: Bool indicating if to open a remote file with urllib first
         column_names: Optional list of column names to use instead of header row.
 
     Example:
@@ -537,6 +539,18 @@ class LoadCSV(LoadWithPandas):
             if self.column_names is not None:
                 args["names"] = self.column_names
                 args["header"] = None  # Don't use first row as header
+            if self.indirect_read:
+                # Open the URL with urllib first to mitigate HTTP errors that sometime happen with the internal pandas implementation
+                from urllib import request
+
+                with request.urlopen(file) as response:
+                    return pd.read_csv(
+                        response,
+                        sep=self.sep,
+                        low_memory=self.streaming,
+                        **args,
+                    )
+
             return pd.read_csv(file, sep=self.sep, low_memory=self.streaming, **args)
 
 
@@ -665,7 +679,7 @@ class LoadFromSklearn(LazyLoader):
             df = pd.DataFrame([split_data["data"], targets]).T
             df.columns = ["data", "target"]
             dataset = df.to_dict("records")
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache._max_size = settings.loader_cache_size
             self.__class__._loader_cache[dataset_id] = dataset
         for instance in self.__class__._loader_cache[dataset_id]:
             yield recursive_copy(instance)

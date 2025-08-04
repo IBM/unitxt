@@ -225,6 +225,7 @@ if Settings.is_uninitilized():
     settings.inference_engine_cache_path = "./inference_engine_cache/"
     settings.max_connection_retries = 3
     settings.max_templates_tests_for_card_test = 10
+    settings.dataset_cache_default = (bool, False)
 
 if Constants.is_uninitilized():
     constants = Constants()
