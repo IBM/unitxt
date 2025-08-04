@@ -365,15 +365,21 @@ class RemoveFields(InstanceOperator):
 
     Args:
         fields (List[str]): The fields to remove from each instance.
+        not_exist_ok (bool): If True, do not raise an error if a field does not exist. Defaults to False.
     """
 
     fields: List[str]
+    not_exist_ok: bool = False
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         for field_name in self.fields:
-            del instance[field_name]
+            try:
+                del instance[field_name]
+            except:
+                if not self.not_exist_ok:
+                    raise
         return instance
 
 
