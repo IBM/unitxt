@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "sw"
+        "name": "sw",
+        "filtering_lambda": "lambda x: x['subject'] == 'prehistory'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "prehistory"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [
