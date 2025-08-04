@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "pashto",
+        "revision": "refs/convert/parquet",
+        "data_dir": "pashto",
         "splits": [
             "test",
             "train",

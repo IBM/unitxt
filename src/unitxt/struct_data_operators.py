@@ -24,6 +24,8 @@ For key-value pairs, expected input format is:
 """
 
 import ast
+import csv
+import io
 import json
 import random
 from abc import ABC, abstractmethod
@@ -31,6 +33,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Optional,
     Tuple,
 )
@@ -1118,3 +1121,67 @@ class JsonStrToDict(FieldOperator):
             )
             dict_value = {}
         return {str(k): str(v) for k, v in dict_value.items() if v is not None}
+
+
+class ParseCSV(FieldOperator):
+    r"""Parse CSV/TSV text content into table format.
+
+    This operator converts CSV or TSV text content into the standard table format
+    used by Unitxt with header and rows fields.
+
+    Args:
+        separator (str): Field separator character. Defaults to ','.
+        has_header (bool): Whether the first row contains column headers. Defaults to True.
+        skip_header (bool): Whether to skip the first row entirely. Defaults to False.
+
+    Example:
+        Parsing CSV content
+
+        .. code-block:: python
+
+            ParseCSV(field="csv_content", to_field="table", separator=",")
+
+        Parsing TSV content
+
+        .. code-block:: python
+
+            ParseCSV(field="tsv_content", to_field="table", separator="\t")
+    """
+
+    separator: str = ","
+    has_header: bool = True
+    skip_header: bool = False
+    dtype: Optional[Literal["str"]] = None
+    strip_cells: bool = False
+
+    def process_value(self, value: str) -> Dict[str, Any]:
+        csv_reader = csv.reader(
+            io.StringIO(value), delimiter=self.separator, quotechar='"'
+        )
+        rows = []
+        header = []
+        for idx, row in enumerate(csv_reader):
+            if idx == 0 and self.has_header:
+                header = row
+                if self.skip_header:
+                    continue
+            else:
+                rows.append(row)
+
+        if not self.has_header or self.skip_header:
+            header = [f"col_{i}" for i in range(len(rows[0]))]
+
+        if self.strip_cells:
+
+            def clean_cell(x):
+                if isinstance(x, str):
+                    return x.replace("\n", " ").strip()
+                return x
+
+            rows = [[clean_cell(cell) for cell in row] for row in rows]
+            header = [clean_cell(h) for h in header]
+
+        return {
+            "header": header,
+            "rows": rows,
+        }

@@ -2,19 +2,30 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "ibm/tab_fact",
-        "streaming": false,
+        "path": "wenhu/tab_fact",
+        "revision": "refs/convert/parquet",
+        "data_dir": "tab_fact",
+        "splits": [
+            "train",
+            "test",
+            "validation"
+        ],
         "data_classification_policy": [
             "public"
         ]
     },
     "preprocess_steps": [
         {
+            "__type__": "parse_csv",
+            "field": "table_text",
+            "to_field": "text_a",
+            "separator": "#",
+            "dtype": "str"
+        },
+        {
             "__type__": "rename",
-            "field_to_field": {
-                "table": "text_a",
-                "statement": "text_b"
-            }
+            "field": "statement",
+            "to_field": "text_b"
         },
         {
             "__type__": "map_instance_values",

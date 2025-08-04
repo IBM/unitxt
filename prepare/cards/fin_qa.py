@@ -1,10 +1,10 @@
 from unitxt.blocks import (
-    LoadHF,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import GetLength
-from unitxt.operators import Copy, FilterByCondition
+from unitxt.loaders import LoadJsonFile
+from unitxt.operators import Cast, Copy, FilterByCondition
 from unitxt.settings_utils import get_settings
 from unitxt.struct_data_operators import MapTableListsToStdTableJSON
 from unitxt.task import Task
@@ -14,12 +14,23 @@ from unitxt.types import Table
 
 settings = get_settings()
 
+url = "https://raw.githubusercontent.com/czyssrs/FinQA/0f16e2867befa6840783e58be38c9efb9229d742/dataset/{}.json"
+
 card = TaskCard(
-    loader=LoadHF(path="ibm/finqa", streaming=False),
+    loader=LoadJsonFile(
+        files={
+            "train": url.format("train"),
+            "validation": url.format("dev"),
+            "test": url.format("test"),
+        }
+    ),
     preprocess_steps=[
+        Copy(field="qa/question", to_field="question"),
+        Copy(field="qa/answer", to_field="answer"),
+        Cast(field="qa/program", to="str", to_field="program_re"),
+        Copy(field="pre_text/0", to_field="pre_text"),
         GetLength(field="table", to_field="table_length"),
         FilterByCondition(values={"table_length": 1}, condition="gt"),
-        Copy(field="pre_text/0", to_field="pre_text"),
         Copy(field="post_text/0", to_field="post_text"),
         MapTableListsToStdTableJSON(field="table"),
     ],

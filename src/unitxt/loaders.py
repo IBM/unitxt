@@ -24,6 +24,7 @@ Available Loaders Overview:
     - :class:`MultipleSourceLoader <unitxt.loaders.MultipleSourceLoader>` - Combines data from multiple different sources.
     - :class:`LoadFromDictionary <unitxt.loaders.LoadFromDictionary>` - Loads data from a user-defined Python dictionary.
     - :class:`LoadFromHFSpace <unitxt.loaders.LoadFromHFSpace>` - Downloads and loads data from HuggingFace Spaces.
+    - :class:`LoadIOB <unitxt.loaders.LoadIOB>` - Loads data from IOB format files for named entity recognition tasks.
 
 
 
@@ -52,6 +53,7 @@ from typing import (
     Union,
 )
 
+import datasets
 import pandas as pd
 import requests
 from datasets import (
@@ -62,6 +64,7 @@ from datasets import (
 )
 from datasets import load_dataset as _hf_load_dataset
 from huggingface_hub import HfApi
+from packaging.version import Version
 from tqdm import tqdm
 
 from .dataclass import NonPositionalField
@@ -96,21 +99,19 @@ def hf_load_dataset(path: str, *args, **kwargs):
     ):
         if settings.hf_offline_datasets_path is not None:
             path = os.path.join(settings.hf_offline_datasets_path, path)
-        try:
-            return _hf_load_dataset(
-                path,
-                *args,
-                **kwargs,
-                verification_mode="no_checks",
-                trust_remote_code=settings.allow_unverified_code,
-                download_mode="force_redownload"
-                if settings.disable_hf_datasets_cache
-                else "reuse_dataset_if_exists",
-            )
-        except ValueError as e:
-            if "trust_remote_code" in str(e):
-                raise UnitxtUnverifiedCodeError(path) from e
-            raise e  # Re raise
+
+        if settings.disable_hf_datasets_cache:
+            kwargs["download_mode"] = "force_redownload"
+
+        if Version(datasets.__version__) < Version("4.0.0"):
+            kwargs["trust_remote_code"] = True
+
+        return _hf_load_dataset(
+            path,
+            *args,
+            **kwargs,
+            verification_mode="no_checks",
+        )
 
 
 @retry_connection_with_exponential_backoff(backoff_factor=2)
@@ -119,13 +120,9 @@ def hf_get_dataset_splits(path: str, name: str, revision=None):
         return get_dataset_split_names(
             path=path,
             config_name=name,
-            trust_remote_code=settings.allow_unverified_code,
             revision=revision,
         )
     except Exception as e:
-        if "trust_remote_code" in str(e):
-            raise UnitxtUnverifiedCodeError(path) from e
-
         if "Couldn't find cache" in str(e):
             raise FileNotFoundError(
                 f"Dataset cache path={path}, name={name} was not found."
@@ -499,7 +496,7 @@ class LoadWithPandas(LazyLoader):
 
 
 class LoadCSV(LoadWithPandas):
-    """Loads data from CSV files.
+    r"""Loads data from CSV files.
 
     Supports streaming and can handle large files by loading them in chunks.
 
@@ -510,6 +507,7 @@ class LoadCSV(LoadWithPandas):
         streaming: Bool indicating if streaming should be used.
         sep: String specifying the separator used in the CSV files.
         indirect_read: Bool indicating if to open a remote file with urllib first
+        column_names: Optional list of column names to use instead of header row.
 
     Example:
         Loading csv
@@ -517,15 +515,30 @@ class LoadCSV(LoadWithPandas):
         .. code-block:: python
 
             load_csv = LoadCSV(files={'train': 'path/to/train.csv'}, chunksize=100)
+
+        Loading TSV with custom column names
+
+        .. code-block:: python
+
+            load_csv = LoadCSV(
+                files={'train': 'path/to/train.tsv'},
+                sep='\t',
+                column_names=['id', 'question', 'table_name', 'answer']
+            )
     """
 
     sep: str = ","
+    column_names: Optional[List[str]] = None
 
     def read_dataframe(self, file) -> pd.DataFrame:
         with error_context(
             stage="Raw Dataset Loading",
             help="https://www.unitxt.ai/en/latest/unitxt.loaders.html#module-unitxt.loaders",
         ):
+            args = self.get_args()
+            if self.column_names is not None:
+                args["names"] = self.column_names
+                args["header"] = None  # Don't use first row as header
             if self.indirect_read:
                 # Open the URL with urllib first to mitigate HTTP errors that sometime happen with the internal pandas implementation
                 from urllib import request
@@ -535,12 +548,10 @@ class LoadCSV(LoadWithPandas):
                         response,
                         sep=self.sep,
                         low_memory=self.streaming,
-                        **self.get_args(),
+                        **args,
                     )
 
-            return pd.read_csv(
-                file, sep=self.sep, low_memory=self.streaming, **self.get_args()
-            )
+            return pd.read_csv(file, sep=self.sep, low_memory=self.streaming, **args)
 
 
 def read_file(source) -> bytes:
@@ -1247,3 +1258,211 @@ class LoadFromAPI(Loader):
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[str(self)] = iterables
         return MultiStream.from_iterables(iterables, copying=True)
+
+
+class LoadIOB(LazyLoader):
+    """Loads data from IOB format files.
+
+    This loader can parse IOB (Inside-Outside-Begin) format files commonly used for
+    named entity recognition tasks. It supports both local files and remote URLs,
+    and can handle various IOB formats including CoNLL-U style files.
+
+    Args:
+        files (Dict[str, str]):
+            A dictionary mapping split names to file paths or URLs.
+        column_names (tuple, optional):
+            Column names for the IOB format. Defaults to ('id', 'token', 'tag', 'misc', 'annotator').
+        fix_tags (bool, optional):
+            Whether to apply tag fixing for OTH and B-O tags. Defaults to True.
+        encoding (str, optional):
+            File encoding. Defaults to 'utf-8'.
+
+    Example:
+        Loading IOB files
+
+        .. code-block:: python
+
+            load_iob = LoadIOB(files={'train': 'path/to/train.iob2', 'test': 'path/to/test.iob2'})
+    """
+
+    files: Dict[str, str]
+    column_names: tuple = ("id", "token", "tag", "misc", "annotator")
+    fix_tags: bool = True
+    encoding: str = "utf-8"
+
+    _requirements_list: List[str] = ["conllu"]
+
+    def _maybe_set_classification_policy(self):
+        self.set_default_data_classification(
+            ["proprietary"], "when loading from local files"
+        )
+
+    def get_splits(self) -> List[str]:
+        return list(self.files.keys())
+
+    def split_generator(self, split: str) -> Generator:
+        import conllu
+
+        dataset_id = str(self) + "_" + split
+        dataset = self.__class__._loader_cache.get(dataset_id, None)
+
+        if dataset is None:
+            if self.get_limit() is not None:
+                self.log_limited_loading()
+
+            file_path = self.files[split]
+            dataset = []
+            id_counter = 0
+
+            try:
+                # Handle remote URLs
+                if file_path.startswith(("http://", "https://")):
+                    import io
+                    import urllib.request
+
+                    with urllib.request.urlopen(file_path) as response:
+                        content = response.read().decode(self.encoding)
+                        # Use StringIO to create a file-like object
+                        content_file = io.StringIO(content)
+                        sentences = list(
+                            conllu.parse_incr(content_file, fields=self.column_names)
+                        )
+                else:
+                    # Handle local files
+                    with open(file_path, encoding=self.encoding) as data_file:
+                        sentences = list(
+                            conllu.parse_incr(data_file, fields=self.column_names)
+                        )
+
+                limit = self.get_limit()
+                processed_count = 0
+
+                for sent in sentences:
+                    if limit is not None and processed_count >= limit:
+                        break
+
+                    # Get sentence ID
+                    if "sent_id" in sent.metadata:
+                        idx = sent.metadata["sent_id"]
+                    else:
+                        idx = id_counter
+
+                    # Extract tokens and tags
+                    tokens = [token["token"] for token in sent]
+                    actual_tags = [token["tag"] for token in sent]
+
+                    # Apply tag fixing if enabled
+                    if self.fix_tags:
+                        fixed_tags = []
+                        for actual_tag in actual_tags:
+                            if "OTH" in actual_tag or actual_tag == "B-O":
+                                actual_tag = "O"
+                            fixed_tags.append(actual_tag)
+                    else:
+                        fixed_tags = actual_tags
+
+                    # Extract annotator info if available
+                    annotator = []
+                    for token in sent:
+                        if "annotator" in token and token["annotator"] is not None:
+                            annotator.append(token["annotator"])
+                        else:
+                            annotator.append("")
+
+                    # Get text from metadata or reconstruct from tokens
+                    if "text" in sent.metadata:
+                        text = sent.metadata["text"]
+                    else:
+                        text = " ".join(tokens)
+
+                    instance = {
+                        "idx": str(idx),
+                        "text": text,
+                        "tokens": tokens,
+                        "ner_tags": fixed_tags,
+                        "annotator": annotator,
+                    }
+
+                    dataset.append(instance)
+                    processed_count += 1
+                    id_counter += 1
+
+            except Exception as e:
+                with error_context(
+                    stage="Raw Dataset Loading",
+                    help="https://www.unitxt.ai/en/latest/unitxt.loaders.html#module-unitxt.loaders",
+                ):
+                    raise UnitxtError(
+                        f"Failed to load IOB file {file_path}: {e!s}"
+                    ) from e
+
+            # Cache the dataset
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[dataset_id] = dataset
+
+        # Yield instances from cached dataset
+        for instance in dataset:
+            yield recursive_copy(instance)
+
+
+class TURLColumnTypeAnnotationLoader(LazyLoader):
+    data_classification_policy = ["public"]
+    _requirements_list = ["huggingface_hub"]
+
+    def prepare(self):
+        super().prepare()
+        from huggingface_hub import hf_hub_download
+
+        self._download = hf_hub_download
+
+    def get_splits(self) -> List[str]:
+        return ["train", "validation", "test"]
+
+    @staticmethod
+    def _load_table(table_data):
+        headers = table_data[5]
+        cols = table_data[6]
+        if not cols:
+            return {"header": headers, "rows": []}
+        row_count = max(x[-1][0][0] for x in cols)
+        rows = []
+        for i in range(row_count):
+            row = []
+            for col in cols:
+                cell = next((c[1][1] for c in col if c[0][0] == i), "")
+                row.append(cell)
+            if any(row):
+                rows.append(row)
+        return {"header": headers, "rows": rows}
+
+    def split_generator(self, split: str) -> Generator[Dict[str, Any], None, None]:
+        dataset_id = str(self) + "_" + split
+        dataset = self.__class__._loader_cache.get(dataset_id, None)
+        if split == "validation":
+            split = "dev"
+        if dataset is None:
+            file_path = self._download(
+                "stanford-crfm/helm-scenarios",
+                filename=f"turl-column-type-annotation/{split}.table_col_type.json",
+                repo_type="dataset",
+                revision="main",
+            )
+            with open(file_path, encoding="utf-8") as f:
+                data = json.load(f)
+            dataset = []
+            for table_data in data:
+                table_content = self._load_table(table_data)
+                for idx, colname in enumerate(table_data[5]):
+                    instance = {
+                        "page_title": table_data[1],
+                        "section_title": table_data[3],
+                        "table_caption": table_data[4],
+                        "table": table_content,
+                        "colname": colname,
+                        "annotations": table_data[7][idx],
+                    }
+                    dataset.append(instance)
+            self.__class__._loader_cache[dataset_id] = dataset
+
+        for instance in self.__class__._loader_cache[dataset_id]:
+            yield instance
