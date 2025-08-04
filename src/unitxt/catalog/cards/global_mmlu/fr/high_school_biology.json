@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "fr"
+        "name": "fr",
+        "filtering_lambda": "lambda x: x['subject'] == 'high_school_biology'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "high_school_biology"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [

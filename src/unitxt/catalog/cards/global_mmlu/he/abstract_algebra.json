@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "he"
+        "name": "he",
+        "filtering_lambda": "lambda x: x['subject'] == 'abstract_algebra'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "abstract_algebra"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [

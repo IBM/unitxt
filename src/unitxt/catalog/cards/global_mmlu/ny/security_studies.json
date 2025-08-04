@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "ny"
+        "name": "ny",
+        "filtering_lambda": "lambda x: x['subject'] == 'security_studies'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "security_studies"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [

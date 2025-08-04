@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "ro"
+        "name": "ro",
+        "filtering_lambda": "lambda x: x['subject'] == 'human_aging'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "human_aging"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [

@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "ms"
+        "name": "ms",
+        "filtering_lambda": "lambda x: x['subject'] == 'college_chemistry'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "college_chemistry"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [

@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "ru"
+        "name": "ru",
+        "filtering_lambda": "lambda x: x['subject'] == 'jurisprudence'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "jurisprudence"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [
