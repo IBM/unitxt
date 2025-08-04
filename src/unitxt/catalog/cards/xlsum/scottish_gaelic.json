@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "scottish_gaelic",
+        "revision": "refs/convert/parquet",
+        "data_dir": "scottish_gaelic",
         "splits": [
             "test",
             "train",

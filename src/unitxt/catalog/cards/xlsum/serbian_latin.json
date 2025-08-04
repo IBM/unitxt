@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "serbian_latin",
+        "revision": "refs/convert/parquet",
+        "data_dir": "serbian_latin",
         "splits": [
             "test",
             "train",

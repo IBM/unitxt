@@ -3,7 +3,11 @@
     "loader": {
         "__type__": "load_hf",
         "path": "ethos",
-        "name": "binary"
+        "revision": "refs/convert/parquet",
+        "data_dir": "binary",
+        "splits": [
+            "train"
+        ]
     },
     "preprocess_steps": [
         {

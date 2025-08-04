@@ -1,4 +1,3 @@
-from datasets import get_dataset_config_names, load_dataset_builder
 from unitxt.blocks import (
     LoadHF,
     MapInstanceValues,
@@ -9,27 +8,142 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.test_utils.card import test_card
 
-langs = get_dataset_config_names("AmazonScience/massive", trust_remote_code=True)
-# now langs is the list of all languages showing in the dataset
+langs = [
+    "af-ZA",
+    "am-ET",
+    "ar-SA",
+    "az-AZ",
+    "bn-BD",
+    "ca-ES",
+    "cy-GB",
+    "da-DK",
+    "de-DE",
+    "el-GR",
+    "en-US",
+    "es-ES",
+    "fa-IR",
+    "fi-FI",
+    "fr-FR",
+    "he-IL",
+    "hi-IN",
+    "hu-HU",
+    "hy-AM",
+    "id-ID",
+    "is-IS",
+    "it-IT",
+    "ja-JP",
+    "jv-ID",
+    "ka-GE",
+    "km-KH",
+    "kn-IN",
+    "ko-KR",
+    "lv-LV",
+    "ml-IN",
+    "mn-MN",
+    "ms-MY",
+    "my-MM",
+    "nb-NO",
+    "nl-NL",
+    "pl-PL",
+    "pt-PT",
+    "ro-RO",
+    "ru-RU",
+    "sl-SL",
+    "sq-AL",
+    "sv-SE",
+    "sw-KE",
+    "ta-IN",
+    "te-IN",
+    "th-TH",
+    "tl-PH",
+    "tr-TR",
+    "ur-PK",
+    "vi-VN",
+    "zh-CN",
+    "zh-TW",
+    "all",
+    "all_1.1",
+]
+class_names = [
+    "datetime_query",
+    "iot_hue_lightchange",
+    "transport_ticket",
+    "takeaway_query",
+    "qa_stock",
+    "general_greet",
+    "recommendation_events",
+    "music_dislikeness",
+    "iot_wemo_off",
+    "cooking_recipe",
+    "qa_currency",
+    "transport_traffic",
+    "general_quirky",
+    "weather_query",
+    "audio_volume_up",
+    "email_addcontact",
+    "takeaway_order",
+    "email_querycontact",
+    "iot_hue_lightup",
+    "recommendation_locations",
+    "play_audiobook",
+    "lists_createoradd",
+    "news_query",
+    "alarm_query",
+    "iot_wemo_on",
+    "general_joke",
+    "qa_definition",
+    "social_query",
+    "music_settings",
+    "audio_volume_other",
+    "calendar_remove",
+    "iot_hue_lightdim",
+    "calendar_query",
+    "email_sendemail",
+    "iot_cleaning",
+    "audio_volume_down",
+    "play_radio",
+    "cooking_query",
+    "datetime_convert",
+    "qa_maths",
+    "iot_hue_lightoff",
+    "iot_hue_lighton",
+    "transport_query",
+    "music_likeness",
+    "email_query",
+    "play_music",
+    "audio_volume_mute",
+    "social_post",
+    "alarm_set",
+    "qa_factoid",
+    "calendar_set",
+    "play_game",
+    "alarm_remove",
+    "lists_remove",
+    "transport_taxi",
+    "recommendation_movies",
+    "iot_coffee",
+    "music_query",
+    "play_podcasts",
+    "lists_query",
+]
 
-
-ds_builder = load_dataset_builder("AmazonScience/massive", trust_remote_code=True)
-classlabels = ds_builder.info.features["intent"]
-
-mappers = {}
-for i in range(len(classlabels.names)):
-    mappers[str(i)] = classlabels.names[i]
+mappers = {f"{i}": name for i, name in enumerate(class_names)}
 
 
 for lang in langs:
     card = TaskCard(
-        loader=LoadHF(path="AmazonScience/massive", name=lang),
+        loader=LoadHF(
+            path="AmazonScience/massive",
+            revision="refs/convert/parquet",
+            data_dir=lang,
+            splits=["train", "test", "validation"],
+        ),
         preprocess_steps=[
             MapInstanceValues(mappers={"intent": mappers}),
             Rename(field_to_field={"utt": "text", "intent": "label"}),
             Set(
                 fields={
-                    "classes": classlabels.names,
+                    "classes": class_names,
                     "text_type": "sentence",
                     "type_of_class": "intent",
                 }

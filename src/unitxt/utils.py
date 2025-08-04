@@ -9,9 +9,13 @@ import time
 from collections import OrderedDict
 from contextvars import ContextVar
 from functools import wraps
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as get_installed_version
 from typing import Any, Dict, Optional
 from urllib.error import HTTPError as UrllibHTTPError
 
+from packaging.requirements import Requirement
+from packaging.version import Version
 from requests.exceptions import ConnectionError, HTTPError
 from requests.exceptions import Timeout as TimeoutError
 
@@ -422,3 +426,46 @@ class LongString(str):
         if self._repr_str is not None:
             return self._repr_str
         return super().__repr__()
+
+
+class DistributionNotFound(Exception):
+    def __init__(self, requirement):
+        self.requirement = requirement
+        super().__init__(f"Distribution not found for requirement: {requirement}")
+
+
+class VersionConflict(Exception):
+    def __init__(self, dist, req):
+        self.dist = dist  # Distribution object, just emulate enough for your needs
+        self.req = req
+        super().__init__(f"Version conflict: {dist} does not satisfy {req}")
+
+
+class DistStub:
+    # Minimal stub to mimic pkg_resources.Distribution
+    def __init__(self, project_name, version):
+        self.project_name = project_name
+        self.version = version
+
+
+def require(requirements):
+    """Minimal drop-in replacement for pkg_resources.require.
+
+    Accepts a single requirement string or a list of them.
+    Raises DistributionNotFound or VersionConflict.
+    Returns nothing (side-effect only).
+    """
+    if isinstance(requirements, str):
+        requirements = [requirements]
+    for req_str in requirements:
+        req = Requirement(req_str)
+        if req.marker and not req.marker.evaluate():
+            continue  # skip not needed for this environment
+        name = req.name
+        try:
+            ver = get_installed_version(name)
+        except PackageNotFoundError as e:
+            raise DistributionNotFound(req_str) from e
+        if req.specifier and not req.specifier.contains(Version(ver), prereleases=True):
+            dist = DistStub(name, ver)
+            raise VersionConflict(dist, req_str)

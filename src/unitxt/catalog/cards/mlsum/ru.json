@@ -3,7 +3,13 @@
     "loader": {
         "__type__": "load_hf",
         "path": "mlsum",
-        "name": "ru"
+        "revision": "refs/convert/parquet",
+        "data_dir": "ru",
+        "splits": [
+            "train",
+            "test",
+            "validation"
+        ]
     },
     "preprocess_steps": [
         {

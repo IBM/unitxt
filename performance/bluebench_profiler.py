@@ -127,10 +127,10 @@ class BlueBenchProfiler:
         t0_5 = time()
         # exhaust recipe to ensure all data is loaded, and hopefully saved in the expanded loader-cache
         ms = recipe()
-        for stream_name in ms:
-            len(list(ms[stream_name]))
-        dataset = _source_to_dataset(source=recipe)
-        # and now begin again, with same recipe in which the loaders enjoy the cache
+        total_production_length_of_recipe = {k: len(list(ms[k])) for k in ms}
+        logger.critical(
+            f"lengths of total production of recipe: {total_production_length_of_recipe}"
+        )  # and now begin again, with same recipe in which the loaders enjoy the cache
         t1 = time()
         ms = recipe()
         t2 = time()
@@ -149,13 +149,7 @@ class BlueBenchProfiler:
         t5 = time()
         evaluate(predictions=predictions, data=dataset)
         t6 = time()
-        # now just streaming through recipe, without generating an HF dataset:
-        ms = recipe()
-        total_production_length_of_recipe = {k: len(list(ms[k])) for k in ms}
-        logger.critical(
-            f"lengths of total production of recipe: {total_production_length_of_recipe}"
-        )
-
+        # now return settings.loader_cache_size back
         settings.loader_cache_size = current_loader_cache_size
         return {
             "load_recipe": t0_5 - t0,

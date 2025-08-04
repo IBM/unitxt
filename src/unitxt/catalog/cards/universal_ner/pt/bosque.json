@@ -1,11 +1,14 @@
 {
     "__type__": "task_card",
     "loader": {
-        "__type__": "load_hf",
-        "path": "universalner/universal_ner",
-        "name": "pt_bosque",
-        "requirements": [
-            "conllu"
+        "__type__": "load_iob",
+        "files": {
+            "train": "https://raw.githubusercontent.com/UniversalNER/UNER_Portuguese-Bosque/master/pt_bosque-ud-train.iob2",
+            "dev": "https://raw.githubusercontent.com/UniversalNER/UNER_Portuguese-Bosque/master/pt_bosque-ud-dev.iob2",
+            "test": "https://raw.githubusercontent.com/UniversalNER/UNER_Portuguese-Bosque/master/pt_bosque-ud-test.iob2"
+        },
+        "data_classification_policy": [
+            "public"
         ]
     },
     "preprocess_steps": [
@@ -18,20 +21,6 @@
             "field_to_field": {
                 "ner_tags": "labels"
             }
-        },
-        {
-            "__type__": "get_item_by_index",
-            "field": "labels",
-            "items_list": [
-                "O",
-                "B-PER",
-                "I-PER",
-                "B-ORG",
-                "I-ORG",
-                "B-LOC",
-                "I-LOC"
-            ],
-            "process_every_value": true
         },
         {
             "__type__": "iob_extractor",

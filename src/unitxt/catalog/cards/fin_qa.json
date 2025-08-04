@@ -1,11 +1,35 @@
 {
     "__type__": "task_card",
     "loader": {
-        "__type__": "load_hf",
-        "path": "ibm/finqa",
-        "streaming": false
+        "__type__": "load_json_file",
+        "files": {
+            "train": "https://raw.githubusercontent.com/czyssrs/FinQA/0f16e2867befa6840783e58be38c9efb9229d742/dataset/train.json",
+            "validation": "https://raw.githubusercontent.com/czyssrs/FinQA/0f16e2867befa6840783e58be38c9efb9229d742/dataset/dev.json",
+            "test": "https://raw.githubusercontent.com/czyssrs/FinQA/0f16e2867befa6840783e58be38c9efb9229d742/dataset/test.json"
+        }
     },
     "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field": "qa/question",
+            "to_field": "question"
+        },
+        {
+            "__type__": "copy",
+            "field": "qa/answer",
+            "to_field": "answer"
+        },
+        {
+            "__type__": "cast",
+            "field": "qa/program",
+            "to": "str",
+            "to_field": "program_re"
+        },
+        {
+            "__type__": "copy",
+            "field": "pre_text/0",
+            "to_field": "pre_text"
+        },
         {
             "__type__": "get_length",
             "field": "table",
@@ -17,11 +41,6 @@
                 "table_length": 1
             },
             "condition": "gt"
-        },
-        {
-            "__type__": "copy",
-            "field": "pre_text/0",
-            "to_field": "pre_text"
         },
         {
             "__type__": "copy",
