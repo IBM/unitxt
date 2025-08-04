@@ -11,41 +11,26 @@
 ![Read the Docs](https://img.shields.io/readthedocs/unitxt)
 [![downloads](https://static.pepy.tech/personalized-badge/unitxt?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/unitxt)
 
-### Unitxt is a Python library that makes AI evaluation simple and standardized, offering the world's largest catalog of benchmarks and tools for comprehensive AI system testing.
+### 🦄 Unitxt is a Python library for enterprise-grade evaluation of AI performance, offering the world's largest catalog of tools and data for end-to-end AI benchmarking
+
 #
 
 ## Why Unitxt?
 
-- **Comprehensive**: Evaluate text, vision, speech, and code in one unified framework
-- **Enterprise-Ready**: Battle-tested components with extensive catalog of benchmarks
-- **Model Agnostic**: Works with HuggingFace, OpenAI, WatsonX, and custom models
-- **Reproducible**: Shareable, modular components ensure consistent results
-
-With unitxt you can evaluate all the key aspects of your AI system:
-- **Text Understanding**
-- **Information Extraction**
-- **Image Understanding**
-- **Speech Recognition**
-- **Tool Calling**
-- **Code Writing**
-- **Multi Turn Interactions**
+- 🌐 **Comprehensive**: Evaluate text, tables, vision, speech, and code in one unified framework
+- 💼 **Enterprise-Ready**: Battle-tested components with extensive catalog of benchmarks
+- 🧠 **Model Agnostic**: Works with HuggingFace, OpenAI, WatsonX, and custom models
+- 🔒 **Reproducible**: Shareable, modular components ensure consistent results
 
 ## Quick Links
 - 📖 [Documentation](https://www.unitxt.ai)
-- 🚀 [Getting Started Guide](https://www.unitxt.ai/en/latest/getting_started.html)
-- 📊 [Browse Catalog](https://www.unitxt.ai/en/latest/catalog.html)
+- 🚀 [Getting Started](https://www.unitxt.ai)
+- 📁 [Browse Catalog](https://www.unitxt.ai/en/latest/catalog/catalog.__dir__.html)
 
 # Installation
 
 ```bash
-# Basic installation
 pip install unitxt
-
-# With UI dashboard
-pip install unitxt[ui]
-
-# Development setup
-pip install unitxt[dev]
 ```
 
 # Quick Start
@@ -106,6 +91,7 @@ dataset = load_dataset(
 
 Launch the graphical user interface to explore datasets and benchmarks:
 ```
+pip install unitxt[ui]
 unitxt-explore
 ```
 
@@ -166,13 +152,7 @@ print("Instance Results:\n", results.instance_scores.summary)
 
 # Contributing
 
-Install Unitxt from source:
-```bash
-git clone git@github.com:IBM/unitxt.git
-cd unitxt
-pip install -e ".[dev]"
-pre-commit install
-```
+Read the [contributing guide](./CONTRIBUTING.md) for details on how to contribute to Unitxt.
 
 # Citation
 
