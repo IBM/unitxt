@@ -16,10 +16,11 @@ from .artifact import (
     verify_legal_catalog_name,
 )
 from .logging_utils import get_logger
-from .settings_utils import get_constants
+from .settings_utils import get_constants, get_settings
 from .text_utils import print_dict
 from .version import version
 
+settings = get_settings()
 logger = get_logger()
 constants = get_constants()
 
@@ -128,13 +129,18 @@ def add_to_catalog(
     catalog_path: Optional[str] = None,
     verbose=True,
 ):
-    reset_artifacts_json_cache()
-    if catalog is None:
-        if catalog_path is None:
-            catalog_path = constants.default_catalog_path
-        catalog = LocalCatalog(location=catalog_path)
-    verify_legal_catalog_name(name)
-    catalog.save_artifact(artifact, name, overwrite=overwrite, verbose=verbose)
+    if settings.skip_save_to_catalog:
+        logger.info(
+            f"Artifact '{name}' was not saved due to settings.skip_save_to_catalog = True."
+        )
+    else:
+        reset_artifacts_json_cache()
+        if catalog is None:
+            if catalog_path is None:
+                catalog_path = constants.default_catalog_path
+            catalog = LocalCatalog(location=catalog_path)
+        verify_legal_catalog_name(name)
+        catalog.save_artifact(artifact, name, overwrite=overwrite, verbose=verbose)
 
 
 def add_link_to_catalog(

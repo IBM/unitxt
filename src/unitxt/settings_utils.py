@@ -210,6 +210,7 @@ if Settings.is_uninitilized():
     settings.metrics_master_key_token = None
     settings.seed = (int, 42)
     settings.skip_artifacts_prepare_and_verify = (bool, False)
+    settings.skip_save_to_catalog = (bool, False)
     settings.data_classification_policy = None
     settings.mock_inference_mode = (bool, False)
     settings.disable_hf_datasets_cache = (bool, False)
