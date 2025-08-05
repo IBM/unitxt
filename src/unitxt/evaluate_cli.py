@@ -454,7 +454,7 @@ def initialize_inference_engine(
         )
 
         # Keep the actual model name for the results
-        args.model = inference_model.engine.model
+        args.model = inference_model.get_engine_id()
     else:
         # This case should not be reached due to argparse choices
         logger.error(
