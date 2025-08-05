@@ -1,3 +1,4 @@
+from unitxt import load_dataset
 from unitxt.api import evaluate
 from unitxt.benchmark import Benchmark
 from unitxt.inference import (
@@ -43,8 +44,7 @@ benchmark = Benchmark(
     },
 )
 
-test_dataset = list(benchmark()["test"])
-
+dataset = load_dataset(benchmark, split="test")
 
 # Infer using llama-3-2-1b base using Watsonx API
 model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
@@ -56,8 +56,8 @@ For the arguments these inference engines can receive, please refer to the class
 about the the open ai api arguments the CrossProviderInferenceEngine follows.
 """
 
-predictions = model(test_dataset)
-results = evaluate(predictions=predictions, data=test_dataset)
+predictions = model(dataset)
+results = evaluate(predictions=predictions, data=dataset)
 
 print("Global Results:")
 print(results.global_scores.summary)

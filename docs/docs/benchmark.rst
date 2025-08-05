@@ -5,7 +5,7 @@
    To use this tutorial, you need to :ref:`install Unitxt <install_unitxt>`.
 
 =================
-Benchmarks 
+Benchmarks
 =================
 
 This guide will assist you in adding or using your new benchmark in Unitxt.
@@ -59,7 +59,10 @@ Next, you can evaluate this benchmark by:
 
 .. code-block:: python
 
-    dataset = list(benchmark()["test"])
+    from unitxt import load_dataset
+
+
+    dataset = load_dataset(benchmark, split="test")
 
     # Inference using Flan-T5 Base via Hugging Face API
     model = HFPipelineBasedInferenceEngine(

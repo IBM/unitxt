@@ -48,7 +48,7 @@ Here’s the code used to set up our tests. This example uses Unitxt to create s
 
     benchmark = Benchmark(subsets=subsets)
 
-    data = list(benchmark()["test"])
+    data = load_dataset(benchmark, split="test")
 
     model = LMMSEvalInferenceEngine(
         model_type="llava_onevision",
