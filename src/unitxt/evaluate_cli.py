@@ -299,7 +299,9 @@ def cli_load_dataset(args: argparse.Namespace) -> HFDataset:
         )
 
     # this hack circumvents an issue with multi-level benchmarks (such Bluebench's translation subset) that fail when wrapped with an additional Benchmark() object.
-    if len(benchmark_subsets) == 1:
+    if len(benchmark_subsets) == 1 and isinstance(
+        next(iter(benchmark_subsets.values())), Benchmark
+    ):
         source = next(iter(benchmark_subsets.values()))
     else:
         source = Benchmark(subsets=benchmark_subsets)
