@@ -1,4 +1,4 @@
-from unitxt import settings
+from unitxt import load_dataset, settings
 from unitxt.api import evaluate
 from unitxt.benchmark import Benchmark
 from unitxt.inference import (
@@ -26,7 +26,7 @@ with settings.context(
 
     benchmark = Benchmark(subsets=subsets, max_samples_per_subset=5)
 
-    data = benchmark()["test"].to_dataset()
+    dataset = load_dataset(benchmark, split="test")
 
     model = LMMSEvalInferenceEngine(
         model_type="llava",
@@ -34,8 +34,8 @@ with settings.context(
         max_new_tokens=2,
     )
 
-    predictions = model(data)
-    results = evaluate(predictions=predictions, data=data)
+    predictions = model(dataset)
+    results = evaluate(predictions=predictions, data=dataset)
 
     print("Subsets scores:")
     print(results.subsets_scores.summary)
