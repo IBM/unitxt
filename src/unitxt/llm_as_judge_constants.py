@@ -370,7 +370,7 @@ class DirectCriteriaCatalogEnum(Enum):
         name="conciseness",
         description="Is the response concise and to the point?",
         prediction_field="response",
-        context_fields=[],
+        context_fields=["question"],
         options=[
             CriteriaOption(
                 name="Yes",
