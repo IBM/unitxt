@@ -2099,6 +2099,9 @@ class RITSInferenceEngine(
         "meta-llama/Llama-3.1-8B-Instruct": "llama-3-1-8b-instruct",
         "meta-llama/Llama-4-Scout-17B-16E-Instruct": "llama-4-scout-17b-16e-instruct",
         "mistralai/Mistral-Small-3.1-24B-Instruct-2503": "mistral-small-3-1-24b-2503",
+        "ibm-granite/granite-guardian-3.2-3b-a800m": "granite-guardian-3-2-3b-a800m",
+        "ibm-granite/granite-guardian-3.2-5b": "granite-guardian-3-2-5b-ris",
+        "granite-guardian-3-2-5b-ris": "granite-guardian-3-3-8b",
     }
 
     def get_default_headers(self):
@@ -3516,7 +3519,11 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "granite-3-3-2b-instruct": "ibm/granite-3-3-2b-instruct",
             "granite-3-3-8b-instruct": "ibm/granite-3-3-8b-instruct",
             "granite-34b-code-instruct": "ibm/granite-34b-code-instruct",
+            "granite-guardian-3-2b": "ibm/granite-guardian-3-2b",
             "granite-guardian-3-8b": "ibm/granite-guardian-3-8b",
+            "granite-guardian-3-1-2b": "ibm/granite-guardian-3-2b",  # LifecycleWarning: Model 'ibm/granite-guardian-3-2b' is in deprecated state from 2025-07-09 until 2025-10-08. IDs of alternative models: ibm/granite-guardian-3-2-5b.
+            "granite-guardian-3-1-8b": "ibm/granite-guardian-3-8b",
+            "granite-guardian-3-2-5b": "ibm/granite-guardian-3-2-5b",
             "granite-vision-3-2-2b": "ibm/granite-vision-3-2-2b",
             "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
@@ -3581,6 +3588,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "granite-3-1-8b-instruct": "ibm-granite/granite-3.1-8b-instruct",
             "granite-3-2-8b-instruct": "ibm-granite/granite-3.2-8b-instruct",
             "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
+            "granite-guardian-3-2-3b": "ibm-granite/granite-guardian-3.2-3b-a800m",
+            "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
+            "granite-guardian-3-3-8b": "ibm-granite/granite-guardian-3.3-8b",
             "llama-3-1-8b-instruct": "meta-llama/Llama-3.1-8B-Instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
             "llama-3-1-405b-instruct": "meta-llama/llama-3-1-405b-instruct-fp8",
@@ -3595,8 +3605,6 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
             "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7B-instruct-v0.1",
             "deepseek-v3": "deepseek-ai/DeepSeek-V3",
-            "granite-guardian-3-2-3b-a800m": "ibm-granite/granite-guardian-3.2-3b-a800m",
-            "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
             "phi-4": "microsoft/phi-4",
         },
         "open-ai": {
@@ -3699,9 +3707,16 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "gpt-4-1": "replicate/openai/gpt-4.1",
         },
         "hf-local": {
-            "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
             "llama-3-3-8b-instruct": "meta-llama/Llama-3.3-8B-Instruct",
             "SmolLM2-1.7B-Instruct": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+            "granite-guardian-3-1-2b": "ibm-granite/granite-guardian-3.1-2b",
+            "granite-guardian-3-1-8b": "ibm-granite/granite-guardian-3.1-8b",
+            "granite-guardian-3-2-3b": "ibm-granite/granite-guardian-3.2-3b-a800m",
+            "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
+            "granite-guardian-3-3-8b": "ibm-granite/granite-guardian-3.3-8b",
+            "granite-3-3-2b-instruct": "ibm-granite/granite-3.3-2b-instruct",
+            "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
+            "granite-4-0-tiny-preview": "ibm-granite/granite-4.0-tiny-preview",
         },
     }
     provider_model_map["watsonx"] = {
