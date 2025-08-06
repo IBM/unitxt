@@ -110,6 +110,12 @@ tests = [
     "pydantic",
     "jsonschema_rs",
     "torchcodec",
+    "soundfile"
+]
+audio = [
+    "torchcodec",
+    "soundfile"
+
 ]
 ui = [
     "gradio",
