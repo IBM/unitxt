@@ -44,7 +44,7 @@ jobs:
 
     - run: echo "blis==0" > constraints.txt
     - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-    - run: uv pip install --upgrade --system torch torchcodec --index-url https://download.pytorch.org/whl/cpu
+    - run: uv pip install --upgrade --system torch torchcodec 
     - run: uv pip install --system -c constraints.txt -e ".[tests]"
     - run: |
         pip install --only-binary :all: spacy
