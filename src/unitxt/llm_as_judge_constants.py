@@ -1625,7 +1625,7 @@ class PairwiseCriteriaCatalogEnum(Enum):
         name="factually_consistent",
         description="A factually consistent response contains only statements that are entailed by the source document.",
         prediction_field="response",
-        context_fields=[],
+        context_fields=["source document"],
     )
 
     INCLUSIVITY = Criteria(
