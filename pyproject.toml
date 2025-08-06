@@ -136,7 +136,8 @@ inference-tests = [
   "tenacity",
   "diskcache",
   "numpy==1.26.4",
-  "ollama"
+  "ollama",
+  "torchaudio"
 ]
 assistant = [
     "streamlit",
