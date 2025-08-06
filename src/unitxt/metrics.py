@@ -7086,7 +7086,7 @@ class GraniteGuardianCustomRisk(GraniteGuardianBase):
         return messages
 
 
-RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
+RISK_TYPE_TO_CLASS: Dict[RiskType, type[GraniteGuardianBase]] = {
     RiskType.USER_MESSAGE: GraniteGuardianUserRisk,
     RiskType.ASSISTANT_MESSAGE: GraniteGuardianAssistantRisk,
     RiskType.RAG: GraniteGuardianRagRisk,
