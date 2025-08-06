@@ -415,10 +415,14 @@ class PostProcessAfterEvaluation(SequentialOperator):
         Rename(
             field="raw_prediction",
             to_field="prediction",
+            not_exist_ok=True,
+            not_exist_do_nothing=True,
         ),
         Rename(
             field="raw_references",
             to_field="references",
+            not_exist_ok=True,
+            not_exist_do_nothing=True,
         ),
         RecursiveCopy(
             field="source",

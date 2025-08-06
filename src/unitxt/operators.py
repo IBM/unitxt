@@ -613,7 +613,12 @@ class Rename(FieldOperator):
             if (not is_subpath(from_field, to_field)) and (
                 not is_subpath(to_field, from_field)
             ):
-                dict_delete(res, from_field, remove_empty_ancestors=True)
+                dict_delete(
+                    res,
+                    from_field,
+                    remove_empty_ancestors=True,
+                    not_exist_ok=self.not_exist_ok,
+                )
 
         return res
 
