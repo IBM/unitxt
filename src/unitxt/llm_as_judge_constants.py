@@ -1603,7 +1603,9 @@ Errors: Are there any errors in grammar, vocabulary, punctuation, or formatting 
     )
 
 
-DIRECT_CRITERIA = [c.value for c in DirectCriteriaCatalogEnum]
+DIRECT_CRITERIA: List[CriteriaWithOptions] = [
+    c.value for c in DirectCriteriaCatalogEnum
+]
 
 
 class PairwiseCriteriaCatalogEnum(Enum):
@@ -1625,7 +1627,7 @@ class PairwiseCriteriaCatalogEnum(Enum):
         name="factually_consistent",
         description="A factually consistent response contains only statements that are entailed by the source document.",
         prediction_field="response",
-        context_fields=[],
+        context_fields=["source document"],
     )
 
     INCLUSIVITY = Criteria(
@@ -1658,4 +1660,4 @@ class PairwiseCriteriaCatalogEnum(Enum):
     )
 
 
-PAIRWISE_CRITERIA = [c.value for c in PairwiseCriteriaCatalogEnum]
+PAIRWISE_CRITERIA: List[Criteria] = [c.value for c in PairwiseCriteriaCatalogEnum]
