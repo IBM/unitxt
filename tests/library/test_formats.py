@@ -453,7 +453,7 @@ class TestFormats(UnitxtTestCase):
         )
 
         self.assertListEqual(
-            dataset["source"],
+            list(dataset["source"]),
             [
                 "<|start_of_role|>system<|end_of_role|>Knowledge Cutoff Date: April 2024.\nToday's Date: "
                 + today

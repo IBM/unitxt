@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "french",
+        "revision": "refs/convert/parquet",
+        "data_dir": "french",
         "splits": [
             "test",
             "train",

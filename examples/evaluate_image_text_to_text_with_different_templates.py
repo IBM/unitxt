@@ -1,4 +1,4 @@
-from unitxt import settings
+from unitxt import load_dataset, settings
 from unitxt.api import evaluate
 from unitxt.benchmark import Benchmark
 from unitxt.inference import (
@@ -14,7 +14,7 @@ with settings.context(
 ):
     card = "cards.seed_bench"
 
-    dataset = Benchmark(
+    benchmark = Benchmark(
         subsets={
             "capitals": DatasetRecipe(
                 card=card,
@@ -35,7 +35,7 @@ with settings.context(
         },
     )
 
-    data = list(dataset()["test"])
+    dataset = load_dataset(benchmark, split="test")
 
     model = LMMSEvalInferenceEngine(
         model_type="llava_onevision",
@@ -43,8 +43,8 @@ with settings.context(
         max_new_tokens=2,
     )
 
-    predictions = model(data)
-    results = evaluate(predictions=predictions, data=data)
+    predictions = model(dataset)
+    results = evaluate(predictions=predictions, data=dataset)
 
     for subset in dataset.subsets:
         logger.info(

@@ -1,4 +1,6 @@
 import json
+import os
+import tempfile
 from collections import Counter
 from typing import Any
 
@@ -42,6 +44,7 @@ from unitxt.operators import (
     MergeStreams,
     MinimumOneExamplePerLabelRefiner,
     Perturb,
+    ReadFile,
     RecursiveReplace,
     RemoveFields,
     RemoveValues,
@@ -372,6 +375,36 @@ class TestOperators(UnitxtTestCase):
             operator=FilterByExpression(expression="d['e'] == 5"),
             inputs=inputs,
             exception_texts=["name 'd' is not defined"],
+            tester=self,
+        )
+
+    def test_filter_by_condition_exists(self):
+        inputs = [
+            {"a": 1, "b": {"c": 2}},
+            {"a": 2, "b": {"c": 3}, "d": 4},
+            {"a": 1, "b": {"c": 3}},
+        ]
+
+        targets = [
+            {"a": 2, "b": {"c": 3}, "d": 4},
+        ]
+
+        check_operator(
+            operator=FilterByCondition(values={"d": True}, condition="exists"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        targets = [
+            {"a": 1, "b": {"c": 2}},
+            {"a": 1, "b": {"c": 3}},
+        ]
+
+        check_operator(
+            operator=FilterByCondition(values={"d": False}, condition="exists"),
+            inputs=inputs,
+            targets=targets,
             tester=self,
         )
 
@@ -3424,3 +3457,24 @@ Agent:"""
         self.assertDictEqual(
             {"field_containing_a_list": "a, b, c, d"}, processed_instance
         )
+
+    def test_read_file_operator(self):
+        test_content = "col1,col2,col3\nvalue1,value2,value3\nvalue4,value5,value6"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create a test file
+            test_file_path = os.path.join(temp_dir, "test.csv")
+            with open(test_file_path, "w", encoding="utf-8") as f:
+                f.write(test_content)
+
+            # Test reading local file
+            operator = ReadFile(field="file_path", to_field="content")
+            inputs = [{"file_path": test_file_path}]
+            targets = [{"file_path": test_file_path, "content": test_content}]
+
+            check_operator(
+                operator=operator,
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )

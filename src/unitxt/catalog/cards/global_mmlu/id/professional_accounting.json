@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "id"
+        "name": "id",
+        "filtering_lambda": "lambda x: x['subject'] == 'professional_accounting'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "professional_accounting"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [

@@ -3,7 +3,6 @@ from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
     Deduplicate,
-    FilterByCondition,
     ListFieldValues,
     MapInstanceValues,
     Set,
@@ -120,9 +119,12 @@ is_first = True
 for language in languages:
     for subject in subtasks:
         card = TaskCard(
-            loader=LoadHF(path="CohereForAI/Global-MMLU", name=language),
+            loader=LoadHF(
+                path="CohereForAI/Global-MMLU",
+                name=language,
+                filtering_lambda=f"lambda x: x['subject'] == '{subject}'",
+            ),
             preprocess_steps=[
-                FilterByCondition(values={"subject": subject}, condition="eq"),
                 Deduplicate(by=["question", "subject", "answer"]),
                 RenameSplits({"dev": "train"}),
                 MapInstanceValues(

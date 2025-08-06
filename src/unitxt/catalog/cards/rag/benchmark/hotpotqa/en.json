@@ -2,9 +2,13 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "vincentkoc/hotpot_qa_archive",
-        "name": "distractor",
-        "revision": "c060661",
+        "path": "hotpotqa/hotpot_qa",
+        "data_dir": "distractor",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "validation"
+        ],
         "data_classification_policy": [
             "public"
         ]

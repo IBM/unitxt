@@ -218,7 +218,7 @@ class MapInstanceValues(InstanceOperator):
         if val_as_str in mapper:
             return recursive_copy(mapper[val_as_str])
         if self.strict:
-            raise KeyError(
+            raise ValueError(
                 f"value '{val_as_str}', the string representation of the value in field '{key}', is not found in mapper '{mapper}'"
             )
         return val
@@ -1254,6 +1254,8 @@ class FilterByCondition(StreamOperator):
        | ``FilterByCondition(values = {"a":[4,8]}, condition = "not in")`` will yield only instances where ``"a"`` is different from ``4`` or ``8``
        | ``FilterByCondition(values = {"a/b":[4,8]}, condition = "not in")`` will yield only instances where ``"a"`` is a dict in which key ``"b"`` is mapped to a value that is neither ``4`` nor ``8``
        | ``FilterByCondition(values = {"a[2]":4}, condition = "le")`` will yield only instances where "a" is a list whose 3-rd element is ``<= 4``
+       | ``FilterByCondition(values = {"a":False}, condition = "exists")`` will yield only instances which do not contain a field named ``"a"``
+       | ``FilterByCondition(values = {"a/b":True}, condition = "exists")`` will yield only instances which contain a field named ``"a"`` whose value is a dict containing, in turn, a field named ``"b"``
 
 
     """
@@ -1269,6 +1271,7 @@ class FilterByCondition(StreamOperator):
         "ne": operator.ne,
         "in": None,  # Handled as special case
         "not in": None,  # Handled as special case
+        "exists": None,  # Handled as special case
     }
     error_on_filtered_all: bool = True
 
@@ -1295,13 +1298,25 @@ class FilterByCondition(StreamOperator):
                 raise ValueError(
                     f"The filter for key ('{key}') in FilterByCondition with condition '{self.condition}' must be list but is not : '{value}'"
                 )
+
+        if self.condition == "exists":
+            for key, value in self.values.items():
+                if not isinstance(value, bool):
+                    raise ValueError(
+                        f"For condition 'exists', the value for key ('{key}') in FilterByCondition must be boolean. But is not : '{value}'"
+                    )
+
         return super().verify()
 
     def _is_required(self, instance: dict) -> bool:
         for key, value in self.values.items():
             try:
                 instance_key = dict_get(instance, key)
+                if self.condition == "exists":
+                    return value
             except ValueError as ve:
+                if self.condition == "exists":
+                    return not value
                 raise ValueError(
                     f"Required filter field ('{key}') in FilterByCondition is not found in instance."
                 ) from ve
@@ -2559,3 +2574,40 @@ class Fillna(FieldOperator):
         except TypeError:
             return value
         return value
+
+
+class ReadFile(FieldOperator):
+    """Reads file content from local path or URL.
+
+    This operator can read files from local filesystem paths or remote URLs.
+    The content is returned as a string.
+
+    Args:
+        encoding (str): Text encoding to use when reading the file. Defaults to 'utf-8'.
+
+    Example:
+        Reading a local file
+
+        .. code-block:: python
+
+            ReadFile(field="file_path", to_field="content")
+
+        Reading from URL
+
+        .. code-block:: python
+
+            ReadFile(field="url", to_field="content")
+    """
+
+    encoding: str = "utf-8"
+
+    def process_value(self, value: str) -> str:
+        """Read file content from local path or URL."""
+        if value.startswith(("http://", "https://")):
+            # Read from URL
+            response = requests.get(value)
+            response.raise_for_status()
+            return response.content.decode(self.encoding, errors="replace")
+        # Read from local file
+        with open(value, encoding=self.encoding) as f:
+            return f.read()

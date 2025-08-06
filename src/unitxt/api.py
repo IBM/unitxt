@@ -233,7 +233,7 @@ def load_dataset(
     dataset_query: Optional[str] = None,
     split: Optional[str] = None,
     streaming: bool = False,
-    use_cache: Optional[bool] = False,
+    use_cache: Optional[bool] = None,
     **kwargs,
 ) -> Union[DatasetDict, IterableDatasetDict, Dataset, IterableDataset]:
     """Loads dataset.
@@ -259,7 +259,8 @@ def load_dataset(
             The split of the data to load
         use_cache (bool, optional):
             If set to True, the returned Huggingface dataset is cached on local disk such that if the same dataset is loaded again, it will be loaded from local disk, resulting in faster runs.
-            If set to False (default), the returned dataset is not cached.
+            If set to False, the returned dataset is not cached.
+            If set to None, the value of this parameter will be determined by setting.dataset_cache_default (default is False).
             Note that if caching is enabled and the dataset card definition is changed, the old version in the cache may be returned.
             Enable caching only if you are sure you are working with fixed Unitxt datasets and definitions (e.g. running using predefined datasets from the Unitxt catalog).
         **kwargs:
@@ -284,6 +285,9 @@ def load_dataset(
 
     """
     recipe = load_recipe(dataset_query, **kwargs)
+
+    if use_cache is None:
+        use_cache = settings.dataset_cache_default
 
     dataset = _source_to_dataset(
         source=recipe, split=split, use_cache=use_cache, streaming=streaming

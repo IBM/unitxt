@@ -17,7 +17,7 @@ classifiers = [
     "Operating System :: OS Independent"
 ]
 dependencies = [
-    "datasets>=2.16.0,<4.0",
+    "datasets>=2.16.0",
     "evaluate",
     "scipy>=1.10.1",
     "diskcache"
@@ -232,7 +232,7 @@ keep-runtime-typing = true
 "src/unitxt/metric_utils.py" = ["C901"]
 "src/unitxt/dataclass.py" = ["C901"]
 "src/unitxt/operators.py" = ["C901"]
-"src/unitxt/utils.py" = ["C901"]
+"src/unitxt/utils.py" = ["C901", "N818"]
 "docs/conf.py" = ["E402"]
 "prepare/cards/attaq_500.py" = ["RUF001"]
 "prepare/instructions/models/llama.py" = ["RUF001"]

@@ -2,7 +2,16 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "EdinburghNLP/xsum"
+        "path": "EdinburghNLP/xsum",
+        "revision": "refs/convert/parquet",
+        "data_classification_policy": [
+            "public"
+        ],
+        "splits": [
+            "train",
+            "validation",
+            "test"
+        ]
     },
     "task": "tasks.summarization.abstractive",
     "preprocess_steps": [

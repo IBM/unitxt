@@ -3,7 +3,15 @@
     "loader": {
         "__type__": "load_hf",
         "path": "openai/summarize_from_feedback",
-        "name": "comparisons"
+        "revision": "refs/convert/parquet",
+        "data_dir": "comparisons",
+        "data_classification_policy": [
+            "public"
+        ],
+        "splits": [
+            "train",
+            "validation"
+        ]
     },
     "preprocess_steps": [
         "splitters.small_no_test",

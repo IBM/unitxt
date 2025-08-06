@@ -18,6 +18,13 @@
             "flags": 16
         },
         {
+            "__type__": "filter_by_condition",
+            "values": {
+                "instance/problem_statement": true
+            },
+            "condition": "exists"
+        },
+        {
             "__type__": "rename",
             "field_to_field": {
                 "instance/problem_statement": "problem statement",

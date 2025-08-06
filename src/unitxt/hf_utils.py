@@ -1,9 +1,28 @@
+import re
 from pathlib import Path
-
-from datasets.utils.py_utils import get_imports
+from typing import List
 
 from .deprecation_utils import compare_versions
 from .file_utils import get_all_files_in_dir
+
+
+def get_internal_imports(file_path: str) -> List[str]:
+    """Return a list of local (relative) modules directly imported in the given Python file."""
+    internal_imports = []
+    is_in_docstring = False
+    with open(file_path, encoding="utf-8") as f:
+        for line in f:
+            if line.count('"""') == 1 or line.count("'''") == 1:
+                is_in_docstring = not is_in_docstring
+            if is_in_docstring:
+                continue
+            # Match "import .module" or "from .module import ..."
+            match = re.match(r"^(?:import|from)\s+\.(\w+)", line)
+            if match:
+                module = match.group(1)
+                if module not in internal_imports:
+                    internal_imports.append(module)
+    return internal_imports
 
 
 def get_missing_imports(file, exclude=None):
@@ -13,8 +32,7 @@ def get_missing_imports(file, exclude=None):
     python_files = get_all_files_in_dir(src_dir, file_extension=".py")
     # get only the file without the path and extension
     required_modules = [Path(p).stem for p in python_files]
-    imports = get_imports(file)
-    imported_modules = [i[1] for i in imports if i[0] == "internal"]
+    imported_modules = get_internal_imports(file)
     return [
         i for i in required_modules if i not in imported_modules and i not in exclude
     ]

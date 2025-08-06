@@ -4,16 +4,20 @@ from unitxt.blocks import (
     Rename,
     SerializeKeyValPairs,
     Set,
-    SplitRandomMix,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
+from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="wiki_bio", streaming=True),
+    loader=LoadHF(
+        path="wiki_bio",
+        revision="refs/convert/parquet",
+        splits=["train", "val", "test"],
+    ),
     preprocess_steps=[
-        SplitRandomMix({"train": "train", "validation": "val", "test": "test"}),
+        RenameSplits({"val": "validation"}),
         ListToKeyValPairs(
             fields=["input_text/table/column_header", "input_text/table/content"],
             to_field="kvpairs",
