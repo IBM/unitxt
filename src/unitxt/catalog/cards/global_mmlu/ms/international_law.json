@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "ms"
+        "name": "ms",
+        "filtering_lambda": "lambda x: x['subject'] == 'international_law'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "international_law"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [

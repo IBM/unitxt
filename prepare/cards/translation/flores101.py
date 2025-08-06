@@ -1,5 +1,7 @@
-from unitxt.blocks import Copy, LoadHF, Set, SplitRandomMix, TaskCard
+from unitxt.blocks import Copy, LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
+from unitxt.loaders import MultipleSourceLoader
+from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 # https://localizely.com/iso-639-2-list/
@@ -131,9 +133,26 @@ pairs = [{"src": lang, "tgt": "eng"} for lang in langs] + [
 
 for pair in pairs:
     card = TaskCard(
-        loader=LoadHF(path="gsarti/flores_101", name="all"),
+        loader=MultipleSourceLoader(
+            sources=[
+                LoadHF(
+                    path="gsarti/flores_101",
+                    data_dir="all/devtest",
+                    data_classification_policy=["public"],
+                    revision="refs/convert/parquet",
+                    splits=["train"],
+                ),
+                LoadHF(
+                    path="gsarti/flores_101",
+                    data_dir="all",
+                    data_classification_policy=["public"],
+                    revision="refs/convert/parquet",
+                    splits=["validation"],
+                ),
+            ]
+        ),
         preprocess_steps=[
-            SplitRandomMix({"validation": "dev", "test": "devtest"}),
+            RenameSplits(mapper={"train": "test"}),
             Copy(
                 field_to_field={
                     f"sentence_{pair['src']}": "text",

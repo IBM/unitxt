@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "ne"
+        "name": "ne",
+        "filtering_lambda": "lambda x: x['subject'] == 'high_school_government_and_politics'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "high_school_government_and_politics"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [

@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "ru"
+        "name": "ru",
+        "filtering_lambda": "lambda x: x['subject'] == 'computer_security'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "computer_security"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [

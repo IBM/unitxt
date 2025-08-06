@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "ja"
+        "name": "ja",
+        "filtering_lambda": "lambda x: x['subject'] == 'machine_learning'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "machine_learning"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [
