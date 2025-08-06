@@ -1,5 +1,5 @@
 {
-    "__type__": "normalized_sacre_bleu",
+    "__type__": "normalized_sacrebleu",
     "language_to_tokenizer": {
         "german": null,
         "deutch": null,

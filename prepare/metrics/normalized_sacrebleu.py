@@ -1,30 +1,30 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import NormalizedSacreBleu
+from unitxt.metrics import NormalizedSacrebleu
 from unitxt.test_utils.metrics import test_metric
 
-metric = NormalizedSacreBleu(
-    language_to_tokenizer={
-        "german": None,
-        "deutch": None,
-        "de": None,
-        "french": None,
-        "fr": None,
-        "romanian": None,
-        "ro": None,
-        "english": None,
-        "en": None,
-        "spanish": None,
-        "es": None,
-        "portuguese": None,
-        "pt": None,
-        "arabic": "intl",
-        "ar": "intl",
-        "korean": "ko-mecab",
-        "ko": "ko-mecab",
-        "japanese": "ja-mecab",
-        "ja": "ja-mecab",
-    }
-)
+language_to_tokenizer = {
+    "german": None,
+    "deutch": None,
+    "de": None,
+    "french": None,
+    "fr": None,
+    "romanian": None,
+    "ro": None,
+    "english": None,
+    "en": None,
+    "spanish": None,
+    "es": None,
+    "portuguese": None,
+    "pt": None,
+    "arabic": "intl",
+    "ar": "intl",
+    "korean": "ko-mecab",
+    "ko": "ko-mecab",
+    "japanese": "ja-mecab",
+    "ja": "ja-mecab",
+}
+
+metric = NormalizedSacrebleu(language_to_tokenizer=language_to_tokenizer)
 
 ### ENGLISH
 

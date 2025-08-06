@@ -6168,7 +6168,7 @@ class SacreBleuStats:
     ref_len: int
 
 
-class NormalizedSacreBleu(
+class NormalizedSacrebleu(
     MapReduceMetric[str, SacreBleuStats], PackageRequirementsMixin
 ):
     """SacreBLEU metric implementation using MapReduceMetric pattern.
