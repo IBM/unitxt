@@ -6187,7 +6187,7 @@ class NormalizedSacrebleu(
     _requirements_list = ["sacrebleu"]
     language_to_tokenizer: Optional[Dict[str, str]] = None
     # Configuration parameters matching sacrebleu API
-    tokenize: str = "13a"
+    tokenize: str = None
     lowercase: bool = False
     force: bool = False
     smooth_method: str = "exp"
@@ -6220,6 +6220,29 @@ class NormalizedSacrebleu(
 
         return self.language_to_tokenizer.get(language.lower())
 
+    @staticmethod
+    @lru_cache(maxsize=10000)
+    def get_bleu_metric(
+        lowercase: bool = False,
+        force: bool = False,
+        tokenize: Optional[str] = None,
+        smooth_method: str = "exp",
+        smooth_value: Optional[float] = None,
+        max_ngram_order: int = 4,
+        effective_order: bool = False,
+    ):
+        from sacrebleu.metrics.bleu import BLEU
+
+        return BLEU(
+            lowercase=lowercase,
+            force=force,
+            tokenize=tokenize,
+            smooth_method=smooth_method,
+            smooth_value=smooth_value,
+            max_ngram_order=max_ngram_order,
+            effective_order=effective_order,
+        )
+
     def map(
         self,
         prediction: str,
@@ -6227,19 +6250,13 @@ class NormalizedSacrebleu(
         task_data: Dict[str, Any],
     ) -> SacreBleuStats:
         """Map function: compute BLEU statistics for a single instance using sacrebleu."""
-        # Determine tokenization method - use task_data target_language if available
-        tokenize_method = self.tokenize
-        if (
-            "target_language" in task_data and self.tokenize == "13a"
-        ):  # Only override if using default
+        if self.tokenize is None and "target_language" in task_data:
             target_lang = task_data["target_language"]
             tokenize_method = self._get_tokenizer_for_language(target_lang)
+        else:
+            tokenize_method = self.tokenize
 
-        # Create a BLEU metric with the appropriate tokenizer for this instance
-        # This will fail immediately if the tokenizer is not available (e.g., ja-mecab, ko-mecab not installed)
-        from sacrebleu.metrics.bleu import BLEU
-
-        instance_bleu_metric = BLEU(
+        instance_bleu_metric = self.get_bleu_metric(
             lowercase=self.lowercase,
             force=self.force,
             tokenize=tokenize_method,
