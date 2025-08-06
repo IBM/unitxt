@@ -108,7 +108,8 @@ tests = [
     "sqlparse",
     "diskcache",
     "pydantic",
-    "jsonschema_rs"
+    "jsonschema_rs",
+    "torchcodec",
 ]
 ui = [
     "gradio",
