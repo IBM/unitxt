@@ -1603,7 +1603,9 @@ Errors: Are there any errors in grammar, vocabulary, punctuation, or formatting 
     )
 
 
-DIRECT_CRITERIA = [c.value for c in DirectCriteriaCatalogEnum]
+DIRECT_CRITERIA: List[CriteriaWithOptions] = [
+    c.value for c in DirectCriteriaCatalogEnum
+]
 
 
 class PairwiseCriteriaCatalogEnum(Enum):
@@ -1658,4 +1660,4 @@ class PairwiseCriteriaCatalogEnum(Enum):
     )
 
 
-PAIRWISE_CRITERIA = [c.value for c in PairwiseCriteriaCatalogEnum]
+PAIRWISE_CRITERIA: List[Criteria] = [c.value for c in PairwiseCriteriaCatalogEnum]
