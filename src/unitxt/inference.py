@@ -1091,10 +1091,10 @@ class HFGraniteSpeechInferenceEngine(HFInferenceEngineBase):
                 if isinstance(turn["content"], list):
                     turn_content = ""
                     for content in turn["content"]:
-                        if content["type"] == "audio":
+                        if content["type"] == "input_audio":
                             audios.append(
                                 base64_to_audio(
-                                    content["audio"]["data"],
+                                    content["input_audio"]["data"],
                                     sampling_rate=self.sampling_rate,
                                 )
                             )
