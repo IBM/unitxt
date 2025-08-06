@@ -3476,6 +3476,7 @@ _supported_apis = Literal[
     "azure",
     "vertex-ai",
     "replicate",
+    "hf-local",
 ]
 
 
