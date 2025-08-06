@@ -6750,7 +6750,6 @@ class GraniteGuardianBase(InstanceMetric):
     """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
 
     reduction_map: Dict[str, List[str]] = None
-    prediction_type = float
     main_score = None
     reduction_map = {}
     wml_model_name: str = "ibm/granite-guardian-3-8b"
