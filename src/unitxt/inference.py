@@ -3480,7 +3480,9 @@ _supported_apis = Literal[
 ]
 
 
-class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
+class CrossProviderInferenceEngine(
+    InferenceEngine, StandardAPIParamsMixin, LogProbInferenceEngine
+):
     """Inference engine capable of dynamically switching between multiple providers APIs.
 
     This class extends the InferenceEngine and OpenAiInferenceEngineParamsMixin
@@ -3753,7 +3755,6 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         return self.provider if self.provider is not None else settings.default_provider
 
     def prepare_engine(self):
-        # print("provider", self.provider)
         provider = self.get_provider_name()
         if provider not in self._provider_to_base_class:
             raise UnitxtError(
@@ -3798,6 +3799,17 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         if self.model in self.provider_model_map[api]:
             return get_model_and_label_id(self.provider_model_map[api][self.model], api)
         return get_model_and_label_id(self.model, api)
+
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        if not isinstance(self.engine, LogProbInferenceEngine):
+            raise UnitxtError(
+                f"The underlying inference engine of this instance of CrossProviderInferenceEngine ({self.engine.get_engine_id()}) must inherit from LogProbInferenceEngine and implement _infer_log_probs"
+            )
+        return self.engine._infer_log_probs(dataset, return_meta_data)
 
 
 class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
