@@ -21,6 +21,7 @@ from typing import (
     Literal,
     Optional,
     Tuple,
+    Type,
     TypeVar,
     Union,
 )
@@ -7086,7 +7087,7 @@ class GraniteGuardianCustomRisk(GraniteGuardianBase):
         return messages
 
 
-RISK_TYPE_TO_CLASS: Dict[RiskType, type[GraniteGuardianBase]] = {
+RISK_TYPE_TO_CLASS: Dict[RiskType, Type[GraniteGuardianBase]] = {
     RiskType.USER_MESSAGE: GraniteGuardianUserRisk,
     RiskType.ASSISTANT_MESSAGE: GraniteGuardianAssistantRisk,
     RiskType.RAG: GraniteGuardianRagRisk,
