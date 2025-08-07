@@ -112,7 +112,8 @@ tests = [
     "torchcodec",
     "soundfile",
     "librosa",
-    "torchaudio"
+    "torchaudio",
+    "protobuf"
 ]
 audio = [
     "torchcodec",
