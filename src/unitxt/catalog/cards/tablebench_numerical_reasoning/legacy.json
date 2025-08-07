@@ -9,13 +9,40 @@
         ],
         "splits": [
             "test"
-        ],
-        "filtering_lambda": "lambda x: x['instruction_type'] == 'DP'"
+        ]
     },
     "preprocess_steps": [
         {
-            "__type__": "load_json",
-            "field": "table"
+            "__type__": "split_random_mix",
+            "mix": {
+                "train": "test[20%]",
+                "validation": "test[20%]",
+                "test": "test[60%]"
+            }
+        },
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "instruction_type": "DP"
+            },
+            "condition": "eq"
+        },
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "qtype": [
+                    "NumericalReasoning"
+                ]
+            },
+            "condition": "in"
+        },
+        {
+            "__type__": "apply",
+            "function": "json.loads",
+            "to_field": "table",
+            "_argv": [
+                "table"
+            ]
         },
         {
             "__type__": "rename",
@@ -58,15 +85,21 @@
         "prediction_type": "str",
         "metrics": [
             "metrics.rouge"
+        ],
+        "augmentable_inputs": [
+            "context",
+            "question"
         ]
     },
     "templates": [
         {
             "__type__": "input_output_template",
-            "input_format": "You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter} \n{context_type}: {context} \nQuestion: {question}",
+            "instruction": "You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter}\nOutput only the final answer without any explanations, extra information, or introductory text.\nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.",
+            "input_format": "{context_type}: {context} \nQuestion: {question}",
             "target_prefix": "Final Answer: ",
             "output_format": "{answers}",
             "postprocessors": [
+                "processors.take_first_non_empty_line",
                 "processors.lower_case",
                 "processors.remove_punctuations",
                 "processors.remove_articles",

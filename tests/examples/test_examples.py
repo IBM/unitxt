@@ -32,6 +32,17 @@ _excluded_files = [
     "evaluate_existing_dataset_by_llm_as_judge_from_template.py",
     # "examples/evaluate_vision_default_benchmark.py",
     "evaluate_text2sql.py",
+    "evaluate_torr_custom_sizes.py",
+    "evaluate_tool_calling_bfcl.py",
+    "evaluate_llama_vision_benchmark.py",
+    "evaluate_vision_full_benchmark.py",
+    "evaluate_image_text_to_text_vllm_inference.py",
+    "evaluate_image_text_to_text_with_different_templates.py",
+    "evaluate_image_text_to_text_wml.py",
+    "evaluate_image_text_to_text_lmms_eval_inference.py",
+    "evaluate_bluebench.py",
+    "evaluate_torr.py",
+    "evaluate_llm_as_judge_judgebench.py",
     # "evaluate_llm_as_judge.py",
     # "evaluate_different_templates_num_demos.py",
     # "evaluate_image_text_to_text_vllm_inference.py",
@@ -64,17 +75,16 @@ _excluded_files = [
     # "standalone_qa_evaluation.py",
 ]
 
+tested_files = [
+    file for file in all_example_files if os.path.basename(file) not in _excluded_files
+]
+logger.critical(f"Testing example files: {tested_files}")
+
 
 class TestExamples(UnitxtExamplesTestCase):
     def test_examples(self):
         logger.info(glob_query)
 
-        tested_files = [
-            file
-            for file in all_example_files
-            if os.path.basename(file) not in _excluded_files
-        ]
-        logger.critical(f"Testing example files: {tested_files}")
         # Make sure the order in which the tests are run is deterministic
         # Having a different order for local testing and github testing may cause diffs in results.
         times = {}
@@ -109,7 +119,7 @@ class TestExamples(UnitxtExamplesTestCase):
                     self.assertTrue(False)
             elapsed_time = time.time() - start_time
             formatted_time = str(timedelta(seconds=elapsed_time))
-            logger.info(
+            logger.critical(
                 "\n_____________________________________________\n"
                 f"  Finished testing example file:\n  {file_name}\n"
                 f"  Run Time: {formatted_time}"

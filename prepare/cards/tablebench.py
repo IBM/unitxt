@@ -5,7 +5,8 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import Apply, FilterByCondition, RemoveFields, Set
+from unitxt.operators import RemoveFields, Set
+from unitxt.struct_data_operators import LoadJson
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 from unitxt.types import Table
@@ -13,16 +14,13 @@ from unitxt.types import Table
 card = TaskCard(
     loader=LoadHF(
         path="Multilingual-Multimodal-NLP/TableBench",
-        revision="90593ad",  # pragma: allowlist secret
+        revision="90593ad8",
         data_classification_policy=["public"],
         splits=["test"],
+        filtering_lambda="lambda x: x['instruction_type'] == 'DP'",
     ),
     preprocess_steps=[
-        # consider samples with DP(Direct Prompting) as instruction type
-        FilterByCondition(values={"instruction_type": "DP"}, condition="eq"),
-        # FilterByCondition(values={"qtype": ["FactChecking", "NumericalReasoning"]}, condition="in"), # filter by question type if needed
-        Apply("table", function="json.loads", to_field="table"),  # parse table json
-        # rename table fields to match with standard table format
+        LoadJson(field="table"),
         Rename(
             field_to_field={"table/columns": "table/header", "table/data": "table/rows"}
         ),
