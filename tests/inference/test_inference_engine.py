@@ -279,7 +279,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         ]
 
         watsonx_engine = WMLInferenceEngineGeneration(
-            model_name="mistralai/mistral-small-3-1-24b-instruct-2503"
+            model_name="meta-llama/llama-3-2-1b-instruct"
         )
 
         for engine in [watsonx_engine]:
