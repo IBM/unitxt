@@ -37,18 +37,8 @@ jobs:
         python-version: '3.9'
         cache: 'pip'
 
-    - name: Install FFmpeg
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg
-
-    - run: echo "blis==0" > constraints.txt
-    - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-    - run: uv pip install --upgrade --system torch torchcodec 
-    - run: uv pip install --system -c constraints.txt -e ".[tests]"
-    - run: |
-        pip install --only-binary :all: spacy
-        pip install networkx==3.2.1
+    - name: Install Dependencies
+      run: bash utils/install.sh
 
     - name:  Hugging Face Login
       run: |

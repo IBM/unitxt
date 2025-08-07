@@ -33,15 +33,8 @@ jobs:
         python-version: '3.9'
         cache: 'pip'
 
-    - run: echo "blis==0" > constraints.txt
-    - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-    - run: uv pip install --upgrade --system torch --index-url https://download.pytorch.org/whl/cpu
-    - run: uv pip install --system -c constraints.txt -e ".[tests]"
-    - run: |
-        pip install --only-binary :all: spacy
-        pip install networkx==3.2.1
-
-    - run: pip install coverage[toml]
+    - name: Install Dependencies
+      run: bash utils/install.sh
 
     - name: Run Tests
       run: coverage run -m unittest discover -s tests/library -p "test_*.py"

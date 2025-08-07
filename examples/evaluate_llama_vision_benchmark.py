@@ -6,7 +6,9 @@ with settings.context(
     allow_unverified_code=True,
 ):
     test_dataset = load_dataset(
-        "benchmarks.llama_vision[format=formats.chat_api,max_samples_per_subset=30]",
+        "benchmarks.llama_vision",
+        format="formats.chat_api",
+        max_samples_per_subset=30,
         split="test",
         use_cache=False,
     )

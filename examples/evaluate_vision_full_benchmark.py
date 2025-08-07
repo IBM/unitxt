@@ -8,7 +8,9 @@ with settings.context(
     allow_unverified_code=True,
 ):
     test_dataset = load_dataset(
-        "benchmarks.vision_full[format=formats.chat_api,max_samples_per_subset=512]",
+        "benchmarks.vision_full",
+        format="formats.chat_api",
+        max_samples_per_subset=512,
         split="test",
     )
 
