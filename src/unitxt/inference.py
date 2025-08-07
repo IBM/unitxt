@@ -3476,7 +3476,7 @@ class CrossProviderInferenceEngine(
     provider_model_map["watsonx"] = {
         k: f"watsonx/{v}" for k, v in provider_model_map["watsonx-sdk"].items()
     }
-    provider_model_map["vllm"] = provider_model_map["hf-local"].items()
+    provider_model_map["vllm"] = provider_model_map["hf-local"]
 
     _provider_to_base_class = {
         "watsonx": LiteLLMInferenceEngine,
