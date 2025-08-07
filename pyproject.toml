@@ -111,12 +111,14 @@ tests = [
     "jsonschema_rs",
     "torchcodec",
     "soundfile",
-    "librosa"
+    "librosa",
+    "torchaudio"
 ]
 audio = [
     "torchcodec",
     "soundfile",
-    "librosa"
+    "librosa",
+    "torchaudio"
 ]
 ui = [
     "gradio",
