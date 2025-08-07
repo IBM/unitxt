@@ -19,6 +19,7 @@ from unitxt.inference import (
     OptionSelectingByLogProbsInferenceEngine,
     RITSInferenceEngine,
     TextGenerationInferenceOutput,
+    VLLMInferenceEngine,
     WMLInferenceEngineChat,
     WMLInferenceEngineGeneration,
 )
@@ -188,6 +189,20 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         predictions = model(dataset)
 
         self.assertListEqual(predictions, ["7", "2"])
+
+    def test_vllm_chat_inference(self):
+        model = VLLMInferenceEngine(
+            model=local_decoder_model,
+            data_classification_policy=["public"],
+            temperature=0,
+            max_tokens=1,
+        )
+
+        dataset = get_text_dataset()
+
+        predictions = model(dataset)
+
+        self.assertListEqual(list(predictions), ["7", "1"])
 
     def test_watsonx_inference_with_external_client(self):
         from ibm_watsonx_ai.client import APIClient, Credentials
