@@ -32,7 +32,7 @@ class Criteria(Artifact):
     prediction_field: Optional[str] = None
     """The prediction field name this criteria expects and refers to, e.g. answer/model response/summary"""
 
-    context_fields: Union[str, List[str], Dict[str, str]] = None
+    context_fields: Optional[Union[str, List[str], Dict[str, str]]] = None
     """The context field names this criteria expects, i.e. [context]/[source article, user questions]"""
 
     @staticmethod
@@ -370,7 +370,7 @@ class DirectCriteriaCatalogEnum(Enum):
         name="conciseness",
         description="Is the response concise and to the point?",
         prediction_field="response",
-        context_fields=[],
+        context_fields=["question"],
         options=[
             CriteriaOption(
                 name="Yes",
