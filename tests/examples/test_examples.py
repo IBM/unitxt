@@ -73,17 +73,16 @@ _excluded_files = [
     # "standalone_qa_evaluation.py",
 ]
 
+tested_files = [
+    file for file in all_example_files if os.path.basename(file) not in _excluded_files
+]
+logger.critical(f"Testing example files: {tested_files}")
+
 
 class TestExamples(UnitxtExamplesTestCase):
     def test_examples(self):
         logger.info(glob_query)
 
-        tested_files = [
-            file
-            for file in all_example_files
-            if os.path.basename(file) not in _excluded_files
-        ]
-        logger.critical(f"Testing example files: {tested_files}")
         # Make sure the order in which the tests are run is deterministic
         # Having a different order for local testing and github testing may cause diffs in results.
         times = {}
@@ -118,7 +117,7 @@ class TestExamples(UnitxtExamplesTestCase):
                     self.assertTrue(False)
             elapsed_time = time.time() - start_time
             formatted_time = str(timedelta(seconds=elapsed_time))
-            logger.info(
+            logger.critical(
                 "\n_____________________________________________\n"
                 f"  Finished testing example file:\n  {file_name}\n"
                 f"  Run Time: {formatted_time}"
