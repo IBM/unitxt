@@ -1,11 +1,13 @@
 import copy
 import functools
 import importlib.util
+import inspect
 import json
 import os
 import random
 import re
 import time
+import types
 from collections import OrderedDict
 from contextvars import ContextVar
 from functools import wraps
@@ -221,7 +223,7 @@ def flatten_dict(
 def load_json(path):
     with open(path) as f:
         try:
-            return json.load(f)
+            return json.load(f, object_hook=decode_function)
         except json.decoder.JSONDecodeError as e:
             with open(path) as f:
                 file_content = "\n".join(f.readlines())
@@ -236,8 +238,56 @@ def save_to_file(path, data):
         f.write("\n")
 
 
-def json_dump(data):
-    return json.dumps(data, indent=4, ensure_ascii=False)
+def encode_function(obj):
+    # Allow only plain (module-level) functions
+    if isinstance(obj, types.FunctionType):
+        try:
+            return {"__function__": obj.__name__, "source": get_function_source(obj)}
+        except Exception as e:
+            raise TypeError(f"Failed to serialize function {obj.__name__}") from e
+    elif isinstance(obj, types.MethodType):
+        raise TypeError(
+            f"Method {obj.__func__.__name__} of class {obj.__self__.__class__.__name__} is not JSON serializable"
+        )
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+
+def json_dump(data, sort_keys=False):
+    return json.dumps(
+        data, indent=4, default=encode_function, ensure_ascii=False, sort_keys=sort_keys
+    )
+
+
+def get_function_source(func):
+    if hasattr(func, "__exec_source__"):
+        return func.__exec_source__
+    return inspect.getsource(func)
+
+
+def decode_function(obj):
+    # Detect our special function marker
+    if "__function__" in obj and "source" in obj:
+        namespace = {}
+        func_name = obj["__function__"]
+        try:
+            exec(obj["source"], namespace)
+            func = namespace.get(func_name)
+            func.__exec_source__ = obj["source"]
+            if not callable(func):
+                raise ValueError(
+                    f"Source did not define a callable named {func_name!r}"
+                )
+            return func
+        except Exception as e:
+            raise ValueError(
+                f"Failed to load function {func_name!r} from source:\n{obj['source']}"
+            ) from e
+
+    return obj
+
+
+def json_load(s):
+    return json.loads(s, object_hook=decode_function)
 
 
 def is_package_installed(package_name):
