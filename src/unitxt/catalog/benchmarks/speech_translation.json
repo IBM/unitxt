@@ -1,0 +1,35 @@
+{
+    "__type__": "benchmark",
+    "subsets": {
+        "en_de": {
+            "__type__": "dataset_recipe",
+            "card": "cards.fleurs.en_us.de_de",
+            "format": "formats.chat_api"
+        },
+        "en_es": {
+            "__type__": "dataset_recipe",
+            "card": "cards.fleurs.en_us.es_419",
+            "format": "formats.chat_api"
+        },
+        "en_fr": {
+            "__type__": "dataset_recipe",
+            "card": "cards.fleurs.en_us.fr_fr",
+            "format": "formats.chat_api"
+        },
+        "en_it": {
+            "__type__": "dataset_recipe",
+            "card": "cards.fleurs.en_us.it_it",
+            "format": "formats.chat_api"
+        },
+        "en_ja": {
+            "__type__": "dataset_recipe",
+            "card": "cards.fleurs.en_us.ja_jp",
+            "format": "formats.chat_api"
+        },
+        "en_pt": {
+            "__type__": "dataset_recipe",
+            "card": "cards.fleurs.en_us.pt_br",
+            "format": "formats.chat_api"
+        }
+    }
+}
