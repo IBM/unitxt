@@ -21,6 +21,7 @@ from typing import (
     Literal,
     Optional,
     Tuple,
+    Type,
     TypeVar,
     Union,
 )
@@ -6750,7 +6751,6 @@ class GraniteGuardianBase(InstanceMetric):
     """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
 
     reduction_map: Dict[str, List[str]] = None
-    prediction_type = float
     main_score = None
     reduction_map = {}
     wml_model_name: str = "ibm/granite-guardian-3-8b"
@@ -7087,7 +7087,7 @@ class GraniteGuardianCustomRisk(GraniteGuardianBase):
         return messages
 
 
-RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
+RISK_TYPE_TO_CLASS: Dict[RiskType, Type[GraniteGuardianBase]] = {
     RiskType.USER_MESSAGE: GraniteGuardianUserRisk,
     RiskType.ASSISTANT_MESSAGE: GraniteGuardianAssistantRisk,
     RiskType.RAG: GraniteGuardianRagRisk,

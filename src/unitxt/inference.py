@@ -1378,45 +1378,6 @@ class MockModeMixin(Artifact):
     mock_mode: bool = False
 
 
-class IbmGenAiInferenceEngineParamsMixin(Artifact):
-    beam_width: Optional[int] = None
-    decoding_method: Optional[Literal["greedy", "sample"]] = None
-    include_stop_sequence: Optional[bool] = None
-    length_penalty: Any = None
-    max_new_tokens: Optional[int] = None
-    min_new_tokens: Optional[int] = None
-    random_seed: Optional[int] = None
-    repetition_penalty: Optional[float] = None
-    return_options: Any = None
-    stop_sequences: Optional[List[str]] = None
-    temperature: Optional[float] = None
-    time_limit: Optional[int] = None
-    top_k: Optional[int] = None
-    top_p: Optional[float] = None
-    truncate_input_tokens: Optional[int] = None
-    typical_p: Optional[float] = None
-
-
-@deprecation(version="2.0.0", alternative=IbmGenAiInferenceEngineParamsMixin)
-class IbmGenAiInferenceEngineParams(Artifact):
-    beam_width: Optional[int] = None
-    decoding_method: Optional[Literal["greedy", "sample"]] = None
-    include_stop_sequence: Optional[bool] = None
-    length_penalty: Any = None
-    max_new_tokens: Optional[int] = None
-    min_new_tokens: Optional[int] = None
-    random_seed: Optional[int] = None
-    repetition_penalty: Optional[float] = None
-    return_options: Any = None
-    stop_sequences: Optional[List[str]] = None
-    temperature: Optional[float] = None
-    time_limit: Optional[int] = None
-    top_k: Optional[int] = None
-    top_p: Optional[float] = None
-    truncate_input_tokens: Optional[int] = None
-    typical_p: Optional[float] = None
-
-
 class GenericInferenceEngine(
     InferenceEngine, ArtifactFetcherMixin, LogProbInferenceEngine
 ):
@@ -1430,7 +1391,7 @@ class GenericInferenceEngine(
                 "GenericInferenceEngine could not be initialized"
                 '\nThis is since both the "UNITXT_INFERENCE_ENGINE" environmental variable is not set and no default engine was not inputted.'
                 "\nFor example, you can fix it by setting"
-                "\nexport UNITXT_INFERENCE_ENGINE=engines.ibm_gen_ai.llama_3_70b_instruct"
+                "\nexport UNITXT_INFERENCE_ENGINE=engines.ibm_wml.llama_3_70b_instruct"
                 "\nto your ~/.bashrc"
                 "\nor passing a similar required engine in the default argument"
             )
@@ -1598,214 +1559,6 @@ class OptionSelectingByLogProbsInferenceEngine:
                 index_max = to_compare_indexes[0]
 
             instance["prediction"] = instance["task_data"]["options"][index_max]
-        return dataset
-
-
-class IbmGenAiInferenceEngine(
-    InferenceEngine,
-    IbmGenAiInferenceEngineParamsMixin,
-    PackageRequirementsMixin,
-    LogProbInferenceEngine,
-    OptionSelectingByLogProbsInferenceEngine,
-):
-    label: str = "ibm_genai"
-    model_name: str
-    _requirements_list = {
-        "ibm-generative-ai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
-    }
-    data_classification_policy = ["public", "proprietary"]
-    parameters: Optional[IbmGenAiInferenceEngineParams] = None
-    rate_limit: int = 10
-
-    def get_engine_id(self):
-        return get_model_and_label_id(self.model_name, self.label)
-
-    @staticmethod
-    def _get_credentials():
-        from genai import Credentials
-
-        api_key_env_var_name = "GENAI_KEY"  # pragma: allowlist secret
-        api_key = os.environ.get(api_key_env_var_name)
-
-        assert api_key is not None, (
-            f"Error while trying to run IbmGenAiInferenceEngine."
-            f" Please set the environment param '{api_key_env_var_name}'."
-        )
-
-        return Credentials(api_key=api_key)
-
-    def prepare_engine(self):
-        self.check_missing_requirements()
-
-        from genai import Client
-        from genai.text.generation import CreateExecutionOptions
-
-        credentials = self._get_credentials()
-        self.client = Client(credentials=credentials)
-
-        self.execution_options = CreateExecutionOptions(
-            concurrency_limit=self.rate_limit
-        )
-
-        self._set_inference_parameters()
-
-    def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        from genai.schema import TextGenerationParameters, TextGenerationResult
-
-        self.verify_not_chat_api(dataset)
-
-        genai_params = TextGenerationParameters(
-            **self.to_dict([IbmGenAiInferenceEngineParamsMixin])
-        )
-
-        responses = self.client.text.generation.create(
-            model_id=self.model_name,
-            inputs=[instance["source"] for instance in dataset],
-            parameters=genai_params,
-            execution_options=self.execution_options,
-        )
-
-        results = []
-        for response in responses:
-            generation_result: TextGenerationResult = response.results[0]
-            result = self.get_return_object(
-                generation_result.generated_text, generation_result, return_meta_data
-            )
-            results.append(result)
-        return results
-
-    def _infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        from genai.schema import TextGenerationParameters, TextGenerationResult
-
-        self.verify_not_chat_api(dataset)
-
-        logprobs_return_options = {
-            "generated_tokens": True,
-            "input_text": False,
-            "input_tokens": False,
-            "token_logprobs": True,
-            "token_ranks": True,
-            "top_n_tokens": 5,
-        }
-        genai_params = self.to_dict(
-            [IbmGenAiInferenceEngineParamsMixin], keep_empty=False
-        )
-        genai_params = {**genai_params, "return_options": logprobs_return_options}
-        genai_params = TextGenerationParameters(**genai_params)
-        predictions = self.client.text.generation.create(
-            model_id=self.model_name,
-            inputs=[instance["source"] for instance in dataset],
-            parameters=genai_params,
-            execution_options=self.execution_options,
-        )
-
-        predict_results = []
-        for prediction in predictions:
-            result: TextGenerationResult = prediction.results[0]
-            assert isinstance(
-                result.generated_tokens, list
-            ), "result.generated_tokens should be a list"
-
-            predict_result = []
-            for base_token in result.generated_tokens:
-                res = {**base_token.__dict__, **base_token.model_extra}
-                res["top_tokens"] = [
-                    {"logprob": top_token.logprob, "text": top_token.text}
-                    for top_token in res["top_tokens"]
-                ]
-                predict_result.append(res)
-            final_results = self.get_return_object(
-                predict_result, result, return_meta_data
-            )
-            predict_results.append(final_results)
-        return predict_results
-
-    def get_return_object(self, predict_result, result, return_meta_data):
-        if return_meta_data:
-            return TextGenerationInferenceOutput(
-                prediction=predict_result,
-                input_tokens=result.input_token_count,
-                output_tokens=result.generated_token_count,
-                model_name=self.model_name,
-                inference_type=self.label,
-                input_text=result.input_text,
-                seed=self.random_seed,
-                stop_reason=result.stop_reason,
-            )
-        return predict_result
-
-    def get_model_details(self) -> Dict:
-        from genai import ApiClient
-        from genai.model import ModelService
-
-        api_client = ApiClient(credentials=self._get_credentials())
-        model_info = (
-            ModelService(api_client=api_client).retrieve(id=self.model_name).result
-        )
-        return model_info.dict()
-
-    def get_token_count(self, dataset):
-        texts = [instance["source"] for instance in dataset]
-        token_counts = list(
-            tqdm(
-                [
-                    result.token_count
-                    for response in self.client.text.tokenization.create(
-                        model_id=self.model_name,
-                        input=texts,
-                        execution_options={"ordered": True},
-                    )
-                    for result in response.results
-                ],
-                desc="Tokenizing",
-                total=len(texts),
-            )
-        )
-        for i, token_count in enumerate(token_counts):
-            dataset[i]["token_count"] = token_count
-        return dataset
-
-    def get_options_log_probs(self, dataset):
-        """Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}."""
-        from genai.schema import TextGenerationParameters, TextGenerationReturnOptions
-
-        texts = [x["source"] for x in dataset]
-
-        responses = tqdm(
-            self.client.text.generation.create(
-                model_id=self.model_name,
-                inputs=texts,
-                execution_options={"ordered": True},
-                parameters=TextGenerationParameters(
-                    max_new_tokens=1,
-                    return_options=TextGenerationReturnOptions(
-                        input_tokens=True, token_logprobs=True
-                    ),
-                    # random_seed=self.random_state
-                ),
-            ),
-            total=len(texts),
-            desc="Completions",
-        )
-
-        scores = [
-            [
-                {"text": token.text, "logprob": token.logprob}
-                for token in response.results[0].input_tokens
-            ]
-            for response in responses
-        ]
-
-        for instance, score in zip(dataset, scores):
-            instance["prediction"] = score[instance["task_data"]["token_count"] - 1 :]
         return dataset
 
 
@@ -2099,6 +1852,11 @@ class RITSInferenceEngine(
         "meta-llama/Llama-3.1-8B-Instruct": "llama-3-1-8b-instruct",
         "meta-llama/Llama-4-Scout-17B-16E-Instruct": "llama-4-scout-17b-16e-instruct",
         "mistralai/Mistral-Small-3.1-24B-Instruct-2503": "mistral-small-3-1-24b-2503",
+        "ibm-granite/granite-guardian-3.2-3b-a800m": "granite-guardian-3-2-3b-a800m",
+        "ibm-granite/granite-guardian-3.2-5b": "granite-guardian-3-2-5b-ris",
+        "granite-guardian-3-2-5b-ris": "granite-guardian-3-3-8b",
+        "openai/gpt-oss-20b": "gpt-oss-20b",
+        "openai/gpt-oss-120b": "gpt-oss-120b",
     }
 
     def get_default_headers(self):
@@ -3467,16 +3225,18 @@ _supported_apis = Literal[
     "open-ai",
     "aws",
     "ollama",
-    "bam",
     "watsonx-sdk",
     "rits",
     "azure",
     "vertex-ai",
     "replicate",
+    "hf-local",
 ]
 
 
-class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
+class CrossProviderInferenceEngine(
+    InferenceEngine, StandardAPIParamsMixin, LogProbInferenceEngine
+):
     """Inference engine capable of dynamically switching between multiple providers APIs.
 
     This class extends the InferenceEngine and OpenAiInferenceEngineParamsMixin
@@ -3516,7 +3276,11 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "granite-3-3-2b-instruct": "ibm/granite-3-3-2b-instruct",
             "granite-3-3-8b-instruct": "ibm/granite-3-3-8b-instruct",
             "granite-34b-code-instruct": "ibm/granite-34b-code-instruct",
+            "granite-guardian-3-2b": "ibm/granite-guardian-3-2b",
             "granite-guardian-3-8b": "ibm/granite-guardian-3-8b",
+            "granite-guardian-3-1-2b": "ibm/granite-guardian-3-2b",  # LifecycleWarning: Model 'ibm/granite-guardian-3-2b' is in deprecated state from 2025-07-09 until 2025-10-08. IDs of alternative models: ibm/granite-guardian-3-2-5b.
+            "granite-guardian-3-1-8b": "ibm/granite-guardian-3-8b",
+            "granite-guardian-3-2-5b": "ibm/granite-guardian-3-2-5b",
             "granite-vision-3-2-2b": "ibm/granite-vision-3-2-2b",
             "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
@@ -3570,17 +3334,14 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "granite-3-3-2b-instruct": "granite3.3:2b",
             "granite-3-3-8b-instruct": "granite3.3:8b",
         },
-        "bam": {
-            "granite-3-8b-instruct": "ibm/granite-8b-instruct-preview-4k",
-            "llama-3-8b-instruct": "meta-llama/llama-3-8b-instruct",
-            "llama-3-2-1b-instruct": "meta-llama/llama-3-2-1b-instruct",
-            "flan-t5-xxl": "google/flan-t5-xxl",
-        },
         "rits": {
             "granite-3-8b-instruct": "ibm-granite/granite-3.0-8b-instruct",
             "granite-3-1-8b-instruct": "ibm-granite/granite-3.1-8b-instruct",
             "granite-3-2-8b-instruct": "ibm-granite/granite-3.2-8b-instruct",
             "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
+            "granite-guardian-3-2-3b": "ibm-granite/granite-guardian-3.2-3b-a800m",
+            "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
+            "granite-guardian-3-3-8b": "ibm-granite/granite-guardian-3.3-8b",
             "llama-3-1-8b-instruct": "meta-llama/Llama-3.1-8B-Instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
             "llama-3-1-405b-instruct": "meta-llama/llama-3-1-405b-instruct-fp8",
@@ -3595,9 +3356,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
             "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7B-instruct-v0.1",
             "deepseek-v3": "deepseek-ai/DeepSeek-V3",
-            "granite-guardian-3-2-3b-a800m": "ibm-granite/granite-guardian-3.2-3b-a800m",
-            "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
             "phi-4": "microsoft/phi-4",
+            "gpt-oss-20b": "openai/gpt-oss-20b",
+            "gpt-oss-120b": "openai/gpt-oss-120b",
         },
         "open-ai": {
             "o1-mini": "o1-mini",
@@ -3699,9 +3460,16 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "gpt-4-1": "replicate/openai/gpt-4.1",
         },
         "hf-local": {
-            "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
             "llama-3-3-8b-instruct": "meta-llama/Llama-3.3-8B-Instruct",
             "SmolLM2-1.7B-Instruct": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+            "granite-guardian-3-1-2b": "ibm-granite/granite-guardian-3.1-2b",
+            "granite-guardian-3-1-8b": "ibm-granite/granite-guardian-3.1-8b",
+            "granite-guardian-3-2-3b": "ibm-granite/granite-guardian-3.2-3b-a800m",
+            "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
+            "granite-guardian-3-3-8b": "ibm-granite/granite-guardian-3.3-8b",
+            "granite-3-3-2b-instruct": "ibm-granite/granite-3.3-2b-instruct",
+            "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
+            "granite-4-0-tiny-preview": "ibm-granite/granite-4.0-tiny-preview",
         },
     }
     provider_model_map["watsonx"] = {
@@ -3714,7 +3482,6 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "together-ai": LiteLLMInferenceEngine,
         "aws": LiteLLMInferenceEngine,
         "ollama": OllamaInferenceEngine,
-        "bam": IbmGenAiInferenceEngine,
         "watsonx-sdk": WMLInferenceEngineChat,
         "rits": RITSInferenceEngine,
         "azure": LiteLLMInferenceEngine,
@@ -3724,7 +3491,6 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     }
 
     _provider_param_renaming = {
-        "bam": {"max_tokens": "max_new_tokens", "model": "model_name"},
         "watsonx-sdk": {"model": "model_name"},
         "rits": {"model": "model_name"},
         "hf-local": {"model": "model_name", "max_tokens": "max_new_tokens"},
@@ -3737,7 +3503,6 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         return self.provider if self.provider is not None else settings.default_provider
 
     def prepare_engine(self):
-        # print("provider", self.provider)
         provider = self.get_provider_name()
         if provider not in self._provider_to_base_class:
             raise UnitxtError(
@@ -3782,6 +3547,17 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         if self.model in self.provider_model_map[api]:
             return get_model_and_label_id(self.provider_model_map[api][self.model], api)
         return get_model_and_label_id(self.model, api)
+
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        if not isinstance(self.engine, LogProbInferenceEngine):
+            raise UnitxtError(
+                f"The underlying inference engine of this instance of CrossProviderInferenceEngine ({self.engine.get_engine_id()}) must inherit from LogProbInferenceEngine and implement _infer_log_probs"
+            )
+        return self.engine._infer_log_probs(dataset, return_meta_data)
 
 
 class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):

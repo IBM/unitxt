@@ -3,7 +3,9 @@
     "name": "conciseness",
     "description": "Is the response concise and to the point?",
     "prediction_field": "response",
-    "context_fields": [],
+    "context_fields": [
+        "question"
+    ],
     "options": [
         {
             "__type__": "criteria_option",
