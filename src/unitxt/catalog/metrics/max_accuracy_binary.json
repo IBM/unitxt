@@ -1,3 +1,6 @@
 {
-    "__type__": "binary_max_accuracy"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "BinaryMaxAccuracy"
+    }
 }

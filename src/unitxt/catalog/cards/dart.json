@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "Yale-LILY/dart",
         "revision": "refs/convert/parquet",
         "splits": [
@@ -15,7 +21,10 @@
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "__type__": "serialize_triples",
+            "__type__": {
+                "module": "unitxt.struct_data_operators",
+                "name": "SerializeTriples"
+            },
             "field_to_field": [
                 [
                     "tripleset",
@@ -24,18 +33,27 @@
             ]
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "serialized_triples": "input"
             }
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "annotations/text/0",
             "to_field": "output"
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "type_of_input": "Triples"
             }

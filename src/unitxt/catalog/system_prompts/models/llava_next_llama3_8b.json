@@ -1,4 +1,7 @@
 {
-    "__type__": "textual_system_prompt",
+    "__type__": {
+        "module": "unitxt.system_prompts",
+        "name": "TextualSystemPrompt"
+    },
     "text": "You are a helpful language and vision assistant. You are able to understand the visual content that the user provides, and assist the user with a variety of tasks using natural language."
 }

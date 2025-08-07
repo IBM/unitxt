@@ -1,5 +1,8 @@
 {
-    "__type__": "multiple_choice_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "MultipleChoiceTemplate"
+    },
     "input_format": "Contexte: {context}\nQuestion: {question}.\nRéponses \n{choices}.\nRéponse:",
     "target_field": "answer",
     "choices_separator": "\n",

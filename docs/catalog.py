@@ -10,7 +10,10 @@ from docutils.core import publish_parts
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import PythonLexer
-from unitxt.artifact import Artifact
+from unitxt.artifact import (
+    get_class_or_function_from_artifact_type,
+    get_module_class_names,
+)
 from unitxt.text_utils import print_dict_as_python
 from unitxt.utils import load_json
 
@@ -51,8 +54,8 @@ def imports_to_syntax_highlighted_html(subtypes: List[str]) -> str:
         return ""
     module_to_class_names = defaultdict(list)
     for subtype in subtypes:
-        subtype_class = Artifact._class_register.get(subtype)
-        module_to_class_names[subtype_class.__module__].append(subtype_class.__name__)
+        (module, class_name) = get_module_class_names(subtype)
+        module_to_class_names[module].append(class_name)
 
     imports_txt = ""
     for modu in sorted(module_to_class_names.keys()):
@@ -103,31 +106,6 @@ def custom_walk(top):
             yield entry
 
 
-def all_subtypes_of_artifact(artifact):
-    if (
-        artifact is None
-        or isinstance(artifact, str)
-        or isinstance(artifact, bool)
-        or isinstance(artifact, int)
-        or isinstance(artifact, float)
-    ):
-        return []
-    if isinstance(artifact, list):
-        to_return = []
-        for art in artifact:
-            to_return.extend(all_subtypes_of_artifact(art))
-        return to_return
-    # artifact is a dict
-    to_return = []
-    for key, value in artifact.items():
-        if isinstance(value, str):
-            if key == "__type__":
-                to_return.append(value)
-        else:
-            to_return.extend(all_subtypes_of_artifact(value))
-    return to_return
-
-
 def get_all_type_elements(nested_dict):
     type_elements = set()
 
@@ -137,7 +115,7 @@ def get_all_type_elements(nested_dict):
             d.pop("__tags__", None)
             for key, value in d.items():
                 if key == "__type__":
-                    type_elements.add(value)
+                    type_elements.add(json.dumps(value))
                 elif isinstance(value, dict):
                     recursive_search(value)
                 elif isinstance(value, list):
@@ -145,24 +123,25 @@ def get_all_type_elements(nested_dict):
                         recursive_search(item)
 
     recursive_search(nested_dict)
-    return list(type_elements)
+    return [json.loads(type_element) for type_element in type_elements]
 
 
 @lru_cache(maxsize=None)
 def artifact_type_to_link(artifact_type):
-    artifact_class = Artifact._class_register.get(artifact_type)
-    type_class_name = artifact_class.__name__
-    artifact_class_id = f"{artifact_class.__module__}.{type_class_name}"
-    return f'<a class="reference internal" href="../{artifact_class.__module__}.html#{artifact_class_id}" title="{artifact_class_id}"><code class="xref py py-class docutils literal notranslate"><span class="pre">{type_class_name}</span></code></a>'
+    artifact_module, artifact_class_name = get_module_class_names(
+        json.loads(artifact_type)
+    )
+    return f'<a class="reference internal" href="../{artifact_module}.html#{artifact_module}.{artifact_class_name}" title="{artifact_module}.{artifact_class_name}"><code class="xref py py-class docutils literal notranslate"><span class="pre">{artifact_class_name}</span></code></a>'
 
 
 # flake8: noqa: C901
-def make_content(artifact, label, all_labels):
-    artifact_type = artifact["__type__"]
-    artifact_class = Artifact._class_register.get(artifact_type)
-    type_class_name = artifact_class.__name__
-    catalog_id = label.replace("catalog.", "")
 
+
+def make_content(artifact, label, all_labels):
+    artifact_type = artifact["__type__"]  # dict with fields "module" and "name"
+    artifact_class = get_class_or_function_from_artifact_type(artifact_type)
+
+    catalog_id = label.replace("catalog.", "")
     result = ""
 
     if "__description__" in artifact and artifact["__description__"] is not None:
@@ -205,25 +184,22 @@ def make_content(artifact, label, all_labels):
         )
 
     for type_name in type_elements:
-        # source = f'<span class="nt">__type__</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">{type_name}</span>'
-        source = f'<span class="n">__type__{type_name}</span><span class="p">'
-        target = artifact_type_to_link(type_name)
-        html_for_dict = html_for_dict.replace(
-            source,
-            f'<span class="n" STYLE="font-size:108%">{target}</span><span class="p">',
-            # '<span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span>'
-            # + target,
+        artifact_module, artifact_class_name = get_module_class_names(type_name)
+        pattern = re.compile(
+            f'<span class="n">__type__(.*?)<span class="n">{artifact_class_name}</span>'
         )
+        repl = (
+            '<span class="n" STYLE="font-size:108%">'
+            + artifact_type_to_link(json.dumps(type_name))
+            + "</span>"
+        )
+        html_for_dict = pattern.sub(repl, html_for_dict)
 
-    pattern = r'(<span class="nt">)&quot;(.*?)&quot;(</span>)'
-
-    # Replacement function
-    html_for_dict = re.sub(pattern, r"\1\2\3", html_for_dict)
-
-    subtypes = all_subtypes_of_artifact(artifact)
-    subtypes = list(set(subtypes))
+    subtypes = type_elements
     subtypes.remove(artifact_type)  # this was already documented
-    html_for_imports = imports_to_syntax_highlighted_html(subtypes)
+    html_for_imports = imports_to_syntax_highlighted_html(
+        get_all_type_elements(artifact)
+    )
 
     source_link = f"""<a class="reference external" href="https://github.com/IBM/unitxt/blob/main/src/unitxt/catalog/{catalog_id.replace(".", "/")}.json"><span class="viewcode-link"><span class="pre">[source]</span></span></a>"""
     html_for_element = f"""<div class="admonition note">
@@ -237,13 +213,13 @@ def make_content(artifact, label, all_labels):
     result += "    " + html_for_element + "\n"
 
     if artifact_class.__doc__:
-        explanation_str = f"Explanation about `{type_class_name}`"
+        explanation_str = f"Explanation about `{artifact_class.__name__}`"
         result += f"\n{explanation_str}\n"
         result += "+" * len(explanation_str) + "\n\n"
         result += artifact_class.__doc__ + "\n"
 
     for subtype in subtypes:
-        subtype_class = Artifact._class_register.get(subtype)
+        subtype_class = get_class_or_function_from_artifact_type(subtype)
         subtype_class_name = subtype_class.__name__
         if subtype_class.__doc__:
             explanation_str = f"Explanation about `{subtype_class_name}`"

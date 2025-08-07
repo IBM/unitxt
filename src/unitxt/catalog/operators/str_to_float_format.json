@@ -1,3 +1,6 @@
 {
-    "__type__": "str_to_float_format"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "StrToFloatFormat"
+    }
 }
