@@ -3231,6 +3231,7 @@ _supported_apis = Literal[
     "vertex-ai",
     "replicate",
     "hf-local",
+    "vllm",
 ]
 
 
@@ -3475,6 +3476,7 @@ class CrossProviderInferenceEngine(
     provider_model_map["watsonx"] = {
         k: f"watsonx/{v}" for k, v in provider_model_map["watsonx-sdk"].items()
     }
+    provider_model_map["vllm"] = provider_model_map["hf-local"].items()
 
     _provider_to_base_class = {
         "watsonx": LiteLLMInferenceEngine,
@@ -3488,6 +3490,7 @@ class CrossProviderInferenceEngine(
         "vertex-ai": LiteLLMInferenceEngine,
         "replicate": LiteLLMInferenceEngine,
         "hf-local": HFAutoModelInferenceEngine,
+        "vllm": VLLMInferenceEngine,
     }
 
     _provider_param_renaming = {
