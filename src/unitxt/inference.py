@@ -1855,6 +1855,8 @@ class RITSInferenceEngine(
         "ibm-granite/granite-guardian-3.2-3b-a800m": "granite-guardian-3-2-3b-a800m",
         "ibm-granite/granite-guardian-3.2-5b": "granite-guardian-3-2-5b-ris",
         "granite-guardian-3-2-5b-ris": "granite-guardian-3-3-8b",
+        "openai/gpt-oss-20b": "gpt-oss-20b",
+        "openai/gpt-oss-120b": "gpt-oss-120b",
     }
 
     def get_default_headers(self):
@@ -3355,6 +3357,8 @@ class CrossProviderInferenceEngine(
             "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7B-instruct-v0.1",
             "deepseek-v3": "deepseek-ai/DeepSeek-V3",
             "phi-4": "microsoft/phi-4",
+            "gpt-oss-20b": "openai/gpt-oss-20b",
+            "gpt-oss-120b": "openai/gpt-oss-120b",
         },
         "open-ai": {
             "o1-mini": "o1-mini",
