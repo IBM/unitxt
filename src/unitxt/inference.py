@@ -3538,6 +3538,7 @@ class CrossProviderInferenceEngine(
                         del args[param]
                 else:
                     del args[param]
+
         self.engine: InferenceEngine = cls(**args)
         self.data_classification_policy = self.engine.data_classification_policy
 

@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from datasets import Dataset as HFDataset
 
 from .api import _source_to_dataset, evaluate, load_recipe
-from .artifact import UnitxtArtifactNotFoundError
 from .benchmark import Benchmark
 
 # Use HFAutoModelInferenceEngine for local models
@@ -117,7 +116,7 @@ def setup_parser() -> argparse.ArgumentParser:
         "-m",
         type=str,
         default="hf",
-        choices=["hf", "cross_provider"],
+        choices=["hf", "cross_provider", "vllm"],
         help="Specifies the model type/engine.\n"
         "- 'hf': Local Hugging Face model via HFAutoModel (default). Requires 'pretrained=...' in --model_args.\n"
         "- 'cross_provider': Remote model via CrossProviderInferenceEngine. Requires 'model_name=...' in --model_args.",
@@ -423,7 +422,7 @@ def initialize_inference_engine(
         # Keep the actual model name for the results
         args.model = inference_model.model_name
     # --- Remote Model (CrossProviderInferenceEngine) ---
-    elif args.model.lower() == "cross_provider":
+    elif args.model.lower() in ["cross_provider", "vllm"]:
         if "model_name" not in model_args_dict:
             logger.error(
                 "Missing 'model_name=<provider/model_id>' in --model_args for '--model cross_provider'."
@@ -449,6 +448,7 @@ def initialize_inference_engine(
 
         # Note: CrossProviderInferenceEngine expects 'model' parameter, not 'model_name'
         inference_model = CrossProviderInferenceEngine(
+            provider="vllm" if args.model == "vllm" else None,
             model=remote_model_name,
             **model_args_dict,
         )
@@ -790,50 +790,48 @@ def main():
         f"Parsed model_args type: {type(args.model_args)}, value: {args.model_args}"
     )
 
-    try:
-        results_path, samples_path = prepare_output_paths(
-            args.output_path, args.output_file_prefix
+    # try:
+    results_path, samples_path = prepare_output_paths(
+        args.output_path, args.output_file_prefix
+    )
+
+    # Apply unitxt settings within a context manager
+    with configure_unitxt_settings(args):
+        test_dataset = cli_load_dataset(args)
+        model_args_dict = prepare_kwargs(args.model_args)
+        gen_kwargs_dict = prepare_kwargs(args.gen_kwargs)
+        chat_kwargs_dict = prepare_kwargs(args.chat_template_kwargs)
+
+        model_args_dict.update(gen_kwargs_dict)
+        inference_model = initialize_inference_engine(
+            args, model_args_dict, chat_kwargs_dict
         )
+        predictions = run_inference(inference_model, test_dataset)
+        evaluation_results = run_evaluation(predictions, test_dataset)
+        process_and_save_results(args, evaluation_results, results_path, samples_path)
 
-        # Apply unitxt settings within a context manager
-        with configure_unitxt_settings(args):
-            test_dataset = cli_load_dataset(args)
-            model_args_dict = prepare_kwargs(args.model_args)
-            gen_kwargs_dict = prepare_kwargs(args.gen_kwargs)
-            chat_kwargs_dict = prepare_kwargs(args.chat_template_kwargs)
+    # # --- More Specific Error Handling ---
+    # except (UnitxtArtifactNotFoundError, FileNotFoundError) as e:
+    #     logger.exception(f"Error loading artifact or file: {e}")
+    #     sys.exit(1)
+    # except (AttributeError, ValueError) as e:
+    #     # Catch issues like missing keys in args, parsing errors, etc.
+    #     logger.exception(f"Configuration or value error: {e}")
+    #     sys.exit(1)
+    # except ImportError as e:
+    #     # Catch missing optional dependencies
+    #     logger.exception(f"Missing dependency: {e}")
+    #     sys.exit(1)
+    # except RuntimeError as e:
+    #     # Catch errors explicitly raised during execution (e.g., evaluation failure)
+    #     logger.exception(f"Runtime error during processing: {e}")
+    #     sys.exit(1)
+    # except Exception as e:
+    #     # Catch any other unexpected errors
+    #     logger.exception(f"An unexpected error occurred: {e}")
+    #     sys.exit(1)
 
-            model_args_dict.update(gen_kwargs_dict)
-            inference_model = initialize_inference_engine(
-                args, model_args_dict, chat_kwargs_dict
-            )
-            predictions = run_inference(inference_model, test_dataset)
-            evaluation_results = run_evaluation(predictions, test_dataset)
-            process_and_save_results(
-                args, evaluation_results, results_path, samples_path
-            )
-
-    # --- More Specific Error Handling ---
-    except (UnitxtArtifactNotFoundError, FileNotFoundError) as e:
-        logger.exception(f"Error loading artifact or file: {e}")
-        sys.exit(1)
-    except (AttributeError, ValueError) as e:
-        # Catch issues like missing keys in args, parsing errors, etc.
-        logger.exception(f"Configuration or value error: {e}")
-        sys.exit(1)
-    except ImportError as e:
-        # Catch missing optional dependencies
-        logger.exception(f"Missing dependency: {e}")
-        sys.exit(1)
-    except RuntimeError as e:
-        # Catch errors explicitly raised during execution (e.g., evaluation failure)
-        logger.exception(f"Runtime error during processing: {e}")
-        sys.exit(1)
-    except Exception as e:
-        # Catch any other unexpected errors
-        logger.exception(f"An unexpected error occurred: {e}")
-        sys.exit(1)
-
-    logger.info("Unitxt Evaluation CLI finished successfully.")
+    # logger.info("Unitxt Evaluation CLI finished successfully.")
 
 
 def extract_scores(directory):  # pragma: no cover
