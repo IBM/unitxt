@@ -16,6 +16,7 @@ dataset = load_dataset(
 
 model = HFGraniteSpeechInferenceEngine(
     model_name="ibm-granite/granite-speech-3.3-2b",
+    revision="granite-speech-3.3.2-2b",
     max_new_tokens=200,
 )
 

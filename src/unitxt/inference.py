@@ -1044,6 +1044,7 @@ class HFLlavaInferenceEngine(HFInferenceEngineBase):
 
 
 class HFGraniteSpeechInferenceEngine(HFInferenceEngineBase):
+    revision: str = None
     lazy_load: bool = True
     label: str = "hf_granite_speech"
     audio_token: str = "<|audio|>"
@@ -1075,6 +1076,7 @@ class HFGraniteSpeechInferenceEngine(HFInferenceEngineBase):
 
         self.model = AutoModelForSpeechSeq2Seq.from_pretrained(
             self.model_name,
+            revision=self.revision,
             torch_dtype=self._get_torch_dtype(),
             low_cpu_mem_usage=self.low_cpu_mem_usage,
             device_map=self.device_map,
