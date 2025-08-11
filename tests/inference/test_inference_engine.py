@@ -484,7 +484,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         )
         inference_model = HFPipelineBasedInferenceEngine(
             model_name=model_name,
-            max_new_tokens=32,
+            max_new_tokens=1,  # Very small for fast testing
             temperature=0,
             top_p=1,
             use_cache=False,
@@ -496,7 +496,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         # Set seed for reproducibility
         inference_model = HFPipelineBasedInferenceEngine(
             model_name=model_name,
-            max_new_tokens=32,
+            max_new_tokens=1,  # Very small for fast testing
             temperature=0,
             top_p=1,
             use_cache=True,
@@ -543,7 +543,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         inference_model = HFPipelineBasedInferenceEngine(
             model_name=model_name,
-            max_new_tokens=32,
+            max_new_tokens=1,  # Very small for fast testing
             temperature=0,
             top_p=1,
             use_cache=True,

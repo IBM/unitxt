@@ -6,7 +6,6 @@ import hashlib
 import io
 import json
 import logging
-import math
 import os
 import re
 import sys
@@ -205,11 +204,112 @@ class MockInferenceMixin(Artifact):
         return [self.mock_logprobs_default_value_factory() for _ in dataset]
 
 
-class InferenceEngine(abc.ABC, MockInferenceMixin):
-    """Abstract base class for inference."""
+class CachedInferenceMixin(Artifact):
+    """Mixin that provides caching functionality for inference engines."""
 
-    cache_batch_size: int = 100
+    cache_batch_size: int = (
+        100  # Kept for backwards compatibility, not used in streaming
+    )
     use_cache: bool = True
+    _cache: Any = InternalField(default=None, name="Disk cache instance")
+
+    def _initialize_cache(self):
+        """Initialize the disk cache if caching is enabled."""
+        if self.use_cache and self._cache is None:
+            from diskcache import Cache
+
+            self._cache = Cache(
+                os.path.join(
+                    settings.inference_engine_cache_path, self.__class__.__name__
+                )
+            )
+
+    def get_instance_cache_key(self, instance):
+        """Extract cacheable fields from an instance."""
+        instance_key_fields = ["media", "source", "task_data"]
+        return {key: instance[key] for key in instance if key in instance_key_fields}
+
+    def _get_cache_key(self, instance: Dict[str, Any]) -> str:
+        """Generate a unique cache key for each input."""
+        record = self.get_instance_cache_key(instance)
+        record["version"] = constants.version
+        record.update(self.to_dict())
+        instance_str = json.dumps(record, sort_keys=True)
+        return hashlib.md5(instance_str.encode()).hexdigest()
+
+    def _get_cached_result(self, instance: Dict[str, Any]):
+        """Get cached result for an instance, returns None if not found."""
+        if not self.use_cache or self._cache is None:
+            return None
+        cache_key = self._get_cache_key(instance)
+        return self._cache.get(cache_key)
+
+    def _cache_result(self, instance: Dict[str, Any], prediction):
+        """Cache a prediction result for an instance."""
+        if not self.use_cache or self._cache is None or prediction is None:
+            return
+        cache_key = self._get_cache_key(instance)
+        self._cache[cache_key] = prediction
+
+    def _apply_caching_to_streaming(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        streaming_func,
+        return_meta_data: bool = False,
+    ):
+        """Apply caching logic to a streaming inference function."""
+        if not self.use_cache:
+            # No caching, just use streaming directly
+            instances_iter = ((i, instance) for i, instance in enumerate(dataset))
+            results = {}
+            for index, prediction in streaming_func(instances_iter, return_meta_data):
+                results[index] = prediction
+            return [results[i] for i in range(len(dataset))]
+
+        # Initialize cache if needed
+        self._initialize_cache()
+
+        # Phase 1: Identify cached vs missing instances
+        cached_results = {}
+        missing_instances = []
+        cached_count = 0
+
+        for i, instance in enumerate(dataset):
+            cached_value = self._get_cached_result(instance)
+
+            if cached_value is not None:
+                cached_results[i] = cached_value
+                cached_count += 1
+            else:
+                missing_instances.append((i, instance))
+
+        message = (
+            f"Found {cached_count} cached instances, inferring {len(missing_instances)} instances"
+            + (
+                f" (cache: {self._cache.directory})"
+                if hasattr(self._cache, "directory")
+                else ""
+            )
+        )
+        logger.info(message)
+
+        # Phase 2: Stream missing instances and cache results immediately
+        if missing_instances:
+            missing_iter = iter(missing_instances)
+
+            for index, prediction in streaming_func(missing_iter, return_meta_data):
+                # Cache immediately when ready, but always store result (even if None)
+                if prediction is not None:
+                    instance = dataset[index]
+                    self._cache_result(instance, prediction)
+                cached_results[index] = prediction
+
+        # Phase 3: Reconstruct results in original order
+        return [cached_results[i] for i in range(len(dataset))]
+
+
+class InferenceEngine(abc.ABC, MockInferenceMixin, CachedInferenceMixin):
+    """Abstract base class for inference."""
 
     @abc.abstractmethod
     def _infer(
@@ -225,6 +325,34 @@ class InferenceEngine(abc.ABC, MockInferenceMixin):
         """
         pass
 
+    def _infer_streaming(
+        self,
+        instances: Iterable[Tuple[int, Dict[str, Any]]],
+        return_meta_data: bool = False,
+    ) -> Iterable[Tuple[int, Union[str, TextGenerationInferenceOutput]]]:
+        """Default streaming wrapper that uses existing _infer method.
+
+        Engines can override this for true streaming behavior.
+
+        Args:
+            instances: Iterable of (index, instance) tuples
+            return_meta_data: Whether to return metadata
+
+        Yields:
+            (index, prediction) tuples as results become ready
+        """
+        # Collect all instances (maintains backwards compatibility)
+        all_instances = list(instances)
+        if not all_instances:
+            return
+
+        indices = [idx for idx, _ in all_instances]
+        batch_instances = [inst for _, inst in all_instances]
+
+        # Use existing _infer method
+        predictions = self._infer(batch_instances, return_meta_data)
+        yield from zip(indices, predictions)
+
     @abc.abstractmethod
     def prepare_engine(self):
         """Perform inference on the input dataset."""
@@ -232,21 +360,13 @@ class InferenceEngine(abc.ABC, MockInferenceMixin):
 
     def prepare(self):
         if not self.is_mock:
-            super().prepare()  # no need to prepare a mock
+            super().prepare()  # This will call CachedInferenceMixin.prepare() which initializes cache
             with error_context(
                 self,
                 stage="Prepare Inference Engine",
                 help="https://www.unitxt.ai/en/latest/docs/inference.html",
             ):
                 self.prepare_engine()
-            if self.use_cache:
-                from diskcache import Cache
-
-                self._cache = Cache(
-                    os.path.join(
-                        settings.inference_engine_cache_path, self.__class__.__name__
-                    )
-                )
 
     def __call__(
         self,
@@ -302,62 +422,10 @@ class InferenceEngine(abc.ABC, MockInferenceMixin):
             result = self._mock_infer(dataset, return_meta_data)
         else:
             if self.use_cache:
-                with error_context(
-                    self,
-                    stage="Inference Cache Handling",
-                    help="https://www.unitxt.ai/en/latest/docs/inference.html",
-                ):
-                    number_of_batches = math.ceil(len(dataset) / self.cache_batch_size)
-                    result = []
-                    for batch_index, batch in enumerate(
-                        batched(dataset, self.cache_batch_size)
-                    ):
-                        cached_results = []
-                        missing_examples = []
-                        for i, item in enumerate(batch):
-                            cache_key = self._get_cache_key(item)
-                            cached_value = self._cache.get(cache_key)
-                            if cached_value is not None:
-                                cached_results.append(
-                                    (i, cached_value)
-                                )  # each element is index in batch, and value
-                            else:
-                                missing_examples.append(
-                                    (i, item)
-                                )  # each element is index in batch and example
-                        # infere on missing examples only, without indices
-
-                        logger.info(
-                            f"Inferring batch {batch_index + 1} / {number_of_batches} with {len(missing_examples)} instances (found {len(cached_results)} instances in {self._cache.directory})"
-                        )
-                        if len(missing_examples) > 0:
-                            with error_context(
-                                self,
-                                stage="Running Inference",
-                                help="https://www.unitxt.ai/en/latest/docs/inference.html",
-                            ):
-                                inferred_results = self._infer(
-                                    [e[1] for e in missing_examples], return_meta_data
-                                )
-                            # recombined to index and value
-                            inferred_results = list(
-                                zip([e[0] for e in missing_examples], inferred_results)
-                            )
-                            # Add missing examples to cache
-                            for (_, item), (_, prediction) in zip(
-                                missing_examples, inferred_results
-                            ):
-                                if prediction is None:
-                                    continue
-                                cache_key = self._get_cache_key(item)
-                                self._cache[cache_key] = prediction
-                        else:
-                            inferred_results = []
-                        # Combine cached and inferred results in original order
-                        batch_predictions = [
-                            p[1] for p in sorted(cached_results + inferred_results)
-                        ]
-                        result.extend(batch_predictions)
+                # Use the mixin's caching functionality
+                result = self._apply_caching_to_streaming(
+                    dataset, self._infer_streaming, return_meta_data
+                )
             else:
                 with error_context(
                     self,
@@ -451,6 +519,36 @@ class LogProbInferenceEngine(abc.ABC, MockInferenceMixin):
         predictions.
         """
         pass
+
+    def _infer_log_probs_streaming(
+        self,
+        instances: Iterable[Tuple[int, Dict[str, Any]]],
+        return_meta_data: bool = False,
+    ) -> Iterable[Tuple[int, Union[Dict, TextGenerationInferenceOutput]]]:
+        """Default streaming wrapper for log probs inference that uses existing _infer_log_probs method.
+
+        Engines can override this for true streaming behavior.
+
+        Args:
+            instances: Iterable of (index, instance) tuples
+            return_meta_data: Whether to return metadata
+
+        Yields:
+            (index, prediction) tuples as results become ready
+        """
+        # Collect all instances (maintains backwards compatibility)
+        all_instances = list(instances)
+        if not all_instances:
+            return
+
+        indices = [idx for idx, _ in all_instances]
+        batch_instances = [inst for _, inst in all_instances]
+
+        # Use existing _infer_log_probs method
+        predictions = self._infer_log_probs(batch_instances, return_meta_data)
+
+        # Yield results with original indices
+        yield from zip(indices, predictions)
 
     def infer_log_probs(
         self,
