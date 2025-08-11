@@ -161,7 +161,51 @@ class ListWithMetadata(List[T]):
         return f"ListWithMetadata(data={super().__repr__()}, metadata={self.metadata})"
 
 
-class InferenceEngine(Artifact):
+class MockInferenceMixin(Artifact):
+    use_mock: bool = False
+
+    @property
+    def is_mock(self):
+        return self.use_mock or settings.mock_inference_mode
+
+    def _mock_infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        result = []
+        for instance in dataset:
+            prediction = str(instance["source"])
+            if return_meta_data:
+                result.append(
+                    TextGenerationInferenceOutput(
+                        prediction=prediction, generated_text=prediction
+                    )
+                )
+            else:
+                result.append(prediction)
+        return result
+
+    @staticmethod
+    def mock_logprobs_default_value_factory() -> List[Dict[str, Any]]:
+        return [
+            {
+                "logprob": -1,
+                "text": "[[10]]",
+                "top_tokens": [
+                    {"logprob": -1, "text": "[[10]]"},
+                ],
+            }
+        ]
+
+    def _mock_infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return [self.mock_logprobs_default_value_factory() for _ in dataset]
+
+
+class InferenceEngine(abc.ABC, MockInferenceMixin):
     """Abstract base class for inference."""
 
     cache_batch_size: int = 100
@@ -187,7 +231,7 @@ class InferenceEngine(Artifact):
         pass
 
     def prepare(self):
-        if not settings.mock_inference_mode:
+        if not self.is_mock:
             super().prepare()  # no need to prepare a mock
             with error_context(
                 self,
@@ -254,7 +298,7 @@ class InferenceEngine(Artifact):
         predictions.
         """
         self.verify_infer_inputs(dataset, return_meta_data)
-        if settings.mock_inference_mode:
+        if self.is_mock:
             result = self._mock_infer(dataset, return_meta_data)
         else:
             if self.use_cache:
@@ -330,24 +374,6 @@ class InferenceEngine(Artifact):
             },
         )
 
-    def _mock_infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        result = []
-        for instance in dataset:
-            prediction = str(instance["source"])
-            if return_meta_data:
-                result.append(
-                    TextGenerationInferenceOutput(
-                        prediction=prediction, generated_text=prediction
-                    )
-                )
-            else:
-                result.append(prediction)
-        return result
-
     @abc.abstractmethod
     def get_engine_id(self):
         raise NotImplementedError()
@@ -409,7 +435,7 @@ class InferenceEngine(Artifact):
         return None
 
 
-class LogProbInferenceEngine(abc.ABC, Artifact):
+class LogProbInferenceEngine(abc.ABC, MockInferenceMixin):
     """Abstract base class for inference with log probs."""
 
     @abc.abstractmethod
@@ -425,12 +451,6 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
         predictions.
         """
         pass
-
-    def _mock_infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return [mock_logprobs_default_value_factory() for instance in dataset]
 
     def infer_log_probs(
         self,
@@ -452,7 +472,7 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
 
         [self.verify_instance(instance) for instance in dataset]
 
-        if settings.mock_inference_mode:
+        if self.is_mock:
             result = self._mock_infer_log_probs(dataset)
         else:
             result = self._infer_log_probs(dataset, return_meta_data)
@@ -1288,23 +1308,11 @@ class HFPipelineBasedInferenceEngine(
         return output["generated_text"]
 
 
-def mock_logprobs_default_value_factory() -> List[Dict[str, Any]]:
-    return [
-        {
-            "logprob": -1,
-            "text": "[[10]]",
-            "top_tokens": [
-                {"logprob": -1, "text": "[[10]]"},
-            ],
-        }
-    ]
-
-
 class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
     model_name: str
     default_inference_value: str = "[[10]]"
     default_inference_value_logprob: List[Dict[str, Any]] = dataclasses.field(
-        default_factory=mock_logprobs_default_value_factory,
+        default_factory=MockInferenceMixin.mock_logprobs_default_value_factory,
     )
     label: str = "mock_inference_engine"
 
@@ -1372,10 +1380,6 @@ class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
                 stop_reason="",
             )
         return predict_result
-
-
-class MockModeMixin(Artifact):
-    mock_mode: bool = False
 
 
 class GenericInferenceEngine(
