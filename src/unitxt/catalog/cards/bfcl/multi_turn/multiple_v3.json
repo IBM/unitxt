@@ -33,7 +33,7 @@
         "operators.fix_json_schema",
         {
             "__type__": "execute_expression",
-            "expression": "[{\"name\": k, \"arguments\": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]",
+            "expression": "[{\"name\": k, \"arguments\": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*[[w for w in vval if w != \"\"] for vval in v.values()])]",
             "to_field": "reference_calls",
             "imports_list": [
                 "itertools"
