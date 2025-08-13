@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Literal, Optional
 from .api import infer
 from .dataclass import Field
 from .formats import ChatAPIFormat, Format, SystemFormat
-from .inference import InferenceEngine, LogProbInferenceEngine, OpenAiInferenceEngine
+from .inference import InferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
 from .operators import ArtifactFetcherMixin
@@ -386,9 +386,7 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
 
     def verify(self):
         super().verify()
-        if self.infer_log_probs and not isinstance(
-            self.inference_model, LogProbInferenceEngine
-        ):
+        if self.infer_log_probs and not self.inference_model.support_log_probs:
             raise NotImplementedError(
                 f"Error in TaskBasedLLMAsJudge: return_log_probs set to True but supplied engine "
                 f"{self.inference_model.__class__.__name__} does not support logprobs."

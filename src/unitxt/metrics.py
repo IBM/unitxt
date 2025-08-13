@@ -49,7 +49,6 @@ from .error_utils import Documentation, UnitxtError, UnitxtWarning, error_contex
 from .inference import (
     HFPipelineBasedInferenceEngine,
     InferenceEngine,
-    LogProbInferenceEngine,
     TorchDeviceMixin,
     WMLInferenceEngineGeneration,
 )
@@ -6770,7 +6769,7 @@ class GraniteGuardianBase(InstanceMetric):
     safe_token = "No"
     unsafe_token = "Yes"
 
-    inference_engine: LogProbInferenceEngine = None
+    inference_engine: InferenceEngine = None
     generation_params: Dict = None
     risk_name: str = None
     risk_type: RiskType = None

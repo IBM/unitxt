@@ -15,7 +15,6 @@ from .dataset_utils import get_dataset_artifact
 from .error_utils import UnitxtError
 from .inference import (
     InferenceEngine,
-    LogProbInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
 )
 from .loaders import LoadFromDictionary
@@ -380,11 +379,6 @@ def infer(
         dataset = dataset.map(add_previous_messages, with_indices=True)
     engine, _ = fetch_artifact(engine)
     if return_log_probs:
-        if not isinstance(engine, LogProbInferenceEngine):
-            raise NotImplementedError(
-                f"Error in infer: return_log_probs set to True but supplied engine "
-                f"{engine.__class__.__name__} does not support logprobs."
-            )
         infer_outputs = engine.infer_log_probs(dataset, return_meta_data)
         raw_predictions = (
             [output.prediction for output in infer_outputs]

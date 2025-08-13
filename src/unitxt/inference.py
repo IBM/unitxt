@@ -14,9 +14,9 @@ import uuid
 from collections import Counter
 from datetime import datetime
 from itertools import islice
-from multiprocessing.pool import ThreadPool
 from typing import (
     Any,
+    AsyncIterable,
     Dict,
     Iterable,
     List,
@@ -32,7 +32,6 @@ from typing import (
 
 from datasets import Dataset, DatasetDict, Image
 from tqdm import tqdm, trange
-from tqdm.asyncio import tqdm_asyncio
 
 from .artifact import Artifact
 from .base_metric import Metric
@@ -241,6 +240,7 @@ class CachedInferenceMixin(Artifact):
         """Get cached result for an instance, returns None if not found."""
         if not self.use_cache or self._cache is None:
             return None
+
         cache_key = self._get_cache_key(instance)
         return self._cache.get(cache_key)
 
@@ -251,68 +251,15 @@ class CachedInferenceMixin(Artifact):
         cache_key = self._get_cache_key(instance)
         self._cache[cache_key] = prediction
 
-    def _apply_caching_to_streaming(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        streaming_func,
-        return_meta_data: bool = False,
-    ):
-        """Apply caching logic to a streaming inference function."""
-        if not self.use_cache:
-            # No caching, just use streaming directly
-            instances_iter = ((i, instance) for i, instance in enumerate(dataset))
-            results = {}
-            for index, prediction in streaming_func(instances_iter, return_meta_data):
-                results[index] = prediction
-            return [results[i] for i in range(len(dataset))]
-
-        # Initialize cache if needed
-        self._initialize_cache()
-
-        # Phase 1: Identify cached vs missing instances
-        cached_results = {}
-        missing_instances = []
-        cached_count = 0
-
-        for i, instance in enumerate(dataset):
-            cached_value = self._get_cached_result(instance)
-
-            if cached_value is not None:
-                cached_results[i] = cached_value
-                cached_count += 1
-            else:
-                missing_instances.append((i, instance))
-
-        message = (
-            f"Found {cached_count} cached instances, inferring {len(missing_instances)} instances"
-            + (
-                f" (cache: {self._cache.directory})"
-                if hasattr(self._cache, "directory")
-                else ""
-            )
-        )
-        logger.info(message)
-
-        # Phase 2: Stream missing instances and cache results immediately
-        if missing_instances:
-            missing_iter = iter(missing_instances)
-
-            for index, prediction in streaming_func(missing_iter, return_meta_data):
-                # Cache immediately when ready, but always store result (even if None)
-                if prediction is not None:
-                    instance = dataset[index]
-                    self._cache_result(instance, prediction)
-                cached_results[index] = prediction
-
-        # Phase 3: Reconstruct results in original order
-        return [cached_results[i] for i in range(len(dataset))]
-
 
 class InferenceEngine(abc.ABC, MockInferenceMixin, CachedInferenceMixin):
     """Abstract base class for inference."""
 
+    concurrency_limit: int = 100
+    support_log_probs: bool = False
+
     @abc.abstractmethod
-    def _infer(
+    async def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
@@ -325,34 +272,6 @@ class InferenceEngine(abc.ABC, MockInferenceMixin, CachedInferenceMixin):
         """
         pass
 
-    def _infer_streaming(
-        self,
-        instances: Iterable[Tuple[int, Dict[str, Any]]],
-        return_meta_data: bool = False,
-    ) -> Iterable[Tuple[int, Union[str, TextGenerationInferenceOutput]]]:
-        """Default streaming wrapper that uses existing _infer method.
-
-        Engines can override this for true streaming behavior.
-
-        Args:
-            instances: Iterable of (index, instance) tuples
-            return_meta_data: Whether to return metadata
-
-        Yields:
-            (index, prediction) tuples as results become ready
-        """
-        # Collect all instances (maintains backwards compatibility)
-        all_instances = list(instances)
-        if not all_instances:
-            return
-
-        indices = [idx for idx, _ in all_instances]
-        batch_instances = [inst for _, inst in all_instances]
-
-        # Use existing _infer method
-        predictions = self._infer(batch_instances, return_meta_data)
-        yield from zip(indices, predictions)
-
     @abc.abstractmethod
     def prepare_engine(self):
         """Perform inference on the input dataset."""
@@ -360,6 +279,7 @@ class InferenceEngine(abc.ABC, MockInferenceMixin, CachedInferenceMixin):
 
     def prepare(self):
         if not self.is_mock:
+            self._initialize_cache()
             super().prepare()  # This will call CachedInferenceMixin.prepare() which initializes cache
             with error_context(
                 self,
@@ -399,11 +319,6 @@ class InferenceEngine(abc.ABC, MockInferenceMixin, CachedInferenceMixin):
             raise Exception(
                 "Dataset passed to infer() is not list of dictionaries or Huggingface Dataset"
             )
-        if return_meta_data and not hasattr(self, "get_return_object"):
-            raise NotImplementedError(
-                f"Inference engine {self.__class__.__name__} does not support return_meta_data as it "
-                f"does not contain a 'get_return_object' method. Please set return_meta_data=False."
-            )
 
         [self.verify_instance(instance) for instance in dataset]
 
@@ -417,22 +332,54 @@ class InferenceEngine(abc.ABC, MockInferenceMixin, CachedInferenceMixin):
         If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
         predictions.
         """
+        return asyncio.run(self._async_infer(dataset, return_meta_data))
+
+    def infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
+        if not self.support_log_probs:
+            raise NotImplementedError(
+                f"return_log_probs set to True but supplied engine "
+                f"{self.__class__.__name__} does not support logprobs."
+            )
+        return asyncio.run(
+            self._async_infer(dataset, return_meta_data, return_log_probs=True)
+        )
+
+    @abc.abstractmethod
+    async def _infer_streaming(
+        self,
+        instances: Iterable[Tuple[int, Dict[str, Any]]],
+        total_len: int,
+        return_meta_data: bool = False,
+    ) -> AsyncIterable[Tuple[int, Union[str, TextGenerationInferenceOutput]]]:
+        ...
+
+    async def _async_infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+        return_log_probs: bool = False,
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
+        """Internal async method that handles all inference logic."""
         self.verify_infer_inputs(dataset, return_meta_data)
+
         if self.is_mock:
-            result = self._mock_infer(dataset, return_meta_data)
-        else:
-            if self.use_cache:
-                # Use the mixin's caching functionality
-                result = self._apply_caching_to_streaming(
-                    dataset, self._infer_streaming, return_meta_data
-                )
+            logger.info("Running inference with mock")
+            if return_log_probs:
+                result = self._mock_infer_log_probs(dataset)
             else:
-                with error_context(
-                    self,
-                    stage="Running Inference",
-                    help="https://www.unitxt.ai/en/latest/docs/inference.html",
-                ):
-                    result = self._infer(dataset, return_meta_data)
+                result = self._mock_infer(dataset, return_meta_data)
+        else:
+            logger.info(f"Running inference with {self.get_engine_id()}")
+            results: Dict[int, Any] = {}
+            async for index, prediction in self._infer_streaming(
+                enumerate(dataset), len(dataset), return_meta_data, return_log_probs
+            ):
+                results[index] = prediction
+            result = [results[i] for i in range(len(dataset))]
         return ListWithMetadata(
             result,
             metadata={
@@ -503,78 +450,216 @@ class InferenceEngine(abc.ABC, MockInferenceMixin, CachedInferenceMixin):
         return None
 
 
-class LogProbInferenceEngine(abc.ABC, MockInferenceMixin):
-    """Abstract base class for inference with log probs."""
+class BatchInferenceEngine(InferenceEngine):
+    """Base class for inference engines that process instances in batches locally.
+
+    This is designed for local compute engines (like HF Pipeline/AutoModel) that:
+    - Benefit from batching multiple instances together
+    - Process all instances in a single batch call
+    - Are typically GPU/CPU bound rather than network bound
+    """
+
+    batch_size: int = NonPositionalField(default=1)
 
     @abc.abstractmethod
-    def _infer_log_probs(
+    def _infer_batch(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instances: List[Dict[str, Any]],
         return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        """Perform inference on the input dataset  that returns log probs.
+        return_log_probs: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        """Process a single batch of instances.
 
-        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the logprob dicts.
-        return_meta_data is only supported for some InferenceEngines.
-        predictions.
+        Args:
+            instances: List of instances to process in this batch
+            return_meta_data: Whether to return metadata
+            return_log_probs: Whether to return log probabilities per token
+
+        Returns:
+            List of predictions corresponding to the input instances
         """
         pass
 
-    def _infer_log_probs_streaming(
-        self,
-        instances: Iterable[Tuple[int, Dict[str, Any]]],
-        return_meta_data: bool = False,
-    ) -> Iterable[Tuple[int, Union[Dict, TextGenerationInferenceOutput]]]:
-        """Default streaming wrapper for log probs inference that uses existing _infer_log_probs method.
-
-        Engines can override this for true streaming behavior.
-
-        Args:
-            instances: Iterable of (index, instance) tuples
-            return_meta_data: Whether to return metadata
-
-        Yields:
-            (index, prediction) tuples as results become ready
-        """
-        # Collect all instances (maintains backwards compatibility)
-        all_instances = list(instances)
-        if not all_instances:
-            return
-
-        indices = [idx for idx, _ in all_instances]
-        batch_instances = [inst for _, inst in all_instances]
-
-        # Use existing _infer_log_probs method
-        predictions = self._infer_log_probs(batch_instances, return_meta_data)
-
-        # Yield results with original indices
-        yield from zip(indices, predictions)
-
-    def infer_log_probs(
+    async def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        """Verifies instances of a dataset and performs inference that returns log probabilities of top tokens.
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        """Process dataset by batching instances."""
+        raise NotImplementedError
 
-        For each instance , generates a list of top tokens per position.
-        [ "top_tokens": [ { "text": ..., "logprob": ...} , ... ]
-        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns the list of the logprob dicts.
-        return_meta_data is only supported for some InferenceEngines.
+    async def _infer_streaming(
+        self,
+        instances: Iterable[Tuple[int, Dict[str, Any]]],
+        total_len: int,
+        return_meta_data: bool = False,
+        return_log_probs: bool = False,
+    ) -> AsyncIterable[Tuple[int, Union[str, TextGenerationInferenceOutput]]]:
+        """Stream results by processing instances in batches, with tqdm progress."""
+        current_batch = []
+        current_indices = []
+        total_generated = 0
+        total_loaded = 0
+        pbar = tqdm(
+            total=total_len, desc=f"Inference {self.get_engine_id()}", unit="inst"
+        )
+        try:
+            for idx, instance in instances:
+                cached_result = self._get_cached_result(instance)
+                if cached_result is not None:
+                    pbar.update(1)
+                    total_loaded += 1
+                    yield idx, cached_result
+                    continue
+
+                current_batch.append(instance)
+                current_indices.append(idx)
+
+                if len(current_batch) >= self.batch_size:
+                    results = self._infer_batch(
+                        current_batch, return_meta_data, return_log_probs
+                    )
+                    for original_idx, instance, result in zip(
+                        current_indices, current_batch, results
+                    ):
+                        self._cache_result(instance, result)
+                        pbar.update(1)
+                        total_generated += 1
+                        yield original_idx, result
+                    current_batch = []
+                    current_indices = []
+
+            if current_batch:
+                results = self._infer_batch(
+                    current_batch, return_meta_data, return_log_probs
+                )
+                for original_idx, result in zip(current_indices, results):
+                    self._cache_result(instance, result)
+                    pbar.update(1)
+                    total_generated += 1
+                    yield original_idx, result
+        finally:
+            # Process remaining instances
+            if current_batch:
+                results = self._infer_batch(
+                    current_batch, return_meta_data, return_log_probs
+                )
+                for original_idx, result in zip(current_indices, results):
+                    self._cache_result(instance, result)
+                    pbar.update(1)
+                    total_generated += 1
+                    yield original_idx, result
+            pbar.close()
+
+        logger.info(
+            f"Inference Summary: {total_generated} generated, {total_loaded} loaded from cache."
+        )
+
+
+class SingleInferenceEngine(InferenceEngine):
+    """Base class for inference engines that process instances individually via API calls.
+
+    This is designed for API-based engines (like OpenAI, LiteLLM, Ollama, VLLM) that:
+    - Make individual API calls per instance
+    - Have built-in concurrency/batching at the API level
+    - Benefit from async concurrent calls
+    - Handle rate limiting and retries at the API level
+    """
+
+    concurrency_limit: int = 100
+    max_concurrent_calls: int = NonPositionalField(default=10)
+
+    @abc.abstractmethod
+    async def _infer_single(
+        self,
+        instance: Dict[str, Any],
+        return_meta_data: bool = False,
+        return_log_probs: bool = False,
+    ) -> Union[str, TextGenerationInferenceOutput]:
+        """Process a single instance via API call.
+
+        Args:
+            instance: Single instance to process
+            return_meta_data: Whether to return metadata
+            return_log_probs: Whether to return log probabilities per token
+
+        Returns:
+            Single prediction result
         """
-        if return_meta_data and not hasattr(self, "get_return_object"):
-            raise NotImplementedError(
-                f"Inference engine {self.__class__.__name__} does not support return_meta_data as it "
-                f"does not contain a 'get_return_object' method. Please set return_meta_data=False."
+        pass
+
+    async def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        raise NotImplementedError
+
+    async def _infer_streaming(
+        self,
+        instances: Iterable[Tuple[int, Dict[str, Any]]],
+        total_len: int,
+        return_meta_data: bool = False,
+        return_log_probs: bool = False,
+    ) -> AsyncIterable[Tuple[int, Union[str, TextGenerationInferenceOutput]]]:
+        """Stream results concurrently without realizing the input iterable, with tqdm progress."""
+        sem = asyncio.Semaphore(self.concurrency_limit)
+        it = iter(instances)
+        pending: set[asyncio.Task] = set()
+
+        # Initialize tqdm with total length
+        pbar = tqdm(
+            total=total_len, desc=f"Inference ({self.get_engine_id()})", unit="item"
+        )
+        total_loaded = 0
+        total_generated = 0
+
+        async def bounded_infer(idx: int, instance: Dict[str, Any]):
+            nonlocal total_loaded, total_generated
+            cached_result = self._get_cached_result(instance)
+            if cached_result is not None:
+                total_loaded += 1
+                return idx, cached_result
+            async with sem:
+                result = await self._infer_single(
+                    instance, return_meta_data, return_log_probs
+                )
+                total_generated += 1
+                self._cache_result(instance, result)
+                return idx, result
+
+        # Prime the pool
+        for _ in range(self.concurrency_limit):
+            try:
+                idx, inst = next(it)
+            except StopIteration:
+                break
+            pending.add(asyncio.create_task(bounded_infer(idx, inst)))
+
+        # Drain while refilling
+        try:
+            while pending:
+                done, pending = await asyncio.wait(
+                    pending, return_when=asyncio.FIRST_COMPLETED
+                )
+
+                for task in done:
+                    idx, result = await task
+                    pbar.update(1)  # update progress for each finished task
+                    yield idx, result
+
+                while len(pending) < self.concurrency_limit:
+                    try:
+                        idx, inst = next(it)
+                    except StopIteration:
+                        break
+                    pending.add(asyncio.create_task(bounded_infer(idx, inst)))
+        finally:
+            pbar.close()
+
+            logger.info(
+                f"Inference Summary: {total_generated} generated, {total_loaded} loaded from cache."
             )
-
-        [self.verify_instance(instance) for instance in dataset]
-
-        if self.is_mock:
-            result = self._mock_infer_log_probs(dataset)
-        else:
-            result = self._infer_log_probs(dataset, return_meta_data)
-        return result
 
 
 class LazyLoadMixin(Artifact):
@@ -598,8 +683,7 @@ class HFGenerationParamsMixin(Artifact):
 
 
 class HFInferenceEngineBase(
-    InferenceEngine,
-    LogProbInferenceEngine,
+    BatchInferenceEngine,
     PackageRequirementsMixin,
     LazyLoadMixin,
     HFGenerationParamsMixin,
@@ -788,14 +872,6 @@ class HFInferenceEngineBase(
             self._prepare_engine()
         return super().infer(dataset, return_meta_data)
 
-    @abc.abstractmethod
-    def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        raise NotImplementedError
-
     def infer_log_probs(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
@@ -806,11 +882,12 @@ class HFInferenceEngineBase(
         return super().infer_log_probs(dataset, return_meta_data)
 
     @abc.abstractmethod
-    def _infer_log_probs(
+    def _infer_batch(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instances: List[Dict[str, Any]],
         return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        return_log_probs: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         raise NotImplementedError
 
 
@@ -825,6 +902,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
     padding: bool = True
     truncation: bool = True
     padding_side: str = "left"  # for decoder only models
+    support_log_probs: bool = True
 
     def _init_processor(self):
         from transformers import AutoTokenizer
@@ -913,123 +991,86 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             **tokenizer_kargs,
         ).to(self.device or self.device_map)
 
-    def _infer_fn(
+    def _infer_batch(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool,
-        return_logprobs: bool,
-    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
-        """Performs inference on the dataset in batches.
-
-        Args:
-            dataset: A list of dictionaries or a Dataset object containing the input data.
-                     Each item should have a "source" key.
-            return_meta_data: Whether to include metadata in the output.
-            return_logprobs: Whether to return log probabilities along with the output.
-
-        Returns:
-            A list of outputs, which can be strings, dictionaries (if metadata is returned),
-            or TextGenerationInferenceOutput objects (if logprobs are returned).
-        """
-        all_final_outputs = []  # List to store results from all batches
-
-        for batch in tqdm(
-            batched(dataset, self.batch_size),
-            desc=f"Running inference in batches of {self.batch_size}",
-            total=len(dataset) // self.batch_size,
-        ):
-            # Get the current batch
-            sources = []
-            tools = []
-            for instance in batch:
-                sources.append(instance["source"])
-                if "task_data" in instance:
-                    task_data = instance["task_data"]
-                    if isinstance(task_data, str):
-                        task_data = json.loads(task_data)
-                    if "__tools__" in task_data:
-                        tools.append(task_data["__tools__"])
-                    else:
-                        tools.append(None)
+        instances: List[Dict[str, Any]],
+        return_meta_data: bool = False,
+        return_log_probs: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        sources = []
+        tools = []
+        for instance in instances:
+            sources.append(instance["source"])
+            if "task_data" in instance:
+                task_data = instance["task_data"]
+                if isinstance(task_data, str):
+                    task_data = json.loads(task_data)
+                if "__tools__" in task_data:
+                    tools.append(task_data["__tools__"])
                 else:
                     tools.append(None)
-            # Tokenize inputs for the batch
+            else:
+                tools.append(None)
+        # Tokenize inputs for the batch
 
-            tokenized_inputs = self.prepare_inputs(sources, tools)
+        tokenized_inputs = self.prepare_inputs(sources, tools)
 
-            # Determine input length (handle encoder-decoder models)
-            input_length = (
-                1
-                if self.model.config.is_encoder_decoder
-                else tokenized_inputs.input_ids.shape[1]
+        # Determine input length (handle encoder-decoder models)
+        input_length = (
+            1
+            if self.model.config.is_encoder_decoder
+            else tokenized_inputs.input_ids.shape[1]
+        )
+
+        # Make predictions for the batch
+        predictions = self.make_predictions(tokenized_inputs)
+        sequences = predictions.sequences  # Sequences for the current batch
+
+        output_tokens = sequences[:, input_length:]
+
+        output_tokens_strings = []
+        for tokens in output_tokens:
+            output_tokens_strings.append(
+                [
+                    self.processor.decode(token, skip_special_tokens=True)
+                    for token in tokens
+                ]
             )
 
-            # Make predictions for the batch
-            predictions = self.make_predictions(tokenized_inputs)
-            sequences = predictions.sequences  # Sequences for the current batch
+        output_strings = []
+        for tokens in output_tokens:
+            output_strings.append(
+                self.processor.decode(tokens, skip_special_tokens=True)
+            )
 
-            output_tokens = sequences[:, input_length:]
+        if return_log_probs:
+            outputs = self.get_logprobs(predictions, output_tokens_strings)
+        else:
+            outputs = output_strings
 
-            output_tokens_strings = []
-            for tokens in output_tokens:
-                output_tokens_strings.append(
-                    [
-                        self.processor.decode(token, skip_special_tokens=True)
-                        for token in tokens
-                    ]
+        # Create return objects for the batch
+        results = []
+        for i in range(len(sequences)):
+            results.append(
+                self.get_return_object(
+                    output=outputs[i],
+                    generated_text=output_strings[i],
+                    output_tokens=len(output_tokens_strings[i]),
+                    inp=sources[i],
+                    inp_tokens=len(tokenized_inputs.encodings[i].tokens)
+                    if tokenized_inputs.encodings is not None
+                    else None,
+                    return_meta_data=return_meta_data,
                 )
-
-            output_strings = []
-            for tokens in output_tokens:
-                output_strings.append(
-                    self.processor.decode(tokens, skip_special_tokens=True)
-                )
-
-            if return_logprobs:
-                outputs = self.get_logprobs(predictions, output_tokens_strings)
-            else:
-                outputs = output_strings
-
-            # Create return objects for the batch
-            batch_results = []
-            for i in range(len(sequences)):
-                batch_results.append(
-                    self.get_return_object(
-                        output=outputs[i],
-                        generated_text=output_strings[i],
-                        output_tokens=len(output_tokens_strings[i]),
-                        inp=sources[i],
-                        inp_tokens=len(tokenized_inputs.encodings[i].tokens)
-                        if tokenized_inputs.encodings is not None
-                        else None,
-                        return_meta_data=return_meta_data,
-                    )
-                )
-
-            all_final_outputs.extend(batch_results)
-
-        return all_final_outputs
-
-    def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return self._infer_fn(dataset, return_meta_data, False)
-
-    def _infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        self.verify_not_chat_api(dataset)
-        return self._infer_fn(dataset, return_meta_data, True)
+            )
+        return results
 
 
 class HFLlavaInferenceEngine(HFInferenceEngineBase):
     lazy_load: bool = True
     label: str = "hf_lava"
     image_token: str = "<image>"
+    support_log_probs: bool = True
 
     def compute_transition_scores(
         self, sequences: Sequence, scores: Sequence, beam_indices: Optional[int]
@@ -1094,15 +1135,15 @@ class HFLlavaInferenceEngine(HFInferenceEngineBase):
 
         return inputs
 
-    def _infer_fn(
+    def _infer_batch(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool,
-        return_logprobs: bool,
-    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
+        instances: List[Dict[str, Any]],
+        return_meta_data: bool = False,
+        return_log_probs: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         results = []
 
-        for instance in tqdm(dataset):
+        for instance in instances:
             processed_inputs = self.prepare_inputs(instance)
             input_len = len(processed_inputs["input_ids"][0])
 
@@ -1127,7 +1168,7 @@ class HFLlavaInferenceEngine(HFInferenceEngineBase):
                     self.processor.decode(tokens, skip_special_tokens=True)
                 )
 
-            if return_logprobs:
+            if return_log_probs:
                 final_outputs = self.get_logprobs(predictions, output_tokens_strings)
             else:
                 final_outputs = output_strings
@@ -1144,20 +1185,6 @@ class HFLlavaInferenceEngine(HFInferenceEngineBase):
             )
 
         return results
-
-    def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return self._infer_fn(dataset, return_meta_data, False)
-
-    def _infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        return self._infer_fn(dataset, return_meta_data, True)
 
 
 class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
@@ -1236,7 +1263,7 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
 
 
 class HFPipelineBasedInferenceEngine(
-    InferenceEngine,
+    BatchInferenceEngine,
     PackageRequirementsMixin,
     LazyLoadMixin,
     HFGenerationParamsMixin,
@@ -1377,42 +1404,58 @@ class HFPipelineBasedInferenceEngine(
         if not self.lazy_load:
             self._prepare_engine()
 
-    def _infer(
+    def _infer_batch(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instances: List[Dict[str, Any]],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return_log_probs: bool = False,
+    ) -> List[Union[str, TextGenerationInferenceOutput]]:
+        """Run a synchronous batch through the model and return outputs (with optional metadata)."""
         if not self._is_loaded():
             self._prepare_engine()
 
-        outputs = self.model([instance["source"] for instance in dataset])
+        # Prepare input texts
+        inputs = [inst["source"] for inst in instances]
 
-        return [
-            self.get_return_object(output[0], instance["source"], return_meta_data)
-            if isinstance(output, list)
-            else self.get_return_object(output, instance["source"], return_meta_data)
-            for output, instance in zip(outputs, dataset)
-        ]
+        # Synchronous model call
+        outputs = self.model(inputs)
 
-    def get_return_object(self, output, inp, return_meta_data):
-        if return_meta_data:
-            return TextGenerationInferenceOutput(
-                prediction=output["generated_text"],
-                generated_text=output["generated_text"],
-                model_name=self.model_name,
-                inference_type=self.label,
-                input_text=inp,
-            )
-        return output["generated_text"]
+        results: List[Union[str, TextGenerationInferenceOutput]] = []
+        for output, inst in zip(outputs, instances):
+            # Normalize single-item list outputs
+            if isinstance(output, list) and output:
+                output = output[0]
+
+            # Extract text if output is a dict
+            if isinstance(output, dict):
+                text = output.get("generated_text", "")
+            else:
+                text = str(output)
+
+            if return_meta_data:
+                results.append(
+                    TextGenerationInferenceOutput(
+                        prediction=text,
+                        generated_text=text,
+                        model_name=self.model_name,
+                        inference_type=self.label,
+                        input_text=inst["source"],
+                    )
+                )
+            else:
+                results.append(text)
+
+        return results
 
 
-class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
+class MockInferenceEngine(SingleInferenceEngine):
     model_name: str
     default_inference_value: str = "[[10]]"
     default_inference_value_logprob: List[Dict[str, Any]] = dataclasses.field(
         default_factory=MockInferenceMixin.mock_logprobs_default_value_factory,
     )
     label: str = "mock_inference_engine"
+    support_log_probs: bool = True
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, "mock")
@@ -1438,33 +1481,18 @@ class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
                 result.append(self.default_inference_value)
         return result
 
-    def _infer(
+    async def _infer_single(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instance: Dict[str, Any],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return [
-            self.get_return_object(
-                self.default_inference_value, instance, return_meta_data
-            )
-            for instance in dataset
-        ]
+        return_log_probs: bool = False,
+    ) -> Union[str, TextGenerationInferenceOutput]:
+        predict_result = (
+            self.default_inference_value_logprob
+            if return_log_probs
+            else self.default_inference_value
+        )
 
-    def _infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        return [
-            self.get_return_object(
-                self.default_inference_value_logprob, instance, return_meta_data
-            )
-            for instance in dataset
-        ]
-
-    def get_return_object(
-        self, predict_result, generated_text, instance, return_meta_data
-    ):
         if return_meta_data:
             return TextGenerationInferenceOutput(
                 prediction=predict_result,
@@ -1477,12 +1505,11 @@ class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
                 seed=111,
                 stop_reason="",
             )
+
         return predict_result
 
 
-class GenericInferenceEngine(
-    InferenceEngine, ArtifactFetcherMixin, LogProbInferenceEngine
-):
+class GenericInferenceEngine(InferenceEngine, ArtifactFetcherMixin):
     default: Optional[str] = None
 
     def prepare_engine(self):
@@ -1500,34 +1527,17 @@ class GenericInferenceEngine(
             engine_reference = self.default
         self.engine = self.get_artifact(engine_reference)
 
-    def get_engine_id(self):
-        # If mock_inference_mode is set, no engine is prepared.
-        if hasattr(self, "engine"):
-            return f"generic_{self.engine.get_engine_id()}"
-        return "generic_inference_engine"
-
-    def _infer(
+    def _infer_streaming(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instances: Iterable[Tuple[Union[int, Dict[str, Any]]]],
+        total_len: int,
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return self.engine._infer(dataset)
-
-    def _infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        if not isinstance(self.engine, LogProbInferenceEngine):
-            raise NotImplementedError(
-                f"Error in infer: inference engine used by the GenericInferenceEngine"
-                f"({self.engine.__class__.__name__}) does not support logprobs."
-            )
-        return self.engine._infer_log_probs(dataset)
+    ) -> AsyncIterable[Tuple[int, Union[str, TextGenerationInferenceOutput]]]:
+        return self.engine._infer_streaming(instances, total_len, return_meta_data)
 
 
 class OllamaInferenceEngine(
-    InferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
+    SingleInferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
 ):
     label: str = "ollama"
     _requirements_list = {
@@ -1539,32 +1549,39 @@ class OllamaInferenceEngine(
         return get_model_and_label_id(self.model, self.label)
 
     def prepare_engine(self):
-        from ollama import Client
+        from ollama import AsyncClient
 
-        self.client = Client(
+        self.client = AsyncClient(
             host=self.credentials["api_base"]
             if self.credentials is not None and "api_base" in self.credentials
             else None
         )
 
-    def _infer(
+    async def _infer_single(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instance: Dict[str, Any],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return_log_probs: bool = False,
+    ) -> Union[str, TextGenerationInferenceOutput]:
         args = self.to_dict([StandardAPIParamsMixin])
-        results = []
         model = args.pop("model")
-        for instance in dataset:
-            messages = self.to_messages(instance)
-            response = self.client.chat(
-                messages=messages,
-                model=model,
-                options=args,
-            )
-            results.append(response)
+        messages = self.to_messages(instance)
+        response = await self.client.chat(
+            messages=messages,
+            model=model,
+            options=args,
+        )
 
-        return [element["message"]["content"] for element in results]
+        prediction = response["message"]["content"]
+
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=prediction,
+                generated_text=prediction,
+                model_name=self.model,
+                inference_type=self.label,
+            )
+        return prediction
 
 
 class OptionSelectingByLogProbsInferenceEngine:
@@ -1710,8 +1727,7 @@ def run_with_imap(func):
 
 
 class OpenAiInferenceEngine(
-    InferenceEngine,
-    LogProbInferenceEngine,
+    SingleInferenceEngine,
     OpenAiInferenceEngineParamsMixin,
     PackageRequirementsMixin,
 ):
@@ -1726,6 +1742,7 @@ class OpenAiInferenceEngine(
     default_headers: Dict[str, str] = {}
     credentials: CredentialsOpenAi = {}
     num_parallel_requests: int = 20
+    support_log_probs: bool = True
 
     def get_engine_id(self) -> str:
         return get_model_and_label_id(self.model_name, self.label)
@@ -1749,17 +1766,19 @@ class OpenAiInferenceEngine(
         return self.default_headers
 
     def create_client(self):
-        from openai import OpenAI
+        from openai import AsyncOpenAI
 
         self.credentials = self._prepare_credentials()
-        return OpenAI(
+        return AsyncOpenAI(
             api_key=self.credentials["api_key"],
             base_url=self.base_url or self.credentials["api_url"],
             default_headers=self.get_default_headers(),
         )
 
     def prepare_engine(self):
-        self.client = self.create_client()
+        from openai import AsyncOpenAI
+
+        self.client: AsyncOpenAI = self.create_client()
         self._set_inference_parameters()
 
     def _get_completion_kwargs(self):
@@ -1769,96 +1788,24 @@ class OpenAiInferenceEngine(
             if v is not None
         }
 
-    def _parallel_infer(
+    async def _infer_single(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        infer_func,
+        instance: Dict[str, Any],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        inputs = [(instance, return_meta_data) for instance in dataset]
-        outputs = []
-        with ThreadPool(processes=self.num_parallel_requests) as pool:
-            for output in tqdm(
-                pool.imap(infer_func, inputs),
-                total=len(inputs),
-                desc=f"Inferring with {self.__class__.__name__}",
-            ):
-                outputs.append(output)
-
-        return outputs
-
-    def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return self._parallel_infer(
-            dataset=dataset,
-            return_meta_data=return_meta_data,
-            infer_func=self._get_chat_completion,
-        )
-
-    def _infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        return self._parallel_infer(
-            dataset=dataset,
-            return_meta_data=return_meta_data,
-            infer_func=self._get_logprobs,
-        )
-
-    def get_client_model_name(self):
-        return self.model_name
-
-    @run_with_imap
-    def _get_chat_completion(self, instance, return_meta_data):
-        import openai
-
+        return_log_probs: bool = False,
+    ) -> Union[str, TextGenerationInferenceOutput]:
         tools = self.to_tools(instance)
         messages = self.to_messages(instance)
-        try:
-            response = self.client.chat.completions.create(
-                messages=messages,
-                tools=tools,
-                model=self.get_client_model_name(),
-                **self._get_completion_kwargs(),
-                #                tool_choice="auto"
-            )
+        response = await self.client.chat.completions.create(
+            messages=messages,
+            tools=tools,
+            model=self.get_client_model_name(),
+            **self._get_completion_kwargs(),
+        )
 
-            if tools is None:
-                prediction = response.choices[0].message.content
-            else:
-                try:
-                    func_call = response.choices[0].message.tool_calls[0].function
-                    prediction = f'{{"name": "{func_call.name}", "arguments": {func_call.arguments}}}'
-                except:
-                    prediction = response.choices[0].message.content or ""
-
-            return self.get_return_object(prediction, response, return_meta_data)
-        # catch in case of content_filtering failure
-        except openai.BadRequestError as e:
-            logging.error(
-                f"Error predicting instance {messages}:{e}. Returning empty prediction"
-            )
-            return TextGenerationInferenceOutput(
-                prediction="-", generated_text="-", input_tokens=0, output_tokens=0
-            )
-
-    @run_with_imap
-    def _get_logprobs(self, instance, return_meta_data):
-        import openai
-
-        messages = self.to_messages(instance)
-        try:
-            response = self.client.chat.completions.create(
-                messages=messages,
-                model=self.model_name,
-                **self._get_completion_kwargs(),
-            )
+        if return_log_probs:
             top_logprobs_response = response.choices[0].logprobs.content
-            pred_output = [
+            prediction = [
                 {
                     "text": generated_token.token,
                     "logprob": generated_token.logprob,
@@ -1869,33 +1816,29 @@ class OpenAiInferenceEngine(
                 }
                 for generated_token in top_logprobs_response
             ]
-            return self.get_return_object(pred_output, response, return_meta_data)
-        # catch in case of content_filtering failure
-        except openai.BadRequestError as e:
-            logging.error(
-                f"Error predicting instance {messages}:{e}. Returning empty prediction"
-            )
-            prediction = [
-                {"text": "-", "logprob": 0, "top_tokens": [{"text": "-", "logprob": 0}]}
-            ]
-            return TextGenerationInferenceOutput(
-                prediction=prediction,
-                generated_text=prediction,
-                input_tokens=0,
-                output_tokens=0,
-            )
+        else:
+            if tools is None:
+                prediction = response.choices[0].message.content
+            else:
+                try:
+                    func_call = response.choices[0].message.tool_calls[0].function
+                    prediction = f'{{"name": "{func_call.name}", "arguments": {func_call.arguments}}}'
+                except:
+                    prediction = response.choices[0].message.content or ""
 
-    def get_return_object(self, predict_result, response, return_meta_data):
         if return_meta_data:
             return TextGenerationInferenceOutput(
-                prediction=predict_result,
+                prediction=prediction,
                 generated_text=response.choices[0].message.content,
                 input_tokens=response.usage.prompt_tokens,
                 output_tokens=response.usage.completion_tokens,
                 model_name=self.model_name,
                 inference_type=self.label,
             )
-        return predict_result
+        return prediction
+
+    def get_client_model_name(self):
+        return self.model_name
 
 
 class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
@@ -1926,10 +1869,10 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
         return {"api_key": api_key, "api_url": api_url, "api_version": api_version}
 
     def create_client(self):
-        from openai import AzureOpenAI
+        from openai import AsyncAzureOpenAI
 
         self.credentials = self._prepare_credentials()
-        return AzureOpenAI(
+        return AsyncAzureOpenAI(
             api_key=self.credentials["api_key"],
             base_url=self.credentials["api_url"],
             api_version=self.credentials["api_version"],
@@ -2027,7 +1970,9 @@ class TogetherAiInferenceEngineParamsMixin(Artifact):
 
 
 class TogetherAiInferenceEngine(
-    InferenceEngine, TogetherAiInferenceEngineParamsMixin, PackageRequirementsMixin
+    SingleInferenceEngine,
+    TogetherAiInferenceEngineParamsMixin,
+    PackageRequirementsMixin,
 ):
     label: str = "together"
     model_name: str
@@ -2041,7 +1986,7 @@ class TogetherAiInferenceEngine(
         return get_model_and_label_id(self.model_name, self.label)
 
     def prepare_engine(self):
-        from together import Together
+        from together import AsyncTogether
         from together.types.models import ModelType
 
         api_key_env_var_name = "TOGETHER_API_KEY"  # pragma: allowlist secret
@@ -2050,7 +1995,7 @@ class TogetherAiInferenceEngine(
             f"Error while trying to run TogetherAiInferenceEngine."
             f" Please set the environment param '{api_key_env_var_name}'."
         )
-        self.client = Together(api_key=api_key)
+        self.client = AsyncTogether(api_key=api_key)
         self._set_inference_parameters()
 
         # Get model type from Together List Models API
@@ -2075,39 +2020,34 @@ class TogetherAiInferenceEngine(
             if v is not None
         }
 
-    def _infer_chat(self, instance: Dict[str, Any]) -> str:
+    async def _infer_chat(self, instance: Dict[str, Any]) -> str:
         messages = self.to_messages(instance)
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.model_name,
             messages=messages,
             **self._get_infer_kwargs(),
         )
         return response.choices[0].message.content
 
-    def _infer_text(self, instance: Dict[str, Any]) -> str:
-        response = self.client.completions.create(
+    async def _infer_text(self, instance: Dict[str, Any]) -> str:
+        response = await self.client.completions.create(
             model=self.model_name,
             prompt=instance["source"],
             **self._get_infer_kwargs(),
         )
         return response.choices[0].text
 
-    def _infer(
+    async def _infer_single(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instance: Dict[str, Any],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return_log_probs: bool = False,
+    ) -> Union[str, TextGenerationInferenceOutput]:
         from together.types.models import ModelType
 
-        outputs = []
         if self.model_type == ModelType.CHAT:
-            for instance in tqdm(dataset, desc="Inferring with Together AI Chat API"):
-                outputs.append(self._infer_chat(instance))
-        else:
-            self.verify_not_chat_api(dataset)
-            for instance in tqdm(dataset, desc="Inferring with Together AI Text API"):
-                outputs.append(self._infer_text(instance))
-        return outputs
+            return await self._infer_chat(instance)
+        return await self._infer_text(instance)
 
 
 @deprecation(
@@ -2196,9 +2136,8 @@ CredentialsWML = Dict[
 
 
 class WMLInferenceEngineBase(
-    InferenceEngine,
+    SingleInferenceEngine,
     PackageRequirementsMixin,
-    LogProbInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
 ):
     """Base for classes running inference using ibm-watsonx-ai.
@@ -2259,15 +2198,6 @@ class WMLInferenceEngineBase(
             self.model_name
             or (self.deployment_id and not (self.model_name and self.deployment_id))
         ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
-
-    # def process_data_before_dump(self, data):
-    #     if "credentials" in data:
-    #         for key, value in data["credentials"].items():
-    #             if key != "url":
-    #                 data["credentials"][key] = "<hidden>"
-    #             else:
-    #                 data["credentials"][key] = value
-    #     return data
 
     def _initialize_wml_client(self):
         if self.external_client:
@@ -2389,51 +2319,6 @@ class WMLInferenceEngineBase(
             deployment_id=self.deployment_id,
             api_client=self._client,
         )
-
-    @abc.abstractmethod
-    def _send_requests(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_logprobs: bool,
-        return_meta_data: bool,
-    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
-        raise NotImplementedError(
-            f"The class '{self.get_pretty_print_name()}' is an abstract class. "
-            f"Please used either 'WMLInferenceEngineGeneration' or "
-            f"'WMLInferenceEngineChat' instead, depending on your task."
-        )
-
-    def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        if self._model is None:
-            self._load_model()
-
-        return self._send_requests(
-            dataset=dataset,
-            return_logprobs=False,
-            return_meta_data=return_meta_data,
-        )
-
-    def _infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        if self._model is None:
-            self._load_model()
-
-        return self._send_requests(
-            dataset=dataset,
-            return_logprobs=True,
-            return_meta_data=return_meta_data,
-        )
-
-    @abc.abstractmethod
-    def get_return_object(self, predict_result, result, input_text, return_meta_data):
-        raise NotImplementedError
 
     def get_model_details(self) -> Dict:
         return self._model.get_details()
@@ -2557,55 +2442,61 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
             "return_options": logprobs_return_options,
         }
 
-    def _send_requests(
+    async def _infer_single(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_logprobs: bool,
-        return_meta_data: bool,
-    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
-        self.verify_not_chat_api(dataset)
+        instance,
+        return_meta_data: bool = False,
+        return_log_probs: bool = False,
+    ):
+        if self._model is None:
+            self._load_model()
 
         params = self.to_dict([WMLGenerationParamsMixin], keep_empty=False)
+        inp = instance["source"]
 
-        if return_logprobs:
-            generation_type = "generated_tokens"
-            params = self._set_logprobs_params(params)
-        else:
-            generation_type = "generated_text"
+        response = await self._model.agenerate(prompt=inp, params=params)
+        result = response["results"][0]
+        pred = result.get("generated_text", "")
 
-        inputs: List[str] = [instance["source"] for instance in dataset]
-
-        results = self._model.generate(
-            prompt=inputs,
-            params=params,
-            concurrency_limit=self.concurrency_limit,
-        )
-
-        final_results = []
-        for result, inp in zip(results, inputs):
-            result_metadata = result["results"][0]
-            generated_content = result_metadata[generation_type]
-            final_results.append(
-                self.get_return_object(
-                    generated_content, result_metadata, inp, return_meta_data
-                )
-            )
-        return final_results
-
-    def get_return_object(self, predict_result, result, input_text, return_meta_data):
         if return_meta_data:
             return TextGenerationInferenceOutput(
-                prediction=predict_result,
-                generated_text=result["generated_text"],
-                input_tokens=result["input_token_count"],
-                output_tokens=result["generated_token_count"],
+                prediction=pred,
+                generated_text=result.get("generated_text"),
+                input_tokens=result.get("input_token_count"),
+                output_tokens=result.get("generated_token_count"),
                 model_name=self.model_name or self.deployment_id,
                 inference_type=self.label,
-                stop_reason=result["stop_reason"],
+                stop_reason=result.get("stop_reason"),
                 seed=self.random_seed,
-                input_text=input_text,
+                input_text=inp,
             )
-        return predict_result
+        return pred
+
+    async def _infer_log_probs_single(self, instance, return_meta_data: bool = False):
+        if self._model is None:
+            self._load_model()
+
+        params = self.to_dict([WMLGenerationParamsMixin], keep_empty=False)
+        params = self._set_logprobs_params(params)
+        inp = instance["source"]
+
+        response = await self._model.agenerate(prompt=inp, params=params)
+        result = response["results"][0]
+        pred = result.get("generated_tokens", {})
+
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=pred,
+                generated_text=result.get("generated_text"),
+                input_tokens=result.get("input_token_count"),
+                output_tokens=result.get("generated_token_count"),
+                model_name=self.model_name or self.deployment_id,
+                inference_type=self.label,
+                stop_reason=result.get("stop_reason"),
+                seed=self.random_seed,
+                input_text=inp,
+            )
+        return pred
 
 
 class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
@@ -2659,6 +2550,17 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
     image_encoder: Optional[EncodeImageToString] = NonPositionalField(
         default_factory=EncodeImageToString
     )
+    support_log_probs: bool = True
+
+    def _async_infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+        return_log_probs: bool = False,
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
+        if self._model is None:
+            self._load_model()
+        return super()._async_infer(dataset, return_meta_data, return_log_probs)
 
     @staticmethod
     def _extract_queries(instance: Dict[str, Any]) -> Tuple[Optional[str], List]:
@@ -2722,7 +2624,7 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
                     }
                 )
 
-            messages.append([message])
+            messages.append(message)
 
         return messages
 
@@ -2773,7 +2675,7 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
         self.verify_messages(messages)
         # This is done to be compatible with inputs containing
         # images as SDK allows sending only one image per message.
-        return [messages]
+        return messages
 
     def to_tools(
         self, instance: Dict[str, Any]
@@ -2792,110 +2694,92 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
 
         return {"tools": None, "tool_choice": None}
 
-    def _handle_async_requests(
+    async def _infer_single(
         self,
-        data: List[Dict[str, Any]],
-        params: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
-        async def handle_async_requests(start_idx, end_idx):
-            coroutines = [
-                self._model.achat(
-                    messages=data[idx]["msg"],
-                    params=params,
-                    tools=data[idx]["tools"]["tools"],
-                    tool_choice=data[idx]["tools"]["tool_choice"],
-                )
-                for idx in range(start_idx, end_idx)
-            ]
-            batch_results = await asyncio.gather(*coroutines)
-            return list(batch_results)
-
-        loop = asyncio.get_event_loop()
-        results = []
-
-        for batch_idx in range(0, len(data), self.concurrency_limit):
-            batch_results = loop.run_until_complete(
-                handle_async_requests(
-                    batch_idx, min(batch_idx + self.concurrency_limit, len(data))
-                )
-            )
-            results.extend(batch_results)
-
-        return results
-
-    def _send_requests(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_logprobs: bool,
-        return_meta_data: bool,
-    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
-        params = self.to_dict([WMLChatParamsMixin], keep_empty=False)
-
-        if return_logprobs:
-            output_type = "logprobs"
-            params["logprobs"] = True
-        else:
-            output_type = "message"
-            params["logprobs"] = False
-
-        data = [
-            {
-                "idx": i,
-                "msg": message,
-                "tools": self.to_tools(dataset[i]),
-            }
-            for i in range(len(dataset))
-            for message in self.to_messages(dataset[i])
-        ]
-
-        responses = self._handle_async_requests(data, params)
-
-        results = []
-        for inp, response in zip(data, responses):
-            idx = inp["idx"]
-            tool_call = data[idx]["tools"]["tools"] is not None
-
-            output = response["choices"][0][output_type]
-            if "content" not in output:
-                output["content"] = ""
-            if tool_call:
-                if "tool_calls" in output:
-                    func = output["tool_calls"][0]["function"]
-                    prediction = f'{{"name": "{func["name"]}", "arguments": {func["arguments"]}}}'
-                else:
-                    prediction = output["content"]
-            else:
-                prediction = output["content"]
-
-            results.append(
-                self.get_return_object(
-                    prediction,
-                    response["choices"][0]["message"]["content"],
-                    response,
-                    str(inp),
-                    return_meta_data,
-                )
-            )
-
-        return results
-
-    def get_return_object(
-        self, predict_result, generated_text, result, input_text, return_meta_data
+        instance,
+        return_meta_data: bool = False,
+        return_log_probs: bool = False,
     ):
+        # Build params
+        params = self.to_dict([WMLChatParamsMixin], keep_empty=False)
+        params["logprobs"] = return_log_probs
+        output_type = "logprobs" if return_log_probs else "message"
+
+        # Prepare inputs
+        messages = self.to_messages(instance)
+        tools_info = self.to_tools(instance) or {}
+        tools = tools_info.get("tools")
+        tool_choice = tools_info.get("tool_choice")
+        tool_call_expected = tools is not None
+
+        # Single request
+        response = await self._model.achat(
+            messages=messages,
+            params=params,
+            tools=tools,
+            tool_choice=tool_choice,
+        )
+
+        # Extract output
+        choice = response["choices"][0]
+        output = choice[output_type]
+
+        # normalize "content" for dict responses
+        if isinstance(output, dict) and "content" not in output:
+            output["content"] = ""
+
+        # compute prediction (mirror your _send_requests logic)
+        if tool_call_expected:
+            if (
+                isinstance(output, dict)
+                and "tool_calls" in output
+                and output["tool_calls"]
+            ):
+                func = output["tool_calls"][0]["function"]
+                prediction = (
+                    f'{{"name": "{func["name"]}", "arguments": {func["arguments"]}}}'
+                )
+            else:
+                prediction = (
+                    output.get("content", "")
+                    if isinstance(output, dict)
+                    else str(output)
+                )
+        else:
+            prediction = (
+                output.get("content", "") if isinstance(output, dict) else str(output)
+            )
+
+        # assistant-visible text for metadata
+        generated_text = (
+            choice.get("message", {}).get("content", "")
+            if "message" in choice
+            else (
+                output.get("content", "") if isinstance(output, dict) else str(output)
+            )
+        )
+
+        # snapshot of input (like str(inp) in your _send_requests)
+        input_snapshot = str(
+            {
+                "idx": 0,
+                "msg": messages,
+                "tools": {"tools": tools, "tool_choice": tool_choice},
+            }
+        )
+
         if return_meta_data:
             return TextGenerationInferenceOutput(
-                prediction=predict_result,
+                prediction=prediction,
                 generated_text=generated_text,
-                input_tokens=result["usage"]["prompt_tokens"],
-                output_tokens=len(predict_result)
-                if isinstance(predict_result, list)
-                else None,
+                input_tokens=response["usage"]["prompt_tokens"],
+                output_tokens=len(prediction) if isinstance(prediction, list) else None,
                 model_name=self.model_name or self.deployment_id,
                 inference_type=self.label,
-                stop_reason=result["choices"][0]["finish_reason"],
-                input_text=input_text,
+                stop_reason=response["choices"][0]["finish_reason"],
+                input_text=input_snapshot,
             )
-        return predict_result
+        return prediction
 
 
 @deprecation(
@@ -2946,7 +2830,7 @@ def get_text_without_images(instance, image_token="<image>"):
 
 
 class LMMSEvalBaseInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, TorchDeviceMixin
+    BatchInferenceEngine, PackageRequirementsMixin, LazyLoadMixin, TorchDeviceMixin
 ):
     label = "lmms-eval"
     model_type: str
@@ -2995,10 +2879,11 @@ class LMMSEvalInferenceEngine(LMMSEvalBaseInferenceEngine):
     do_sample: bool = False
     generate_until: List[str] = ["\n\n"]
 
-    def _infer(
+    def _infer_batch(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instances: List[Dict[str, Any]],
         return_meta_data: bool = False,
+        return_log_probs: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if not self._is_loaded():
             self._prepare_engine()
@@ -3008,7 +2893,7 @@ class LMMSEvalInferenceEngine(LMMSEvalBaseInferenceEngine):
         temp_task_name = str(uuid.uuid4())
 
         requests = []
-        for i, instance in enumerate(dataset):
+        for i, instance in enumerate(instances):
             requests.append(
                 Instance(
                     request_type="generate_until",
@@ -3034,7 +2919,7 @@ class LMMSEvalInferenceEngine(LMMSEvalBaseInferenceEngine):
                 )
             )
 
-        self.model.task_dict[temp_task_name] = DatasetDict({"test": dataset})
+        self.model.task_dict[temp_task_name] = DatasetDict({"test": instances})
 
         responses = self.model.generate_until(requests)
 
@@ -3067,10 +2952,11 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
             },
         )
 
-    def _infer(
+    def _infer_batch(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instances: List[Dict[str, Any]],
         return_meta_data: bool = False,
+        return_log_probs: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if not self._is_loaded():
             self._prepare_engine()
@@ -3078,7 +2964,7 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
         temp_task_name = str(uuid.uuid4())
 
         requests = []
-        for i, instance in enumerate(dataset):
+        for i, instance in enumerate(instances):
             task_data = instance["task_data"]
 
             if isinstance(task_data, str):
@@ -3094,15 +2980,15 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
                     )
                 )
 
-        self.model.task_dict[temp_task_name] = DatasetDict({"test": dataset})
+        self.model.task_dict[temp_task_name] = DatasetDict({"test": instances})
         self.model.metadata = {}
 
         responses = self.model.loglikelihood(requests)
 
         self.model.task_dict.pop(temp_task_name)
 
-        optimal_scores = [sys.float_info.max] * len(dataset)
-        optimal_responses = [None] * len(dataset)
+        optimal_scores = [sys.float_info.max] * len(instances)
+        optimal_responses = [None] * len(instances)
 
         for request, (score, _) in zip(requests, responses):
             if score < optimal_scores[request.idx]:
@@ -3135,7 +3021,9 @@ class VLLMParamsMixin(Artifact):
     prompt_logprobs: Optional[int] = None
 
 
-class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsMixin):
+class VLLMInferenceEngine(
+    SingleInferenceEngine, PackageRequirementsMixin, VLLMParamsMixin
+):
     label = "vllm"
 
     def get_engine_id(self):
@@ -3144,10 +3032,13 @@ class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsM
     def prepare_engine(self):
         args = self.to_dict([VLLMParamsMixin])
         args.pop("model")
-        from vllm import LLM, SamplingParams
+
+        from vllm import AsyncLLMEngine, SamplingParams
+        from vllm.engine.arg_utils import AsyncEngineArgs
 
         self.sampling_params = SamplingParams(**args)
-        self.llm = LLM(
+        # Use AsyncLLMEngine for single instance async processing
+        engine_args = AsyncEngineArgs(
             model=self.model,
             device="auto",
             trust_remote_code=True,
@@ -3157,27 +3048,53 @@ class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsM
             max_num_seqs=64,
             enforce_eager=True,
         )
+        self.llm = AsyncLLMEngine.from_engine_args(engine_args)
 
-    def _infer(
+    async def _infer_single(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instance: Dict[str, Any],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        inputs = []
-        for instance in dataset:
-            inputs.append(instance["source"])
+        return_log_probs: bool = False,
+    ) -> Union[str, TextGenerationInferenceOutput]:
+        import uuid
 
-        if isinstance(inputs[0], list):
-            # outputs = self.llm.chat(inputs, self.sampling_params, chat_template="{{- bos_token }}\n{%- if custom_tools is defined %}\n    {%- set tools = custom_tools %}\n{%- endif %}\n{%- if not tools_in_user_message is defined %}\n    {%- set tools_in_user_message = true %}\n{%- endif %}\n{%- if not date_string is defined %}\n    {%- if strftime_now is defined %}\n        {%- set date_string = strftime_now(\"%d %b %Y\") %}\n    {%- else %}\n        {%- set date_string = \"26 Jul 2024\" %}\n    {%- endif %}\n{%- endif %}\n{%- if not tools is defined %}\n    {%- set tools = none %}\n{%- endif %}\n\n{#- This block extracts the system message, so we can slot it into the right place. #}\n{%- if messages[0]['role'] == 'system' %}\n    {%- set system_message = messages[0]['content']|trim %}\n    {%- set messages = messages[1:] %}\n    {%- set user_supplied_system_message = true %}\n{%- else %}\n    {%- set system_message = \"\" %}\n    {%- set user_supplied_system_message = false %}\n{%- endif %}\n\n{#- Find out if there are any images #}\n{% set image_ns = namespace(has_images=false) %}      \n{%- for message in messages %}\n    {%- for content in message['content'] %}\n        {%- if content['type'] == 'image' %}\n            {%- set image_ns.has_images = true %}\n        {%- endif %}\n    {%- endfor %}\n{%- endfor %}\n\n{#- System message if there are no images, or if the user supplied one #}\n{%- if user_supplied_system_message or not image_ns.has_images %}\n    {{- \"<|start_header_id|>system<|end_header_id|>\\n\" }}\n    {%- if tools is not none %}\n        {{- \"Environment: ipython\\n\" }}\n    {%- endif %}\n    {{- \"Cutting Knowledge Date: December 2023\\n\" }}\n    {{- \"Today Date: \" + date_string + \"\\n\" }}\n    {%- if tools is not none and not tools_in_user_message %}\n        {{- \"You have access to the following functions. To call a function, please respond with JSON for a function call.\" }}\n        {{- 'Respond in the format {\"name\": function name, \"parameters\": dictionary of argument name and its value}.' }}\n        {{- \"Do not use variables.\\n\" }}\n        {%- for t in tools %}\n            {{- t | tojson(indent=4) }}\n            {{- \"\\n\" }}\n        {%- endfor %}\n    {%- endif %}\n    {{- system_message }}\n    {{- \"<|eot_id|>\" }}\n{%- endif %}\n\n{#- Custom tools are passed in a user message with some extra guidance #}\n{%- if tools_in_user_message and not tools is none %}\n    {#- Extract the first user message so we can plug it in here #}\n    {%- if messages | length != 0 %}\n        {%- set first_user_message = messages[0]['content']|trim %}\n        {%- set messages = messages[1:] %}\n    {%- else %}\n        {{- raise_exception(\"Cannot put tools in the first user message when there's no first user message!\") }}\n{%- endif %}\n    {{- '<|start_header_id|>user<|end_header_id|>\\n' -}}\n    {{- \"Given the following functions, please respond with a JSON for a function call \" }}\n    {{- \"with its proper arguments that best answers the given prompt.\\n\" }}\n    {{- 'Respond in the format {\"name\": function name, \"parameters\": dictionary of argument name and its value}.' }}\n    {{- \"Do not use variables.\\n\" }}\n    {%- for t in tools %}\n        {{- t | tojson(indent=4) }}\n        {{- \"\\n\" }}\n    {%- endfor %}\n    {{- first_user_message + \"<|eot_id|>\"}}\n{%- endif %}\n\n{%- for message in messages %}\n    {%- if not (message.role == 'ipython' or message.role == 'tool' or 'tool_calls' in message) %}\n    {{- '<|start_header_id|>' + message['role'] + '<|end_header_id|>\\n' }}\n        {%- if message['content'] is string %}\n            {{- message['content'] }}\n        {%- else %}\n            {%- for content in message['content'] %}\n                {%- if content['type'] == 'image' %}\n                    {{- '<|image|>' }}\n                {%- elif content['type'] == 'text' %}\n                    {{- content['text'] }}\n                {%- endif %}\n            {%- endfor %}\n        {%- endif %}\n        {{- '<|eot_id|>' }}\n    {%- elif 'tool_calls' in message %}\n        {%- if not message.tool_calls|length == 1 %}\n            {{- raise_exception(\"This model only supports single tool-calls at once!\") }}\n        {%- endif %}\n        {%- set tool_call = message.tool_calls[0].function %}\n        {{- '<|start_header_id|>assistant<|end_header_id|>\\n' -}}\n        {{- '{\"name\": \"' + tool_call.name + '\", ' }}\n        {{- '\"parameters\": ' }}\n        {{- tool_call.arguments | tojson }}\n        {{- \"}\" }}\n        {{- \"<|eot_id|>\" }}\n    {%- elif message.role == \"tool\" or message.role == \"ipython\" %}\n        {{- \"<|start_header_id|>ipython<|end_header_id|>\\n\" }}\n        {%- if message.content is mapping or message.content is iterable %}\n            {{- message.content | tojson }}\n        {%- else %}\n            {{- message.content }}\n        {%- endif %}\n        {{- \"<|eot_id|>\" }}\n    {%- endif %}\n{%- endfor %}\n{%- if add_generation_prompt %}\n    {{- '<|start_header_id|>assistant<|end_header_id|>\\n' }}\n{%- endif %}")
-            outputs = self.llm.chat(inputs, self.sampling_params)
+        source = instance["source"]
+        request_id = str(uuid.uuid4())
+
+        # Use the async VLLM generate method
+        if isinstance(source, list):
+            # Chat format
+            result_generator = self.llm.generate(
+                request_id, source, self.sampling_params
+            )
         else:
-            outputs = self.llm.generate(inputs, self.sampling_params)
+            # Simple text format
+            result_generator = self.llm.generate(
+                request_id, source, self.sampling_params
+            )
 
-        predictions = []
-        for output in outputs:
-            predictions.append(output.outputs[0].text)
+        # Iterate through the async generator to get the final result
+        final_output = None
+        async for request_output in result_generator:
+            final_output = request_output
 
-        return predictions
+        if final_output and final_output.outputs:
+            generated_text = final_output.outputs[0].text
+
+            if return_meta_data:
+                return TextGenerationInferenceOutput(
+                    prediction=generated_text,
+                    generated_text=generated_text,
+                    input_tokens=len(final_output.prompt_token_ids)
+                    if final_output.prompt_token_ids
+                    else 0,
+                    output_tokens=len(final_output.outputs[0].token_ids)
+                    if final_output.outputs[0].token_ids
+                    else 0,
+                )
+            return generated_text
+
+        return ""
 
 
 class AsyncTokenBucket:
@@ -3218,7 +3135,7 @@ class AsyncTokenBucket:
 
 
 class LiteLLMInferenceEngine(
-    InferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
+    SingleInferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
 ):
     label: str = "litellm"
     max_requests_per_second: float = 6
@@ -3241,84 +3158,59 @@ class LiteLLMInferenceEngine(
         from litellm import acompletion
 
         self._completion = acompletion
-        # Initialize a semaphore to limit concurrency
-        self._semaphore = asyncio.Semaphore(round(self.max_requests_per_second))
+        # Use parent's concurrent calls limit instead of custom semaphore
+        self.max_concurrent_calls = round(self.max_requests_per_second)
 
-    async def _infer_instance(
-        self, index: int, instance: Dict[str, Any]
-    ) -> TextGenerationInferenceOutput:
-        """Process a single inference request."""
-        async with self._semaphore:
-            await self._rate_limiter.acquire()
-            # Introduce a slight delay to prevent burstiness
-            await asyncio.sleep(0.01)
-            messages = self.to_messages(instance)
-            tools = self.to_tools(instance)
-            kwargs = self.to_dict([StandardAPIParamsMixin])
-            kwargs = {k: v for k, v in kwargs.items() if v is not None}
-            del kwargs["credentials"]
-            try:
-                response = await self._completion(
-                    messages=messages,
-                    tools=tools,
-                    max_retries=self.max_retries,
-                    drop_params=False,
-                    **self.credentials,
-                    **kwargs,
-                )
-            except Exception as e:
-                raise RuntimeError(
-                    f"Error inferring the following instance:\n{instance}"
-                ) from e
-
-            usage = response.get("usage", {})
-
-            if tools is None:
-                prediction = response["choices"][0]["message"]["content"]
-            else:
-                try:
-                    func_call = response["choices"][0]["message"]["tool_calls"][0][
-                        "function"
-                    ]
-                    prediction = f'{{"name": "{func_call.name}", "arguments": {func_call.arguments}}}'
-                except:
-                    prediction = response["choices"][0]["message"]["content"] or ""
-            return TextGenerationInferenceOutput(
-                prediction=prediction,
-                generated_text=response["choices"][0]["message"]["content"],
-                input_tokens=usage.get("prompt_tokens"),
-                output_tokens=usage.get("completion_tokens"),
-                model_name=response.get("model", self.model),
-                inference_type=self.inference_type,
-            )
-
-    async def _infer_async(
-        self, dataset: List[Dict[str, Any]]
-    ) -> List[TextGenerationInferenceOutput]:
-        """Process multiple inference requests concurrently with a progress bar."""
-        tasks = (
-            self._infer_instance(i, instance) for i, instance in enumerate(dataset)
-        )
-        # Use tqdm_asyncio.gather to display progress bar
-        return await tqdm_asyncio.gather(
-            *tasks, desc=f"LiteLLM Inference ({self.model})", total=len(dataset)
-        )
-
-    def _infer(
+    async def _infer_single(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instance: Dict[str, Any],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        """Main inference entry point."""
-        loop = asyncio.get_event_loop()
-        responses = loop.run_until_complete(self._infer_async(dataset))
-        return self.get_return_object(responses, return_meta_data)
+        return_log_probs: bool = False,
+    ) -> Union[str, TextGenerationInferenceOutput]:
+        """Process a single inference request."""
+        await self._rate_limiter.acquire()
+        # Introduce a slight delay to prevent burstiness
+        await asyncio.sleep(0.01)
+        messages = self.to_messages(instance)
+        tools = self.to_tools(instance)
+        kwargs = self.to_dict([StandardAPIParamsMixin])
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
+        del kwargs["credentials"]
 
-    def get_return_object(self, responses, return_meta_data):
+        response = await self._completion(
+            messages=messages,
+            tools=tools,
+            max_retries=self.max_retries,
+            drop_params=False,
+            **self.credentials,
+            **kwargs,
+        )
+
+        usage = response.get("usage", {})
+
+        if tools is None:
+            prediction = response["choices"][0]["message"]["content"]
+        else:
+            try:
+                func_call = response["choices"][0]["message"]["tool_calls"][0][
+                    "function"
+                ]
+                prediction = f'{{"name": "{func_call.name}", "arguments": {func_call.arguments}}}'
+            except:
+                prediction = response["choices"][0]["message"]["content"] or ""
+
+        result = TextGenerationInferenceOutput(
+            prediction=prediction,
+            generated_text=response["choices"][0]["message"]["content"],
+            input_tokens=usage.get("prompt_tokens"),
+            output_tokens=usage.get("completion_tokens"),
+            model_name=response.get("model", self.model),
+            inference_type=self.inference_type,
+        )
+
         if return_meta_data:
-            return responses
-
-        return [response.prediction for response in responses]
+            return result
+        return prediction
 
 
 _supported_apis = Literal[
@@ -3336,9 +3228,7 @@ _supported_apis = Literal[
 ]
 
 
-class CrossProviderInferenceEngine(
-    InferenceEngine, StandardAPIParamsMixin, LogProbInferenceEngine
-):
+class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     """Inference engine capable of dynamically switching between multiple providers APIs.
 
     This class extends the InferenceEngine and OpenAiInferenceEngineParamsMixin
@@ -3637,12 +3527,29 @@ class CrossProviderInferenceEngine(
         self.engine: InferenceEngine = cls(**args)
         self.data_classification_policy = self.engine.data_classification_policy
 
-    def _infer(
+    async def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return self.engine._infer(dataset, return_meta_data)
+        return await self.engine._infer(dataset, return_meta_data)
+
+    async def _async_infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
+        return await self.engine._async_infer(dataset, return_meta_data)
+
+    async def _infer_streaming(
+        self,
+        instances: Iterable[Tuple[Union[int, Dict[str, Any]]]],
+        total_len: int,
+        return_meta_data: bool = False,
+    ) -> AsyncIterable[Tuple[Union[int, str, TextGenerationInferenceOutput]]]:
+        return await self.engine._infer_streaming(
+            instances, total_len, return_meta_data
+        )
 
     def get_engine_id(self):
         api = self.get_provider_name()
@@ -3650,19 +3557,8 @@ class CrossProviderInferenceEngine(
             return get_model_and_label_id(self.provider_model_map[api][self.model], api)
         return get_model_and_label_id(self.model, api)
 
-    def _infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        if not isinstance(self.engine, LogProbInferenceEngine):
-            raise UnitxtError(
-                f"The underlying inference engine of this instance of CrossProviderInferenceEngine ({self.engine.get_engine_id()}) must inherit from LogProbInferenceEngine and implement _infer_log_probs"
-            )
-        return self.engine._infer_log_probs(dataset, return_meta_data)
 
-
-class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
+class HFOptionSelectingInferenceEngine(BatchInferenceEngine, TorchDeviceMixin):
     """HuggingFace based class for inference engines that calculate log probabilities.
 
     This class uses models from the HuggingFace Transformers library to calculate log probabilities for text inputs.
@@ -3670,7 +3566,6 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 
     label = "hf_option_selection"
     model_name: str
-    batch_size: int
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
@@ -3740,10 +3635,11 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 
         return log_probs
 
-    def _infer(
+    def _infer_batch(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instances: List[Dict[str, Any]],
         return_meta_data: bool = False,
+        return_log_probs: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if return_meta_data and not hasattr(self.engine, "get_return_object"):
             raise NotImplementedError(
@@ -3753,7 +3649,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 
         inputs = []
 
-        for instance in dataset:
+        for instance in instances:
             for option in instance["task_data"]["options"]:
                 if isinstance(instance["source"], list):
                     inputs.append(
@@ -3767,7 +3663,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
         scores_iterator = iter(scores)
 
         predictions = []
-        for instance in dataset:
+        for instance in instances:
             options_scores = Counter()
             for option in instance["task_data"]["options"]:
                 score = next(scores_iterator)
@@ -3777,31 +3673,32 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
         return predictions
 
 
-class MetricInferenceEngine(InferenceEngine):
+class MetricInferenceEngine(BatchInferenceEngine):
     """An inference engine that uses the output of a metric as its prediction. Used to evaluate metrics like LLM as Judge or Granite Guardian.
 
     Args:
-        InferenceEngine (_type_): _description_
+        BatchInferenceEngine (_type_): _description_
     """
 
     metric: Metric
     prediction_field: Optional[str] = None
 
-    def _infer(
+    def _infer_batch(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        instances: List[Dict[str, Any]],
         return_meta_data: bool = False,
+        return_log_probs: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         task_data = [
             json.loads(instance["task_data"]) if "task_data" in instance else {}
-            for instance in dataset
+            for instance in instances
         ]
         predictions = (
             [td[self.prediction_field] for td in task_data]
             if self.prediction_field
             else []
         )
-        references = [instance["references"] for instance in dataset]
+        references = [instance["references"] for instance in instances]
         return self.metric.compute(
             task_data=task_data,
             predictions=predictions,
