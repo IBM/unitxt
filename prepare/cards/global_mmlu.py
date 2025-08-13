@@ -3,6 +3,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
     Deduplicate,
+    FilterByExpression,
     ListFieldValues,
     MapInstanceValues,
     Set,
@@ -141,8 +142,19 @@ for language in languages:
                     fields=["option_a", "option_b", "option_c", "option_d"],
                     to_field="choices",
                 ),
-                Set({"topic": subject.replace("_", " ")}),
-            ],
+            ]
+            + (
+                [FilterByExpression(expression="None not in choices")]
+                if (language, subject)
+                in [
+                    ("am", "clinical_knowledge"),
+                    ("am", "college_medicine"),
+                    ("ig", "college_computer_science"),
+                    ("vi", "conceptual_physics"),
+                ]
+                else []
+            )
+            + [Set({"topic": subject.replace("_", " ")})],
             task="tasks.qa.multiple_choice.with_topic",
             templates="templates.qa.multiple_choice.with_topic.all",
             __tags__={

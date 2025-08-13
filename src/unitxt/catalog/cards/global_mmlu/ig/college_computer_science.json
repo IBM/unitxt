@@ -43,6 +43,10 @@
             "to_field": "choices"
         },
         {
+            "__type__": "filter_by_expression",
+            "expression": "None not in choices"
+        },
+        {
             "__type__": "set",
             "fields": {
                 "topic": "college computer science"
