@@ -21,6 +21,13 @@
             "new_stream_name": "test"
         },
         {
+            "__type__": "delete_splits",
+            "splits": [
+                "questions",
+                "answers"
+            ]
+        },
+        {
             "__type__": "copy",
             "field": "question/0/0/content",
             "to_field": "query"
