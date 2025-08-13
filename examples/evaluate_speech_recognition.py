@@ -1,3 +1,5 @@
+import os
+
 from unitxt import evaluate, load_dataset
 from unitxt.inference import (
     HFGraniteSpeechInferenceEngine,
@@ -13,6 +15,9 @@ test_dataset = load_dataset(
         text="Knowledge Cutoff Date: April 2024.\nToday's Date: December 19, 2024.\nYou are Granite, developed by IBM. You are a helpful AI assistant"
     ),
 )
+
+if os.environ.get("SKIP_HEAVY_LOCAL", False):
+    exit()
 
 model = HFGraniteSpeechInferenceEngine(
     model_name="ibm-granite/granite-speech-3.3-2b",

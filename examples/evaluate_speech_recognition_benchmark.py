@@ -1,3 +1,5 @@
+import os
+
 from unitxt import evaluate, load_dataset
 from unitxt.inference import (
     HFGraniteSpeechInferenceEngine,
@@ -13,6 +15,10 @@ dataset = load_dataset(
     ),
     split="test",
 )
+
+
+if os.environ.get("SKIP_HEAVY_LOCAL", False):
+    exit()
 
 model = HFGraniteSpeechInferenceEngine(
     model_name="ibm-granite/granite-speech-3.3-2b",
