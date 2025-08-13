@@ -4,6 +4,7 @@ from unitxt.operators import RecursiveReplace
 operator = RecursiveReplace(
     key="type",
     map_values={
+        "": "object",
         "dict": "object",
         "float": "number",
         "tuple": "array",

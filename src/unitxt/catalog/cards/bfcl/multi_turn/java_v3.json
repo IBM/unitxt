@@ -21,6 +21,13 @@
             "new_stream_name": "test"
         },
         {
+            "__type__": "delete_splits",
+            "splits": [
+                "questions",
+                "answers"
+            ]
+        },
+        {
             "__type__": "copy",
             "field": "question/*/0",
             "to_field": "dialog"
@@ -31,6 +38,10 @@
             "to_field": "tools"
         },
         "operators.fix_json_schema",
+        {
+            "__type__": "filter_by_expression",
+            "expression": "all(isinstance(v, dict) for d in ground_truth for k, v in d.items())"
+        },
         {
             "__type__": "execute_expression",
             "expression": "[{\"name\": k, \"arguments\": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*[[w for w in vval if w != \"\"] for vval in v.values()])]",
