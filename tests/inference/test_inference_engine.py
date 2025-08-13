@@ -345,7 +345,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         ]
 
         watsonx_engine = WMLInferenceEngineGeneration(
-            model_name="mistralai/mistral-small-3-1-24b-instruct-2503"
+            model_name="meta-llama/llama-3-2-1b-instruct"
         )
 
         for engine in [watsonx_engine]:
@@ -449,7 +449,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_lite_llm_inference_engine_without_task_data_not_failing(self):
         LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-3-70b-instruct",
+            model="watsonx/meta-llama/llama-3-2-1b-instruct",
             max_tokens=2,
             temperature=0,
             top_p=1,
