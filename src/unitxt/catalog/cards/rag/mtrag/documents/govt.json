@@ -13,6 +13,13 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "filter_by_condition",
+            "values": {
+                "title": null
+            },
+            "condition": "ne"
+        },
+        {
             "__type__": "wrap",
             "field": "text",
             "inside": "list",

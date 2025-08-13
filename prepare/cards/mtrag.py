@@ -9,6 +9,7 @@ from unitxt.loaders import LoadJsonFile
 from unitxt.operators import (
     Cast,
     Copy,
+    FilterByCondition,
     MapInstanceValues,
     Set,
     ZipFieldValues,
@@ -25,6 +26,10 @@ card = TaskCard(
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
+        FilterByCondition(
+            values={"Answerability": [["UNANSWERABLE"], ["ANSWERABLE"], ["PARTIAL"]]},
+            condition="in",
+        ),
         MapInstanceValues(
             {
                 "Answerability": {
@@ -94,6 +99,10 @@ for subset in ["clapnq", "cloud", "fiqa", "govt"]:
         )
     if subset in ["cloud"]:
         subset_operators.append(Set(fields={"title": ""}))
+    if subset in ["govt"]:
+        subset_operators.append(
+            FilterByCondition(values={"title": None}, condition="ne")
+        )
 
     card = TaskCard(
         loader=LoadJsonFile(
