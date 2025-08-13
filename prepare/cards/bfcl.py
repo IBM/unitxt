@@ -5,9 +5,10 @@ from unitxt.loaders import LoadJsonFile
 from unitxt.operators import (
     Copy,
     ExecuteExpression,
+    FilterByExpression,
     Set,
 )
-from unitxt.stream_operators import JoinStreams
+from unitxt.stream_operators import DeleteSplits, JoinStreams
 from unitxt.test_utils.card import test_card
 
 base_path = "https://raw.githubusercontent.com/ShishirPatil/gorilla/70b6a4a2144597b1f99d1f4d3185d35d7ee532a4/berkeley-function-call-leaderboard/data/"
@@ -31,6 +32,7 @@ with unitxt.settings.context(allow_unverified_code=True):
                     on="id",
                     new_stream_name="test",
                 ),
+                DeleteSplits(splits=["questions", "answers"]),
                 Copy(field="question/0/0/content", to_field="query"),
                 Copy(field="function", to_field="tools"),
                 "operators.fix_json_schema",
@@ -100,9 +102,13 @@ with unitxt.settings.context(allow_unverified_code=True):
                     on="id",
                     new_stream_name="test",
                 ),
+                DeleteSplits(splits=["questions", "answers"]),
                 Copy(field="question/*/0", to_field="dialog"),
                 Copy(field="function", to_field="tools"),
                 "operators.fix_json_schema",
+                FilterByExpression(
+                    expression="all(isinstance(v, dict) for d in ground_truth for k, v in d.items())"
+                ),
                 ExecuteExpression(
                     expression='[{"name": k, "arguments": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*[[w for w in vval if w != ""] for vval in v.values()])]',
                     to_field="reference_calls",
