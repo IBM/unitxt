@@ -46,7 +46,7 @@
                         "__type__": "load_hf",
                         "path": "google/fleurs",
                         "revision": "refs/convert/parquet",
-                        "data_dir": "pt_br",
+                        "data_dir": "cmn_hans_cn",
                         "splits": [
                             "test"
                         ],
@@ -101,7 +101,7 @@
             "__type__": "add_fields",
             "fields": {
                 "source_language": "English",
-                "target_language": "Portuguese"
+                "target_language": "Chinese"
             }
         }
     ],

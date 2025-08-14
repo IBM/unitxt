@@ -1,24 +1,52 @@
 {
-    "__type__": "normalized_sacrebleu",
-    "language_to_tokenizer": {
-        "german": null,
-        "deutch": null,
-        "de": null,
-        "french": null,
-        "fr": null,
-        "romanian": null,
-        "ro": null,
-        "english": null,
-        "en": null,
-        "spanish": null,
-        "es": null,
-        "portuguese": null,
-        "pt": null,
-        "arabic": "intl",
-        "ar": "intl",
-        "korean": "ko-mecab",
-        "ko": "ko-mecab",
-        "japanese": "ja-mecab",
-        "ja": "ja-mecab"
+    "__type__": "metric_pipeline",
+    "main_score": "sacrebleu",
+    "prediction_type": "str",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field": "task_data/target_language",
+            "to_field": "task_data/tokenize",
+            "not_exist_ok": true,
+            "get_default": "en"
+        },
+        {
+            "__type__": "lower",
+            "field": "task_data/tokenize"
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "task_data/tokenize": {
+                    "italian": null,
+                    "it": null,
+                    "german": null,
+                    "deutch": null,
+                    "de": null,
+                    "french": null,
+                    "fr": null,
+                    "romanian": null,
+                    "ro": null,
+                    "english": null,
+                    "en": null,
+                    "spanish": null,
+                    "es": null,
+                    "portuguese": null,
+                    "pt": null,
+                    "arabic": "intl",
+                    "ar": "intl",
+                    "korean": "ko-mecab",
+                    "ko": "ko-mecab",
+                    "japanese": "ja-mecab",
+                    "ja": "ja-mecab",
+                    "chinese": "zh",
+                    "zh": "zh"
+                }
+            },
+            "strict": true
+        }
+    ],
+    "metric": {
+        "__type__": "normalized_sacrebleu"
     }
 }

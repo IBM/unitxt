@@ -582,3 +582,19 @@ class NormalizeTextWithWhisper(FieldOperator):
 
     def process_value(self, value: str) -> str:
         return self._normalize(value)
+
+
+class NormalizeTextBasicWithWhisper(FieldOperator):
+    """A processor that uses uses whisper multilingual normalizer."""
+
+    _requirements_list = ["transformers"]
+
+    def prepare(self):
+        super().prepare()
+        from transformers import WhisperTokenizer
+
+        self.tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-base")
+        self._normalize = self.tokenizer.basic_normalize
+
+    def process_value(self, value: str) -> str:
+        return self._normalize(value)
