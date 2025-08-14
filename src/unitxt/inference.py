@@ -51,7 +51,7 @@ from .operator import PackageRequirementsMixin
 from .operators import ArtifactFetcherMixin
 from .settings_utils import get_constants, get_settings
 from .type_utils import isoftype
-from .utils import retry_connection_with_exponential_backoff
+from .utils import json_load, retry_connection_with_exponential_backoff
 
 constants = get_constants()
 settings = get_settings()
@@ -403,7 +403,7 @@ class InferenceEngine(Artifact):
         if task_data is None:
             return None
         if isinstance(task_data, str):
-            task_data = json.loads(task_data)
+            task_data = json_load(task_data)
         if "__tools__" in task_data:
             return task_data["__tools__"]
         return None
@@ -2562,7 +2562,7 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
     def _extract_queries(instance: Dict[str, Any]) -> Tuple[Optional[str], List]:
         task_data = instance["task_data"]
         if isinstance(task_data, str):
-            task_data = json.loads(task_data)
+            task_data = json_load(task_data)
         question = task_data.get("question")
 
         images = [None]
@@ -2682,7 +2682,7 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             return {"tools": None, "tool_choice": None}
 
         if isinstance(task_data, str):
-            task_data = json.loads(task_data)
+            task_data = json_load(task_data)
         if "__tools__" in task_data:
             tools: List[Dict[str, str]] = task_data["__tools__"]
             tool_choice: Optional[Dict[str, str]] = task_data.get("__tool_choice__")
@@ -2980,7 +2980,7 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
             task_data = instance["task_data"]
 
             if isinstance(task_data, str):
-                task_data = json.loads(task_data)
+                task_data = json_load(task_data)
 
             for option in task_data["options"]:
                 requests.append(
@@ -3691,7 +3691,7 @@ class MetricInferenceEngine(InferenceEngine):
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         task_data = [
-            json.loads(instance["task_data"]) if "task_data" in instance else {}
+            json_load(instance["task_data"]) if "task_data" in instance else {}
             for instance in dataset
         ]
         predictions = (
