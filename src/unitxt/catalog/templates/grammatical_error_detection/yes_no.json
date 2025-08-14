@@ -1,5 +1,8 @@
 {
-    "__type__": "input_output_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "InputOutputTemplate"
+    },
     "instruction": "You are given a text. Does this text contain any grammatical errors or spelling mistakes? Answer only \"Yes\" or \"No\".\n",
     "input_format": "Text: {text}",
     "output_format": "{label}",

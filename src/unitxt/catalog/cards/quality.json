@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadJsonFile"
+        },
         "files": {
             "train": "https://raw.githubusercontent.com/nyu-mll/quality/05e85750d4c5444d2a0a4ad299f6df5f4df06068/data/v1.0.1/QuALITY.v1.0.1.htmlstripped.train",
             "validation": "https://raw.githubusercontent.com/nyu-mll/quality/05e85750d4c5444d2a0a4ad299f6df5f4df06068/data/v1.0.1/QuALITY.v1.0.1.htmlstripped.dev"
@@ -13,7 +19,10 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "SplitRandomMix"
+            },
             "mix": {
                 "train": "train[80%]",
                 "validation": "train[20%]",
@@ -21,32 +30,50 @@
             }
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "article",
             "to_field": "context"
         },
         {
-            "__type__": "explode",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Explode"
+            },
             "field": "questions",
             "to_field": "data"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "data/question",
             "to_field": "question"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "data/options",
             "to_field": "choices"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "data/gold_label",
             "to_field": "answer"
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "answer": {
                     "1": 0,
@@ -58,7 +85,10 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "context_type": "document"
             }

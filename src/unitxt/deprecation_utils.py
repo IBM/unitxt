@@ -1,6 +1,8 @@
 import functools
+import inspect
 import warnings
 
+from .artifact import Artifact
 from .error_utils import UnitxtWarning
 from .settings_utils import get_constants, get_settings
 
@@ -73,6 +75,12 @@ def depraction_wrapper(obj, version, alt_text):
                     DeprecationWarning,
                     stacklevel=2,
                 )
+            if (
+                inspect.isclass(obj)
+                and issubclass(obj, Artifact)
+                and obj is not Artifact
+            ):
+                obj.register_class()
         elif constants.version >= version:
             raise DeprecationError(f"{obj.__name__} is no longer supported.{alt_text}")
         return obj(*args, **kwargs)

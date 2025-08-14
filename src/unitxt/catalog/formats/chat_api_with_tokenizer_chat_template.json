@@ -1,4 +1,7 @@
 {
-    "__type__": "hf_system_format",
+    "__type__": {
+        "module": "unitxt.formats",
+        "name": "HFSystemFormat"
+    },
     "model_name": "ibm-granite/granite-3.1-2b-instruct"
 }

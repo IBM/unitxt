@@ -1,5 +1,8 @@
 {
-    "__type__": "multi_reference_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "MultiReferenceTemplate"
+    },
     "instruction": "Please respond to the following question using the context",
     "input_format": "Context: {contexts}\nQuestion: {question}.\n",
     "target_prefix": "Response:",

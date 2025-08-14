@@ -1,14 +1,23 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "IBM/ProvoQ",
         "data_classification_policy": [
             "public"
         ]
     },
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "question": "str",
             "stigma": "str",
@@ -21,10 +30,16 @@
         ]
     },
     "templates": {
-        "__type__": "templates_dict",
+        "__type__": {
+            "module": "unitxt.templates",
+            "name": "TemplatesDict"
+        },
         "items": {
             "default": {
-                "__type__": "input_output_template",
+                "__type__": {
+                    "module": "unitxt.templates",
+                    "name": "InputOutputTemplate"
+                },
                 "input_format": "{question}",
                 "output_format": ""
             }
