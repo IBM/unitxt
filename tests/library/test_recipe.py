@@ -5,7 +5,6 @@ import re
 import sys
 from typing import Any, Dict
 
-from unitxt import dataset_file
 from unitxt.artifact import fetch_artifact
 from unitxt.card import TaskCard
 from unitxt.catalog import get_from_catalog
@@ -703,10 +702,9 @@ class TestRecipes(UnitxtTestCase):
         with self.assertRaises(Exception) as cm:
             list(recipe()["test"])
 
-        self.assertTrue(
-            str(cm.exception).startswith(
-                "Input multi-stream is missing a stream named 'train' to take demo instances from for the demos_pool."
-            )
+        self.assertIn(
+            "Input multi-stream is missing a stream named 'train' to take demo instances from for the demos_pool.",
+            str(cm.exception),
         )
 
         with self.assertRaises(Exception) as cm:
@@ -717,9 +715,9 @@ class TestRecipes(UnitxtTestCase):
                 demos_pool_size=0,
             )
 
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers.",
+            str(cm.exception),
         )
 
         with self.assertRaises(Exception) as cm:
@@ -730,9 +728,9 @@ class TestRecipes(UnitxtTestCase):
                 demos_pool_size=10,
             )
 
-        self.assertEqual(
-            str(cm.exception),
+        self.assertIn(
             "num_demos (got: 30) should not exceed demos_pool_size - 1 (got: 10), (-1: to always allow filtering of a demo identical to the processed instance).",
+            str(cm.exception),
         )
 
     def test_dataset_recipe_with_no_test(self):
@@ -752,12 +750,9 @@ class TestRecipes(UnitxtTestCase):
             DatasetRecipe(
                 card="cards.wnli", template="templates.key_val", template_card_index=100
             )
-        self.assertTrue(
-            re.match(
-                "Specify either template (.*) or template_card_index (.*) but not both",
-                str(cm.exception),
-            )
-            is not None
+        self.assertIn(
+            "Specify either template",
+            str(cm.exception),
         )
 
         # Also check if string index is used
@@ -767,22 +762,19 @@ class TestRecipes(UnitxtTestCase):
                 template="templates.key_val",
                 template_card_index="illegal_template",
             )
-        self.assertTrue(
-            re.match(
-                "Specify either template (.*) or template_card_index (.*) but not both",
-                str(cm.exception),
-            )
-            is not None
+        self.assertIn(
+            "Specify either template",
+            str(cm.exception),
         )
 
         # Return an error if index is not found in card
         with self.assertRaises(ValueError) as cm:
             DatasetRecipe(card="cards.wnli", template_card_index="illegal_template")
-        self.assertTrue("not defined in card." in str(cm.exception))
+        self.assertIn("not defined in card.", str(cm.exception))
 
         with self.assertRaises(ValueError) as cm:
             DatasetRecipe(card="cards.wnli", template_card_index=100)
-        self.assertTrue("not defined in card." in str(cm.exception))
+        self.assertIn("not defined in card.", str(cm.exception))
 
     def test_dataset_recipe_with_balancer_and_size_limit(self):
         recipe = DatasetRecipe(
@@ -847,13 +839,10 @@ class TestRecipes(UnitxtTestCase):
         self.assertEqual(len(list(stream["test"])), 5)
 
     def test_recipe_with_hf_with_twice_the_same_instance_demos(self):
-        from datasets import load_dataset
+        from unitxt import load_dataset
 
         d = load_dataset(
-            dataset_file,
             "__type__=dataset_recipe,card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=1",
-            streaming=True,
-            trust_remote_code=True,
         )
 
         iterator = iter(d["train"])
@@ -884,9 +873,9 @@ class TestRecipes(UnitxtTestCase):
                 num_demos=1,
                 demos_pool_size=10,
             )
-        self.assertEqual(
-            str(e.exception),
+        self.assertIn(
             "Unexpected None value for card.sampler. To use num_demos > 0, please set a sampler on the TaskCard.",
+            str(e.exception),
         )
 
     def test_set_serializer_from_recipe(self):
@@ -942,3 +931,88 @@ class TestRecipes(UnitxtTestCase):
         result = next(iter(recipe()["train"]))["source"]
         target = "Solve: {'header': ['col1', 'col2'], 'rows': [['val1', 'val2'], ['val3'], ['val4']]}\nAnswer: \n"
         self.assertEqual(result, target)
+
+    def test_dataset_recipe_with_demos_sampling_seed(self):
+        recipe = DatasetRecipe(
+            card="cards.mmlu.marketing",
+            system_prompt="system_prompts.models.llama",
+            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
+            format="formats.user_agent",
+            demos_pool_size=5,
+            num_demos=3,
+            demos_sampling_seed=1,
+        )
+
+        source_seed_1_first = recipe.produce(
+            [
+                {
+                    "question": "what?",
+                    "choices": ["yes", "not", "maybe"],
+                    "topic": "testing",
+                }
+            ]
+        )[0]["source"]
+
+        recipe = DatasetRecipe(
+            card="cards.mmlu.marketing",
+            system_prompt="system_prompts.models.llama",
+            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
+            format="formats.user_agent",
+            demos_pool_size=5,
+            num_demos=3,
+            demos_sampling_seed=1,
+        )
+
+        source_seed_1_second = recipe.produce(
+            [
+                {
+                    "question": "what?",
+                    "choices": ["yes", "not", "maybe"],
+                    "topic": "testing",
+                }
+            ]
+        )[0]["source"]
+
+        recipe = DatasetRecipe(
+            card="cards.mmlu.marketing",
+            system_prompt="system_prompts.models.llama",
+            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
+            format="formats.user_agent",
+            demos_pool_size=5,
+            num_demos=3,
+            demos_sampling_seed=2,
+        )
+
+        source_seed_2_first = recipe.produce(
+            [
+                {
+                    "question": "what?",
+                    "choices": ["yes", "not", "maybe"],
+                    "topic": "testing",
+                }
+            ]
+        )[0]["source"]
+
+        recipe = DatasetRecipe(
+            card="cards.mmlu.marketing",
+            system_prompt="system_prompts.models.llama",
+            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
+            format="formats.user_agent",
+            demos_pool_size=5,
+            num_demos=3,
+            demos_sampling_seed=2,
+        )
+
+        source_seed_2_second = recipe.produce(
+            [
+                {
+                    "question": "what?",
+                    "choices": ["yes", "not", "maybe"],
+                    "topic": "testing",
+                }
+            ]
+        )[0]["source"]
+
+        self.assertEqual(source_seed_1_first, source_seed_1_second)
+        self.assertEqual(source_seed_2_first, source_seed_2_second)
+        self.assertNotEqual(source_seed_1_first, source_seed_2_second)

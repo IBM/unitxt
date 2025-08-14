@@ -6,7 +6,7 @@ from unitxt.serializers import (
     ListSerializer,
     MultiTypeSerializer,
 )
-from unitxt.struct_data_operators import JsonStrToListOfKeyValuePairs
+from unitxt.struct_data_operators import JsonStrToDict
 from unitxt.templates import (
     InputOutputTemplate,
 )
@@ -17,7 +17,7 @@ add_to_catalog(
         input_format="{input}",
         output_format="{key_value_pairs_answer}",
         postprocessors=[
-            PostProcess(JsonStrToListOfKeyValuePairs()),
+            PostProcess(JsonStrToDict()),
         ],
         serializer=MultiTypeSerializer(
             serializers=[ImageSerializer(), DictAsJsonSerializer(), ListSerializer()]

@@ -59,7 +59,7 @@ def get_schema(stream_name):
 def load_chat_source(chat_str):
     chat = json.loads(chat_str)
     for turn in chat:
-        if isinstance(turn["content"], list):
+        if "content" in turn and isinstance(turn["content"], list):
             for content in turn["content"]:
                 if content["type"] == "image_url":
                     content["image_url"]["url"] = ImageDataString(
@@ -68,7 +68,19 @@ def load_chat_source(chat_str):
     return chat
 
 
-def loads_instance(batch):
+class SerializeInstancesBeforeDump(InstanceOperator):
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if settings.task_data_as_text:
+            instance["task_data"] = json.dumps(instance["task_data"])
+
+        if not isinstance(instance["source"], str):
+            instance["source"] = json.dumps(instance["source"])
+        return instance
+
+
+def loads_batch(batch):
     if (
         "source" in batch
         and isinstance(batch["source"][0], str)
@@ -87,17 +99,24 @@ def loads_instance(batch):
     return batch
 
 
-class SerializeInstancesBeforeDump(InstanceOperator):
+def loads_instance(instance):
+    if (
+        "source" in instance
+        and isinstance(instance["source"], str)
+        and (
+            instance["source"].startswith('[{"role":')
+            or instance["source"].startswith('[{"content":')
+        )
+    ):
+        instance["source"] = load_chat_source(instance["source"])
+    if (
+        not settings.task_data_as_text
+        and "task_data" in instance
+        and isinstance(instance["task_data"], str)
+    ):
+        instance["task_data"] = json.loads(instance["task_data"])
+    return instance
 
-   def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        if settings.task_data_as_text:
-            instance["task_data"] = json.dumps(instance["task_data"])
-
-        if not isinstance(instance["source"], str):
-            instance["source"] = json.dumps(instance["source"])
-        return instance
 
 class FinalizeDataset(InstanceOperatorValidator):
     group_by: List[List[str]]
@@ -136,8 +155,10 @@ class FinalizeDataset(InstanceOperatorValidator):
         }
         if use_reference_fields:
             task_data = {**task_data, **instance["reference_fields"]}
-        return task_data
 
+        if "__tools__" in instance:
+            task_data["__tools__"] = instance["__tools__"]
+        return task_data
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None

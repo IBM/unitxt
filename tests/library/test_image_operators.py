@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from unitxt.image_operators import ToImage, extract_images
+from unitxt.image_operators import HashImage, ToImage, extract_images
 from unitxt.settings_utils import get_constants
 
 constants = get_constants()
@@ -36,6 +36,17 @@ class TestImageOperators(unittest.TestCase):
         instance = {"source": text}
         result = extract_images(instance)
         self.assertEqual(result, [])
+
+    def test_hash_image(self):
+        first_image = create_random_jpeg_image(10, 10, 42)
+
+        second_image = create_random_jpeg_image(10, 10, 42)
+
+        operator = HashImage(field="image")
+
+        first_hash = operator.process_value(first_image)
+        second_hash = operator.process_value(second_image)
+        self.assertEqual(first_hash, second_hash)
 
     def test_extract_images_single_image(self):
         text = f'This is a text with <{constants.image_tag} src="image1.jpg"> image'

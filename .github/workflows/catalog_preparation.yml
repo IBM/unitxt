@@ -6,10 +6,15 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
+    cancel-in-progress: true
+
 jobs:
   preparation:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       OS: ubuntu-latest
       UNITXT_DEFAULT_VERBOSITY: error
@@ -30,9 +35,11 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.9'
+        cache: 'pip'
 
-    - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-    - run: uv pip install --system ".[tests]"
+    - name: Install Dependencies
+      run: bash utils/install.sh
+
     - name:  Hugging Face Login
       run: |
         for i in {1..5}; do

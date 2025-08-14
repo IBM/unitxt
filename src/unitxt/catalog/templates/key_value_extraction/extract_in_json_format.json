@@ -7,7 +7,7 @@
         {
             "__type__": "post_process",
             "operator": {
-                "__type__": "json_str_to_list_of_key_value_pairs"
+                "__type__": "json_str_to_dict"
             }
         }
     ],

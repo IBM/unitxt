@@ -7,27 +7,28 @@
             "public"
         ]
     },
-    "preprocess_steps": [
-        {
-            "__type__": "rename",
-            "field_to_field": {
-                "prompt": "input"
-            }
+    "task": {
+        "__type__": "task",
+        "input_fields": {
+            "prompt": "str",
+            "id": "str",
+            "harm_area": "str",
+            "category": "str"
         },
-        {
-            "__type__": "set",
-            "fields": {
-                "output": "None",
-                "type_of_input": "question",
-                "type_of_output": "answer",
-                "prediction_type": "str"
-            }
+        "reference_fields": {},
+        "prediction_type": "str",
+        "metrics": [
+            "metrics.granite_guardian.assistant_risk.harm[prediction_type=str,user_message_field=prompt,assistant_message_field=prediction,score_prefix=graniteguardian_]",
+            "metrics.llm_as_judge.safety.llamaguard[score_prefix=llamaguard_]"
+        ]
+    },
+    "templates": {
+        "default": {
+            "__type__": "input_output_template",
+            "input_format": "{prompt}",
+            "output_format": ""
         }
-    ],
-    "task": "tasks.generation",
-    "templates": [
-        "templates.generation.empty"
-    ],
+    },
     "__description__": "100 test prompts across five harm areas that LLMs, for the vast majority of applications, should refuse to comply with.",
     "__tags__": {
         "languages": [

@@ -3,7 +3,13 @@
     "loader": {
         "__type__": "load_hf",
         "path": "AmazonScience/massive",
-        "name": "my-MM"
+        "revision": "refs/convert/parquet",
+        "data_dir": "my-MM",
+        "splits": [
+            "train",
+            "test",
+            "validation"
+        ]
     },
     "preprocess_steps": [
         {

@@ -5,7 +5,7 @@
    To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
 =====================================
-Templates ✨
+Templates 
 =====================================
 
 In this section you learn how to add a Template. Templates are the way for unitxt to take your task data and verbalize the task instructions to the model.
@@ -61,12 +61,12 @@ We can define a template for this task like this:
     ),
 
 
-The ``instruction`` attribute defines that part of the prompt that appears once (marked green in the second figure above), 
-while the ``input_format`` defines the part of prompt that repeats for 
+The ``instruction`` attribute defines that part of the prompt that appears once (marked green in the second figure above),
+while the ``input_format`` defines the part of prompt that repeats for
 each in-context learning demonstration and for the final instance (marked red in the second figure above).
 
-The ``output_format`` defines how the reference answer is verbalized as string (marked in purple in the first figure above).   
-The InputOutputTemplate assumes there is at most only a single reference (gold answer). 
+The ``output_format`` defines how the reference answer is verbalized as string (marked in purple in the first figure above).
+The InputOutputTemplate assumes there is at most only a single reference (gold answer).
 If you pass a field value which is a list to the InputOutputTemplate, then it is verbalized as comma separated string. For example, ["happy","angry"]
 becomes the string reference "happy,angry", and it is expected that the model will return that string as the correct answer.
 
@@ -79,9 +79,9 @@ Post Processors
 ---------------
 
 The template also defines the post processing steps applied to the output predictions of the model before they are passed to the :ref:`Metrics <adding_metric>`.
-Typically, the post processors applied both to the model prediction and to the references. 
+Typically, the post processors applied both to the model prediction and to the references.
 For example, we could use the ``processors.lower_case`` processor to lowercase both the model predictions and references,
-so the metric computation will ignore case. 
+so the metric computation will ignore case.
 
 .. code-block:: python
 
@@ -96,12 +96,12 @@ so the metric computation will ignore case.
             ]
     )
 
-The reason the post processors are set in the template, is because different templates prompt the model to generate answers in different formats. 
-For example, one template may prompt the model to answer ``Yes`` or ``No`` while another 
+The reason the post processors are set in the template, is because different templates prompt the model to generate answers in different formats.
+For example, one template may prompt the model to answer ``Yes`` or ``No`` while another
 template may prompt the model to answer ``True`` or ``False``. Both can use different post processors to convert them to standard model prediction of `0` or `1`.
 
 Post processors implemented as operators.  Usually they are implemented as fields operators that are applied to the ``prediction``
-and ``references``` fields.   When needed, It is possible to add post processors that are applied only to the prediction of the model and not the references or vice versa. 
+and ``references``` fields.   When needed, It is possible to add post processors that are applied only to the prediction of the model and not the references or vice versa.
 Here we see how we can lowercase only the model prediction.
 
 .. code-block:: python
@@ -119,8 +119,8 @@ Here we see how we can lowercase only the model prediction.
         input_format="Translate this {text_type} from {source_language} to {target_language}: {text}.",
         target_prefix="Translation: ",
         output_format='{translation}',
-        postprocessors= [ 
-            PostProcess(Lower(),process_references=False)    
+        postprocessors= [
+            PostProcess(Lower(),process_references=False)
         ]
     )
 
@@ -163,7 +163,7 @@ implementing its abstract methods:
            as the 'target' - the reference used if the instance is used as a demonstration."
         pass
 
-    
+
 
 For instance, this template passes all the input fields to the model as a json string.
 It also formats the references by taking two of the dataset reference fields: the 'top_answer' and the 'alternative_answer'.

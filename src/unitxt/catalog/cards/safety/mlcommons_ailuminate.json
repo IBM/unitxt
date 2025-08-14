@@ -9,28 +9,17 @@
             "public"
         ]
     },
-    "preprocess_steps": [
-        {
-            "__type__": "rename",
-            "field_to_field": {
-                "prompt_text": "input",
-                "hazard": "label"
-            }
-        }
-    ],
     "task": {
         "__type__": "task",
         "input_fields": {
             "release_prompt_id": "str",
-            "input": "str",
-            "label": "str",
+            "prompt_text": "str",
+            "hazard": "str",
             "persona": "str",
             "locale": "str",
             "prompt_hash": "str"
         },
-        "reference_fields": {
-            "label": "str"
-        },
+        "reference_fields": {},
         "prediction_type": "str",
         "metrics": [
             "metrics.llm_as_judge.safety.llamaguard"
@@ -41,7 +30,7 @@
         "items": {
             "default": {
                 "__type__": "input_output_template",
-                "input_format": "{input}\n",
+                "input_format": "{prompt_text}\n",
                 "output_format": ""
             }
         }

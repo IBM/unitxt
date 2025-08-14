@@ -25,7 +25,7 @@ Some operators are specialized in specific data or specific operations such as:
 - :class:`collections_operators<unitxt.collections_operators>` for handling collections such as lists and dictionaries.
 - :class:`dialog_operators<unitxt.dialog_operators>` for handling dialogs.
 - :class:`string_operators<unitxt.string_operators>` for handling strings.
-- :class:`span_labeling_operators<unitxt.span_labeling_operators>` for handling strings.
+- :class:`span_labeling_operators<unitxt.span_lableing_operators>` for handling strings.
 - :class:`fusion<unitxt.fusion>` for fusing and mixing datasets.
 
 Other specialized operators are used by unitxt internally:
@@ -40,6 +40,7 @@ General Operators List:
 """
 
 import operator
+import re
 import uuid
 import warnings
 import zipfile
@@ -67,7 +68,7 @@ from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
-from .error_utils import UnitxtError
+from .error_utils import UnitxtError, error_context
 from .generator_utils import ReusableGenerator
 from .operator import (
     InstanceOperator,
@@ -76,7 +77,6 @@ from .operator import (
     PagedStreamOperator,
     SequentialOperator,
     SideEffectOperator,
-    SingleStreamReducer,
     SourceOperator,
     StreamingOperator,
     StreamInitializerOperator,
@@ -85,7 +85,7 @@ from .operator import (
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
 from .stream import DynamicStream, Stream
-from .text_utils import nested_tuple_to_string, to_pretty_string
+from .text_utils import to_pretty_string
 from .type_utils import isoftype
 from .utils import (
     LRUCache,
@@ -219,7 +219,7 @@ class MapInstanceValues(InstanceOperator):
         if val_as_str in mapper:
             return recursive_copy(mapper[val_as_str])
         if self.strict:
-            raise KeyError(
+            raise ValueError(
                 f"value '{val_as_str}', the string representation of the value in field '{key}', is not found in mapper '{mapper}'"
             )
         return val
@@ -282,6 +282,78 @@ class Set(InstanceOperator):
                 value = deep_copy(value)
             dict_set(instance, key, value)
         return instance
+
+
+def recursive_key_value_replace(data, target_key, value_map, value_remove=None):
+    """Recursively traverses a data structure (dicts and lists), replaces values of target_key using value_map, and removes values listed in value_remove.
+
+    Args:
+        data: The data structure (dict or list) to traverse.
+        target_key: The specific key whose value needs to be checked and replaced or removed.
+        value_map: A dictionary mapping old values to new values.
+        value_remove: A list of values to completely remove if found as values of target_key.
+
+    Returns:
+        The modified data structure. Modification is done in-place.
+    """
+    if value_remove is None:
+        value_remove = []
+
+    if isinstance(data, dict):
+        keys_to_delete = []
+        for key, value in data.items():
+            if key == target_key:
+                if isinstance(value, list):
+                    data[key] = [
+                        value_map.get(item, item)
+                        for item in value
+                        if not isinstance(item, dict) and item not in value_remove
+                    ]
+                elif isinstance(value, dict):
+                    recursive_key_value_replace(
+                        value, target_key, value_map, value_remove
+                    )
+                elif value in value_remove:
+                    keys_to_delete.append(key)
+                elif value in value_map:
+                    data[key] = value_map[value]
+            else:
+                recursive_key_value_replace(value, target_key, value_map, value_remove)
+        for key in keys_to_delete:
+            del data[key]
+    elif isinstance(data, list):
+        for item in data:
+            recursive_key_value_replace(item, target_key, value_map, value_remove)
+    return data
+
+
+class RecursiveReplace(InstanceOperator):
+    # Assisted by watsonx Code Assistant
+    """An operator to recursively replace values in dictionary fields of instances based on a key and a mapping of values.
+
+    Attributes:
+        key (str): The key in the dictionary to start the replacement process.
+        map_values (dict): A dictionary containing the key-value pairs to replace the original values.
+        remove_values (Optional[list]): An optional list of values to remove from the dictionary. Defaults to None.
+
+    Example:
+    RecursiveReplace(key="a", map_values={"1": "hi", "2": "bye" }, remove_values=["3"])
+        replaces the value of key "a" in all instances of all streams:
+        instance ``{"field" : [{"a": "1", "b" : "2"}, {"a" : "3", "b:" "4"}}` becomes ``{"field" : [{"a": "hi", "b" : "2"}, {"b": "4"}}``
+
+        Notice how the value of field ``"a"`` in the first instance is replaced with ``"hi"`` and the value of field ``"a"`` in the second instance is removed.
+    """
+
+    key: str
+    map_values: dict
+    remove_values: Optional[list] = None
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        return recursive_key_value_replace(
+            instance, self.key, self.map_values, self.remove_values
+        )
 
 
 @deprecation(version="2.0.0", alternative=Set)
@@ -367,6 +439,7 @@ class InstanceFieldOperator(InstanceOperator):
     field_to_field: Optional[Union[List[List[str]], Dict[str, str]]] = None
     use_query: Optional[bool] = None
     process_every_value: bool = False
+    set_every_value: bool = NonPositionalField(default=False)
     get_default: Any = None
     not_exist_ok: bool = False
     not_exist_do_nothing: bool = False
@@ -452,7 +525,7 @@ class InstanceFieldOperator(InstanceOperator):
     ) -> Dict[str, Any]:
         self.verify_field_definition()
         for from_field, to_field in self._field_to_field:
-            try:
+            with error_context(self, field=from_field, action="Read Field"):
                 old_value = dict_get(
                     instance,
                     from_field,
@@ -463,11 +536,12 @@ class InstanceFieldOperator(InstanceOperator):
                     if self.not_exist_do_nothing:
                         continue
                     old_value = self.get_default
-            except Exception as e:
-                raise ValueError(
-                    f"Failed to get '{from_field}' from instance due to the exception above."
-                ) from e
-            try:
+
+            with error_context(
+                self,
+                field=from_field,
+                action="Process Field",
+            ):
                 if self.process_every_value:
                     new_value = [
                         self.process_instance_value(value, instance)
@@ -475,15 +549,13 @@ class InstanceFieldOperator(InstanceOperator):
                     ]
                 else:
                     new_value = self.process_instance_value(old_value, instance)
-            except Exception as e:
-                raise ValueError(
-                    f"Failed to process field '{from_field}' from instance due to the exception above."
-                ) from e
+
             dict_set(
                 instance,
                 to_field,
                 new_value,
                 not_exist_ok=True,
+                set_multiple=self.set_every_value,
             )
         return instance
 
@@ -541,9 +613,27 @@ class Rename(FieldOperator):
         return res
 
 
+class Move(InstanceOperator):
+    field: str
+    to_field: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        value = dict_get(instance, self.field)
+        dict_delete(instance, self.field)
+        dict_set(instance, self.to_field, value=value)
+        return instance
+
+
 @deprecation(version="2.0.0", alternative=Rename)
 class RenameFields(Rename):
     pass
+
+
+class BytesToString(FieldOperator):
+    def process_value(self, value: Any) -> Any:
+        return str(value)
 
 
 class AddConstant(FieldOperator):
@@ -560,7 +650,26 @@ class AddConstant(FieldOperator):
 
 
 class ShuffleFieldValues(FieldOperator):
-    """Shuffles a list of values found in a field."""
+    # Assisted by watsonx Code Assistant
+    """An operator that shuffles the values of a list field.
+
+    the seed for shuffling in the is determined by the elements of the input field,
+    ensuring that the shuffling operation produces different results for different input lists,
+    but also that it is deterministic and reproducible.
+
+    Attributes:
+        None
+
+    Methods:
+        process_value(value: Any) -> Any:
+            Shuffles the elements of the input list and returns the shuffled list.
+
+            Parameters:
+                value (Any): The input list to be shuffled.
+
+    Returns:
+                Any: The shuffled list.
+    """
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
@@ -898,7 +1007,14 @@ class CopyFields(Copy):
 
 
 class GetItemByIndex(FieldOperator):
-    """Get from the item list by the index in the field."""
+    """Get the element from the fixed list by the index in the given field and store in another field.
+
+    Example:
+        GetItemByIndex(items_list=["dog",cat"],field="animal_index",to_field="animal")
+
+    on instance {"animal_index" : 1}  will change the instance to {"animal_index" : 1, "animal" : "cat"}
+
+    """
 
     items_list: List[Any]
 
@@ -930,7 +1046,13 @@ class Cast(FieldOperator):
     failure_default: Optional[Any] = "__UNDEFINED__"
 
     def prepare(self):
-        self.types = {"int": int, "float": float, "str": str, "bool": bool}
+        self.types = {
+            "int": int,
+            "float": float,
+            "str": str,
+            "bool": bool,
+            "tuple": tuple,
+        }
 
     def process_value(self, value):
         try:
@@ -1099,9 +1221,10 @@ class ApplyOperatorsField(InstanceOperator):
     ) -> Dict[str, Any]:
         operator_names = instance.get(self.operators_field)
         if operator_names is None:
-            assert (
-                self.default_operators is not None
-            ), f"No operators found in field '{self.operators_field}', and no default operators provided."
+            if self.default_operators is None:
+                raise ValueError(
+                    f"No operators found in field '{self.operators_field}', and no default operators provided."
+                )
             operator_names = self.default_operators
 
         if isinstance(operator_names, str):
@@ -1132,6 +1255,8 @@ class FilterByCondition(StreamOperator):
        | ``FilterByCondition(values = {"a":[4,8]}, condition = "not in")`` will yield only instances where ``"a"`` is different from ``4`` or ``8``
        | ``FilterByCondition(values = {"a/b":[4,8]}, condition = "not in")`` will yield only instances where ``"a"`` is a dict in which key ``"b"`` is mapped to a value that is neither ``4`` nor ``8``
        | ``FilterByCondition(values = {"a[2]":4}, condition = "le")`` will yield only instances where "a" is a list whose 3-rd element is ``<= 4``
+       | ``FilterByCondition(values = {"a":False}, condition = "exists")`` will yield only instances which do not contain a field named ``"a"``
+       | ``FilterByCondition(values = {"a/b":True}, condition = "exists")`` will yield only instances which contain a field named ``"a"`` whose value is a dict containing, in turn, a field named ``"b"``
 
 
     """
@@ -1147,6 +1272,7 @@ class FilterByCondition(StreamOperator):
         "ne": operator.ne,
         "in": None,  # Handled as special case
         "not in": None,  # Handled as special case
+        "exists": None,  # Handled as special case
     }
     error_on_filtered_all: bool = True
 
@@ -1173,13 +1299,25 @@ class FilterByCondition(StreamOperator):
                 raise ValueError(
                     f"The filter for key ('{key}') in FilterByCondition with condition '{self.condition}' must be list but is not : '{value}'"
                 )
+
+        if self.condition == "exists":
+            for key, value in self.values.items():
+                if not isinstance(value, bool):
+                    raise ValueError(
+                        f"For condition 'exists', the value for key ('{key}') in FilterByCondition must be boolean. But is not : '{value}'"
+                    )
+
         return super().verify()
 
     def _is_required(self, instance: dict) -> bool:
         for key, value in self.values.items():
             try:
                 instance_key = dict_get(instance, key)
+                if self.condition == "exists":
+                    return value
             except ValueError as ve:
+                if self.condition == "exists":
+                    return not value
                 raise ValueError(
                     f"Required filter field ('{key}') in FilterByCondition is not found in instance."
                 ) from ve
@@ -1335,7 +1473,7 @@ class ExecuteExpression(InstanceOperator, ComputeExpressionMixin):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        instance[self.to_field] = self.compute_expression(instance)
+        dict_set(instance, self.to_field, self.compute_expression(instance))
         return instance
 
 
@@ -1611,63 +1749,6 @@ class RemoveValues(FieldOperator):
         return [e for e in value if e not in self.unallowed_values]
 
 
-class Unique(SingleStreamReducer):
-    """Reduces a stream to unique instances based on specified fields.
-
-    Args:
-        fields (List[str]): The fields that should be unique in each instance.
-    """
-
-    fields: List[str] = field(default_factory=list)
-
-    @staticmethod
-    def to_tuple(instance: dict, fields: List[str]) -> tuple:
-        result = []
-        for field_name in fields:
-            value = instance[field_name]
-            if isinstance(value, list):
-                value = tuple(value)
-            result.append(value)
-        return tuple(result)
-
-    def process(self, stream: Stream) -> Stream:
-        seen = set()
-        for instance in stream:
-            values = self.to_tuple(instance, self.fields)
-            if values not in seen:
-                seen.add(values)
-        return list(seen)
-
-
-class SplitByValue(MultiStreamOperator):
-    """Splits a MultiStream into multiple streams based on unique values in specified fields.
-
-    Args:
-        fields (List[str]): The fields to use when splitting the MultiStream.
-    """
-
-    fields: List[str] = field(default_factory=list)
-
-    def process(self, multi_stream: MultiStream) -> MultiStream:
-        uniques = Unique(fields=self.fields)(multi_stream)
-
-        result = {}
-
-        for stream_name, stream in multi_stream.items():
-            stream_unique_values = uniques[stream_name]
-            for unique_values in stream_unique_values:
-                filtering_values = dict(zip(self.fields, unique_values))
-                filtered_streams = FilterByCondition(
-                    values=filtering_values, condition="eq"
-                )._process_single_stream(stream)
-                filtered_stream_name = (
-                    stream_name + "_" + nested_tuple_to_string(unique_values)
-                )
-                result[filtered_stream_name] = filtered_streams
-
-        return MultiStream(result)
-
-
 class SplitByNestedGroup(MultiStreamOperator):
     """Splits a MultiStream that is small - for metrics, hence: whole stream can sit in memory, split by the value of field 'group'.
 
@@ -1712,6 +1793,15 @@ class SplitByNestedGroup(MultiStreamOperator):
                 result[signature].append(instance)
 
         return MultiStream.from_iterables(result)
+
+
+class AddIncrementalId(StreamOperator):
+    to_field: str
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        for i, instance in enumerate(stream):
+            instance[self.to_field] = i
+            yield instance
 
 
 class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
@@ -1768,55 +1858,58 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
 
         # to be populated only when two or more metrics
         accumulated_scores = []
+        with error_context(self, stage="Load Metrics"):
+            first_instance = stream.peek()
 
-        first_instance = stream.peek()
-
-        metric_names = first_instance.get(self.metric_field, [])
-        if not metric_names:
-            raise RuntimeError(
-                f"Missing metric names in field '{self.metric_field}' and instance '{first_instance}'."
-            )
-
-        if isinstance(metric_names, str):
-            metric_names = [metric_names]
-
-        metrics_list = []
-        for metric_name in metric_names:
-            metric = self.get_artifact(metric_name)
-            if isinstance(metric, MetricsList):
-                metrics_list.extend(list(metric.items))
-            elif isinstance(metric, Metric):
-                metrics_list.append(metric)
-            else:
-                raise ValueError(
-                    f"Operator {metric_name} must be a Metric or MetricsList"
+            metric_names = first_instance.get(self.metric_field, [])
+            if not metric_names:
+                raise RuntimeError(
+                    f"Missing metric names in field '{self.metric_field}' and instance '{first_instance}'."
                 )
 
-        for metric in metrics_list:
-            if not self.calc_confidence_intervals:
-                metric.disable_confidence_interval_calculation()
-        # Each metric operator computes its score and then sets the main score, overwriting
-        # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
-        # This will cause the first listed metric to run last, and the main score will be set
-        # by the first listed metric (as desired).
-        metrics_list = list(reversed(metrics_list))
+            if isinstance(metric_names, str):
+                metric_names = [metric_names]
 
-        for i, metric in enumerate(metrics_list):
-            if i == 0:  # first metric
-                multi_stream = MultiStream({"tmp": stream})
-            else:  # metrics with previous scores
-                reusable_generator = ReusableGenerator(
-                    generator=update_scores_of_stream_instances,
-                    gen_kwargs={"stream": stream, "scores": accumulated_scores},
+            metrics_list = []
+            for metric_name in metric_names:
+                metric = self.get_artifact(metric_name)
+                if isinstance(metric, MetricsList):
+                    metrics_list.extend(list(metric.items))
+                elif isinstance(metric, Metric):
+                    metrics_list.append(metric)
+                else:
+                    raise ValueError(
+                        f"Operator {metric_name} must be a Metric or MetricsList"
+                    )
+        with error_context(self, stage="Setup Metrics"):
+            for metric in metrics_list:
+                metric.set_confidence_interval_calculation(
+                    self.calc_confidence_intervals
                 )
-                multi_stream = MultiStream.from_generators({"tmp": reusable_generator})
+            # Each metric operator computes its score and then sets the main score, overwriting
+            # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
+            # This will cause the first listed metric to run last, and the main score will be set
+            # by the first listed metric (as desired).
+            metrics_list = list(reversed(metrics_list))
 
-            multi_stream = metric(multi_stream)
+            for i, metric in enumerate(metrics_list):
+                if i == 0:  # first metric
+                    multi_stream = MultiStream({"tmp": stream})
+                else:  # metrics with previous scores
+                    reusable_generator = ReusableGenerator(
+                        generator=update_scores_of_stream_instances,
+                        gen_kwargs={"stream": stream, "scores": accumulated_scores},
+                    )
+                    multi_stream = MultiStream.from_generators(
+                        {"tmp": reusable_generator}
+                    )
 
-            if i < len(metrics_list) - 1:  # last metric
-                accumulated_scores = []
-                for inst in multi_stream["tmp"]:
-                    accumulated_scores.append(recursive_copy(inst["score"]))
+                multi_stream = metric(multi_stream)
+
+                if i < len(metrics_list) - 1:  # last metric
+                    accumulated_scores = []
+                    for inst in multi_stream["tmp"]:
+                        accumulated_scores.append(recursive_copy(inst["score"]))
 
         yield from multi_stream["tmp"]
 
@@ -2469,13 +2562,155 @@ class WikipediaFetcher(FieldOperator):
 
         return {"title": page.title, "body": getattr(page, self.mode)}
 
+
 class Fillna(FieldOperator):
     value: Any
+
     def process_value(self, value: Any) -> Any:
         import numpy as np
+
         try:
             if np.isnan(value):
                 return self.value
         except TypeError:
             return value
         return value
+
+
+class ReadFile(FieldOperator):
+    """Reads file content from local path or URL.
+
+    This operator can read files from local filesystem paths or remote URLs.
+    The content is returned as a string.
+
+    Args:
+        encoding (str): Text encoding to use when reading the file. Defaults to 'utf-8'.
+
+    Example:
+        Reading a local file
+
+        .. code-block:: python
+
+            ReadFile(field="file_path", to_field="content")
+
+        Reading from URL
+
+        .. code-block:: python
+
+            ReadFile(field="url", to_field="content")
+    """
+
+    encoding: str = "utf-8"
+
+    def process_value(self, value: str) -> str:
+        """Read file content from local path or URL."""
+        if value.startswith(("http://", "https://")):
+            # Read from URL
+            response = requests.get(value)
+            response.raise_for_status()
+            return response.content.decode(self.encoding, errors="replace")
+        # Read from local file
+        with open(value, encoding=self.encoding) as f:
+            return f.read()
+
+
+class FixJsonSchemaOfParameterTypes(InstanceOperator):
+    main_field: str
+
+    def prepare(self):
+        self.simple_mapping = {
+            "": "object",
+            "any": "object",
+            "Any": "object",
+            "Array": "array",
+            "ArrayList": "array",
+            "Bigint": "integer",
+            "bool": "boolean",
+            "Boolean": "boolean",
+            "byte": "integer",
+            "char": "string",
+            "dict": "object",
+            "Dict": "object",
+            "double": "number",
+            "float": "number",
+            "HashMap": "object",
+            "Hashtable": "object",
+            "int": "integer",
+            "list": "array",
+            "List": "array",
+            "long": "integer",
+            "Queue": "array",
+            "short": "integer",
+            "Stack": "array",
+            "tuple": "array",
+            "Set": "array",
+            "set": "array",
+            "str": "string",
+            "String": "string",
+        }
+
+    def dict_type_of(self, type_str: str) -> dict:
+        return {"type": type_str}
+
+    def recursive_trace_for_type_fields(self, containing_element):
+        if isinstance(containing_element, dict):
+            keys = list(containing_element.keys())
+            for key in keys:
+                if key == "type" and isinstance(containing_element["type"], str):
+                    jsonschema_dict = self.type_str_to_jsonschema_dict(
+                        containing_element["type"]
+                    )
+                    containing_element.pop("type")
+                    containing_element.update(jsonschema_dict)
+                else:
+                    self.recursive_trace_for_type_fields(containing_element[key])
+        elif isinstance(containing_element, list):
+            for list_element in containing_element:
+                self.recursive_trace_for_type_fields(list_element)
+
+    def type_str_to_jsonschema_dict(self, type_str: str) -> dict:
+        if type_str in self.simple_mapping:
+            return self.dict_type_of(self.simple_mapping[type_str])
+        m = re.match(r"^(List|Tuple)\[(.*?)\]$", type_str)
+        if m:
+            basic_type = self.dict_type_of("array")
+            basic_type["items"] = self.type_str_to_jsonschema_dict(
+                m.group(2) if m.group(1) == "List" else m.group(2).split(",")[0].strip()
+            )
+            return basic_type
+
+        m = re.match(r"^(Union)\[(.*?)\]$", type_str)
+        if m:
+            args = m.group(2).split(",")
+            for i in range(len(args)):
+                args[i] = args[i].strip()
+            return {"anyOf": [self.type_str_to_jsonschema_dict(arg) for arg in args]}
+        if re.match(r"^(Callable)\[(.*?)\]$", type_str):
+            return self.dict_type_of("object")
+        if "," in type_str:
+            sub_types = type_str.split(",")
+            for i in range(len(sub_types)):
+                sub_types[i] = sub_types[i].strip()
+            assert len(sub_types) in [
+                2,
+                3,
+            ], f"num of subtypes should be 2 or 3, got {type_str}"
+            basic_type = self.type_str_to_jsonschema_dict(sub_types[0])
+            for sub_type in sub_types[1:]:
+                if sub_type.lower().startswith("default"):
+                    basic_type["default"] = re.split(r"[= ]", sub_type, maxsplit=1)[1]
+            for sub_type in sub_types[1:]:
+                if sub_type.lower().startswith("optional"):
+                    return {"anyOf": [basic_type, self.dict_type_of("null")]}
+            return basic_type
+
+        return self.dict_type_of(type_str)  # otherwise - return what arrived
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        assert (
+            self.main_field in instance
+        ), f"field '{self.main_field}' must reside in instance in order to verify its jsonschema correctness. got {instance}"
+        self.recursive_trace_for_type_fields(instance[self.main_field])
+        return instance

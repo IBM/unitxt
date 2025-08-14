@@ -14,6 +14,7 @@ jobs:
   eager:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       OS: ubuntu-latest
       UNITXT_USE_EAGER_EXECUTION: True
@@ -31,10 +32,12 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.9'
-        # cache: 'pip' # caching pip dependencies
-    - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-    - run: uv pip install --system ".[tests]"
-    - run: uv pip install --system coverage[toml]
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: bash utils/install.sh
+
+    - run: pip install coverage[toml]
 
     - name: Run Tests
       run:  coverage run --omit=*/preparation -m unittest discover -s tests/library -p "test_*.py"

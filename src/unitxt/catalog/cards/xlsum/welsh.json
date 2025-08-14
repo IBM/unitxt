@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "welsh",
+        "revision": "refs/convert/parquet",
+        "data_dir": "welsh",
         "splits": [
             "test",
             "train",

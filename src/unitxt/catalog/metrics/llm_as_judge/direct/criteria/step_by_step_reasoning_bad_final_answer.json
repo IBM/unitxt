@@ -1,0 +1,29 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "step_by_step_reasoning_bad_final_answer",
+    "description": "Does this step contain a final step with an incorrect final answer? (If an explicit 'yes/no' is not provided, an exact match of the correct answer with respect to the question in the context must be given.)",
+    "prediction_field": "step",
+    "context_fields": [
+        "question",
+        "premise",
+        "hypothesis",
+        "model reasoning",
+        "correct answer"
+    ],
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": ""
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": ""
+        }
+    ],
+    "option_map": {
+        "Yes": 0.0,
+        "No": 1.0
+    }
+}

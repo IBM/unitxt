@@ -1,0 +1,13 @@
+{
+    "__type__": "llm_judge_pairwise",
+    "inference_engine": {
+        "__type__": "cross_provider_inference_engine",
+        "max_tokens": 1024,
+        "seed": 42,
+        "temperature": 0,
+        "provider": "vertex-ai",
+        "model": "gemma-2-5-pro"
+    },
+    "evaluator_name": "GEMMA_2_5_PRO",
+    "generate_summaries": false
+}

@@ -1,0 +1,4 @@
+{
+    "__type__": "tool_calling_metric",
+    "__description__": "Metric that evaluates tool call predictions with reference calls.\nGenerate aggregated metrics on tool name, tool parameter selection , and tool parameter value type.\nCan supports multiple references."
+}

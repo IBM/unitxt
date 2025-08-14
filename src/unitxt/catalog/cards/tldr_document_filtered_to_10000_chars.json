@@ -3,6 +3,13 @@
     "loader": {
         "__type__": "load_hf",
         "path": "webis/tldr-17",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train"
+        ],
+        "data_classification_policy": [
+            "public"
+        ],
         "streaming": true
     },
     "preprocess_steps": [

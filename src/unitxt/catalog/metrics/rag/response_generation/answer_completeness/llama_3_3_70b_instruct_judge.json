@@ -3,12 +3,15 @@
     "inference_engine": {
         "__type__": "cross_provider_inference_engine",
         "model": "llama-3-3-70b-instruct",
-        "max_tokens": 1024
+        "max_tokens": 1024,
+        "temperature": 0
     },
     "criteria": {
         "__type__": "criteria_with_options",
         "name": "answer_completeness",
         "description": "The response is complete: all the aspects of the reference answer are addressed in the response. The response might use different phrasing or wording from the reference answer.",
+        "prediction_field": null,
+        "context_fields": null,
         "options": [
             {
                 "__type__": "criteria_option",

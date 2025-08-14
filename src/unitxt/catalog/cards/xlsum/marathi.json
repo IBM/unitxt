@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "marathi",
+        "revision": "refs/convert/parquet",
+        "data_dir": "marathi",
         "splits": [
             "test",
             "train",

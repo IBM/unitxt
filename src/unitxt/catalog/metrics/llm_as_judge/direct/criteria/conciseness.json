@@ -2,6 +2,10 @@
     "__type__": "criteria_with_options",
     "name": "conciseness",
     "description": "Is the response concise and to the point?",
+    "prediction_field": "response",
+    "context_fields": [
+        "question"
+    ],
     "options": [
         {
             "__type__": "criteria_option",

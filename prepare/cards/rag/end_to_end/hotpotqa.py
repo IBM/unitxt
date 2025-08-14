@@ -19,7 +19,9 @@ from unitxt.test_utils.card import test_card
 benchmark_card = TaskCard(
     loader=LoadHF(
         path="hotpotqa/hotpot_qa",
-        name="distractor",
+        data_dir="distractor",
+        revision="refs/convert/parquet",
+        splits=["train", "validation"],
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
@@ -27,12 +29,13 @@ benchmark_card = TaskCard(
             {
                 "test": "train[30%]",
                 "train": "train[70%]",
-            }),
+            }
+        ),
         Copy(
             field_to_field={
                 "question": "question",
                 "id": "question_id",
-                "level": "metadata_tags/level"
+                "level": "metadata_tags/level",
             },
         ),
         Copy(
@@ -58,7 +61,10 @@ benchmark_card = TaskCard(
     ],
     task="tasks.rag.end_to_end",
     templates={"default": "templates.rag.end_to_end.json_predictions"},
-    __tags__={"license": "CC BY-SA 4.0"},
+    __tags__={
+        "license": "CC BY-SA 4.0",
+        "url": "https://huggingface.co/datasets/BeIR/hotpotqa",
+    },
     __description__="""HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering.
 HotpotQA is a new dataset with 113k Wikipedia-based question-answer pairs with four key features: (1) the questions require finding and reasoning over multiple supporting documents to answer; (2) the questions are diverse and not constrained to any pre-existing knowledge bases or knowledge schemas; (3) we provide sentence-level supporting facts required for reasoning, allowingQA systems to reason with strong supervision and explain the predictions; (4) we offer a new type of factoid comparison questions to test QA systems ability to extract relevant facts and perform necessary comparison.
     """,
@@ -86,7 +92,8 @@ add_to_catalog(benchmark_card, "cards.rag.benchmark.hotpotqa.en", overwrite=True
 documents_card = TaskCard(
     loader=LoadHF(
         path="hotpotqa/hotpot_qa",
-        name="distractor",
+        revision="refs/convert/parquet",
+        splits=["train", "test", "validation"],
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
@@ -97,17 +104,12 @@ documents_card = TaskCard(
             process_every_value=True,
         ),
         ZipFieldValues(
-            fields= ["context/title", "context_sentences"],
-            to_field = "documents"
+            fields=["context/title", "context_sentences"], to_field="documents"
         ),
-        Explode(
-            field =  "documents",
-            to_field = "document"
-        ),
-
+        Explode(field="documents", to_field="document"),
         Copy(field="document/0", to_field="document_id"),
         Copy(field="document/0", to_field="title"),
-        Replace(field="document/1",old="\xa0", new = " "),
+        Replace(field="document/1", old="\xa0", new=" "),
         Wrap(field="document/1", inside="list", to_field="passages"),
         Deduplicate(by=["document_id"]),
     ],
@@ -118,7 +120,10 @@ documents_card = TaskCard(
             output_format="",
         ),
     },
-    __tags__={"license": "CC BY-SA 4.0"},
+    __tags__={
+        "license": "CC BY-SA 4.0",
+        "url": "https://huggingface.co/datasets/BeIR/hotpotqa",
+    },
     __description__="""HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering.
 HotpotQA is a new dataset with 113k Wikipedia-based question-answer pairs with four key features: (1) the questions require finding and reasoning over multiple supporting documents to answer; (2) the questions are diverse and not constrained to any pre-existing knowledge bases or knowledge schemas; (3) we provide sentence-level supporting facts required for reasoning, allowingQA systems to reason with strong supervision and explain the predictions; (4) we offer a new type of factoid comparison questions to test QA systems ability to extract relevant facts and perform necessary comparison.
 """,

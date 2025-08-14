@@ -2,10 +2,14 @@ from abc import abstractmethod
 from typing import Dict, Generator, List, Optional, Union
 
 from .dataclass import NonPositionalField
+from .error_utils import error_context
+from .logging_utils import get_logger
 from .operator import SourceOperator
 from .random_utils import new_random_generator
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
+
+logger = get_logger()
 
 
 class BaseFusion(SourceOperator):
@@ -65,6 +69,7 @@ class FixedFusion(BaseFusion):
     """
 
     max_instances_per_subset: Optional[int] = None
+    max_instances_per_split: Optional[Dict[str, int]] = None
 
     def prepare(self):
         super().prepare()
@@ -76,11 +81,23 @@ class FixedFusion(BaseFusion):
             if split not in multi_stream:
                 continue
             emitted_from_this_split = 0
-            try:
+            max_from_this_split = None
+            if self.max_instances_per_subset is not None:
+                max_from_this_split = self.max_instances_per_subset
+            if self.max_instances_per_split is not None:
+                max_per_this_split = self.max_instances_per_split.get(split)
+                if max_per_this_split is not None:
+                    if max_from_this_split is None:
+                        max_from_this_split = max_per_this_split
+                    elif max_per_this_split < max_from_this_split:
+                        max_from_this_split = max_per_this_split
+
+            logger.info(f"Processing {split} from {origin_name}...")
+            with error_context(self, subset=origin_name):
                 for instance in multi_stream[split]:
                     if (
-                        self.max_instances_per_subset is not None
-                        and emitted_from_this_split >= self.max_instances_per_subset
+                        max_from_this_split is not None
+                        and emitted_from_this_split >= max_from_this_split
                     ):
                         break
                     if isinstance(origin_name, str):
@@ -89,8 +106,6 @@ class FixedFusion(BaseFusion):
                         instance["subset"].insert(0, origin_name)
                     emitted_from_this_split += 1
                     yield instance
-            except Exception as e:
-                raise RuntimeError(f"Exception in subset: {origin_name}") from e
 
 
 class WeightedFusion(BaseFusion):
@@ -148,16 +163,15 @@ class WeightedFusion(BaseFusion):
                 weights=[self.named_weights[name] for name in population],
             )[0]
             iterator = iterators[origin_name]
-            try:
-                instance = next(iterator)
-                if isinstance(origin_name, str):
-                    if "subset" not in instance:
-                        instance["subset"] = []
-                    instance["subset"].insert(0, origin_name)
-                total_examples += 1
-                yield instance
+            with error_context(self, subset=origin_name):
+                try:
+                    instance = next(iterator)
+                    if isinstance(origin_name, str):
+                        if "subset" not in instance:
+                            instance["subset"] = []
+                        instance["subset"].insert(0, origin_name)
+                    total_examples += 1
+                    yield instance
 
-            except StopIteration:
-                iterators.pop(origin_name)
-            except Exception as e:
-                raise RuntimeError(f"Exception in subset: {origin_name}") from e
+                except StopIteration:
+                    iterators.pop(origin_name)

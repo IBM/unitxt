@@ -7,6 +7,7 @@ from .settings_utils import get_constants
 
 constants = get_constants()
 
+
 class SystemPrompt(InstanceOperator):
     """The role of SystemPrompt is to add task-independent opening-text to every instance."""
 

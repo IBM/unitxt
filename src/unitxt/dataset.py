@@ -1,11 +1,12 @@
 import os
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 import datasets
 
 from .api import __file__ as _
 from .artifact import __file__ as _
 from .augmentors import __file__ as _
+from .base_metric import __file__ as _
 from .benchmark import __file__ as _
 from .blocks import __file__ as _
 from .card import __file__ as _
@@ -46,13 +47,12 @@ from .processors import __file__ as _
 from .random_utils import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
-from .schema import SerializeInstancesBeforeDump, loads_instance
+from .schema import SerializeInstancesBeforeDump, loads_batch, loads_instance
 from .serializers import __file__ as _
 from .settings_utils import get_constants
 from .span_lableing_operators import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
-from .sql_utils import __file__ as _
 from .standard import __file__ as _
 from .stream import MultiStream
 from .stream import __file__ as _
@@ -62,6 +62,7 @@ from .struct_data_operators import __file__ as _
 from .system_prompts import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
+from .text2sql_utils import __file__ as _
 from .text_utils import __file__ as _
 from .type_utils import __file__ as _
 from .types import __file__ as _
@@ -118,6 +119,13 @@ class Dataset(datasets.GeneratorBasedBuilder):
             dl_manager, "no_checks", **prepare_splits_kwargs
         )
 
+    def as_streaming_dataset(
+        self, split: Optional[str] = None, base_path: Optional[str] = None
+    ) -> Union[Dict[str, datasets.IterableDataset], datasets.IterableDataset]:
+        return (
+            super().as_streaming_dataset(split, base_path=base_path).map(loads_instance)
+        )
+
     def as_dataset(
         self,
         split: Optional[datasets.Split] = None,
@@ -160,5 +168,5 @@ class Dataset(datasets.GeneratorBasedBuilder):
         return (
             super()
             .as_dataset(split, run_post_process, verification_mode, in_memory)
-            .with_transform(loads_instance)
+            .with_transform(loads_batch)
         )

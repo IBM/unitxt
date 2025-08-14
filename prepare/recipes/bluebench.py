@@ -66,7 +66,7 @@ default_args = {
     "template_card_index": 1,
     "max_train_instances": 1000,
     "max_validation_instances": 1000,
-    "max_test_instances": 1000,
+    "max_test_instances": 100,
 }
 
 
@@ -82,6 +82,8 @@ def prepare_recipe(default_args, specific_args):
 
     if "template" in recipe and "template_card_index" in recipe:
         del recipe["template_card_index"]
+
+    # Note: BlueBench only uses the chat_api format.
     return DatasetRecipe(**recipe, format="formats.chat_api")
 
 
@@ -129,7 +131,7 @@ ingridients = {
     "num_demos": 0,
     "template": "templates.generation.empty",
     "metrics": [
-        "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct.template_arena_hard"
+        "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_3_70b_instruct.template_arena_hard"
     ],
 }
 recipe = prepare_recipe(default_args, ingridients)
@@ -145,6 +147,7 @@ add_to_catalog(
 ingridients = {
     "card": "cards.20_newsgroups_short",
     "template": "templates.classification.multi_class.bluebench",
+    "num_demos": 1,
 }
 recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(
@@ -159,7 +162,7 @@ for subset in subsets["cards.safety.bbq"]:
         "card": f"cards.safety.bbq.{subset}",
         "demos_pool_size": 20,
         "num_demos": 5,
-        "template": "templates.qa.multiple_choice.with_context.match",
+        "template": "templates.qa.multiple_choice.with_context.bluebench",
         "demos_taken_from": "test",
     }
     recipe = prepare_recipe(default_args, ingridients)
@@ -178,6 +181,7 @@ for subset in subsets["cards.legalbench"]:
         "demos_pool_size": 10,
         "template": "templates.classification.multi_class.bluebench",
         "demos_taken_from": "test",
+        "num_demos": 1,
     }
     recipe = prepare_recipe(default_args, ingridients)
     add_to_catalog(
@@ -235,10 +239,11 @@ for subset in subsets["cards.universal_ner"]:
         "card": f"cards.universal_ner.{subset}",
         "demos_pool_size": 10000,
         "num_demos": 5,
-        "template": "templates.span_labeling.extraction.title",
+        "template": "templates.span_labeling.extraction.detailed",
         "metrics": ["metrics.ner[zero_division=1.0]"],
         "train_refiner": "operators.balancers.ner.zero_vs_many_entities[segments_boundaries=[0,1,2]]",
         "demos_taken_from": "test" if "pud" in subset else "train",
+        "max_train_instances": 10000,
     }
     recipe = prepare_recipe(default_args, ingridients)
     add_to_catalog(
@@ -293,6 +298,7 @@ add_to_catalog(
 ingridients = {
     "card": "cards.rag.response_generation.clapnq",
     "template": "templates.rag.response_generation.bluebench",
+    "num_demos": 1,
 }
 recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(
@@ -306,7 +312,7 @@ add_to_catalog(
 
 ingridients = {
     "card": "cards.fin_qa",
-    "num_demos": 1,
+    "num_demos": 2,
     "template_card_index": 0,
 }
 recipe = prepare_recipe(default_args, ingridients)

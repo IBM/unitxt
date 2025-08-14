@@ -4,9 +4,11 @@
     "subsets": {
         "fin_qa": {
             "__type__": "benchmark",
+            "max_samples_per_subset": null,
             "subsets": {
                 "concat": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.fin_qa.concat.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.fin_qa.concat.no_augmentation_5_demos",
@@ -17,6 +19,7 @@
                 },
                 "csv": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.fin_qa.csv.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.fin_qa.csv.no_augmentation_5_demos",
@@ -27,6 +30,7 @@
                 },
                 "df": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.fin_qa.df.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.fin_qa.df.no_augmentation_5_demos",
@@ -37,6 +41,7 @@
                 },
                 "html": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.fin_qa.html.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.fin_qa.html.no_augmentation_5_demos",
@@ -47,6 +52,7 @@
                 },
                 "indexed_row_major": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.fin_qa.indexed_row_major.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.fin_qa.indexed_row_major.no_augmentation_5_demos",
@@ -57,6 +63,7 @@
                 },
                 "json": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.fin_qa.json.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.fin_qa.json.no_augmentation_5_demos",
@@ -67,6 +74,7 @@
                 },
                 "markdown": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.fin_qa.markdown.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.fin_qa.markdown.no_augmentation_5_demos",
@@ -79,9 +87,11 @@
         },
         "numeric_nlg": {
             "__type__": "benchmark",
+            "max_samples_per_subset": null,
             "subsets": {
                 "concat": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.concat.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.numeric_nlg.concat.no_augmentation_5_demos",
@@ -92,6 +102,7 @@
                 },
                 "csv": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.csv.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.numeric_nlg.csv.no_augmentation_5_demos",
@@ -102,6 +113,7 @@
                 },
                 "df": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.df.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.numeric_nlg.df.no_augmentation_5_demos",
@@ -112,6 +124,7 @@
                 },
                 "html": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.html.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.numeric_nlg.html.no_augmentation_5_demos",
@@ -122,6 +135,7 @@
                 },
                 "indexed_row_major": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.indexed_row_major.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.numeric_nlg.indexed_row_major.no_augmentation_5_demos",
@@ -132,6 +146,7 @@
                 },
                 "json": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.json.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.numeric_nlg.json.no_augmentation_5_demos",
@@ -142,6 +157,7 @@
                 },
                 "markdown": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.numeric_nlg.markdown.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.numeric_nlg.markdown.no_augmentation_5_demos",
@@ -154,9 +170,11 @@
         },
         "qtsumm": {
             "__type__": "benchmark",
+            "max_samples_per_subset": null,
             "subsets": {
                 "concat": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.qtsumm.concat.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.qtsumm.concat.no_augmentation_5_demos",
@@ -167,6 +185,7 @@
                 },
                 "csv": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.qtsumm.csv.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.qtsumm.csv.no_augmentation_5_demos",
@@ -177,6 +196,7 @@
                 },
                 "df": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.qtsumm.df.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.qtsumm.df.no_augmentation_5_demos",
@@ -187,6 +207,7 @@
                 },
                 "html": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.qtsumm.html.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.qtsumm.html.no_augmentation_5_demos",
@@ -197,6 +218,7 @@
                 },
                 "indexed_row_major": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.qtsumm.indexed_row_major.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.qtsumm.indexed_row_major.no_augmentation_5_demos",
@@ -207,6 +229,7 @@
                 },
                 "json": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.qtsumm.json.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.qtsumm.json.no_augmentation_5_demos",
@@ -217,6 +240,7 @@
                 },
                 "markdown": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.qtsumm.markdown.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.qtsumm.markdown.no_augmentation_5_demos",
@@ -229,9 +253,11 @@
         },
         "scigen": {
             "__type__": "benchmark",
+            "max_samples_per_subset": null,
             "subsets": {
                 "concat": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.scigen.concat.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.scigen.concat.no_augmentation_5_demos",
@@ -242,6 +268,7 @@
                 },
                 "csv": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.scigen.csv.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.scigen.csv.no_augmentation_5_demos",
@@ -252,6 +279,7 @@
                 },
                 "df": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.scigen.df.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.scigen.df.no_augmentation_5_demos",
@@ -262,6 +290,7 @@
                 },
                 "html": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.scigen.html.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.scigen.html.no_augmentation_5_demos",
@@ -272,6 +301,7 @@
                 },
                 "indexed_row_major": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.scigen.indexed_row_major.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.scigen.indexed_row_major.no_augmentation_5_demos",
@@ -282,6 +312,7 @@
                 },
                 "json": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.scigen.json.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.scigen.json.no_augmentation_5_demos",
@@ -292,6 +323,7 @@
                 },
                 "markdown": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.scigen.markdown.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.scigen.markdown.no_augmentation_5_demos",
@@ -304,9 +336,11 @@
         },
         "tab_fact": {
             "__type__": "benchmark",
+            "max_samples_per_subset": null,
             "subsets": {
                 "concat": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tab_fact.concat.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tab_fact.concat.no_augmentation_5_demos",
@@ -317,6 +351,7 @@
                 },
                 "csv": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tab_fact.csv.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tab_fact.csv.no_augmentation_5_demos",
@@ -327,6 +362,7 @@
                 },
                 "df": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tab_fact.df.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tab_fact.df.no_augmentation_5_demos",
@@ -337,6 +373,7 @@
                 },
                 "html": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tab_fact.html.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tab_fact.html.no_augmentation_5_demos",
@@ -347,6 +384,7 @@
                 },
                 "indexed_row_major": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tab_fact.indexed_row_major.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tab_fact.indexed_row_major.no_augmentation_5_demos",
@@ -357,6 +395,7 @@
                 },
                 "json": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tab_fact.json.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tab_fact.json.no_augmentation_5_demos",
@@ -367,6 +406,7 @@
                 },
                 "markdown": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tab_fact.markdown.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tab_fact.markdown.no_augmentation_5_demos",
@@ -379,9 +419,11 @@
         },
         "tablebench_data_analysis": {
             "__type__": "benchmark",
+            "max_samples_per_subset": null,
             "subsets": {
                 "concat": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.concat.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.concat.no_augmentation_5_demos",
@@ -392,6 +434,7 @@
                 },
                 "csv": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.csv.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.csv.no_augmentation_5_demos",
@@ -402,6 +445,7 @@
                 },
                 "df": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.df.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.df.no_augmentation_5_demos",
@@ -412,6 +456,7 @@
                 },
                 "html": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.html.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.html.no_augmentation_5_demos",
@@ -422,6 +467,7 @@
                 },
                 "indexed_row_major": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.indexed_row_major.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.indexed_row_major.no_augmentation_5_demos",
@@ -432,6 +478,7 @@
                 },
                 "json": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.json.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.json.no_augmentation_5_demos",
@@ -442,6 +489,7 @@
                 },
                 "markdown": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.markdown.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_data_analysis.markdown.no_augmentation_5_demos",
@@ -454,9 +502,11 @@
         },
         "tablebench_fact_checking": {
             "__type__": "benchmark",
+            "max_samples_per_subset": null,
             "subsets": {
                 "concat": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.concat.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.concat.no_augmentation_5_demos",
@@ -467,6 +517,7 @@
                 },
                 "csv": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.csv.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.csv.no_augmentation_5_demos",
@@ -477,6 +528,7 @@
                 },
                 "df": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.df.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.df.no_augmentation_5_demos",
@@ -487,6 +539,7 @@
                 },
                 "html": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.html.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.html.no_augmentation_5_demos",
@@ -497,6 +550,7 @@
                 },
                 "indexed_row_major": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.indexed_row_major.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.indexed_row_major.no_augmentation_5_demos",
@@ -507,6 +561,7 @@
                 },
                 "json": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.json.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.json.no_augmentation_5_demos",
@@ -517,6 +572,7 @@
                 },
                 "markdown": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.markdown.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_fact_checking.markdown.no_augmentation_5_demos",
@@ -529,9 +585,11 @@
         },
         "tablebench_numerical_reasoning": {
             "__type__": "benchmark",
+            "max_samples_per_subset": null,
             "subsets": {
                 "concat": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.concat.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.concat.no_augmentation_5_demos",
@@ -542,6 +600,7 @@
                 },
                 "csv": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.csv.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.csv.no_augmentation_5_demos",
@@ -552,6 +611,7 @@
                 },
                 "df": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.df.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.df.no_augmentation_5_demos",
@@ -562,6 +622,7 @@
                 },
                 "html": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.html.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.html.no_augmentation_5_demos",
@@ -572,6 +633,7 @@
                 },
                 "indexed_row_major": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.indexed_row_major.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.indexed_row_major.no_augmentation_5_demos",
@@ -582,6 +644,7 @@
                 },
                 "json": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.json.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.json.no_augmentation_5_demos",
@@ -592,6 +655,7 @@
                 },
                 "markdown": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.markdown.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.tablebench_numerical_reasoning.markdown.no_augmentation_5_demos",
@@ -604,9 +668,11 @@
         },
         "turl_col_type": {
             "__type__": "benchmark",
+            "max_samples_per_subset": null,
             "subsets": {
                 "concat": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.turl_col_type.concat.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.turl_col_type.concat.no_augmentation_5_demos",
@@ -617,6 +683,7 @@
                 },
                 "csv": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.turl_col_type.csv.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.turl_col_type.csv.no_augmentation_5_demos",
@@ -627,6 +694,7 @@
                 },
                 "df": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.turl_col_type.df.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.turl_col_type.df.no_augmentation_5_demos",
@@ -637,6 +705,7 @@
                 },
                 "html": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.turl_col_type.html.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.turl_col_type.html.no_augmentation_5_demos",
@@ -647,6 +716,7 @@
                 },
                 "indexed_row_major": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.turl_col_type.indexed_row_major.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.turl_col_type.indexed_row_major.no_augmentation_5_demos",
@@ -657,6 +727,7 @@
                 },
                 "json": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.turl_col_type.json.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.turl_col_type.json.no_augmentation_5_demos",
@@ -667,6 +738,7 @@
                 },
                 "markdown": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_5_demos": "recipes.torr.turl_col_type.markdown.insert_empty_rows_augmentation_5_demos",
                         "no_augmentation_5_demos": "recipes.torr.turl_col_type.markdown.no_augmentation_5_demos",
@@ -679,9 +751,11 @@
         },
         "wikitq": {
             "__type__": "benchmark",
+            "max_samples_per_subset": null,
             "subsets": {
                 "concat": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_1_demos": "recipes.torr.wikitq.concat.insert_empty_rows_augmentation_1_demos",
                         "no_augmentation_1_demos": "recipes.torr.wikitq.concat.no_augmentation_1_demos",
@@ -692,6 +766,7 @@
                 },
                 "csv": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_1_demos": "recipes.torr.wikitq.csv.insert_empty_rows_augmentation_1_demos",
                         "no_augmentation_1_demos": "recipes.torr.wikitq.csv.no_augmentation_1_demos",
@@ -702,6 +777,7 @@
                 },
                 "df": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_1_demos": "recipes.torr.wikitq.df.insert_empty_rows_augmentation_1_demos",
                         "no_augmentation_1_demos": "recipes.torr.wikitq.df.no_augmentation_1_demos",
@@ -712,6 +788,7 @@
                 },
                 "html": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_1_demos": "recipes.torr.wikitq.html.insert_empty_rows_augmentation_1_demos",
                         "no_augmentation_1_demos": "recipes.torr.wikitq.html.no_augmentation_1_demos",
@@ -722,6 +799,7 @@
                 },
                 "indexed_row_major": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_1_demos": "recipes.torr.wikitq.indexed_row_major.insert_empty_rows_augmentation_1_demos",
                         "no_augmentation_1_demos": "recipes.torr.wikitq.indexed_row_major.no_augmentation_1_demos",
@@ -732,6 +810,7 @@
                 },
                 "json": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_1_demos": "recipes.torr.wikitq.json.insert_empty_rows_augmentation_1_demos",
                         "no_augmentation_1_demos": "recipes.torr.wikitq.json.no_augmentation_1_demos",
@@ -742,6 +821,7 @@
                 },
                 "markdown": {
                     "__type__": "benchmark",
+                    "max_samples_per_subset": 100,
                     "subsets": {
                         "insert_empty_rows_augmentation_1_demos": "recipes.torr.wikitq.markdown.insert_empty_rows_augmentation_1_demos",
                         "no_augmentation_1_demos": "recipes.torr.wikitq.markdown.no_augmentation_1_demos",

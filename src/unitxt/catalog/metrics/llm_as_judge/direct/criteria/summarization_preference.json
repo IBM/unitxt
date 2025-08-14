@@ -2,6 +2,10 @@
     "__type__": "criteria_with_options",
     "name": "summarization_preference",
     "description": "Does the response capture the summary in the best possible way?",
+    "prediction_field": "response",
+    "context_fields": [
+        "summary"
+    ],
     "options": [
         {
             "__type__": "criteria_option",

@@ -23,6 +23,9 @@ For key-value pairs, expected input format is:
     {"key1": "value1", "key2": value2, "key3": "value3"}
 """
 
+import ast
+import csv
+import io
 import json
 import random
 from abc import ABC, abstractmethod
@@ -30,6 +33,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Optional,
     Tuple,
 )
@@ -43,7 +47,7 @@ from .operators import FieldOperator, InstanceOperator
 from .random_utils import new_random_generator
 from .serializers import ImageSerializer, TableSerializer
 from .type_utils import isoftype
-from .types import Table
+from .types import Table, ToolCall
 from .utils import recursive_copy
 
 
@@ -754,6 +758,78 @@ class LoadJson(FieldOperator):
             return json.loads(value, strict=False)
 
 
+class PythonCallProcessor(FieldOperator):
+    def process_value(self, value: str) -> ToolCall:
+        expr = ast.parse(value, mode="eval").body
+        function = expr.func.id
+        args = {}
+        for kw in expr.keywords:
+            args[kw.arg] = ast.literal_eval(kw.value)
+        # Handle positional args, if any
+        if expr.args:
+            args["_args"] = [ast.literal_eval(arg) for arg in expr.args]
+        return {"name": function, "arguments": args}
+
+
+def extract_possible_json_str(text):
+    """Extract potential JSON string from text by finding outermost braces/brackets."""
+    # Find first opening delimiter
+    start_positions = [pos for pos in [text.find("{"), text.find("[")] if pos != -1]
+    start = min(start_positions) if start_positions else 0
+
+    # Find last closing delimiter
+    end_positions = [pos for pos in [text.rfind("}"), text.rfind("]")] if pos != -1]
+    end = max(end_positions) if end_positions else len(text) - 1
+
+    return text[start : end + 1]
+
+
+class ToolCallPostProcessor(FieldOperator):
+    failure_value: Any = None
+    allow_failure: bool = False
+
+    def process_value(self, value: str) -> ToolCall:
+        value = extract_possible_json_str(
+            value
+        )  # clear tokens such as <tool_call> focusing on the call json itself
+        if self.allow_failure:
+            try:
+                result = json.loads(value)
+            except json.JSONDecodeError:
+                return self.failure_value
+        else:
+            result = json.loads(value, strict=False)
+        if isoftype(result, List[ToolCall]):
+            if len(result) > 1:
+                UnitxtWarning(f"More than one tool call returned from model: {result}")
+                return self.failure_value
+            if len(result) == 0:
+                return self.failure_value
+            return result[0]
+        if not isoftype(result, ToolCall):
+            return self.failure_value
+        return result
+
+
+class MultipleToolCallPostProcessor(FieldOperator):
+    failure_value: Any = None
+    allow_failure: bool = False
+
+    def process_value(self, value: str) -> List[ToolCall]:
+        if self.allow_failure:
+            try:
+                result = json.loads(value)
+            except json.JSONDecodeError:
+                return self.failure_value
+        else:
+            result = json.loads(value, strict=False)
+        if isoftype(result, List[ToolCall]):
+            return result
+        if not isoftype(result, ToolCall):
+            return self.failure_value
+        return [result]
+
+
 class DumpJson(FieldOperator):
     def process_value(self, value: str) -> str:
         return json.dumps(value)
@@ -1024,24 +1100,88 @@ class ShuffleColumnsNames(TypeDependentAugmentor):
         return {"header": shuffled_header, "rows": table["rows"]}
 
 
-class JsonStrToListOfKeyValuePairs(FieldOperator):
-    """Convert a Json string of representing key value as dictionary to list of key value pairs."""
+class JsonStrToDict(FieldOperator):
+    """Convert a Json string of representing key value as dictionary.
+
+    Ensure keys and values are strings, and there are no None values.
+
+    """
 
     def process_value(self, text: str) -> List[Tuple[str, str]]:
         try:
             dict_value = json.loads(text)
         except Exception as e:
             UnitxtWarning(
-                f"Unable to convert input text to json format in JsonStrToListOfKeyValuePairs due to {e}. Text: {text}"
+                f"Unable to convert input text to json format in JsonStrToDict due to {e}. Text: {text}"
             )
             dict_value = {}
         if not isoftype(dict_value, Dict[str, Any]):
             UnitxtWarning(
-                f"Unable to convert input text to dictionary in JsonStrToListOfKeyValuePairs. Text: {text}"
+                f"Unable to convert input text to dictionary in JsonStrToDict. Text: {text}"
             )
             dict_value = {}
-        return [
-            (str(key), str(value))
-            for key, value in dict_value.items()
-            if value is not None
-        ]
+        return {str(k): str(v) for k, v in dict_value.items() if v is not None}
+
+
+class ParseCSV(FieldOperator):
+    r"""Parse CSV/TSV text content into table format.
+
+    This operator converts CSV or TSV text content into the standard table format
+    used by Unitxt with header and rows fields.
+
+    Args:
+        separator (str): Field separator character. Defaults to ','.
+        has_header (bool): Whether the first row contains column headers. Defaults to True.
+        skip_header (bool): Whether to skip the first row entirely. Defaults to False.
+
+    Example:
+        Parsing CSV content
+
+        .. code-block:: python
+
+            ParseCSV(field="csv_content", to_field="table", separator=",")
+
+        Parsing TSV content
+
+        .. code-block:: python
+
+            ParseCSV(field="tsv_content", to_field="table", separator="\t")
+    """
+
+    separator: str = ","
+    has_header: bool = True
+    skip_header: bool = False
+    dtype: Optional[Literal["str"]] = None
+    strip_cells: bool = False
+
+    def process_value(self, value: str) -> Dict[str, Any]:
+        csv_reader = csv.reader(
+            io.StringIO(value), delimiter=self.separator, quotechar='"'
+        )
+        rows = []
+        header = []
+        for idx, row in enumerate(csv_reader):
+            if idx == 0 and self.has_header:
+                header = row
+                if self.skip_header:
+                    continue
+            else:
+                rows.append(row)
+
+        if not self.has_header or self.skip_header:
+            header = [f"col_{i}" for i in range(len(rows[0]))]
+
+        if self.strip_cells:
+
+            def clean_cell(x):
+                if isinstance(x, str):
+                    return x.replace("\n", " ").strip()
+                return x
+
+            rows = [[clean_cell(cell) for cell in row] for row in rows]
+            header = [clean_cell(h) for h in header]
+
+        return {
+            "header": header,
+            "rows": rows,
+        }

@@ -1,0 +1,13 @@
+{
+    "__type__": "llm_judge_direct",
+    "inference_engine": {
+        "__type__": "cross_provider_inference_engine",
+        "max_tokens": 1024,
+        "seed": 42,
+        "temperature": 0,
+        "provider": "aws",
+        "model": "mistral-large-instruct"
+    },
+    "evaluator_name": "MIXTRAL_LARGE",
+    "generate_summaries": false
+}

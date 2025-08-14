@@ -34,7 +34,7 @@ class TestMetricUtils(UnitxtTestCase):
         )
 
         target = {
-            "test://": [
+            "test>>": [
                 {
                     "subset": [],
                     "groups": [],
@@ -83,7 +83,7 @@ class TestMetricUtils(UnitxtTestCase):
         )
 
         target = {
-            "test://": [
+            "test>>": [
                 {
                     "subset": [],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -100,7 +100,7 @@ class TestMetricUtils(UnitxtTestCase):
                     "__idx__": 2,
                 },
             ],
-            "test://?template:templates.t1": [
+            "test>>?template:templates.t1": [
                 {
                     "subset": [],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -112,7 +112,7 @@ class TestMetricUtils(UnitxtTestCase):
                     "__idx__": 2,
                 },
             ],
-            "test://?num_demos:1": [
+            "test>>?num_demos:1": [
                 {
                     "subset": [],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -129,7 +129,7 @@ class TestMetricUtils(UnitxtTestCase):
                     "__idx__": 2,
                 },
             ],
-            "test://?template:templates.t2": [
+            "test>>?template:templates.t2": [
                 {
                     "subset": [],
                     "groups": ['{"template":"templates.t2"}', '{"num_demos": 1}'],
@@ -168,7 +168,7 @@ class TestMetricUtils(UnitxtTestCase):
         )
 
         target = {
-            "test://mnli": [
+            "test>>mnli": [
                 {
                     "subset": ["mnli"],
                     "groups": [],
@@ -182,7 +182,7 @@ class TestMetricUtils(UnitxtTestCase):
                     "__idx__": 1,
                 },
             ],
-            "test://squad": [
+            "test>>squad": [
                 {
                     "subset": ["squad"],
                     "groups": [],
@@ -219,7 +219,7 @@ class TestMetricUtils(UnitxtTestCase):
         )
 
         target = {
-            "test://mnli": [
+            "test>>mnli": [
                 {
                     "subset": ["mnli"],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -231,14 +231,14 @@ class TestMetricUtils(UnitxtTestCase):
                     "__idx__": 1,
                 },
             ],
-            "test://mnli?template:templates.t1": [
+            "test>>mnli?template:templates.t1": [
                 {
                     "subset": ["mnli"],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
                     "__idx__": 0,
                 }
             ],
-            "test://mnli?num_demos:1": [
+            "test>>mnli?num_demos:1": [
                 {
                     "subset": ["mnli"],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -250,28 +250,28 @@ class TestMetricUtils(UnitxtTestCase):
                     "__idx__": 1,
                 },
             ],
-            "test://mnli?template:templates.t2": [
+            "test>>mnli?template:templates.t2": [
                 {
                     "subset": ["mnli"],
                     "groups": ['{"template":"templates.t2"}', '{"num_demos": 1}'],
                     "__idx__": 1,
                 }
             ],
-            "test://squad": [
+            "test>>squad": [
                 {
                     "subset": ["squad"],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
                     "__idx__": 2,
                 }
             ],
-            "test://squad?template:templates.t1": [
+            "test>>squad?template:templates.t1": [
                 {
                     "subset": ["squad"],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
                     "__idx__": 2,
                 }
             ],
-            "test://squad?num_demos:1": [
+            "test>>squad?num_demos:1": [
                 {
                     "subset": ["squad"],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -287,7 +287,7 @@ class TestMetricUtils(UnitxtTestCase):
     def test_join_none(self):
         operator = JoinSubsetsAndGroups()
         inputs = {
-            "test://": [
+            "test>>": [
                 {
                     "subset": [],
                     "groups": [],
@@ -382,7 +382,7 @@ class TestMetricUtils(UnitxtTestCase):
     def test_join_groups(self):
         operator = JoinSubsetsAndGroups()
         inputs = {
-            "test://": [
+            "test>>": [
                 {
                     "subset": [],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -441,7 +441,7 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
             ],
-            "test://?template:templates.t1": [
+            "test>>?template:templates.t1": [
                 {
                     "subset": [],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -481,7 +481,7 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
             ],
-            "test://?num_demos:1": [
+            "test>>?num_demos:1": [
                 {
                     "subset": [],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -540,7 +540,7 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
             ],
-            "test://?template:templates.t2": [
+            "test>>?template:templates.t2": [
                 {
                     "subset": [],
                     "groups": ['{"template":"templates.t2"}', '{"num_demos": 1}'],
@@ -702,7 +702,7 @@ class TestMetricUtils(UnitxtTestCase):
     def test_join_subsets(self):
         operator = JoinSubsetsAndGroups()
         inputs = {
-            "test://mnli": [
+            "test>>mnli": [
                 {
                     "subset": ["mnli"],
                     "groups": [],
@@ -744,7 +744,7 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
             ],
-            "test://squad": [
+            "test>>squad": [
                 {
                     "subset": ["squad"],
                     "groups": [],
@@ -883,7 +883,7 @@ class TestMetricUtils(UnitxtTestCase):
     def test_join_nested_subsets(self):
         operator = JoinSubsetsAndGroups()
         inputs = {
-            "test://mnli/first": [
+            "test>>mnli/first": [
                 {
                     "subset": ["mnli", "first"],
                     "groups": [],
@@ -925,7 +925,7 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
             ],
-            "test://mnli/second": [
+            "test>>mnli/second": [
                 {
                     "subset": ["mnli", "second"],
                     "groups": [],
@@ -1059,7 +1059,7 @@ class TestMetricUtils(UnitxtTestCase):
         operator = JoinSubsetsAndGroups()
 
         inputs = {
-            "test://mnli": [
+            "test>>mnli": [
                 {
                     "subset": ["mnli"],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -1099,7 +1099,7 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
             ],
-            "test://mnli?template:templates.t1": [
+            "test>>mnli?template:templates.t1": [
                 {
                     "subset": ["mnli"],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -1120,7 +1120,7 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 }
             ],
-            "test://mnli?num_demos:1": [
+            "test>>mnli?num_demos:1": [
                 {
                     "subset": ["mnli"],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -1160,7 +1160,7 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
             ],
-            "test://mnli?template:templates.t2": [
+            "test>>mnli?template:templates.t2": [
                 {
                     "subset": ["mnli"],
                     "groups": ['{"template":"templates.t2"}', '{"num_demos": 1}'],
@@ -1181,7 +1181,7 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 }
             ],
-            "test://squad": [
+            "test>>squad": [
                 {
                     "subset": ["squad"],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -1202,7 +1202,7 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 }
             ],
-            "test://squad?template:templates.t1": [
+            "test>>squad?template:templates.t1": [
                 {
                     "subset": ["squad"],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
@@ -1223,7 +1223,7 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 }
             ],
-            "test://squad?num_demos:1": [
+            "test>>squad?num_demos:1": [
                 {
                     "subset": ["squad"],
                     "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],

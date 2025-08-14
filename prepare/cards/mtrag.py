@@ -5,10 +5,11 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.collections_operators import Dictify, Wrap
-from unitxt.loaders import LoadCSV
+from unitxt.loaders import LoadJsonFile
 from unitxt.operators import (
     Cast,
     Copy,
+    FilterByCondition,
     MapInstanceValues,
     Set,
     ZipFieldValues,
@@ -17,15 +18,18 @@ from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadCSV(
+    loader=LoadJsonFile(
         files={
             "test": "https://raw.githubusercontent.com/IBM/mt-rag-benchmark/refs/heads/main/human/generation_tasks/reference+RAG.jsonl"
         },
-        file_type="json",
         lines=True,
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
+        FilterByCondition(
+            values={"Answerability": [["UNANSWERABLE"], ["ANSWERABLE"], ["PARTIAL"]]},
+            condition="in",
+        ),
         MapInstanceValues(
             {
                 "Answerability": {
@@ -95,14 +99,15 @@ for subset in ["clapnq", "cloud", "fiqa", "govt"]:
         )
     if subset in ["cloud"]:
         subset_operators.append(Set(fields={"title": ""}))
+    if subset in ["govt"]:
+        subset_operators.append(Cast(field="title", to="str"))
 
     card = TaskCard(
-        loader=LoadCSV(
+        loader=LoadJsonFile(
             files={
                 "test": f"https://github.com/IBM/mt-rag-benchmark/raw/refs/heads/main/corpora/{subset}.jsonl.zip"
             },
             compression="zip",
-            file_type="json",
             lines=True,
             data_classification_policy=["public"],
         ),

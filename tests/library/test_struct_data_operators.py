@@ -4,10 +4,11 @@ from unitxt.struct_data_operators import (
     DuplicateTableColumns,
     DuplicateTableRows,
     InsertEmptyTableRows,
-    JsonStrToListOfKeyValuePairs,
+    JsonStrToDict,
     ListToKeyValPairs,
     LoadJson,
     MapHTMLTableToJSON,
+    ParseCSV,
     SerializeKeyValPairs,
     SerializeTableAsDFLoader,
     SerializeTableAsHTML,
@@ -711,7 +712,7 @@ class TestStructDataOperators(UnitxtTestCase):
             tester=self,
         )
 
-    def test_json_str_to_list_of_key_value_pairs(self):
+    def test_json_str_to_dict(self):
         inputs = [
             {
                 "prediction": """
@@ -720,25 +721,121 @@ class TestStructDataOperators(UnitxtTestCase):
             }
         ]
 
-        targets = [{"prediction": [("b", "3"), ("c", "word")]}]
+        targets = [{"prediction": {"b": "3", "c": "word"}}]
 
         check_operator(
-            operator=JsonStrToListOfKeyValuePairs(field="prediction"),
+            operator=JsonStrToDict(field="prediction"),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
         check_operator(
-            operator=JsonStrToListOfKeyValuePairs(field="prediction"),
+            operator=JsonStrToDict(field="prediction"),
             inputs=[{"prediction": "bad input"}],
-            targets=[{"prediction": []}],
+            targets=[{"prediction": {}}],
             tester=self,
         )
 
         check_operator(
-            operator=JsonStrToListOfKeyValuePairs(field="prediction"),
+            operator=JsonStrToDict(field="prediction"),
             inputs=[{"prediction": "3"}],
-            targets=[{"prediction": []}],
+            targets=[{"prediction": {}}],
+            tester=self,
+        )
+
+    def test_parse_csv(self):
+        csv_content = "name,age,city\nAlice,25,New York\nBob,30,San Francisco"
+
+        inputs = [{"csv_data": csv_content}]
+        targets = [
+            {
+                "csv_data": csv_content,
+                "table": {
+                    "header": ["name", "age", "city"],
+                    "rows": [
+                        ["Alice", "25", "New York"],
+                        ["Bob", "30", "San Francisco"],
+                    ],
+                },
+            }
+        ]
+
+        check_operator(
+            operator=ParseCSV(field="csv_data", to_field="table"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        # Test TSV parsing
+        tsv_content = "name\tage\tcity\nAlice\t25\tNew York\nBob\t30\tSan Francisco"
+
+        inputs = [{"tsv_data": tsv_content}]
+        targets = [
+            {
+                "tsv_data": tsv_content,
+                "table": {
+                    "header": ["name", "age", "city"],
+                    "rows": [
+                        ["Alice", "25", "New York"],
+                        ["Bob", "30", "San Francisco"],
+                    ],
+                },
+            }
+        ]
+
+        check_operator(
+            operator=ParseCSV(field="tsv_data", to_field="table", separator="\t"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        # Test CSV without header
+        csv_no_header = "Alice,25,New York\nBob,30,San Francisco"
+
+        inputs = [{"csv_data": csv_no_header}]
+        targets = [
+            {
+                "csv_data": csv_no_header,
+                "table": {
+                    "header": ["col_0", "col_1", "col_2"],
+                    "rows": [
+                        ["Alice", "25", "New York"],
+                        ["Bob", "30", "San Francisco"],
+                    ],
+                },
+            }
+        ]
+
+        check_operator(
+            operator=ParseCSV(field="csv_data", to_field="table", has_header=False),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        # Test CSV with skip_header
+        csv_with_header = "name,age,city\nAlice,25,New York\nBob,30,San Francisco"
+
+        inputs = [{"csv_data": csv_with_header}]
+        targets = [
+            {
+                "csv_data": csv_with_header,
+                "table": {
+                    "header": ["col_0", "col_1", "col_2"],
+                    "rows": [
+                        ["Alice", "25", "New York"],
+                        ["Bob", "30", "San Francisco"],
+                    ],
+                },
+            }
+        ]
+
+        check_operator(
+            operator=ParseCSV(field="csv_data", to_field="table", skip_header=True),
+            inputs=inputs,
+            targets=targets,
             tester=self,
         )

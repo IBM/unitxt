@@ -1,3 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;700&display=swap');
+
+body{
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
 nav {
     background-color: #cfd0ff !important;
 }
@@ -70,17 +76,31 @@ div.document div.documentwrapper {
 }
 
 .code-snippet {
-    background-color: #2b2b2b;
-    color: #f8f8f2;
-    max-height: 300px;
-    overflow-x: scroll; /* Enable horizontal scrolling */
-    overflow-y: hidden; /* Hide vertical scrollbar, adjust if necessary */
-    white-space: nowrap; /* Prevent wrapping */
-    border-radius: 5px;
-    padding: 30px;
-    width: 100%;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 20px;
+  background-color: #2b2b2b;
+  color: #f8f8f2;
+  max-height: 300px;
+  overflow-x: scroll !important; /* Force horizontal scrollbar */
+  overflow-y: scroll !important; /* Force vertical scrollbar */
+  white-space: nowrap; /* Prevent wrapping */
+  border-radius: 5px;
+  padding: 30px;
+  width: 100%;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 18px;
+
+  /* Ensure content exceeds container for testing */
+  min-width: 1000px; /* This will ensure horizontal scrollbar appears */
+}
+
+.code-snippet::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  display: block;
+}
+
+.code-snippet::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
 }
 
 .code-window-buttons {
@@ -210,4 +230,4 @@ div.document div.documentwrapper {
 #unitxtImports {
   /* Display nothing for the element */
   display: none;
-}         
+}
