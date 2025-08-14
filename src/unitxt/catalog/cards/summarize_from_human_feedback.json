@@ -23,6 +23,11 @@
             }
         },
         {
+            "__type__": "cast",
+            "field": "input",
+            "to": "str"
+        },
+        {
             "__type__": "rename",
             "field_to_field": {
                 "choice": "output_choice"
