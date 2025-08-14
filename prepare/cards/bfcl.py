@@ -6,6 +6,7 @@ from unitxt.operators import (
     Copy,
     ExecuteExpression,
     FilterByExpression,
+    FixJsonSchemaOfParameterTypes,
     Set,
 )
 from unitxt.stream_operators import DeleteSplits, JoinStreams
@@ -35,7 +36,7 @@ with unitxt.settings.context(allow_unverified_code=True):
                 DeleteSplits(splits=["questions", "answers"]),
                 Copy(field="question/0/0/content", to_field="query"),
                 Copy(field="function", to_field="tools"),
-                "operators.fix_json_schema",
+                FixJsonSchemaOfParameterTypes(main_field="tools"),
                 # Process ground truth data in this dataset, which is a provided as a list of options per field,
                 # and convert it into a list of explicit tool calls
                 #
@@ -105,7 +106,7 @@ with unitxt.settings.context(allow_unverified_code=True):
                 DeleteSplits(splits=["questions", "answers"]),
                 Copy(field="question/*/0", to_field="dialog"),
                 Copy(field="function", to_field="tools"),
-                "operators.fix_json_schema",
+                FixJsonSchemaOfParameterTypes(main_field="tools"),
                 FilterByExpression(
                     expression="all(isinstance(v, dict) for d in ground_truth for k, v in d.items())"
                 ),
@@ -159,7 +160,7 @@ with unitxt.settings.context(allow_unverified_code=True):
             preprocess_steps=[
                 Copy(field="question/*/0", to_field="dialog"),
                 Copy(field="function", to_field="tools"),
-                "operators.fix_json_schema",
+                FixJsonSchemaOfParameterTypes(main_field="tools"),
                 Set(fields={"reference_calls": []}),
             ],
             task="tasks.tool_calling.multi_turn",
