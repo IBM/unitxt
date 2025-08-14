@@ -13,11 +13,9 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "filter_by_condition",
-            "values": {
-                "title": null
-            },
-            "condition": "ne"
+            "__type__": "cast",
+            "field": "title",
+            "to": "str"
         },
         {
             "__type__": "wrap",

@@ -100,9 +100,7 @@ for subset in ["clapnq", "cloud", "fiqa", "govt"]:
     if subset in ["cloud"]:
         subset_operators.append(Set(fields={"title": ""}))
     if subset in ["govt"]:
-        subset_operators.append(
-            FilterByCondition(values={"title": None}, condition="ne")
-        )
+        subset_operators.append(Cast(field="title", to="str"))
 
     card = TaskCard(
         loader=LoadJsonFile(
