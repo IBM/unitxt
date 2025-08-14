@@ -197,8 +197,12 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         )
 
     def test_granite_speech_inference_engine(self):
+        if os.environ.get("SKIP_HEAVY_LOCAL"):
+            return
+
         model = HFGraniteSpeechInferenceEngine(
             model_name="ibm-granite/granite-speech-3.3-2b",
+            revision="granite-speech-3.3.2-2b",
             max_new_tokens=10,
             temperature=0.0,
         )
@@ -344,7 +348,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         ]
 
         watsonx_engine = WMLInferenceEngineGeneration(
-            model_name="mistralai/mixtral-8x7b-instruct-v01"
+            model_name="meta-llama/llama-3-2-1b-instruct"
         )
 
         for engine in [watsonx_engine]:
@@ -448,7 +452,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_lite_llm_inference_engine_without_task_data_not_failing(self):
         LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-3-70b-instruct",
+            model="watsonx/meta-llama/llama-3-2-1b-instruct",
             max_tokens=2,
             temperature=0,
             top_p=1,

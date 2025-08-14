@@ -5,6 +5,8 @@
 # voxpopuli, ami, librispeech, spgispeech, tedlium, earnings22,
 # commonvoice_en, commonvoice_de, commonvoice_es, commonvoice_fr, commonvoice_pt
 
+import os
+
 from unitxt import evaluate, load_dataset
 from unitxt.inference import (
     HFGraniteSpeechInferenceEngine,
@@ -21,8 +23,13 @@ dataset = load_dataset(
     split="test",
 )
 
+
+if os.environ.get("SKIP_HEAVY_LOCAL", False):
+    exit()
+
 model = HFGraniteSpeechInferenceEngine(
     model_name="ibm-granite/granite-speech-3.3-2b",  # two options for Granite Speech 3.3:  2b  and  8b
+    revision="granite-speech-3.3.2-2b",
     max_new_tokens=200,  # 200 for 2b,  120 for 8b
 )
 

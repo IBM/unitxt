@@ -5,7 +5,6 @@ import re
 import sys
 from typing import Any, Dict
 
-from unitxt import dataset_file
 from unitxt.artifact import fetch_artifact
 from unitxt.card import TaskCard
 from unitxt.catalog import get_from_catalog
@@ -840,13 +839,10 @@ class TestRecipes(UnitxtTestCase):
         self.assertEqual(len(list(stream["test"])), 5)
 
     def test_recipe_with_hf_with_twice_the_same_instance_demos(self):
-        from datasets import load_dataset
+        from unitxt import load_dataset
 
         d = load_dataset(
-            dataset_file,
             "__type__=dataset_recipe,card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=1",
-            streaming=True,
-            trust_remote_code=True,
         )
 
         iterator = iter(d["train"])

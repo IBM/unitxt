@@ -3,7 +3,15 @@
     "loader": {
         "__type__": "load_hf",
         "path": "nguha/legalbench",
-        "name": "corporate_lobbying"
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "test"
+        ],
+        "data_dir": "corporate_lobbying",
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {

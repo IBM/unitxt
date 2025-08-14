@@ -9,7 +9,7 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.llm_as_judge_constants import DirectCriteriaCatalogEnum
 from unitxt.loaders import LoadJsonFile
-from unitxt.operators import Copy, Set
+from unitxt.operators import Copy, FilterByCondition, Set
 from unitxt.processors import GroupDictWithRegex
 from unitxt.task import Task
 from unitxt.test_utils.card import test_card
@@ -34,6 +34,9 @@ card = TaskCard(
                 r"(?P<model_reasoning>.*)"
             ),
             flags=re.DOTALL,
+        ),
+        FilterByCondition(
+            values={"instance/problem_statement": True}, condition="exists"
         ),
         Rename(
             field_to_field={

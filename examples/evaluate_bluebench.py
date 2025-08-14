@@ -7,8 +7,9 @@ with settings.context(
     allow_unverified_code=True,
     mock_inference_mode=True,
 ):
-    test_dataset = load_dataset(
-        "benchmarks.bluebench[loader_limit=30]",
+    dataset = load_dataset(
+        "benchmarks.bluebench",
+        loader_limit=30,
         split="test",
         use_cache=True,
     )
@@ -25,8 +26,8 @@ with settings.context(
     about the the open ai api arguments the CrossProviderInferenceEngine follows.
     """
 
-    predictions = model(test_dataset)
-    results = evaluate(predictions=predictions, data=test_dataset)
+    predictions = model(dataset)
+    results = evaluate(predictions=predictions, data=dataset)
 
     print("Global scores:")
     print(results.global_scores.summary)

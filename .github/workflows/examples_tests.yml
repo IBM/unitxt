@@ -30,6 +30,7 @@ jobs:
       WML_PROJECT_ID: ${{ secrets.WML_PROJECT_ID }}
       WML_APIKEY: ${{ secrets.WML_APIKEY }}
       GENAI_KEY: ${{ secrets.GENAI_KEY }}
+      SKIP_HEAVY_LOCAL: "True"
 
     steps:
     - uses: actions/checkout@v4
@@ -38,19 +39,8 @@ jobs:
       with:
         python-version: '3.10'
 
-    - run: echo "blis==0" > constraints.txt
-    - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-    - run: uv pip install --upgrade --system torch --index-url https://download.pytorch.org/whl/cpu
-    - run: uv pip install --system -c constraints.txt -e ".[tests]"
-    - run: |
-        pip install --only-binary :all: spacy
-        pip install networkx==3.2.1
-
-    - name: Install spacy (binary)
-      run: |
-        pip install --only-binary :all: spacy
-        pip install networkx==3.2.1
-        pip install datasets==3.5.1
+    - name: Install Dependencies
+      run: bash utils/install.sh
 
     - name: Hugging Face Login
       run: |

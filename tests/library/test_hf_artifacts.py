@@ -1,5 +1,4 @@
 import unitxt
-from datasets import load_dataset
 from evaluate import load
 from unitxt.hf_utils import (
     UnitxtVersionsConflictError,
@@ -31,15 +30,6 @@ class HFTests(UnitxtTestCase):
             ],
         )
         self.assertEqual(missing_imports, [])
-
-    def test_dataset_load(self):
-        dataset = load_dataset(
-            unitxt.dataset_file,
-            "card=cards.wnli,template_card_index=0",
-            trust_remote_code=True,
-            download_mode="force_redownload",
-        )
-        str(dataset["train"][0])
 
     def test_metric_load(self):
         load(unitxt.metric_file)

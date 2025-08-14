@@ -3,7 +3,15 @@
     "loader": {
         "__type__": "load_hf",
         "path": "nguha/legalbench",
-        "name": "function_of_decision_section"
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "test"
+        ],
+        "data_dir": "function_of_decision_section",
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {

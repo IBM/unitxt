@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "burmese",
+        "revision": "refs/convert/parquet",
+        "data_dir": "burmese",
         "splits": [
             "test",
             "train",

@@ -8,7 +8,7 @@ import uuid
 import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
-from dataclasses import asdict, field
+from dataclasses import asdict, dataclass, field
 from dataclasses import fields as dataclasses_fields
 from enum import Enum
 from functools import lru_cache
@@ -21,6 +21,7 @@ from typing import (
     Literal,
     Optional,
     Tuple,
+    Type,
     TypeVar,
     Union,
 )
@@ -3418,43 +3419,6 @@ class WerFast(MapReduceMetric[Tuple[float, float], float]):
         return {self.main_score: incorrect / total if total > 0 else np.nan}
 
 
-class NormalizedWer(MapReduceMetric[Tuple[float, float], float]):
-    """Computes mean squared error between predictions and references.
-
-    Range: [0, ∞) (lower is better)
-    Measures average squared differences between predicted and true values.
-    """
-
-    main_score = "normalized_wer"
-    prediction_type = str
-    single_reference_per_prediction = True
-    _requirements_list = ["jiwer>=3.0.0"]  # added process_words function
-
-    def prepare(self):
-        super().prepare()
-        import jiwer
-        from transformers import WhisperTokenizer
-
-        self.tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-base")
-
-        self._metric = jiwer.process_words
-        self._normalize = self.tokenizer.normalize
-
-    def map(
-        self, prediction: str, references: List[str], task_data: Dict[str, Any]
-    ) -> Tuple[float, float]:
-        normalized_reference = self._normalize(references[0])
-        normalized_prediction = self._normalize(prediction)
-        measures = self._metric(normalized_reference, normalized_prediction)
-        incorrect = measures.substitutions + measures.deletions + measures.insertions
-        total = measures.substitutions + measures.deletions + measures.hits
-        return incorrect, total
-
-    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
-        incorrect, total = map(sum, zip(*intermediates))
-        return {self.main_score: incorrect / total}
-
-
 class MeanSquaredError(MapReduceMetric[float, float]):
     """Computes mean squared error between predictions and references.
 
@@ -3488,7 +3452,7 @@ class RootMeanSquaredError(MeanSquaredError):
         return {self.main_score: nan_mean(intermediates) ** 0.5}
 
 
-class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
+class CorrelationMetric(MapReduceMetric[float, Tuple[float, float]]):
     """Computes Spearman rank correlation coefficient.
 
     Range: [-1, 1] (higher absolute value is better)
@@ -3497,16 +3461,8 @@ class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
     Reference: https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient
     """
 
-    main_score = "spearmanr"
-    ci_score_names = ["spearmanr"]
     prediction_type = float
     _requirements_list = ["scipy"]
-
-    def prepare(self):
-        super().prepare()
-        from scipy.stats import spearmanr
-
-        self.spearmanr = spearmanr
 
     def map(
         self,
@@ -3515,6 +3471,9 @@ class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
         task_data: Dict[str, Any],
     ) -> Tuple[float, float]:
         return (prediction, references[0])
+
+    def get_correlation_func(self):
+        raise NotImplementedError()
 
     def reduce_one(self, intermidate: Tuple[float, float]):
         return {self.main_score: np.nan}
@@ -3526,7 +3485,7 @@ class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
             list_a.append(a)
             list_b.append(b)
 
-        score, p_value = self.spearmanr(a=list_a, b=list_b)
+        score, p_value = self.get_correlation_func()(list_a, list_b)
 
         try:
             score = float(score)
@@ -3540,8 +3499,47 @@ class Spearmanr(MapReduceMetric[float, Tuple[float, float]]):
 
         return {
             self.main_score: score,
-            "spearmanr_p_value": p_value,
+            f"{self.main_score}_p_value": p_value,
         }
+
+
+class Spearmanr(CorrelationMetric):
+    """Computes Spearman rank correlation coefficient.
+
+    Range: [-1, 1] (higher absolute value is better)
+    Measures monotonic relationship between predictions and references.
+
+    Reference: https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient
+    """
+
+    main_score = "spearmanr"
+    ci_score_names: List[str] = ["spearmanr"]
+
+    def get_correlation_func(self):
+        from scipy.stats import spearmanr
+
+        return spearmanr
+
+
+class Pearsonr(CorrelationMetric):
+    """Computes Pearson correlation coefficient.
+
+    Range: [-1, 1] (higher absolute value is better)
+    Measures linear relationship between predictions and references.
+
+    Reference: https://en.wikipedia.org/wiki/Pearson_correlation_coefficient
+    """
+
+    main_score = "pearsonr"
+    ci_score_names = ["pearsonr"]
+
+    def get_correlation_func(self):
+        from scipy.stats import pearsonr
+
+        return pearsonr
+
+    def prepare(self):
+        super().prepare()
 
 
 class KendallTauMetric(GlobalMetric):
@@ -6204,23 +6202,174 @@ For MacOS: If error on 'mecab-config' show up during installation ], one should 
 """
 
 
-class NormalizedSacrebleu(HuggingfaceMetric):
-    """Normalized SacreBLEU metric for machine translation evaluation.
+@dataclass
+class SacreBleuStats:
+    counts: List[int]
+    totals: List[int]
+    sys_len: int
+    ref_len: int
+
+
+class NormalizedSacrebleu(
+    MapReduceMetric[str, SacreBleuStats], PackageRequirementsMixin
+):
+    """SacreBLEU metric implementation using MapReduceMetric pattern.
+
+    This implementation uses the official sacrebleu library for tokenization
+    and BLEU computation, while supporting the map-reduce pattern for proper
+    corpus-level evaluation that matches the behavior of the HuggingFace version.
 
     Range: [0, 1] (higher is better)
-    Character-level tokenization of BLEU score for improved cross-lingual evaluation.
-
-    Reference: https://arxiv.org/abs/1804.08771
+    Reference: Post, M. 2018. A Call for Clarity in Reporting BLEU Scores.
     """
 
-    hf_metric_name = "sacrebleu"
-    hf_main_score = "score"
-    prediction_type = str
     main_score = "sacrebleu"
-    scale = 100.0
-    scaled_fields = ["sacrebleu", "precisions"]
-    hf_additional_input_fields_pass_one_value = ["tokenize"]
+    ci_score_names = ["sacrebleu"]
+    prediction_type = str
     _requirements_list = ["sacrebleu"]
+    language_to_tokenizer: Optional[Dict[str, str]] = None
+    # Configuration parameters matching sacrebleu API
+    tokenize: str = None
+    lowercase: bool = False
+    force: bool = False
+    smooth_method: str = "exp"
+    smooth_value: Optional[float] = None
+    use_effective_order: bool = True  # Recommended by sacrebleu for sentence-level BLEU
+    max_ngram_order: int = 4
+
+    def prepare(self):
+        super().prepare()
+        from sacrebleu.metrics.bleu import BLEU
+
+        self.bleu_metric = BLEU(
+            lowercase=self.lowercase,
+            force=self.force,
+            tokenize=self.tokenize,
+            smooth_method=self.smooth_method,
+            smooth_value=self.smooth_value,
+            max_ngram_order=self.max_ngram_order,
+            effective_order=self.use_effective_order,
+        )
+
+    def _get_tokenizer_for_language(self, language: str) -> str:
+        """Get appropriate tokenizer for a given language."""
+        if self.language_to_tokenizer is None:
+            raise ValueError("Please set language_to_tokenizer.")
+        if language.lower() not in self.language_to_tokenizer:
+            raise ValueError(
+                f"Language {language} is not in language_to_tokenizer please add it."
+            )
+
+        return self.language_to_tokenizer.get(language.lower())
+
+    @staticmethod
+    @lru_cache(maxsize=10000)
+    def get_bleu_metric(
+        lowercase: bool = False,
+        force: bool = False,
+        tokenize: Optional[str] = None,
+        smooth_method: str = "exp",
+        smooth_value: Optional[float] = None,
+        max_ngram_order: int = 4,
+        effective_order: bool = False,
+    ):
+        from sacrebleu.metrics.bleu import BLEU
+
+        return BLEU(
+            lowercase=lowercase,
+            force=force,
+            tokenize=tokenize,
+            smooth_method=smooth_method,
+            smooth_value=smooth_value,
+            max_ngram_order=max_ngram_order,
+            effective_order=effective_order,
+        )
+
+    def map(
+        self,
+        prediction: str,
+        references: List[str],
+        task_data: Dict[str, Any],
+    ) -> SacreBleuStats:
+        """Map function: compute BLEU statistics for a single instance using sacrebleu."""
+        if self.tokenize is None and "target_language" in task_data:
+            target_lang = task_data["target_language"]
+            tokenize_method = self._get_tokenizer_for_language(target_lang)
+        else:
+            tokenize_method = self.tokenize
+
+        instance_bleu_metric = self.get_bleu_metric(
+            lowercase=self.lowercase,
+            force=self.force,
+            tokenize=tokenize_method,
+            smooth_method=self.smooth_method,
+            smooth_value=self.smooth_value,
+            max_ngram_order=self.max_ngram_order,
+            effective_order=self.use_effective_order,
+        )
+
+        # Use the instance-specific metric to get per-instance statistics
+        bleu_result = instance_bleu_metric.sentence_score(prediction, references)
+
+        return SacreBleuStats(
+            counts=bleu_result.counts,
+            totals=bleu_result.totals,
+            sys_len=bleu_result.sys_len,
+            ref_len=bleu_result.ref_len,
+        )
+
+    def reduce(self, intermediates: List[SacreBleuStats]) -> Dict[str, Any]:
+        """Reduce function: aggregate statistics and compute corpus BLEU using sacrebleu."""
+        if not intermediates:
+            return {
+                "sacrebleu": 0.0,
+                "counts": [0, 0, 0, 0],
+                "totals": [0, 0, 0, 0],
+                "precisions": [0.0, 0.0, 0.0, 0.0],
+                "bp": 0.0,
+                "sys_len": 0,
+                "ref_len": 0,
+            }
+
+        # Aggregate all the statistics across instances
+        total_counts = [0] * self.max_ngram_order
+        total_totals = [0] * self.max_ngram_order
+        total_sys_len = 0
+        total_ref_len = 0
+
+        for stats in intermediates:
+            for i in range(min(len(stats.counts), self.max_ngram_order)):
+                total_counts[i] += stats.counts[i]
+                total_totals[i] += stats.totals[i]
+            total_sys_len += stats.sys_len
+            total_ref_len += stats.ref_len
+
+        # Use sacrebleu's compute_bleu static method to compute the final score from aggregated stats
+        # This is the proper way to get corpus-level BLEU from individual statistics
+        bleu_result = self.bleu_metric.compute_bleu(
+            correct=total_counts,
+            total=total_totals,
+            sys_len=total_sys_len,
+            ref_len=total_ref_len,
+            smooth_method=self.smooth_method,
+            smooth_value=self.smooth_value,
+            effective_order=self.use_effective_order,
+            max_ngram_order=self.max_ngram_order,
+        )
+
+        return {
+            "sacrebleu": round(
+                bleu_result.score / 100.0, 2
+            ),  # Convert from 0-100 to 0-1 scale
+            "counts": total_counts,
+            "totals": total_totals,
+            "precisions": [
+                round(p / 100.0, 2) for p in bleu_result.precisions
+            ],  # Convert from 0-100 to 0-1 scale
+            "bp": round(bleu_result.bp, 2),
+            "sys_len": total_sys_len,
+            "ref_len": total_ref_len,
+        }
 
 
 class CustomF1Fuzzy(CustomF1):
@@ -6643,7 +6792,6 @@ class GraniteGuardianBase(InstanceMetric):
     """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
 
     reduction_map: Dict[str, List[str]] = None
-    prediction_type = float
     main_score = None
     reduction_map = {}
     wml_model_name: str = "ibm/granite-guardian-3-8b"
@@ -6980,7 +7128,7 @@ class GraniteGuardianCustomRisk(GraniteGuardianBase):
         return messages
 
 
-RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
+RISK_TYPE_TO_CLASS: Dict[RiskType, Type[GraniteGuardianBase]] = {
     RiskType.USER_MESSAGE: GraniteGuardianUserRisk,
     RiskType.ASSISTANT_MESSAGE: GraniteGuardianAssistantRisk,
     RiskType.RAG: GraniteGuardianRagRisk,

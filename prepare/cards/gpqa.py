@@ -12,7 +12,7 @@ from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 with unitxt.settings.context(allow_unverified_code=True):
-    for subset in ["main", "diamond", "experts", "extended"]:
+    for subset in ["main", "diamond", "extended"]:
         card = TaskCard(
             loader=LoadHF(
                 path="Idavidrein/gpqa",

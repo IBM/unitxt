@@ -3,16 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "CohereForAI/Global-MMLU",
-        "name": "fa"
+        "name": "fa",
+        "filtering_lambda": "lambda x: x['subject'] == 'professional_medicine'"
     },
     "preprocess_steps": [
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "subject": "professional_medicine"
-            },
-            "condition": "eq"
-        },
         {
             "__type__": "deduplicate",
             "by": [

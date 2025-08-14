@@ -25,6 +25,8 @@ from .operators import (
     ApplyOperatorsField,
     ArtifactFetcherMixin,
     RecursiveCopy,
+    RemoveFields,
+    Rename,
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
 from .schema import UNITXT_DATASET_SCHEMA
@@ -406,6 +408,28 @@ class PreProcessForEvaluation(SequentialOperatorInitializer):
                 to_field="task_data/source",
             ),
         ]
+
+
+class PostProcessAfterEvaluation(SequentialOperator):
+    steps = [
+        Rename(
+            field="raw_prediction",
+            to_field="prediction",
+            not_exist_ok=True,
+            not_exist_do_nothing=True,
+        ),
+        Rename(
+            field="raw_references",
+            to_field="references",
+            not_exist_ok=True,
+            not_exist_do_nothing=True,
+        ),
+        RecursiveCopy(
+            field="source",
+            to_field="task_data/source",
+        ),
+        RemoveFields(fields=["__idx__"], not_exist_ok=True),
+    ]
 
 
 class MainEvaluationPipeline(SequentialOperator):
@@ -1010,10 +1034,14 @@ def _compute(
 
     results_multi_stream = evaluate(preprocess_multi_stream)
 
+    post_process = PostProcessAfterEvaluation()
+
+    data_multi_stream = post_process(preprocess_multi_stream)
+
     return EvaluationResults(
         merge_evaluation_results(
             results_multi_stream[split_name],
-            preprocess_multi_stream[split_name],
+            data_multi_stream[split_name],
         )
     )
 

@@ -3,13 +3,14 @@
     "loader": {
         "__type__": "load_hf",
         "path": "Multilingual-Multimodal-NLP/TableBench",
-        "revision": "90593ad8af90f027f6f478b8c4c1981d9f073a83",
+        "revision": "90593ad8",
         "data_classification_policy": [
             "public"
         ],
         "splits": [
             "test"
-        ]
+        ],
+        "filtering_lambda": "lambda x: x['instruction_type'] == 'DP' and x['qtype'] in ['FactChecking']"
     },
     "preprocess_steps": [
         {
@@ -21,28 +22,8 @@
             }
         },
         {
-            "__type__": "filter_by_condition",
-            "values": {
-                "instruction_type": "DP"
-            },
-            "condition": "eq"
-        },
-        {
-            "__type__": "filter_by_condition",
-            "values": {
-                "qtype": [
-                    "FactChecking"
-                ]
-            },
-            "condition": "in"
-        },
-        {
-            "__type__": "apply",
-            "function": "json.loads",
-            "to_field": "table",
-            "_argv": [
-                "table"
-            ]
+            "__type__": "load_json",
+            "field": "table"
         },
         {
             "__type__": "rename",

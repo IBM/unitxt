@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "thai",
+        "revision": "refs/convert/parquet",
+        "data_dir": "thai",
         "splits": [
             "test",
             "train",

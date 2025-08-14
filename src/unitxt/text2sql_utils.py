@@ -728,7 +728,7 @@ def sqlparse_queries_equivalent(sql1: str, sql2: str) -> bool:
                 return False
         return True
     except Exception as e:
-        logger.debug(f"Errpr parsing SQL query for comparison: {e}")
+        logger.debug(f"Error parsing SQL query for comparison: {e}")
         return False
 
 
@@ -863,6 +863,8 @@ def compare_dfs_ignore_colnames_subset(
     if df1.empty or df2.empty or len(df1) != len(df2):
         return False
 
+    df1.columns = range(df1.shape[1])
+    df2.columns = range(df2.shape[1])
     subset_df, superset_df = (df1, df2) if df1.shape[1] <= df2.shape[1] else (df2, df1)
 
     if ignore_row_order:

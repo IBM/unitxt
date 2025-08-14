@@ -1,5 +1,7 @@
 # this python script shows an example of running speech recognition evaluation for Granite Speech using the Hugging Face ESB datasets and the CommonVoice datasets
 
+import os
+
 from unitxt import evaluate, load_dataset
 from unitxt.inference import (
     CrossProviderInferenceEngine,
@@ -31,10 +33,14 @@ test_dataset = load_dataset(
     ),
 )
 
+if os.environ.get("SKIP_HEAVY_LOCAL", False):
+    exit()
+
 if not USE_RITS:
     # locally running the model, it needs GPU to run properly
     model = HFGraniteSpeechInferenceEngine(
         model_name="ibm-granite/granite-speech-3.3-8b",  # two options for Granite Speech 3.3:  2b  and  8b
+        revision="granite-speech-3.3.2-2b",
         max_new_tokens=120,  # 200 for 2b,  120 for 8b
     )
 if USE_RITS:

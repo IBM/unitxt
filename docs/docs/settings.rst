@@ -43,6 +43,8 @@ Data Loaders
   - Type: int | Default: 10 | Env Var: ``UNITXT_LOADERS_MAX_RETRIES``
 - ``unitxt.settings.loader_cache_size``: Defines the in-memory cache size for loaders.
   - Type: int | Default: 25 | Env Var: ``UNITXT_LOADER_CACHE_SIZE``
+- ``unitxt.settings.dataset_cache_default``: Determines the default behavior for dataset caching. If the use_cache parameter of the load_dataset function is explicitly set, that value takes precedence. Otherwise, caching will be activated based on this setting.
+  - Type: bool | Default: False | Env Var: ``UNITXT_DATASET_CACHE_DEFAULT``
 
 External Code
 -------------

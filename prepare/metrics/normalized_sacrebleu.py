@@ -1,7 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import MetricPipeline, NormalizedSacrebleu
-from unitxt.operators import Copy, MapInstanceValues
-from unitxt.processors import Lower
+from unitxt.metrics import NormalizedSacrebleu
 from unitxt.test_utils.metrics import test_metric
 
 language_to_tokenizer = {
@@ -30,24 +28,7 @@ language_to_tokenizer = {
     "zh": "zh",
 }
 
-metric = MetricPipeline(
-    main_score="sacrebleu",
-    prediction_type=str,
-    preprocess_steps=[
-        Copy(
-            field="task_data/target_language",
-            to_field="task_data/tokenize",
-            not_exist_ok=True,
-            get_default="en",
-        ),
-        Lower(field="task_data/tokenize"),
-        MapInstanceValues(
-            mappers={"task_data/tokenize": language_to_tokenizer},
-            strict=True,
-        ),
-    ],
-    metric=NormalizedSacrebleu(),
-)
+metric = NormalizedSacrebleu(language_to_tokenizer=language_to_tokenizer)
 
 ### ENGLISH
 
