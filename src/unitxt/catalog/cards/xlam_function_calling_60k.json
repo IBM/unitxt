@@ -64,8 +64,10 @@
             "expression": "[[p for p, c in tool['parameters']['properties'].items() if 'optional' not in c['type'].lower()] for tool in tools]"
         },
         {
-            "__function__": "extract_required_parameters",
-            "source": "def extract_required_parameters(instance, stream_name=None):\n    for tool in instance[\"tools\"]:\n        required_params = []\n        for param_name, param_info in tool[\"parameters\"][\"properties\"].items():\n            if \"optional\" not in param_info[\"type\"].lower():\n                required_params.append(param_name)\n        tool[\"parameters\"][\"required\"] = required_params\n    return instance\n"
+            "__type__": "copy",
+            "field": "required",
+            "to_field": "tools/*/parameters/required",
+            "set_every_value": true
         },
         {
             "__type__": "fix_json_schema_of_parameter_types",

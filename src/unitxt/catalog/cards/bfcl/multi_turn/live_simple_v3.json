@@ -30,9 +30,7 @@
             "field": "function",
             "to_field": "tools"
         },
-        {
-            "__type__": "fix_json_schema_of_tool_parameter_types"
-        },
+        "operators.fix_json_schema",
         {
             "__type__": "execute_expression",
             "expression": "[{\"name\": k, \"arguments\": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]",
