@@ -1,5 +1,8 @@
 {
     "__type__": "input_output_template",
-    "input_format": "{audio}listen to the speech and translate it to {target_language}",
-    "output_format": "{translation}"
+    "input_format": "{audio}translate the speech to {target_language}",
+    "output_format": "{translation}",
+    "postprocessors": [
+        "processors.normalize_text_basic_with_whisper"
+    ]
 }
