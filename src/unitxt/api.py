@@ -22,7 +22,7 @@ from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
 from .metric_utils import EvaluationResults, _compute, _inference_post_process
 from .operator import SourceOperator
-from .schema import loads_batch
+from .schema import SerializeInstancesBeforeDump, loads_batch
 from .settings_utils import get_constants, get_settings
 from .standard import DatasetRecipe
 from .task import Task
@@ -204,7 +204,7 @@ def _source_to_dataset(
         )
         if split is not None:
             stream = {split: stream[split]}
-        ds_builder._generators = stream
+        ds_builder._generators = SerializeInstancesBeforeDump()(stream)
 
         try:
             ds_builder.download_and_prepare(
@@ -354,10 +354,12 @@ def produce(
     if not is_list:
         instance_or_instances = [instance_or_instances]
     dataset_recipe = _get_recipe_with_cache(dataset_query, **kwargs)
-    result = dataset_recipe.produce(instance_or_instances)
+    instances = dataset_recipe.produce(instance_or_instances)
+    serialize = SerializeInstancesBeforeDump()
+    instances = [serialize.process_instance(instance) for instance in instances]
     if not is_list:
-        return result[0]
-    return Dataset.from_list(result).with_transform(loads_batch)
+        return instances[0]
+    return Dataset.from_list(instances).with_transform(loads_batch)
 
 
 def infer(
