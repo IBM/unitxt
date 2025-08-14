@@ -70,6 +70,7 @@ class StandardAPIParamsMixin(Artifact):
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
     max_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
     seed: Optional[int] = None
     stop: Union[Optional[str], List[str]] = None
     temperature: Optional[float] = None
@@ -1091,10 +1092,10 @@ class HFGraniteSpeechInferenceEngine(HFInferenceEngineBase):
                 if isinstance(turn["content"], list):
                     turn_content = ""
                     for content in turn["content"]:
-                        if content["type"] == "audio":
+                        if content["type"] == "input_audio":
                             audios.append(
                                 base64_to_audio(
-                                    content["audio"]["data"],
+                                    content["input_audio"]["data"],
                                     sampling_rate=self.sampling_rate,
                                 )
                             )
@@ -1972,6 +1973,7 @@ class OpenAiInferenceEngineParamsMixin(Artifact):
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
     max_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
     seed: Optional[int] = None
     stop: Union[Optional[str], List[str]] = None
     temperature: Optional[float] = None
@@ -1989,6 +1991,7 @@ class OpenAiInferenceEngineParams(Artifact):
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
     max_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
     seed: Optional[int] = None
     stop: Union[Optional[str], List[str]] = None
     temperature: Optional[float] = None
@@ -2306,6 +2309,7 @@ class RITSInferenceEngine(
 
 class TogetherAiInferenceEngineParamsMixin(Artifact):
     max_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
     stop: Optional[List[str]] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
@@ -2466,6 +2470,7 @@ class WMLChatParamsMixin(Artifact):
     response_format: Optional[Dict[str, Any]] = None
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
     time_limit: Optional[int] = None
     top_p: Optional[float] = None
     n: Optional[int] = None
@@ -3419,6 +3424,7 @@ class VLLMParamsMixin(Artifact):
     bad_words: Optional[List[str]] = None
     ignore_eos: bool = False
     max_tokens: Optional[int] = 16
+    max_new_tokens: Optional[int] = None
     min_tokens: int = 0
     logprobs: Optional[int] = None
     prompt_logprobs: Optional[int] = None
@@ -3728,6 +3734,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "granite-3-1-8b-instruct": "ibm-granite/granite-3.1-8b-instruct",
             "granite-3-2-8b-instruct": "ibm-granite/granite-3.2-8b-instruct",
             "granite-3-3-8b-instruct": "ibm-granite/granite-3.3-8b-instruct",
+            "granite-speech-3-3-8b": "ibm-granite/granite-speech-3.3-8b",
             "llama-3-1-8b-instruct": "meta-llama/Llama-3.1-8B-Instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
             "llama-3-1-405b-instruct": "meta-llama/llama-3-1-405b-instruct-fp8",

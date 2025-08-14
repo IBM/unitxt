@@ -12,10 +12,6 @@ benchmark = Benchmark(
             card="cards.esb.ami",
             format="formats.chat_api",
         ),
-        # "gigaspeech": DatasetRecipe(
-        #     card="cards.esb.gigaspeech",
-        #     format="formats.chat_api",
-        # ),
         "librispeech": DatasetRecipe(
             card="cards.esb.librispeech",
             format="formats.chat_api",
@@ -30,6 +26,26 @@ benchmark = Benchmark(
         ),
         "earnings22": DatasetRecipe(
             card="cards.esb.earnings22",
+            format="formats.chat_api",
+        ),
+        "commonvoice_en": DatasetRecipe(
+            card="cards.commonvoice.en",
+            format="formats.chat_api",
+        ),
+        "commonvoice_de": DatasetRecipe(
+            card="cards.commonvoice.de",
+            format="formats.chat_api",
+        ),
+        "commonvoice_es": DatasetRecipe(
+            card="cards.commonvoice.es",
+            format="formats.chat_api",
+        ),
+        "commonvoice_fr": DatasetRecipe(
+            card="cards.commonvoice.fr",
+            format="formats.chat_api",
+        ),
+        "commonvoice_pt": DatasetRecipe(
+            card="cards.commonvoice.pt",
             format="formats.chat_api",
         ),
     },

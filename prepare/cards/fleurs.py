@@ -1,13 +1,16 @@
+# This Python script is used to prepare cards for the fleurs dataset, used for evaluating speech translation
+
 from unitxt.audio_operators import ToAudio
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import MultipleSourceLoader
 from unitxt.operator import SourceSequentialOperator
-from unitxt.operators import RemoveFields, Rename
+from unitxt.operators import AddFields, RemoveFields, Rename
 from unitxt.splitters import RenameSplits
-from unitxt.stream_operators import JoinStreams
+from unitxt.stream_operators import JoinStreamsFleurs
 from unitxt.test_utils.card import test_card
 
+# Entire list of languages (codes) supported by fleurs, for reference:
 # all_subsets = [
 #     "af_za",
 #     "am_et",
@@ -113,6 +116,11 @@ from unitxt.test_utils.card import test_card
 #     "zu_za",
 # ]
 
+# Currently we only use fleurs for evaluating translating from english_us to the following 6 languages; additions may follow
+# The fleurs dataset can be used from any language to any language within its supported list of languages
+# We use the (basic) Whisper text normalization; before extending to other languages, check if Whisper basic normalizer supports them
+
+# "to" language:
 target_subsets = [
     "de_de",
     "es_419",
@@ -120,11 +128,35 @@ target_subsets = [
     "it_it",
     "ja_jp",
     "pt_br",
+    "cmn_hans_cn",
 ]
 
+# "from" language:
 source_subsets = [
     "en_us",
 ]
+
+lang_code = {
+    "en_us": "en",
+    "de_de": "de",
+    "es_419": "es",
+    "fr_fr": "fr",
+    "it_it": "it",
+    "ja_jp": "ja",
+    "pt_br": "pt",
+    "cmn_hans_cn": "zh",
+}
+
+lang_name = {
+    "en_us": "English",
+    "de_de": "German",
+    "es_419": "Spanish",
+    "fr_fr": "French",
+    "it_it": "Italian",
+    "ja_jp": "Japanese",
+    "pt_br": "Portuguese",
+    "cmn_hans_cn": "Chinese",
+}
 
 first = True
 for source_subset in source_subsets:
@@ -139,6 +171,7 @@ for source_subset in source_subsets:
                                 revision="refs/convert/parquet",
                                 data_dir=source_subset,
                                 splits=["test"],
+                                data_classification_policy=["public"],
                             ),
                             RemoveFields(
                                 fields=[
@@ -166,6 +199,7 @@ for source_subset in source_subsets:
                                 revision="refs/convert/parquet",
                                 data_dir=target_subset,
                                 splits=["test"],
+                                data_classification_policy=["public"],
                             ),
                             RemoveFields(
                                 fields=[
@@ -175,6 +209,7 @@ for source_subset in source_subsets:
                                     "raw_transcription",
                                     "gender",
                                     "lang_id",
+                                    "language",
                                     "lang_group_id",
                                 ]
                             ),
@@ -188,7 +223,14 @@ for source_subset in source_subsets:
                 ]
             ),
             preprocess_steps=[
-                JoinStreams(
+                # The following JointStream operator is unique for fleurs
+                # It removes redundant repetitions in the target ("right") stream - repetitions of the same translation text targets
+                # The repetitions are inherent to the structure of the fleurs dataset
+                # On the other hand, we do preserve the repeated recornings of the input speech (1-3 recordings per target instance),
+                #    as they contain recordings by different speakers and different recording conditions, therefore considered as
+                #    separate instannces
+                # The unique JointStream operator also adds '.' at the end of text instances, to improve the behavior of the metric (sacrebleu)
+                JoinStreamsFleurs(
                     left_stream="test_input",
                     right_stream="test_target",
                     how="inner",
@@ -197,7 +239,12 @@ for source_subset in source_subsets:
                 ),
                 ToAudio(field="audio"),
                 Rename(field="transcription", to_field="translation"),
-                Rename(field="language", to_field="target_language"),
+                AddFields(
+                    {
+                        "source_language": lang_name[source_subset],
+                        "target_language": lang_name[target_subset],
+                    }
+                ),
             ],
             task="tasks.translation.speech",
             templates=[

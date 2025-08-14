@@ -439,8 +439,8 @@ class ChatAPIFormat(BaseFormat):
                     data_url = src
                 contents.append(
                     {
-                        "type": "audio",
-                        "audio": {"data": data_url, "mime_type": "audio/wav"},
+                        "type": "input_audio",
+                        "input_audio": {"data": data_url, "format": "wav"},
                     }
                 )
 
