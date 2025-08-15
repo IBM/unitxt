@@ -147,9 +147,10 @@ class TestFormats(UnitxtTestCase):
                 "target_prefix": "The answer is ",
                 "system_prompt": "You are a smart assistant.",
                 "media": {
+                    "audios": [],
                     "images": [
                         {"image": create_random_jpeg_image(2, 2, 1), "format": "JPEG"}
-                    ]
+                    ],
                 },
             },
         ]
@@ -259,7 +260,7 @@ class TestFormats(UnitxtTestCase):
                     },
                 ],
                 "demos": demo_instances,
-                "media": {"images": []},
+                "media": {"audios": [], "images": []},
             },
         ]
 

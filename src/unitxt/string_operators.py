@@ -93,6 +93,20 @@ class Strip(FieldOperator):
         return value.strip()
 
 
+class StripQuotation(FieldOperator):
+    def process_value(self, value: str) -> str:
+        if value.startswith('"') and value.endswith('"'):
+            return value.strip('"')
+        return value
+
+
+class AddFullStop(FieldOperator):
+    def process_value(self, value: str) -> str:
+        if value[-1] not in [".", "?", "!"]:
+            return value + "."
+        return value
+
+
 class Replace(FieldOperator):
     old: str
     new: str

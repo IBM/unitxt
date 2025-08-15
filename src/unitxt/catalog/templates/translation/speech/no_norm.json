@@ -1,0 +1,5 @@
+{
+    "__type__": "input_output_template",
+    "input_format": "{audio}translate the speech to {target_language}",
+    "output_format": "{translation}"
+}

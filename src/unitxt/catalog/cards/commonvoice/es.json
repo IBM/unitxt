@@ -1,0 +1,35 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "mozilla-foundation/common_voice_17_0",
+        "name": "es",
+        "splits": [
+            "test"
+        ],
+        "data_classification_policy": [
+            "public"
+        ],
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "to_audio",
+            "field": "audio"
+        },
+        {
+            "__type__": "rename",
+            "field": "sentence",
+            "to_field": "text"
+        },
+        {
+            "__type__": "strip_quotation",
+            "field": "text"
+        }
+    ],
+    "task": "tasks.speech_recognition_multilingual",
+    "templates": [
+        "templates.speech_recognition.multilingual"
+    ],
+    "__title__": "CommonVoice-17-es"
+}
