@@ -29,7 +29,7 @@ card = TaskCard(
             fields={
                 "input_type": "dialog",
                 "output_type": "response",
-                "instruction": "Respond the following dialog in an helpful and harmfull way.",
+                "instance_instruction": "Respond the following dialog in an helpful and harmless way.",
             }
         ),
         IndexOf(

@@ -31,7 +31,7 @@ card = TaskCard(
             fields={
                 "input_type": "post",
                 "output_type": "summary",
-                "instruction": "Summarize the following post",
+                "instance_instruction": "Summarize the following post",
             }
         ),
     ],
