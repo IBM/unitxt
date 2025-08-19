@@ -90,7 +90,7 @@ for lang in subsets_from_en:
             data_dir=local_data_path + "en",
             split="test",
             streaming=True,
-            requirements=["datasets<4.0.0"],
+            # requirements=["datasets<4.0.0"],
         ),
         preprocess_steps=[
             ToAudio(field="audio"),
@@ -107,7 +107,7 @@ for lang in subsets_from_en:
         ],
     )
 
-    if first:
+    if first and os.path.isdir(local_data_path):
         test_card(card, debug=True)
         first = False
 
