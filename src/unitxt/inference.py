@@ -259,20 +259,6 @@ class InferenceEngine(abc.ABC, MockInferenceMixin, CachedInferenceMixin):
     support_log_probs: bool = False
 
     @abc.abstractmethod
-    async def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        """Perform inference on the input dataset.
-
-        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string.
-        return_meta_data is only supported for some InferenceEngines.
-        predictions.
-        """
-        pass
-
-    @abc.abstractmethod
     def prepare_engine(self):
         """Perform inference on the input dataset."""
         pass
@@ -480,14 +466,6 @@ class BatchInferenceEngine(InferenceEngine):
         """
         pass
 
-    async def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        """Process dataset by batching instances."""
-        raise NotImplementedError
-
     async def _infer_streaming(
         self,
         instances: Iterable[Tuple[int, Dict[str, Any]]],
@@ -587,13 +565,6 @@ class SingleInferenceEngine(InferenceEngine):
             Single prediction result
         """
         pass
-
-    async def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        raise NotImplementedError
 
     async def _infer_streaming(
         self,
@@ -3527,18 +3498,13 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         self.engine: InferenceEngine = cls(**args)
         self.data_classification_policy = self.engine.data_classification_policy
 
-    async def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return await self.engine._infer(dataset, return_meta_data)
-
     async def _async_infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
+        if not hasattr(self, "engine"):
+            self.prepare_engine()
         return await self.engine._async_infer(dataset, return_meta_data)
 
     async def _infer_streaming(
@@ -3547,6 +3513,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         total_len: int,
         return_meta_data: bool = False,
     ) -> AsyncIterable[Tuple[Union[int, str, TextGenerationInferenceOutput]]]:
+        if not hasattr(self, "engine"):
+            self.prepare_engine()
         return await self.engine._infer_streaming(
             instances, total_len, return_meta_data
         )
