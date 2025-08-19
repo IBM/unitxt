@@ -1,5 +1,7 @@
 # This Python script is used to prepare card for the covost2 dataset, used for evaluating speech translation
 
+import os
+
 from unitxt.audio_operators import ToAudio
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
@@ -88,6 +90,7 @@ for lang in subsets_from_en:
             data_dir=local_data_path + "en",
             split="test",
             streaming=True,
+            requirements=["datasets<4.0.0"],
         ),
         preprocess_steps=[
             ToAudio(field="audio"),
@@ -135,7 +138,7 @@ for lang in subsets_to_en:
         ],
     )
 
-    if first:
+    if first and os.path.isdir(local_data_path):
         test_card(card, demos_taken_from="test", num_demos=0)
         first = False
 
