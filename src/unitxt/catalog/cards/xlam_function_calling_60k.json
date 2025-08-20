@@ -46,24 +46,22 @@
             "to_field": "properties"
         },
         {
-            "__type__": "set",
-            "fields": {
-                "tools/*/parameters": {
-                    "type": "object"
-                }
-            },
-            "use_deepcopy": true
-        },
-        {
             "__type__": "copy",
             "field": "properties",
             "to_field": "tools/*/parameters/properties",
             "set_every_value": true
         },
         {
+            "__type__": "set",
+            "fields": {
+                "tools/*/parameters/type": "object"
+            },
+            "use_deepcopy": true
+        },
+        {
             "__type__": "execute_expression",
             "to_field": "required",
-            "expression": "[[p for p, c in tool['parameters']['properties'].items() if 'optional' not in c['type']] for tool in tools]"
+            "expression": "[[p for p, c in tool['parameters']['properties'].items() if 'optional' not in c['type'].lower()] for tool in tools]"
         },
         {
             "__type__": "copy",
@@ -71,7 +69,10 @@
             "to_field": "tools/*/parameters/required",
             "set_every_value": true
         },
-        "operators.fix_json_schema"
+        {
+            "__type__": "fix_json_schema_of_parameter_types",
+            "main_field": "tools"
+        }
     ],
     "task": "tasks.tool_calling.multi_turn",
     "templates": [

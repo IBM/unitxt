@@ -4,6 +4,7 @@ from unitxt.loaders import LoadHF
 from unitxt.operators import (
     Copy,
     ExecuteExpression,
+    FixJsonSchemaOfParameterTypes,
     Move,
     Set,
 )
@@ -24,22 +25,22 @@ card = TaskCard(
         LoadJson(field="answers", to_field="reference_calls"),
         LoadJson(field="tools"),
         Move(field="tools/*/parameters", to_field="properties"),
-        Set(fields={"tools/*/parameters": {"type": "object"}}, use_deepcopy=True),
         Copy(
             field="properties",
             to_field="tools/*/parameters/properties",
             set_every_value=True,
         ),
+        Set(fields={"tools/*/parameters/type": "object"}, use_deepcopy=True),
         ExecuteExpression(
             to_field="required",
-            expression="[[p for p, c in tool['parameters']['properties'].items() if 'optional' not in c['type']] for tool in tools]",
+            expression="[[p for p, c in tool['parameters']['properties'].items() if 'optional' not in c['type'].lower()] for tool in tools]",
         ),
         Copy(
             field="required",
             to_field="tools/*/parameters/required",
             set_every_value=True,
         ),
-        "operators.fix_json_schema",
+        FixJsonSchemaOfParameterTypes(main_field="tools"),
     ],
     task="tasks.tool_calling.multi_turn",
     templates=["templates.tool_calling.multi_turn"],
