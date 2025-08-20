@@ -9,6 +9,7 @@ import logging
 import os
 import re
 import sys
+import threading
 import time
 import uuid
 from collections import Counter
@@ -17,6 +18,7 @@ from itertools import islice
 from typing import (
     Any,
     AsyncIterable,
+    Awaitable,
     Dict,
     Iterable,
     List,
@@ -253,16 +255,25 @@ class CachedInferenceMixin(Artifact):
 
 
 class PersistentAsyncLoopMixin:
-    _loop = None
+    """Mixin providing a per-thread asyncio event loop.
 
-    def _get_persistent_loop(self):
-        if self._loop is None or self._loop.is_closed():
-            self._loop = asyncio.new_event_loop()
-        return self._loop
+    Each thread gets its own persistent loop stored in thread-local memory.
+    This avoids 'event loop is closed' and 'loop already running' errors when running async code from multiple threads.
+    """
 
-    def _run_coroutine(self, coroutine):
-        loop = self._get_persistent_loop()
-        return loop.run_until_complete(coroutine)
+    _thread_local = threading.local()  # separate storage per thread
+
+    def _get_loop(self) -> asyncio.AbstractEventLoop:
+        loop = getattr(self._thread_local, "loop", None)
+        if loop is None or loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)  # bind to this thread
+            self._thread_local.loop = loop  # stored only in this thread
+        return loop
+
+    def _run_async(self, coro: Awaitable[Any]) -> Any:
+        loop = self._get_loop()
+        return loop.run_until_complete(coro)
 
 
 class InferenceEngine(
@@ -333,7 +344,7 @@ class InferenceEngine(
         If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
         predictions.
         """
-        return self._run_coroutine(self._async_infer(dataset, return_meta_data))
+        return self._run_async(self._async_infer(dataset, return_meta_data))
 
     def infer_log_probs(
         self,
@@ -345,7 +356,7 @@ class InferenceEngine(
                 f"return_log_probs set to True but supplied engine "
                 f"{self.__class__.__name__} does not support logprobs."
             )
-        return self._run_coroutine(
+        return self._run_async(
             self._async_infer(dataset, return_meta_data, return_log_probs=True)
         )
 
