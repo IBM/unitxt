@@ -308,7 +308,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         predictions = list(model(dataset))
 
-        self.assertListEqual(predictions, ["", "12"])
+        self.assertListEqual(predictions, ["7\n", "12"])
 
     def test_hf_auto_model_inference_engine(self):
         data = get_text_dataset()

@@ -252,7 +252,22 @@ class CachedInferenceMixin(Artifact):
         self._cache[cache_key] = prediction
 
 
-class InferenceEngine(abc.ABC, MockInferenceMixin, CachedInferenceMixin):
+class PersistentAsyncLoopMixin:
+    _loop = None
+
+    def _get_persistent_loop(self):
+        if self._loop is None or self._loop.is_closed():
+            self._loop = asyncio.new_event_loop()
+        return self._loop
+
+    def _run_coroutine(self, coroutine):
+        loop = self._get_persistent_loop()
+        return loop.run_until_complete(coroutine)
+
+
+class InferenceEngine(
+    abc.ABC, MockInferenceMixin, CachedInferenceMixin, PersistentAsyncLoopMixin
+):
     """Abstract base class for inference."""
 
     concurrency_limit: int = 100
@@ -318,7 +333,7 @@ class InferenceEngine(abc.ABC, MockInferenceMixin, CachedInferenceMixin):
         If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
         predictions.
         """
-        return asyncio.run(self._async_infer(dataset, return_meta_data))
+        return self._run_coroutine(self._async_infer(dataset, return_meta_data))
 
     def infer_log_probs(
         self,
@@ -330,7 +345,7 @@ class InferenceEngine(abc.ABC, MockInferenceMixin, CachedInferenceMixin):
                 f"return_log_probs set to True but supplied engine "
                 f"{self.__class__.__name__} does not support logprobs."
             )
-        return asyncio.run(
+        return self._run_coroutine(
             self._async_infer(dataset, return_meta_data, return_log_probs=True)
         )
 
@@ -2377,6 +2392,8 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
             results = wml_inference.infer(dataset["test"])
     """
 
+    support_log_probs: bool = True
+
     def verify(self):
         super().verify()
 
@@ -2422,38 +2439,21 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
         if self._model is None:
             self._load_model()
 
+        # Base params
         params = self.to_dict([WMLGenerationParamsMixin], keep_empty=False)
+
+        if return_log_probs:
+            params = self._set_logprobs_params(params)
+
         inp = instance["source"]
 
         response = await self._model.agenerate(prompt=inp, params=params)
         result = response["results"][0]
-        pred = result.get("generated_text", "")
 
-        if return_meta_data:
-            return TextGenerationInferenceOutput(
-                prediction=pred,
-                generated_text=result.get("generated_text"),
-                input_tokens=result.get("input_token_count"),
-                output_tokens=result.get("generated_token_count"),
-                model_name=self.model_name or self.deployment_id,
-                inference_type=self.label,
-                stop_reason=result.get("stop_reason"),
-                seed=self.random_seed,
-                input_text=inp,
-            )
-        return pred
-
-    async def _infer_log_probs_single(self, instance, return_meta_data: bool = False):
-        if self._model is None:
-            self._load_model()
-
-        params = self.to_dict([WMLGenerationParamsMixin], keep_empty=False)
-        params = self._set_logprobs_params(params)
-        inp = instance["source"]
-
-        response = await self._model.agenerate(prompt=inp, params=params)
-        result = response["results"][0]
-        pred = result.get("generated_tokens", {})
+        if return_log_probs:
+            pred = result.get("generated_tokens", {})
+        else:
+            pred = result.get("generated_text", "")
 
         if return_meta_data:
             return TextGenerationInferenceOutput(
