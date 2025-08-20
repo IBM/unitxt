@@ -31,8 +31,15 @@ for subset in subsets:
             path="mozilla-foundation/common_voice_17_0",
             revision="refs/convert/parquet",
             data_dir=subset,
-            splits=["test"],
             data_classification_policy=["public"],
+            splits=[
+                "invalidated",
+                "other",
+                "test",
+                "train",
+                "validated",
+                "validation",
+            ],
             streaming=True,
         ),
         preprocess_steps=[

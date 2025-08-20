@@ -5,11 +5,16 @@
         "path": "mozilla-foundation/common_voice_17_0",
         "revision": "refs/convert/parquet",
         "data_dir": "de",
-        "splits": [
-            "test"
-        ],
         "data_classification_policy": [
             "public"
+        ],
+        "splits": [
+            "invalidated",
+            "other",
+            "test",
+            "train",
+            "validated",
+            "validation"
         ],
         "streaming": true
     },
