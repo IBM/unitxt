@@ -62,6 +62,20 @@
             "to_field": "topic"
         },
         {
+            "__type__": "filter_by_condition",
+            "values": {
+                "answer": [
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "E",
+                    "?"
+                ]
+            },
+            "condition": "in"
+        },
+        {
             "__type__": "map_values",
             "field": "answer",
             "mapping": {
@@ -72,6 +86,10 @@
                 "E": 4,
                 "?": null
             }
+        },
+        {
+            "__type__": "filter_by_expression",
+            "expression": "answer < len(choices)"
         }
     ],
     "task": "tasks.qa.multiple_choice.with_topic",

@@ -1,7 +1,12 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Filter
-from unitxt.operators import ListFieldValues, MapValues
+from unitxt.operators import (
+    FilterByCondition,
+    FilterByExpression,
+    ListFieldValues,
+    MapValues,
+)
 from unitxt.processors import LiteralEval, Lower
 from unitxt.splitters import RenameSplits
 from unitxt.string_operators import MapReplace
@@ -40,6 +45,8 @@ config_names = [
     "Sociology",
 ]
 
+mapping = {"A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "?": None}
+
 for name in config_names:
     card = TaskCard(
         loader=LoadHF(
@@ -60,10 +67,12 @@ for name in config_names:
             ),
             LiteralEval(field="choices"),
             Lower(field="subfield", to_field="topic"),
+            FilterByCondition(values={"answer": list(mapping.keys())}, condition="in"),
             MapValues(
                 field="answer",
-                mapping={"A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "?": None},
+                mapping=mapping,
             ),
+            FilterByExpression(expression="answer < len(choices)"),
         ],
         task="tasks.qa.multiple_choice.with_topic",
         templates="templates.qa.multiple_choice.with_topic.all",
