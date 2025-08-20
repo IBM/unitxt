@@ -44,14 +44,14 @@ from .llm_as_judge_utils import (
 )
 from .logging_utils import get_logger
 from .metric_utils import EmptyPrediction
-from .metrics import BulkInstanceMetric
+from .metrics import MapReduceMetric
 from .task import Task
 from .templates import Template
 
 logger = get_logger(__name__)
 
 
-class LLMJudge(BulkInstanceMetric):
+class LLMJudge(MapReduceMetric[Any, Dict[str, Any]]):
     """A metric class to evaluate instances using LLM as a Judge.
 
     Evaluations are performed in two steps. First, the LLM is asked to generate an assessment following a CoT approach based on the criteria. Then, the same LLM is asked to select one of the available options. A summary of the general assessment can be generated for easy consumption by end users.
@@ -270,6 +270,55 @@ class LLMJudge(BulkInstanceMetric):
 
         return predictions
 
+    def map(
+        self, 
+        prediction: Any, 
+        references: List[Any], 
+        task_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Process a single instance using the LLM judge.
+        
+        This method processes one instance at a time, but the actual implementation
+        will collect instances and process them in batches for efficiency.
+        """
+        # This method is implemented by subclasses like LLMJudgeDirect
+        raise NotImplementedError("Subclasses must implement map method")
+
+    def reduce(self, intermediates: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Aggregate individual instance results into global scores."""
+        if not intermediates:
+            return {}
+        
+        # Collect all numeric scores for averaging
+        numeric_scores = {}
+        for result in intermediates:
+            for key, value in result.items():
+                if isinstance(value, (int, float)):
+                    if key not in numeric_scores:
+                        numeric_scores[key] = []
+                    numeric_scores[key].append(value)
+        
+        # Calculate averages
+        aggregated = {}
+        for key, values in numeric_scores.items():
+            if values:
+                aggregated[key] = sum(values) / len(values)
+        
+        # Set the main score
+        if self.main_score in aggregated:
+            aggregated["score"] = aggregated[self.main_score]
+            aggregated["score_name"] = self.main_score
+        
+        return aggregated
+
+    def reduce_one(self, intermediate: Dict[str, Any]) -> Dict[str, Any]:
+        """Return individual instance scores."""
+        result = dict(intermediate)
+        if self.main_score in result:
+            result["score"] = result[self.main_score]
+            result["score_name"] = self.main_score
+        return result
+
 
 class LLMJudgeDirect(LLMJudge):
     """LLMJudgeDirect is a specialized evaluation metric that performs Direct Assessment using an LLM to score responses based on a predefined evaluation criteria.
@@ -454,15 +503,26 @@ class LLMJudgeDirect(LLMJudge):
             for r in results
         ]
 
-    def compute(
-        self,
-        references: List[List[str]],
-        predictions: List[str],
-        task_data: List[Dict[str, Any]],
-    ) -> List[Dict]:
+    def map(
+        self, 
+        prediction: Any, 
+        references: List[Any], 
+        task_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Process a single instance for compatibility with MapReduceMetric."""
+        # Extract the evaluation inputs for a single instance
+        evaluation_inputs = [(prediction, references, task_data)]
+        
+        # Use map_stream with a single instance
+        results = list(self.map_stream(evaluation_inputs))
+        
+        # Return the first (and only) result
+        return results[0] if results else {}
+
+    def map_stream(self, evaluation_inputs_stream):
         r"""Performs direct assessment evaluation on the given predictions and references.
 
-        This method evaluates the quality of of the predictions by calculating scores for each instance based on a criterion.
+        This method evaluates the quality of the predictions by calculating scores for each instance based on a criterion.
 
         Returns:
         --------
@@ -563,70 +623,115 @@ class LLMJudgeDirect(LLMJudge):
             f'Starting evaluation with evaluator "{self.evaluator_name}" and provider "{self.inference_engine.get_pretty_print_name()}'
         )
 
-        evaluations_count = len(task_data)
-        # TODO: find out how to serialize and deserialize enums
-        criteria_list = self.get_criteria(task_data, evaluations_count)
-        predictions = self.get_predictions(task_data, criteria_list, predictions)
-        contexts = self.get_contexts(task_data, criteria_list)
-        self.__set_main_score(criteria_list)
-        if self.check_positional_bias:
-            criteria_list += [
-                CriteriaWithOptions(
-                    name=criteria.name,
-                    description=criteria.description,
-                    option_map=criteria.option_map,
-                    options=list(reversed(criteria.options)),
-                )
-                for criteria in criteria_list
-            ]
-            contexts += contexts
-            predictions += predictions
+        # Prepare all instances for inference without aggregating heavy data
+        prepared_instances = []
+        for prediction, references, task_data in evaluation_inputs_stream:
+            prepared_instance = self._prepare_instance_for_inference(prediction, references, task_data)
+            prepared_instances.append(prepared_instance)
+        
+        # Set main score based on first criteria (all should be same in direct assessment)
+        if prepared_instances:
+            self.__set_main_score([prepared_instances[0]['criteria']])
+        
+        # Run all inference steps on the prepared instances
+        return self._run_inference_on_all(prepared_instances)
 
-        parsed_criterias = [
-            self.__get_parsed_criteria(criteria) for criteria in criteria_list
-        ]
+    def _prepare_instance_for_inference(self, prediction, references, task_data):
+        """Prepare a single instance for inference without keeping heavy data."""
+        # Get criteria for this specific instance
+        criteria = self.get_criteria([task_data], 1)[0]
+        
+        # Get prediction for this specific instance
+        pred = self.get_predictions([task_data], [criteria], [prediction])[0]
+        
+        # Get context for this specific instance
+        context = self.get_contexts([task_data], [criteria])[0]
+        
+        # Parse criteria for this instance
+        criteria_description, criteria_option_names, display_options_instruction = self.__get_parsed_criteria(criteria)
+        
+        return {
+            'prediction': pred,
+            'context': context,
+            'criteria': criteria,
+            'criteria_description': criteria_description,
+            'criteria_option_names': criteria_option_names,
+            'display_options_instruction': display_options_instruction,
+        }
 
-        (
-            criteria_description_list,
-            criteria_option_names_list,
-            display_options_instruction_list,
-        ) = zip(*parsed_criterias)
-
-        assessment_for_summaries_slice = slice(0, evaluations_count)
-
-        assessment_instances = [
-            {
-                "context_variables": context,
-                "response": prediction,
-                "display_options_instruction": display_options_instruction,
-                "criteria_description": criteria_description,
+    def _run_inference_on_all(self, prepared_instances):
+        """Run inference on all prepared instances efficiently."""
+        # Prepare all assessment instances
+        assessment_instances = []
+        instance_metadata = []
+        
+        for i, prep in enumerate(prepared_instances):
+            # Store metadata for later use
+            instance_metadata.append({
+                'criteria': prep['criteria'],
+                'criteria_description': prep['criteria_description'],
+                'criteria_option_names': prep['criteria_option_names'],
+                'display_options_instruction': prep['display_options_instruction'],
+                'original_index': i
+            })
+            
+            # Create assessment instance
+            assessment_instances.append({
+                "context_variables": prep['context'],
+                "response": prep['prediction'],
+                "display_options_instruction": prep['display_options_instruction'],
+                "criteria_description": prep['criteria_description'],
                 "data_classification_policy": ["public"],
-            }
-            for context, prediction, criteria_description, display_options_instruction in zip(
-                contexts,
-                predictions,
-                criteria_description_list,
-                display_options_instruction_list,
-            )
-        ]
+            })
+            
+            # If checking positional bias, add reversed version
+            if self.check_positional_bias:
+                reversed_criteria = CriteriaWithOptions(
+                    name=prep['criteria'].name,
+                    description=prep['criteria'].description,
+                    option_map=prep['criteria'].option_map,
+                    options=list(reversed(prep['criteria'].options)),
+                )
+                rev_criteria_description, rev_criteria_option_names, rev_display_options_instruction = self.__get_parsed_criteria(reversed_criteria)
+                
+                # Store reversed metadata
+                instance_metadata.append({
+                    'criteria': reversed_criteria,
+                    'criteria_description': rev_criteria_description,
+                    'criteria_option_names': rev_criteria_option_names,
+                    'display_options_instruction': rev_display_options_instruction,
+                    'original_index': i,
+                    'is_positional_bias': True
+                })
+                
+                # Add reversed assessment instance
+                assessment_instances.append({
+                    "context_variables": prep['context'],
+                    "response": prep['prediction'],
+                    "display_options_instruction": rev_display_options_instruction,
+                    "criteria_description": rev_criteria_description,
+                    "data_classification_policy": ["public"],
+                })
+        
+        # Perform assessment step on all instances at once
         assessment_prompts, assessment_outputs, _ = self.perform_evaluation_step(
             assessment_instances, self.assessment_task, self.assessment_template
         )
         logger.info("The assessment was generated successfully.")
-
+        
+        # Summarization step (if enabled)
         summarization_prompts = None
         summarization_outputs = None
         if self.generate_summaries:
-            # Summarisation Stage
+            evaluations_count = len(prepared_instances)
             summarization_instances = [
                 {
                     "assessment": assessment_output,
                     "data_classification_policy": ["public"],
                 }
-                for assessment_output in assessment_outputs[
-                    assessment_for_summaries_slice
-                ]
+                for assessment_output in assessment_outputs[:evaluations_count]  # Only original assessments, not positional bias
             ]
+            
             (
                 summarization_prompts,
                 summarization_outputs,
@@ -637,31 +742,24 @@ class LLMJudgeDirect(LLMJudge):
                 self.summarization_template,
             )
             logger.info("The summary was generated successfully.")
-
-        option_selection_instances = [
-            {
-                "criteria_description": criteria_description,
-                "display_options_instruction": display_options_instruction,
-                "options": criteria_option_names,
+        
+        # Option selection step
+        option_selection_instances = []
+        for metadata in instance_metadata:
+            option_selection_instances.append({
+                "criteria_description": metadata['criteria_description'],
+                "display_options_instruction": metadata['display_options_instruction'],
+                "options": metadata['criteria_option_names'],
                 "data_classification_policy": ["public"],
-            }
-            for (
-                criteria_description,
-                display_options_instruction,
-                criteria_option_names,
-            ) in zip(
-                criteria_description_list,
-                display_options_instruction_list,
-                criteria_option_names_list,
-            )
-        ]
-
+            })
+        
         previous_messages = [
             [assessment_prompt[0], {"role": "assistant", "content": assessment_output}]
             for assessment_prompt, assessment_output in zip(
                 assessment_prompts, assessment_outputs
             )
         ]
+        
         (
             option_selection_prompts,
             option_selection_outputs,
@@ -673,7 +771,11 @@ class LLMJudgeDirect(LLMJudge):
             previous_messages,
         )
         logger.info("The selections were calculated successfully.")
-
+        
+        # Process results for each original instance
+        evaluations_count = len(prepared_instances)
+        criteria_list = [meta['criteria'] for meta in instance_metadata]
+        
         results = self.__get_results(
             assessment_prompts,
             assessment_outputs,
@@ -685,7 +787,7 @@ class LLMJudgeDirect(LLMJudge):
             evaluations_count,
             criteria_list,
         )
-
+        
         return self.clean_results(results)
 
 
@@ -973,18 +1075,24 @@ class LLMJudgePairwise(LLMJudge):
     def __set_main_score(self, predictions: List[Dict[str, str]]):
         self.main_score = f"{next(iter(predictions[0].keys()))}_winrate"
 
-    def compute(
-        self,
-        references: List[List[str]],
-        predictions: List[str],
-        task_data: List[Dict[str, str]],
-    ) -> List[Dict]:
-        r"""Executes the pairwise comparison evaluation, including assessment, summarization, and option selection. It computes the winrate and ranking for the responses.
+    def map(
+        self, 
+        prediction: Any, 
+        references: List[Any], 
+        task_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Process a single instance for compatibility with MapReduceMetric."""
+        # Extract the evaluation inputs for a single instance
+        evaluation_inputs = [(prediction, references, task_data)]
+        
+        # Use map_stream with a single instance
+        results = list(self.map_stream(evaluation_inputs))
+        
+        # Return the first (and only) result
+        return results[0] if results else {}
 
-        Args:
-            references (List[List[str]]): A list of reference responses for comparison.
-            predictions (List[str]): A list of predicted responses.
-            task_data (List[Dict[str, str]]): Task data to be used for evaluation.
+    def map_stream(self, evaluation_inputs_stream):
+        r"""Executes the pairwise comparison evaluation, including assessment, summarization, and option selection. It computes the winrate and ranking for the responses.
 
         Returns:
         --------
@@ -1055,348 +1163,14 @@ class LLMJudgePairwise(LLMJudge):
                                 "system1",
                                 "system1"
                             ],
-                            "system1_prompts": {
-                                "assessment": [
-                                    [
-                                        {
-                                            "role": "user",
-                                            "content": "You are provided a pair of responses (Re..."
-                                        }
-                                    ],
-                                    [
-                                        {
-                                            "role": "user",
-                                            "content": "You are provided a pair of responses (Re..."
-                                        }
-                                    ]
-                                ],
-                                "positional_bias_assessment": [
-                                    [
-                                        {
-                                            "role": "user",
-                                            "content": "You are provided a pair of responses (Re..."
-                                        }
-                                    ],
-                                    [
-                                        {
-                                            "role": "user",
-                                            "content": "You are provided a pair of responses (Re..."
-                                        }
-                                    ]
-                                ],
-                                "option_selection": [
-                                    [
-                                        {
-                                            "content": "You are provided a pair of responses (Re...",
-                                            "role": "user"
-                                        },
-                                        {
-                                            "content": "To determine the better response accordi...",
-                                            "role": "assistant"
-                                        },
-                                        {
-                                            "content": "Now considering the evaluation criteria,...",
-                                            "role": "user"
-                                        }
-                                    ],
-                                    [
-                                        {
-                                            "content": "You are provided a pair of responses (Re...",
-                                            "role": "user"
-                                        },
-                                        {
-                                            "content": "To determine the better response accordi...",
-                                            "role": "assistant"
-                                        },
-                                        {
-                                            "content": "Now considering the evaluation criteria,...",
-                                            "role": "user"
-                                        }
-                                    ]
-                                ],
-                                "positional_bias_option_selection": [
-                                    [
-                                        {
-                                            "content": "You are provided a pair of responses (Re...",
-                                            "role": "user"
-                                        },
-                                        {
-                                            "content": "To determine the better response accordi...",
-                                            "role": "assistant"
-                                        },
-                                        {
-                                            "content": "Now considering the evaluation criteria,...",
-                                            "role": "user"
-                                        }
-                                    ],
-                                    [
-                                        {
-                                            "content": "You are provided a pair of responses (Re...",
-                                            "role": "user"
-                                        },
-                                        {
-                                            "content": "To determine the better response accordi...",
-                                            "role": "assistant"
-                                        },
-                                        {
-                                            "content": "Now considering the evaluation criteria,...",
-                                            "role": "user"
-                                        }
-                                    ]
-                                ]
-                            },
                             "system1_winrate": 1.0,
                             "system1_llm_as_judge": 1.0,
                             "system1_ranking": 1,
                             "system1_response_name": "system1",
-                            "system2_contest_results": [
-                                false,
-                                true
-                            ],
-                            "system2_selections": [
-                                "system1",
-                                "system2"
-                            ],
-                            "system2_compared_to": [
-                                "system1",
-                                "system3"
-                            ],
-                            "system2_assessments": [
-                                "To determine the better response accordi...",
-                                "To determine the better response accordi..."
-                            ],
-                            "system2_positional_bias_assessments": [
-                                "To determine the better response accordi...",
-                                "To determine the better response accordi..."
-                            ],
-                            "system2_option_selection_outputs": [
-                                "system1",
-                                "system2"
-                            ],
-                            "system2_positional_bias": [
-                                false,
-                                false
-                            ],
-                            "system2_positional_bias_selection": [
-                                "system1",
-                                "system2"
-                            ],
-                            "system2_prompts": {
-                                "assessment": [
-                                    [
-                                        {
-                                            "role": "user",
-                                            "content": "You are provided a pair of responses (Re..."
-                                        }
-                                    ],
-                                    [
-                                        {
-                                            "role": "user",
-                                            "content": "You are provided a pair of responses (Re..."
-                                        }
-                                    ]
-                                ],
-                                "positional_bias_assessment": [
-                                    [
-                                        {
-                                            "role": "user",
-                                            "content": "You are provided a pair of responses (Re..."
-                                        }
-                                    ],
-                                    [
-                                        {
-                                            "role": "user",
-                                            "content": "You are provided a pair of responses (Re..."
-                                        }
-                                    ]
-                                ],
-                                "option_selection": [
-                                    [
-                                        {
-                                            "content": "You are provided a pair of responses (Re...",
-                                            "role": "user"
-                                        },
-                                        {
-                                            "content": "To determine the better response accordi...",
-                                            "role": "assistant"
-                                        },
-                                        {
-                                            "content": "Now considering the evaluation criteria,...",
-                                            "role": "user"
-                                        }
-                                    ],
-                                    [
-                                        {
-                                            "content": "You are provided a pair of responses (Re...",
-                                            "role": "user"
-                                        },
-                                        {
-                                            "content": "To determine the better response accordi...",
-                                            "role": "assistant"
-                                        },
-                                        {
-                                            "content": "Now considering the evaluation criteria,...",
-                                            "role": "user"
-                                        }
-                                    ]
-                                ],
-                                "positional_bias_option_selection": [
-                                    [
-                                        {
-                                            "content": "You are provided a pair of responses (Re...",
-                                            "role": "user"
-                                        },
-                                        {
-                                            "content": "To determine the better response accordi...",
-                                            "role": "assistant"
-                                        },
-                                        {
-                                            "content": "Now considering the evaluation criteria,...",
-                                            "role": "user"
-                                        }
-                                    ],
-                                    [
-                                        {
-                                            "content": "You are provided a pair of responses (Re...",
-                                            "role": "user"
-                                        },
-                                        {
-                                            "content": "To determine the better response accordi...",
-                                            "role": "assistant"
-                                        },
-                                        {
-                                            "content": "Now considering the evaluation criteria,...",
-                                            "role": "user"
-                                        }
-                                    ]
-                                ]
-                            },
                             "system2_winrate": 0.5,
                             "system2_llm_as_judge": 0.5,
                             "system2_ranking": 2,
                             "system2_response_name": "system2",
-                            "system3_contest_results": [
-                                false,
-                                false
-                            ],
-                            "system3_selections": [
-                                "system1",
-                                "system2"
-                            ],
-                            "system3_compared_to": [
-                                "system1",
-                                "system2"
-                            ],
-                            "system3_assessments": [
-                                "To determine the better response accordi...",
-                                "To determine the better response accordi..."
-                            ],
-                            "system3_positional_bias_assessments": [
-                                "To determine the better response accordi...",
-                                "To determine the better response accordi..."
-                            ],
-                            "system3_option_selection_outputs": [
-                                "system1",
-                                "system2"
-                            ],
-                            "system3_positional_bias": [
-                                false,
-                                false
-                            ],
-                            "system3_positional_bias_selection": [
-                                "system1",
-                                "system2"
-                            ],
-                            "system3_prompts": {
-                                "assessment": [
-                                    [
-                                        {
-                                            "role": "user",
-                                            "content": "You are provided a pair of responses (Re..."
-                                        }
-                                    ],
-                                    [
-                                        {
-                                            "role": "user",
-                                            "content": "You are provided a pair of responses (Re..."
-                                        }
-                                    ]
-                                ],
-                                "positional_bias_assessment": [
-                                    [
-                                        {
-                                            "role": "user",
-                                            "content": "You are provided a pair of responses (Re..."
-                                        }
-                                    ],
-                                    [
-                                        {
-                                            "role": "user",
-                                            "content": "You are provided a pair of responses (Re..."
-                                        }
-                                    ]
-                                ],
-                                "option_selection": [
-                                    [
-                                        {
-                                            "content": "You are provided a pair of responses (Re...",
-                                            "role": "user"
-                                        },
-                                        {
-                                            "content": "To determine the better response accordi...",
-                                            "role": "assistant"
-                                        },
-                                        {
-                                            "content": "Now considering the evaluation criteria,...",
-                                            "role": "user"
-                                        }
-                                    ],
-                                    [
-                                        {
-                                            "content": "You are provided a pair of responses (Re...",
-                                            "role": "user"
-                                        },
-                                        {
-                                            "content": "To determine the better response accordi...",
-                                            "role": "assistant"
-                                        },
-                                        {
-                                            "content": "Now considering the evaluation criteria,...",
-                                            "role": "user"
-                                        }
-                                    ]
-                                ],
-                                "positional_bias_option_selection": [
-                                    [
-                                        {
-                                            "content": "You are provided a pair of responses (Re...",
-                                            "role": "user"
-                                        },
-                                        {
-                                            "content": "To determine the better response accordi...",
-                                            "role": "assistant"
-                                        },
-                                        {
-                                            "content": "Now considering the evaluation criteria,...",
-                                            "role": "user"
-                                        }
-                                    ],
-                                    [
-                                        {
-                                            "content": "You are provided a pair of responses (Re...",
-                                            "role": "user"
-                                        },
-                                        {
-                                            "content": "To determine the better response accordi...",
-                                            "role": "assistant"
-                                        },
-                                        {
-                                            "content": "Now considering the evaluation criteria,...",
-                                            "role": "user"
-                                        }
-                                    ]
-                                ]
-                            },
                             "system3_winrate": 0.0,
                             "system3_llm_as_judge": 0.0,
                             "system3_ranking": 3,
@@ -1409,130 +1183,74 @@ class LLMJudgePairwise(LLMJudge):
             f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
         )
 
-        instances_count = len(predictions)
-        criteria_list = self.get_criteria(task_data, instances_count)
-        contexts = self.get_contexts(task_data, criteria_list)
-        predictions = self.get_predictions(task_data, criteria_list, predictions)
-        predictions = self.__convert_predictions_to_dicts(predictions)
-        self.__set_main_score(predictions)
+        # Prepare all instances for inference without aggregating heavy data
+        prepared_instances = []
+        for prediction, references, task_data in evaluation_inputs_stream:
+            prepared_instance = self._prepare_instance_for_inference(prediction, references, task_data)
+            prepared_instances.append(prepared_instance)
+        
+        # Run all inference steps on the prepared instances
+        return self._run_inference_on_all(prepared_instances)
+
+    def _prepare_instance_for_inference(self, prediction, references, task_data):
+        """Prepare a single instance for pairwise inference without keeping heavy data."""
+        # Get criteria for this specific instance
+        criteria = self.get_criteria([task_data], 1)[0]
+        
+        # Get context for this specific instance
+        context = self.get_contexts([task_data], [criteria])[0]
+        
+        # Get predictions for this specific instance and convert to dicts
+        pred = self.get_predictions([task_data], [criteria], [prediction])[0]
+        pred_dict = self.__parse_prediction_to_dict(pred)
+        
+        return {
+            'prediction_dict': pred_dict,
+            'context': context,
+            'criteria': criteria,
+            'task_data': task_data,
+        }
+
+    def _run_inference_on_all(self, prepared_instances):
+        """Run pairwise inference on all prepared instances efficiently."""
+        if not prepared_instances:
+            return []
+        
+        # Set main score and reduction map based on first instance
+        first_pred_dict = prepared_instances[0]['prediction_dict']
+        self.__set_main_score([first_pred_dict])
         self.reduction_map = {"mean": ["score"]}
         self.reduction_map["mean"].extend(
-            [f"{key}_winrate" for key in predictions[0].keys()]
+            [f"{key}_winrate" for key in first_pred_dict.keys()]
         )
-
-        predictions_count_list = [len(prediction) for prediction in predictions]
-        combination_indexes_list = [
-            list(itertools.combinations(range(evaluations_count), 2))
-            for evaluations_count in predictions_count_list
-        ]
-        contests_count_list = [
-            len(combination_indexes) for combination_indexes in combination_indexes_list
-        ]
-
-        logger.info(
-            f"The evaluation will perform {sum(contests_count_list) * [1, 2][self.check_positional_bias]} ({' + '.join([f'{c * [1, 2][self.check_positional_bias]}' for c in contests_count_list])}) pairwise comparisons"
-        )
-
-        response_pairs_list: List[List[List[str]]] = []
-        option_pairs_list: List[List[List[str]]] = []
-        predictions_names = set(predictions[0].keys())
-        for i, combination_indexes in enumerate(combination_indexes_list):
-            instance_predictions = predictions[i]
-            instance_predictions_names = list(instance_predictions.keys())
-            if set(instance_predictions_names) != predictions_names:
-                raise Exception(
-                    f"The set of prediction names is different between instance 0 and instance {i}. In prediction 0, it is {sorted(predictions_names)}. In prediction {i}, it is {sorted(instance_predictions_names)}. Make sure the same number of predictions is passed for all instances."
-                )
-
-            response_pairs: List[List[str]] = []
-            option_pairs: List[List[str]] = []
-            for combination in combination_indexes:
-                (idx_1, idx_2) = combination
-                response_name_1 = instance_predictions_names[idx_1]
-                response_name_2 = instance_predictions_names[idx_2]
-                response_pairs.append(
-                    [
-                        instance_predictions[response_name_1],
-                        instance_predictions[response_name_2],
-                    ]
-                )
-                option_pairs.append([response_name_1, response_name_2])
-            response_pairs_list.append(response_pairs)
-            option_pairs_list.append(option_pairs)
-
-        if self.check_positional_bias:
-            criteria_list.extend(criteria_list)
-            contexts.extend(contexts)
-            for response_pairs, option_pairs in zip(
-                response_pairs_list, option_pairs_list
-            ):
-                response_pairs += [
-                    list(reversed(response_pair)) for response_pair in response_pairs
-                ]
-                option_pairs += [
-                    list(reversed(option_pair)) for option_pair in option_pairs
-                ]
-
-        assessment_instances = [
-            {
-                "context_variables": contexts[i],
-                "response_a": response_pair[0],
-                "response_b": response_pair[1],
-                "option_a": option_pair[0],
-                "option_b": option_pair[1],
-                "criteria_name": criteria_list[i].name,
-                "criteria_description": criteria_list[i].description,
-                "data_classification_policy": ["public"],
-            }
-            for i, (response_pairs, option_pairs) in enumerate(
-                zip(response_pairs_list, option_pairs_list)
-            )
-            for response_pair, option_pair in zip(response_pairs, option_pairs)
-        ]
+        
+        # Prepare all assessment instances without keeping heavy data aggregated
+        all_assessment_instances = []
+        all_instance_metadata = []
+        
+        for prep_instance in prepared_instances:
+            assessment_instances, instance_metadata = self._prepare_assessment_instances(prep_instance)
+            all_assessment_instances.extend(assessment_instances)
+            all_instance_metadata.append(instance_metadata)
+        
+        # Perform assessment step on all instances at once
         assessment_prompts, assessment_outputs, _ = self.perform_evaluation_step(
-            assessment_instances, self.assessment_task, self.assessment_template
+            all_assessment_instances, self.assessment_task, self.assessment_template
         )
         logger.info("The assessment was generated successfully.")
-
-        # the slices used to get the assessment for each summary generation instance
-        # it will grab the whole assessment for a particular instance or half of it depending on the value of check_positional_bias
-        incremental_contests_count_list = [
-            sum(contests_count_list[: i + 1]) for i in range(len(contests_count_list))
-        ]
-
-        # Summarisation Stage
+        
+        # Summarization step (if enabled)
         summarization_prompts = None
         summarization_outputs = None
         if self.generate_summaries:
-            incremental_contests_count_with_positional_bias_list = [
-                incremental_contests_count * [1, 2][self.check_positional_bias]
-                for incremental_contests_count in incremental_contests_count_list
-            ]
-            assessment_for_summaries_slice_list = [
-                slice(
-                    incremental_contests_count_with_positional_bias_list[i - 1]
-                    if i > 0
-                    else 0,
-                    (
-                        incremental_contests_count_with_positional_bias_list[i - 1]
-                        if i > 0
-                        else 0
-                    )
-                    + contests_count_list[i],
-                )
-                for i in range(len(contests_count_list))
-            ]
-            summarization_instances = [
-                {
-                    "assessment": assessment_output,
-                    "data_classification_policy": ["public"],
-                }
-                for assessment_for_summaries_slice in assessment_for_summaries_slice_list
-                for assessment_output in assessment_outputs[
-                    assessment_for_summaries_slice
-                ]
-            ]
-
+            summarization_instances = []
+            for metadata in all_instance_metadata:
+                for i in range(metadata['contests_count']):
+                    summarization_instances.append({
+                        "assessment": assessment_outputs[metadata['assessment_start_idx'] + i],
+                        "data_classification_policy": ["public"],
+                    })
+            
             (
                 summarization_prompts,
                 summarization_outputs,
@@ -1543,41 +1261,23 @@ class LLMJudgePairwise(LLMJudge):
                 self.summarization_template,
             )
             logger.info("The summary was generated successfully.")
-
-        score_option_instruction_list = [
-            "".join(
-                [
-                    f'Choose "{option}" if Response {option} is better quality.\n'
-                    for option in option_pair
-                ]
-            )
-            for option_pairs in option_pairs_list
-            for option_pair in option_pairs
-        ]
-
-        option_selection_instances = [
-            {
-                "options": [f"Response {option}" for option in option_pair],
-                "score_option_instruction": score_option_instruction,
+        
+        # Option selection step
+        option_selection_instances = []
+        for assessment_instance in all_assessment_instances:
+            option_selection_instances.append({
+                "options": [f"Response {option}" for option in assessment_instance["option_pair"]],
+                "score_option_instruction": assessment_instance["score_option_instruction"],
                 "data_classification_policy": ["public"],
-            }
-            for option_pair, score_option_instruction in zip(
-                [
-                    option_pair
-                    for option_pairs in option_pairs_list
-                    for option_pair in option_pairs
-                ],
-                score_option_instruction_list,
-            )
-        ]
-
+            })
+        
         previous_messages = [
             [assessment_prompt[0], {"role": "assistant", "content": assessment_output}]
             for assessment_prompt, assessment_output in zip(
                 assessment_prompts, assessment_outputs
             )
         ]
-
+        
         (
             option_selection_prompts,
             option_selection_outputs,
@@ -1591,36 +1291,90 @@ class LLMJudgePairwise(LLMJudge):
         # Selections are of the form 'Response n', so we just keep n
         selections = [selection.split(" ")[-1] for selection in selections]
         logger.info("The selections were calculated successfully.")
+        
+        # Process results for each instance
         results = []
-        slice_start = 0
-        for i, incremental_contests_count in enumerate(incremental_contests_count_list):
-            slice_end = slice_start + contests_count_list[i]
+        assessment_idx = 0
+        for i, (prep_instance, metadata) in enumerate(zip(prepared_instances, all_instance_metadata)):
+            contests_count = metadata['contests_count']
+            combination_indexes = metadata['combination_indexes']
+            
+            slice_end = assessment_idx + contests_count
             if self.check_positional_bias:
-                slice_end += contests_count_list[i]
-            sli = slice(slice_start, slice_end)
-            sli_summarization = slice(
-                (incremental_contests_count_list[i - 1] if i > 0 else 0),
-                (incremental_contests_count_list[i - 1] if i > 0 else 0)
-                + incremental_contests_count,
-            )
+                slice_end += contests_count
+            
+            sli = slice(assessment_idx, slice_end)
+            sli_summarization = slice(assessment_idx, assessment_idx + contests_count) if self.generate_summaries else None
+            
             instance_results = self.__get_instance_results(
-                predictions[i],
+                prep_instance['prediction_dict'],
                 assessment_prompts[sli],
                 assessment_outputs[sli],
-                summarization_prompts[sli_summarization]
-                if self.generate_summaries
-                else None,
-                summarization_outputs[sli_summarization]
-                if self.generate_summaries
-                else None,
+                summarization_prompts[sli_summarization] if self.generate_summaries else None,
+                summarization_outputs[sli_summarization] if self.generate_summaries else None,
                 option_selection_prompts[sli],
                 option_selection_outputs[sli],
                 selections[sli],
-                contests_count_list[i],
-                combination_indexes_list[i],
-                criteria_list[i],
+                contests_count,
+                combination_indexes,
+                prep_instance['criteria'],
             )
             results.append(instance_results)
-            slice_start = slice_end
-
+            assessment_idx = slice_end
+        
         return results
+
+    def _prepare_assessment_instances(self, prep_instance):
+        """Prepare assessment instances for a single prepared instance."""
+        pred_dict = prep_instance['prediction_dict']
+        context = prep_instance['context']
+        criteria = prep_instance['criteria']
+        
+        # Calculate combinations and prepare pairs
+        prediction_names = list(pred_dict.keys())
+        combination_indexes = list(itertools.combinations(range(len(prediction_names)), 2))
+        contests_count = len(combination_indexes)
+        
+        # Prepare response pairs and option pairs
+        response_pairs = []
+        option_pairs = []
+        for combination in combination_indexes:
+            (idx_1, idx_2) = combination
+            response_name_1 = prediction_names[idx_1]
+            response_name_2 = prediction_names[idx_2]
+            response_pairs.append([pred_dict[response_name_1], pred_dict[response_name_2]])
+            option_pairs.append([response_name_1, response_name_2])
+        
+        # If checking positional bias, add reversed pairs
+        if self.check_positional_bias:
+            response_pairs += [list(reversed(pair)) for pair in response_pairs]
+            option_pairs += [list(reversed(pair)) for pair in option_pairs]
+        
+        # Create assessment instances
+        assessment_instances = []
+        for response_pair, option_pair in zip(response_pairs, option_pairs):
+            score_option_instruction = "".join([
+                f'Choose "{option}" if Response {option} is better quality.\n'
+                for option in option_pair
+            ])
+            
+            assessment_instances.append({
+                "context_variables": context,
+                "response_a": response_pair[0],
+                "response_b": response_pair[1],
+                "option_a": option_pair[0],
+                "option_b": option_pair[1],
+                "criteria_name": criteria.name,
+                "criteria_description": criteria.description,
+                "data_classification_policy": ["public"],
+                "option_pair": option_pair,  # Store for later use
+                "score_option_instruction": score_option_instruction,
+            })
+        
+        metadata = {
+            'contests_count': contests_count,
+            'combination_indexes': combination_indexes,
+            'assessment_start_idx': 0,  # Will be set correctly when called
+        }
+        
+        return assessment_instances, metadata

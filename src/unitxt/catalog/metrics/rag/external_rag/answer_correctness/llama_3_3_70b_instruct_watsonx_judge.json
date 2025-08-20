@@ -6,6 +6,7 @@
     "format": null,
     "main_score": "answer_correctness_judge",
     "prediction_field": "answer",
+    "reference_field": "ground_truths",
     "infer_log_probs": false,
     "judge_to_generator_fields_mapping": {}
 }

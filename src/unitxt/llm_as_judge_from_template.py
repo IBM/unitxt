@@ -6,7 +6,7 @@ from .api import infer
 from .dataclass import Field
 from .formats import ChatAPIFormat, Format, SystemFormat
 from .inference import InferenceEngine, LogProbInferenceEngine, OpenAiInferenceEngine
-from .metrics import BulkInstanceMetric
+from .metrics import MapReduceMetric
 from .operator import SequentialOperator
 from .operators import ArtifactFetcherMixin
 from .settings_utils import get_settings
@@ -24,7 +24,7 @@ def get_task_data_dict(task_data):
     return json.loads(task_data) if isinstance(task_data, str) else task_data
 
 
-class LLMAsJudgeBase(BulkInstanceMetric, ArtifactFetcherMixin):
+class LLMAsJudgeBase(MapReduceMetric[Any, Dict[str, Any]], ArtifactFetcherMixin):
     """LLM-as-judge-base metric class for evaluating correctness of generated predictions.
 
     Attributes:
@@ -90,15 +90,50 @@ class LLMAsJudgeBase(BulkInstanceMetric, ArtifactFetcherMixin):
     def get_full_task_name(self):
         pass
 
-    def compute(
-        self,
-        references: List[List[Any]],
-        predictions: List[Any],
-        task_data: List[Dict],
-    ) -> List[Dict[str, Any]]:
-        instances = self.prepare_instances(references, predictions, task_data)
-        outputs = self.infer_instances(instances)
-        return self.get_metric_results_from_prediction_outputs(outputs)
+    def map(
+        self, 
+        prediction: Any, 
+        references: List[Any], 
+        task_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        raise NotImplementedError(
+            "LLM-as-judge metrics should override map_stream for efficient batch processing, not map"
+        )
+
+    def reduce(self, intermediates: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Aggregate individual instance results into global scores."""
+        if not intermediates:
+            return {}
+        
+        # Collect all numeric scores for averaging
+        numeric_scores = {}
+        for result in intermediates:
+            for key, value in result.items():
+                if isinstance(value, (int, float)):
+                    if key not in numeric_scores:
+                        numeric_scores[key] = []
+                    numeric_scores[key].append(value)
+        
+        # Calculate averages
+        aggregated = {}
+        for key, values in numeric_scores.items():
+            if values:
+                aggregated[key] = sum(values) / len(values)
+        
+        # Set the main score
+        if self.main_score in aggregated:
+            aggregated["score"] = aggregated[self.main_score]
+            aggregated["score_name"] = self.main_score
+        
+        return aggregated
+
+    def reduce_one(self, intermediate: Dict[str, Any]) -> Dict[str, Any]:
+        """Return individual instance scores."""
+        result = dict(intermediate)
+        if self.main_score in result:
+            result["score"] = result[self.main_score]
+            result["score_name"] = self.main_score
+        return result
 
     @abstractmethod
     def prepare_instances(
@@ -383,6 +418,64 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
         if "references" not in instance:
             instance["references"] = [""]
         return instance
+
+    def compute(self, stream, stream_name=None):
+        """Override to handle batch processing like the original BulkInstanceMetric approach."""
+        # Process stream in batches to avoid memory issues with large datasets
+        batch_size = getattr(self, 'batch_size', 32)
+        
+        all_results = []
+        current_batch_instances = []
+        
+        for instance in stream:
+            # Apply preprocess_instance to handle missing fields
+            instance = self.preprocess_instance(instance)
+            current_batch_instances.append(instance)
+            
+            # Process when batch is full
+            if len(current_batch_instances) >= batch_size:
+                batch_results = self._process_batch(current_batch_instances)
+                all_results.extend(batch_results)
+                current_batch_instances = []  # Clear batch to free memory
+        
+        # Process remaining instances in final batch
+        if current_batch_instances:
+            batch_results = self._process_batch(current_batch_instances)
+            all_results.extend(batch_results)
+        
+        if not all_results:
+            return [], {}
+        
+        # Apply reduce to get global scores
+        global_scores = self.reduce(all_results)
+        
+        # Apply reduce_one to get individual scores
+        instance_scores = [self.reduce_one(result) for result in all_results]
+        
+        return instance_scores, global_scores
+    
+    def _process_batch(self, batch_instances):
+        """Process a batch of instances and return results."""
+        # Extract references, predictions, and task_data from batch
+        references = []
+        predictions = []
+        task_data = []
+        
+        for instance in batch_instances:
+            references.append(instance.get("references", [""]))
+            predictions.append(instance.get("prediction", ""))
+            task_data.append(instance)
+        
+        # Use the existing prepare_instances method to preprocess the data
+        instances = self.prepare_instances(references, predictions, task_data)
+        
+        # Run inference on batch instances
+        outputs = self.infer_instances(instances)
+        
+        # Get results for batch instances
+        batch_results = self.get_metric_results_from_prediction_outputs(outputs)
+        
+        return batch_results
 
     def verify(self):
         super().verify()
