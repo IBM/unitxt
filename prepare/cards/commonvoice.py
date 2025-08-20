@@ -29,7 +29,8 @@ for subset in subsets:
     card = TaskCard(
         loader=LoadHF(
             path="mozilla-foundation/common_voice_17_0",
-            name=subset,
+            revision="refs/convert/parquet",
+            data_dir=subset,
             splits=["test"],
             data_classification_policy=["public"],
             streaming=True,

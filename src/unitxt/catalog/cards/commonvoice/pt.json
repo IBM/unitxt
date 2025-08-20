@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "mozilla-foundation/common_voice_17_0",
-        "name": "pt",
+        "revision": "refs/convert/parquet",
+        "data_dir": "pt",
         "splits": [
             "test"
         ],
