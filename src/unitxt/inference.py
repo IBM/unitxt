@@ -296,6 +296,10 @@ class LazyPrepareMixin(Artifact):
                 help="https://www.unitxt.ai/en/latest/docs/inference.html",
             ):
                 self._prepare_engine()
+        if not self._is_prepared():
+            raise RuntimeError(
+                "After calling _prepare_engine then _is_prepared() must return True."
+            )
 
     def lazy_prepare_engine(self):
         if not self.lazy_prepare:
@@ -1511,11 +1515,15 @@ class DecoratedInferenceEngine(InferenceEngine, LazyPrepareMixin):
             and self.engine._is_prepared
         )
 
+    def _prepare_engine(self):
+        return self.engine._prepare_engine()
+
     async def _async_infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
+        self.prepare_engine()
         return await self.engine._async_infer(dataset, return_meta_data)
 
     async def _infer_streaming(
@@ -1524,6 +1532,7 @@ class DecoratedInferenceEngine(InferenceEngine, LazyPrepareMixin):
         total_len: int,
         return_meta_data: bool = False,
     ) -> AsyncIterable[Tuple[Union[int, str, TextGenerationInferenceOutput]]]:
+        self.prepare_engine()
         return await self.engine._infer_streaming(
             instances, total_len, return_meta_data
         )
