@@ -903,7 +903,7 @@ class ReflectionToolCallingMetricSyntactic(
     reduction = MeanReduction()
     prediction_type = ToolCall
     _requirements_list = {
-        "llmevalkit": "pip install 'git+ssh://git@github.ibm.com/MLT/LLMEvalKit.git'"
+        "llmevalkit": "Install with \"pip install 'git+ssh://git@github.ibm.com/MLT/LLMEvalKit.git'\".\nTo gain access please reach the team."
     }
 
     def map(
