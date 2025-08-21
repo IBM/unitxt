@@ -40,7 +40,10 @@ jobs:
     - name: Install Dependencies
       run: bash utils/install.sh
 
-    - uses: ./.github/actions/llmevalkit
+    - name: Install Internal Dependencies
+      uses: ./.github/actions/llmevalkit
+      with:
+        ssh-private-key: ${{ secrets.LLMEVALKIT_SSH_KEY }}
 
     - name:  Hugging Face Login
       run: |
