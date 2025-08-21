@@ -4,6 +4,7 @@ from unitxt import add_to_catalog
 from unitxt.blocks import Copy, LoadHF, Set, Task, TaskCard
 from unitxt.llm_as_judge import CreateCriteriaWithOptionsFromDict
 from unitxt.operators import Cast, MergeStreams
+from unitxt.string_operators import FormatText
 from unitxt.test_utils.card import test_card
 
 empty_criteria = {
@@ -36,9 +37,11 @@ for is_multilingual in [False, True]:
             ),
             Set(fields={"criteria": empty_criteria}),
             Cast(field="human_score", to="float"),
+            # biggen exposes to level of granularities, e.g. capability: theory_of_mind, task: guess_the_emotion
+            FormatText(text="{capability}-{task}", to_field="criteria_name"),
             Copy(
                 field_to_field={
-                    "task": "criteria/name",
+                    "criteria_name": "criteria/name",
                     "score_rubric/criteria": "criteria/description",
                     "score_rubric/score1_description": "criteria/options/0/description",
                     "score_rubric/score2_description": "criteria/options/1/description",

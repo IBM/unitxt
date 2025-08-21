@@ -66,9 +66,14 @@
             "to": "float"
         },
         {
+            "__type__": "format_text",
+            "text": "{capability}-{task}",
+            "to_field": "criteria_name"
+        },
+        {
             "__type__": "copy",
             "field_to_field": {
-                "task": "criteria/name",
+                "criteria_name": "criteria/name",
                 "score_rubric/criteria": "criteria/description",
                 "score_rubric/score1_description": "criteria/options/0/description",
                 "score_rubric/score2_description": "criteria/options/1/description",
