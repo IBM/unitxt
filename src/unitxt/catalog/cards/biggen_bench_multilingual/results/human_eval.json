@@ -4,14 +4,14 @@
         "__type__": "load_hf",
         "path": "prometheus-eval/BiGGen-Bench-Results",
         "splits": [
-            "human_eval"
+            "multilingual_human_eval"
         ]
     },
     "preprocess_steps": [
         {
             "__type__": "merge_streams",
             "streams_to_merge": [
-                "human_eval"
+                "multilingual_human_eval"
             ],
             "new_stream_name": "test",
             "add_origin_stream_name": true
