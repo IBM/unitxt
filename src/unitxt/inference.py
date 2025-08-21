@@ -277,29 +277,48 @@ class PersistentAsyncLoopMixin:
         return loop.run_until_complete(coro)
 
 
+class LazyPrepareMixin(Artifact):
+    lazy_prepare: bool = NonPositionalField(default=True)
+
+    @abc.abstractmethod
+    def _is_prepared(self):
+        pass
+
+    @abc.abstractmethod
+    def _prepare_engine(self):
+        pass
+
+    def prepare_engine(self):
+        if not self._is_prepared():
+            with error_context(
+                self,
+                stage="Prepare Inference Engine",
+                help="https://www.unitxt.ai/en/latest/docs/inference.html",
+            ):
+                self._prepare_engine()
+
+    def lazy_prepare_engine(self):
+        if not self.lazy_prepare:
+            self.prepare_engine()
+
+
 class InferenceEngine(
-    abc.ABC, MockInferenceMixin, CachedInferenceMixin, PersistentAsyncLoopMixin
+    abc.ABC,
+    LazyPrepareMixin,
+    MockInferenceMixin,
+    CachedInferenceMixin,
+    PersistentAsyncLoopMixin,
 ):
     """Abstract base class for inference."""
 
     concurrency_limit: int = 100
     support_log_probs: bool = False
 
-    @abc.abstractmethod
-    def prepare_engine(self):
-        """Perform inference on the input dataset."""
-        pass
-
     def prepare(self):
         if not self.is_mock:
             self._initialize_cache()
             super().prepare()  # This will call CachedInferenceMixin.prepare() which initializes cache
-            with error_context(
-                self,
-                stage="Prepare Inference Engine",
-                help="https://www.unitxt.ai/en/latest/docs/inference.html",
-            ):
-                self.prepare_engine()
+            self.lazy_prepare_engine()
 
     def __call__(
         self,
@@ -377,6 +396,7 @@ class InferenceEngine(
         return_log_probs: bool = False,
     ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
         """Internal async method that handles all inference logic."""
+        self.prepare_engine()
         self.verify_infer_inputs(dataset, return_meta_data)
 
         if self.is_mock:
@@ -660,14 +680,6 @@ class SingleInferenceEngine(InferenceEngine):
             )
 
 
-class LazyLoadMixin(Artifact):
-    lazy_load: bool = NonPositionalField(default=False)
-
-    @abc.abstractmethod
-    def _is_loaded(self):
-        pass
-
-
 class HFGenerationParamsMixin(Artifact):
     max_new_tokens: Optional[int] = None
     do_sample: bool = False
@@ -680,10 +692,20 @@ class HFGenerationParamsMixin(Artifact):
     eos_token_id: Optional[int] = None
 
 
+class ClientMixin:
+    def _is_prepared(self):
+        return hasattr(self, "client") and self.client is not None
+
+
+class ModelMixin:
+    def _is_prepared(self):
+        return hasattr(self, "model") and self.model is not None
+
+
 class HFInferenceEngineBase(
+    ModelMixin,
     BatchInferenceEngine,
     PackageRequirementsMixin,
-    LazyLoadMixin,
     HFGenerationParamsMixin,
     TorchDeviceMixin,
 ):
@@ -711,9 +733,6 @@ class HFInferenceEngineBase(
         "torch": "Install torch, go on PyTorch website for mode details.",
         "accelerate": "pip install accelerate",
     }
-
-    def _is_loaded(self):
-        return hasattr(self, "model") and self.model is not None
 
     def _set_inference_device(self):
         if self.device is not None and self.device_map is not None:
@@ -765,10 +784,6 @@ class HFInferenceEngineBase(
         self._set_inference_device()
         self._init_processor()
         self._init_model()
-
-    def prepare_engine(self):
-        if not self.lazy_load:
-            self._prepare_engine()
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, self.label)
@@ -860,24 +875,6 @@ class HFInferenceEngineBase(
                 inference_type=self.label,
             )
         return output
-
-    def infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        if not self._is_loaded():
-            self._prepare_engine()
-        return super().infer(dataset, return_meta_data)
-
-    def infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        if not self._is_loaded():
-            self._prepare_engine()
-        return super().infer_log_probs(dataset, return_meta_data)
 
     @abc.abstractmethod
     def _infer_batch(
@@ -1263,7 +1260,7 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
 class HFPipelineBasedInferenceEngine(
     BatchInferenceEngine,
     PackageRequirementsMixin,
-    LazyLoadMixin,
+    LazyPrepareMixin,
     HFGenerationParamsMixin,
     TorchDeviceMixin,
 ):
@@ -1287,7 +1284,7 @@ class HFPipelineBasedInferenceEngine(
         "accelerate": "pip install accelerate",
     }
 
-    def _is_loaded(self):
+    def _is_prepared(self):
         return hasattr(self, "model") and self.model is not None
 
     def get_engine_id(self):
@@ -1398,10 +1395,6 @@ class HFPipelineBasedInferenceEngine(
         model_args = self._get_model_args()
         self._create_pipeline(model_args)
 
-    def prepare_engine(self):
-        if not self.lazy_load:
-            self._prepare_engine()
-
     def _infer_batch(
         self,
         instances: List[Dict[str, Any]],
@@ -1409,9 +1402,6 @@ class HFPipelineBasedInferenceEngine(
         return_log_probs: bool = False,
     ) -> List[Union[str, TextGenerationInferenceOutput]]:
         """Run a synchronous batch through the model and return outputs (with optional metadata)."""
-        if not self._is_loaded():
-            self._prepare_engine()
-
         # Prepare input texts
         inputs = [inst["source"] for inst in instances]
 
@@ -1458,7 +1448,7 @@ class MockInferenceEngine(SingleInferenceEngine):
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, "mock")
 
-    def prepare_engine(self):
+    def _prepare_engine(self):
         return
 
     def _mock_infer(
@@ -1507,19 +1497,21 @@ class MockInferenceEngine(SingleInferenceEngine):
         return predict_result
 
 
-class DecoratedInferenceEngine(InferenceEngine, LazyLoadMixin):
+class DecoratedInferenceEngine(InferenceEngine, LazyPrepareMixin):
     engine: InferenceEngine = InternalField(default=None)
 
-    def _is_loaded(self):
-        return hasattr(self, "engine") and self.engine is not None
+    def _is_prepared(self):
+        return (
+            hasattr(self, "engine")
+            and self.engine is not None
+            and self.engine._is_prepared
+        )
 
     async def _async_infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
-        if not self._is_loaded():
-            self.prepare_engine()
         return await self.engine._async_infer(dataset, return_meta_data)
 
     async def _infer_streaming(
@@ -1528,22 +1520,19 @@ class DecoratedInferenceEngine(InferenceEngine, LazyLoadMixin):
         total_len: int,
         return_meta_data: bool = False,
     ) -> AsyncIterable[Tuple[Union[int, str, TextGenerationInferenceOutput]]]:
-        if not self._is_loaded():
-            self.prepare_engine()
         return await self.engine._infer_streaming(
             instances, total_len, return_meta_data
         )
 
     def get_engine_id(self):
-        if not self._is_loaded():
-            return self.prepare_engine()
+        self.prepare_engine()
         return self.engine.get_engine_id()
 
 
 class GenericInferenceEngine(DecoratedInferenceEngine, ArtifactFetcherMixin):
     default: Optional[str] = None
 
-    def prepare_engine(self):
+    def _prepare_engine(self):
         if "UNITXT_INFERENCE_ENGINE" in os.environ:
             engine_reference = os.environ["UNITXT_INFERENCE_ENGINE"]
         else:
@@ -1562,7 +1551,7 @@ class GenericInferenceEngine(DecoratedInferenceEngine, ArtifactFetcherMixin):
 
 
 class OllamaInferenceEngine(
-    SingleInferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
+    ClientMixin, SingleInferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
 ):
     label: str = "ollama"
     _requirements_list = {
@@ -1573,7 +1562,7 @@ class OllamaInferenceEngine(
     def get_engine_id(self):
         return get_model_and_label_id(self.model, self.label)
 
-    def prepare_engine(self):
+    def _prepare_engine(self):
         from ollama import AsyncClient
 
         self.client = AsyncClient(
@@ -1752,6 +1741,7 @@ def run_with_imap(func):
 
 
 class OpenAiInferenceEngine(
+    ClientMixin,
     SingleInferenceEngine,
     OpenAiInferenceEngineParamsMixin,
     PackageRequirementsMixin,
@@ -1800,7 +1790,7 @@ class OpenAiInferenceEngine(
             default_headers=self.get_default_headers(),
         )
 
-    def prepare_engine(self):
+    def _prepare_engine(self):
         from openai import AsyncOpenAI
 
         self.client: AsyncOpenAI = self.create_client()
@@ -1932,13 +1922,13 @@ class RITSInferenceEngine(
     def get_default_headers(self):
         return {"RITS_API_KEY": self.credentials["api_key"]}
 
-    def prepare_engine(self):
+    def _prepare_engine(self):
         # inference endpoint need the '/v1' path
         self.base_url = (
             RITSInferenceEngine.get_base_url_from_model_name(self.model_name) + "/v1"
         )
         logger.info(f"Created RITS inference engine with base url: {self.base_url}")
-        super().prepare_engine()
+        super()._prepare_engine()
 
     def get_client_model_name(self):
         if self.model_name.startswith("byom-"):
@@ -1995,6 +1985,7 @@ class TogetherAiInferenceEngineParamsMixin(Artifact):
 
 
 class TogetherAiInferenceEngine(
+    ClientMixin,
     SingleInferenceEngine,
     TogetherAiInferenceEngineParamsMixin,
     PackageRequirementsMixin,
@@ -2010,7 +2001,7 @@ class TogetherAiInferenceEngine(
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, self.label)
 
-    def prepare_engine(self):
+    def _prepare_engine(self):
         from together import AsyncTogether
         from together.types.models import ModelType
 
@@ -2329,12 +2320,17 @@ class WMLInferenceEngineBase(
             "as keys for WML credentials dict."
         )
 
-    def prepare_engine(self):
+    def _prepare_engine(self):
         self.check_missing_requirements()
 
         self._client = self._initialize_wml_client()
 
         self._set_inference_parameters()
+
+        self._load_model()
+
+    def _is_prepared(self):
+        return self._client is not None and self._model is not None
 
     def _load_model(self):
         from ibm_watsonx_ai.foundation_models.inference import ModelInference
@@ -2349,8 +2345,7 @@ class WMLInferenceEngineBase(
         return self._model.get_details()
 
     def get_token_count(self, dataset):
-        if self._model is None:
-            self._load_model()
+        self.prepare_engine()
 
         texts = [instance["source"] for instance in dataset]
 
@@ -2364,8 +2359,7 @@ class WMLInferenceEngineBase(
 
     def get_options_log_probs(self, dataset):
         """Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}."""
-        if self._model is None:
-            self._load_model()
+        self.prepare_engine()
 
         texts = [x["source"] for x in dataset]
 
@@ -2475,10 +2469,6 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
         return_meta_data: bool = False,
         return_log_probs: bool = False,
     ):
-        if self._model is None:
-            self._load_model()
-
-        # Base params
         params = self.to_dict([WMLGenerationParamsMixin], keep_empty=False)
 
         if return_log_probs:
@@ -2561,16 +2551,6 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
         default_factory=EncodeImageToString
     )
     support_log_probs: bool = True
-
-    def _async_infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-        return_log_probs: bool = False,
-    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
-        if self._model is None:
-            self._load_model()
-        return super()._async_infer(dataset, return_meta_data, return_log_probs)
 
     @staticmethod
     def _extract_queries(instance: Dict[str, Any]) -> Tuple[Optional[str], List]:
@@ -2710,7 +2690,6 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
         return_meta_data: bool = False,
         return_log_probs: bool = False,
     ):
-        # Build params
         params = self.to_dict([WMLChatParamsMixin], keep_empty=False)
         params["logprobs"] = return_log_probs
         output_type = "logprobs" if return_log_probs else "message"
@@ -2840,7 +2819,11 @@ def get_text_without_images(instance, image_token="<image>"):
 
 
 class LMMSEvalBaseInferenceEngine(
-    BatchInferenceEngine, PackageRequirementsMixin, LazyLoadMixin, TorchDeviceMixin
+    ModelMixin,
+    BatchInferenceEngine,
+    PackageRequirementsMixin,
+    LazyPrepareMixin,
+    TorchDeviceMixin,
 ):
     label = "lmms-eval"
     model_type: str
@@ -2854,10 +2837,6 @@ class LMMSEvalBaseInferenceEngine(
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_type, self.label)
-
-    def prepare_engine(self):
-        if not self.lazy_load:
-            self._prepare_engine()
 
     def _prepare_engine(self):
         from lmms_eval.api.instance import Instance
@@ -2879,9 +2858,6 @@ class LMMSEvalBaseInferenceEngine(
             },
         )
 
-    def _is_loaded(self):
-        return hasattr(self, "model") and self.model is not None
-
 
 class LMMSEvalInferenceEngine(LMMSEvalBaseInferenceEngine):
     max_new_tokens: int = 32
@@ -2895,9 +2871,6 @@ class LMMSEvalInferenceEngine(LMMSEvalBaseInferenceEngine):
         return_meta_data: bool = False,
         return_log_probs: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        if not self._is_loaded():
-            self._prepare_engine()
-
         from lmms_eval.api.instance import Instance
 
         temp_task_name = str(uuid.uuid4())
@@ -2968,9 +2941,6 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
         return_meta_data: bool = False,
         return_log_probs: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        if not self._is_loaded():
-            self._prepare_engine()
-
         temp_task_name = str(uuid.uuid4())
 
         requests = []
@@ -3032,14 +3002,14 @@ class VLLMParamsMixin(Artifact):
 
 
 class VLLMInferenceEngine(
-    SingleInferenceEngine, PackageRequirementsMixin, VLLMParamsMixin
+    ModelMixin, SingleInferenceEngine, PackageRequirementsMixin, VLLMParamsMixin
 ):
     label = "vllm"
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model, self.label)
 
-    def prepare_engine(self):
+    def _prepare_engine(self):
         args = self.to_dict([VLLMParamsMixin])
         args.pop("model")
 
@@ -3058,7 +3028,7 @@ class VLLMInferenceEngine(
             max_num_seqs=64,
             enforce_eager=True,
         )
-        self.llm = AsyncLLMEngine.from_engine_args(engine_args)
+        self.model = AsyncLLMEngine.from_engine_args(engine_args)
 
     async def _infer_single(
         self,
@@ -3074,12 +3044,12 @@ class VLLMInferenceEngine(
         # Use the async VLLM generate method
         if isinstance(source, list):
             # Chat format
-            result_generator = self.llm.generate(
+            result_generator = self.model.generate(
                 request_id, source, self.sampling_params
             )
         else:
             # Simple text format
-            result_generator = self.llm.generate(
+            result_generator = self.model.generate(
                 request_id, source, self.sampling_params
             )
 
@@ -3156,7 +3126,10 @@ class LiteLLMInferenceEngine(
     def get_engine_id(self):
         return get_model_and_label_id(self.model, self.label)
 
-    def prepare_engine(self):
+    def _is_prepared(self):
+        return hasattr(self, "_completion") and self._completion is not None
+
+    def _prepare_engine(self):
         if self.credentials is None:
             self.credentials = {}
         # Initialize the token bucket rate limiter
@@ -3504,7 +3477,7 @@ class CrossProviderInferenceEngine(DecoratedInferenceEngine, StandardAPIParamsMi
     def get_provider_name(self):
         return self.provider if self.provider is not None else settings.default_provider
 
-    def prepare_engine(self):
+    def _prepare_engine(self):
         provider = self.get_provider_name()
         if provider not in self._provider_to_base_class:
             raise UnitxtError(
@@ -3544,7 +3517,9 @@ class CrossProviderInferenceEngine(DecoratedInferenceEngine, StandardAPIParamsMi
         return get_model_and_label_id(self.model, api)
 
 
-class HFOptionSelectingInferenceEngine(BatchInferenceEngine, TorchDeviceMixin):
+class HFOptionSelectingInferenceEngine(
+    ModelMixin, BatchInferenceEngine, TorchDeviceMixin
+):
     """HuggingFace based class for inference engines that calculate log probabilities.
 
     This class uses models from the HuggingFace Transformers library to calculate log probabilities for text inputs.
@@ -3561,7 +3536,7 @@ class HFOptionSelectingInferenceEngine(BatchInferenceEngine, TorchDeviceMixin):
         return get_model_and_label_id(self.model_name, self.label)
 
     @retry_connection_with_exponential_backoff(backoff_factor=2)
-    def prepare_engine(self):
+    def _prepare_engine(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
         self.device = self.get_device()
@@ -3691,8 +3666,11 @@ class MetricInferenceEngine(BatchInferenceEngine):
             references=references,
         )
 
-    def prepare_engine(self):
+    def _prepare_engine(self):
         pass
+
+    def _is_prepared(self):
+        return hasattr(self, "metric") and self.metric is not None
 
     def get_engine_id(self):
         return "metric_inference_engine"

@@ -104,9 +104,9 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_pipeline_based_inference_engine_lazy_load(self):
         model = HFPipelineBasedInferenceEngine(
-            model_name=local_decoder_model,  # pragma: allowlist secret
+            model_name=local_decoder_model,
             max_new_tokens=2,
-            lazy_load=True,
+            lazy_prepare=True,
             use_cache=False,
         )
         dataset = get_text_dataset()
@@ -119,7 +119,6 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         inference_model = HFPipelineBasedInferenceEngine(
             model_name=local_decoder_model,  # pragma: allowlist secret
             max_new_tokens=2,
-            lazy_load=True,
             data_classification_policy=["public"],
             use_cache=False,
         )
