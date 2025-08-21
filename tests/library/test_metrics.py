@@ -80,9 +80,9 @@ from unitxt.test_utils.metrics import (
     check_scores,
     test_metric,
 )
+from unitxt.types import ToolCall
 
 from tests.utils import UnitxtTestCase
-from unitxt.types import ToolCall
 
 logger = get_logger()
 
@@ -1649,7 +1649,6 @@ class TestMetrics(UnitxtTestCase):
             outputs[0]["score"]["global"]["argument_schema_validation"], 0.0
         )
 
-
     def test_complex_tool_call_real_static_only(self):
         """Test a complex tool call with multiple types of validation issues."""
         # Create a complex tool call with multiple issues
@@ -2101,9 +2100,7 @@ class TestMetrics(UnitxtTestCase):
     def test_incorrect_parameter_type_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
         # Create sample inputs with wrong parameter type
-        prediction = ToolCall(
-            **{"name": "get_weather", "arguments": {"location": 42}}
-        )
+        prediction = ToolCall(**{"name": "get_weather", "arguments": {"location": 42}})
 
         references = [
             {"name": "get_weather", "arguments": {"location": "San Francisco"}}

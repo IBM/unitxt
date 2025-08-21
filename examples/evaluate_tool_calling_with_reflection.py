@@ -64,9 +64,7 @@ dataset = create_dataset(
     test_set=data,
     split="test",
     format="formats.chat_api",
-    metrics=[
-        "metrics.tool_calling.reflection.syntactic"
-    ],
+    metrics=["metrics.tool_calling.reflection.syntactic"],
     max_test_instances=10,
 )
 
