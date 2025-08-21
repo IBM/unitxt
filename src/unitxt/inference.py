@@ -3544,6 +3544,8 @@ class HFOptionSelectingInferenceEngine(
         import torch
         from tqdm import tqdm
 
+        self.prepare_engine()
+
         log_probs = []
 
         # Process texts in batches
