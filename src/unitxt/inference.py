@@ -1535,6 +1535,8 @@ class DecoratedInferenceEngine(InferenceEngine, LazyLoadMixin):
         )
 
     def get_engine_id(self):
+        if not self._is_loaded():
+            return self.prepare_engine()
         return self.engine.get_engine_id()
 
 
