@@ -41,9 +41,9 @@ jobs:
       run: bash utils/install.sh
 
     - name: Install Internal Dependencies
-      uses: ./.github/actions/llmevalkit
-      with:
-        ssh-private-key: ${{ secrets.LLMEVALKIT_SSH_KEY }}
+      run: |
+        GIT_SSH_COMMAND="ssh -i <(printf '%s' \"${{ secrets.LLMEVALKIT_SSH_KEY }}\") -o StrictHostKeyChecking=no" \
+          pip install "git+ssh://git@github.ibm.com/MLT/LLMEvalKit.git"
 
     - name:  Hugging Face Login
       run: |
