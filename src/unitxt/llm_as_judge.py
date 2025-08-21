@@ -1,4 +1,5 @@
 import itertools
+from abc import abstractmethod
 from difflib import get_close_matches
 from typing import Any, Dict, List, Optional, Union
 
@@ -284,6 +285,43 @@ class LLMJudge(MapReduceMetric[Any, Dict[str, Any]]):
         # This method is implemented by subclasses like LLMJudgeDirect
         raise NotImplementedError("Subclasses must implement map method")
 
+    def map_stream(self, evaluation_inputs_stream):
+        """Common map_stream implementation for all LLM judge subclasses."""
+        logger.info(
+            f'Starting evaluation with {self.__class__.__name__} using "{self.inference_engine.get_engine_id()}"'
+        )
+
+        # Prepare all instances for inference without aggregating heavy data
+        prepared_instances = []
+        for prediction, references, task_data in evaluation_inputs_stream:
+            prepared_instance = self._prepare_instance_for_inference(prediction, references, task_data)
+            prepared_instances.append(prepared_instance)
+        
+        # Optional: Set main score for judges that need it (like LLMJudgeDirect)
+        if prepared_instances and hasattr(self, '_LLMJudgeDirect__set_main_score'):
+            self._LLMJudgeDirect__set_main_score([prepared_instances[0]['criteria']])
+        
+        # Run all inference steps on the prepared instances
+        return self._run_inference_on_all(prepared_instances)
+    
+    @abstractmethod
+    def _prepare_instance_for_inference(self, prediction, references, task_data):
+        """Prepare a single instance for inference without keeping heavy data.
+        
+        This method should be implemented by each judge subclass to prepare
+        an individual instance for batch inference processing.
+        """
+        pass
+    
+    @abstractmethod  
+    def _run_inference_on_all(self, prepared_instances):
+        """Run inference on all prepared instances efficiently.
+        
+        This method should be implemented by each judge subclass to execute
+        inference on the batch of prepared instances and return results.
+        """
+        pass
+
     def reduce(self, intermediates: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Aggregate individual instance results into global scores."""
         if not intermediates:
@@ -509,132 +547,10 @@ class LLMJudgeDirect(LLMJudge):
         references: List[Any], 
         task_data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Process a single instance for compatibility with MapReduceMetric."""
-        # Extract the evaluation inputs for a single instance
-        evaluation_inputs = [(prediction, references, task_data)]
-        
-        # Use map_stream with a single instance
-        results = list(self.map_stream(evaluation_inputs))
-        
-        # Return the first (and only) result
-        return results[0] if results else {}
-
-    def map_stream(self, evaluation_inputs_stream):
-        r"""Performs direct assessment evaluation on the given predictions and references.
-
-        This method evaluates the quality of the predictions by calculating scores for each instance based on a criterion.
-
-        Returns:
-        --------
-        List[Dict]
-            A list of dictionaries containing the evaluation results for each instance. The results include the computed scores for each prediction. Each result will have the `score_name` as a prefix, which may be the criterion name if only one used, or "llm_as_judge" if several criteria were used.
-
-            Explanation of fields:
-
-            - `score`: a float representing the evaluation score for the response. The value is calculated from criteria.option_map[selected_option].
-            - `using_<evaluator_name>`: Equal to score.
-            - `positional_bias`: Boolean indicating whether the assessment detected positional bias. Its final value is selected_option != positional_bias_selected_option
-            - `selected_option`: The criteria option that the evaluator chose (e.g., "Could be Improved"). It is calculated by processing `option_selection_completion` using `processors.match_closest_option`
-            - `positional_bias_selected_option`: The criteria option that the evaluator chose when checking positional bias.
-            - `assessment`: The inference engine's generated text using the `prompts.assessment` prompt.
-            - `positional_bias_assessment`: The inference engine's generated text using the `prompts.positional_bias_assessment` prompt.
-            - `summary`: An LLM-generated summary of the assessment.
-            - `positional_bias_summary`: A LLM-generated summary of the positional bias assessment.
-            - `prompts`: A dictionary of prompts used in different stages of evaluation.
-                - `assessment`: The prompt used to instruct the model on how to assess the response.
-                - `positional_bias_assessment`: The prompt used to instruct the model on how to assess the response in the positional bias check.
-                - `summarization`: The prompt used to generate summary of the assessment.
-                - `option_selection`: The prompt used to generate a final judgement.
-                - `positional_bias_option_selection`: The prompt used to generate a final judgement in the positional bias check.
-            - `option_selection_completion`: The inference engine's generated text using `prompts.option_selection`.
-            - `positional_bias_option_selection_completion`: The inference engine's generated text using `prompts.positional_bias_option_selection`.
-            - `criteria`: A JSON-like string representing the evaluation criteria's artifact.
-
-            Result example:
-
-            .. code-block:: python
-
-                [
-                    {
-                        "answer_relevance": 1,
-                        "answer_relevance_using_granite3.0-2b_litellm": 1,
-                        "answer_relevance_positional_bias": false,
-                        "answer_relevance_selected_option": "Could be Improved",
-                        "answer_relevance_positional_bias_selected_option": "Could be Improved",
-                        "answer_relevance_assessment": "To assess the quality of the response, l...",
-                        "answer_relevance_positional_bias_assessment": "To assess the quality of the response, l...",
-                        "answer_relevance_summary": "A response about apprenticeships during ...",
-                        "answer_relevance_positional_bias_summary": "A response about apprenticeships during ...",
-                        "answer_relevance_prompts": {
-                            "assessment": [
-                                {
-                                    "role": "user",
-                                    "content": "You are presented with a response gener..."
-                                }
-                            ],
-                            "positional_bias_assessment": [
-                                {
-                                    "role": "user",
-                                    "content": "You are presented with a response gener..."
-                                }
-                            ],
-                            "summarization": [
-                                {
-                                    "role": "user",
-                                    "content": "Transform the following assessment into ..."
-                                }
-                            ],
-                            "option_selection": [
-                                {
-                                    "content": "You are presented with a response gener...",
-                                    "role": "user"
-                                },
-                                {
-                                    "content": "To assess the quality of the response, l...",
-                                    "role": "assistant"
-                                },
-                                {
-                                    "content": "Now consider the evaluation criteria and...",
-                                    "role": "user"
-                                }
-                            ],
-                            "posional_bias_option_selection": [
-                                {
-                                    "content": "You are presented with a response gener...",
-                                    "role": "user"
-                                },
-                                {
-                                    "content": "To assess the quality of the response, l...",
-                                    "role": "assistant"
-                                },
-                                {
-                                    "content": "Now consider the evaluation criteria and...",
-                                    "role": "user"
-                                }
-                            ]
-                        },
-                        "answer_relevance_option_selection_completion": "Could be Improved",
-                        "answer_relevance_positional_bias_option_selection_completion": "Could be Improved",
-                        "answer_relevance_criteria": "{    \"__type__\": \"criteria_with_options..."
-                    }
-                ]
-        """
-        logger.info(
-            f'Starting evaluation with evaluator "{self.evaluator_name}" and provider "{self.inference_engine.get_pretty_print_name()}'
+        raise NotImplementedError(
+            "LLMJudgeDirect uses map_stream for efficient batch processing, not map"
         )
 
-        # Prepare all instances for inference without aggregating heavy data
-        prepared_instances = []
-        for prediction, references, task_data in evaluation_inputs_stream:
-            prepared_instance = self._prepare_instance_for_inference(prediction, references, task_data)
-            prepared_instances.append(prepared_instance)
-        
-        # Set main score based on first criteria (all should be same in direct assessment)
-        if prepared_instances:
-            self.__set_main_score([prepared_instances[0]['criteria']])
-        
-        # Run all inference steps on the prepared instances
-        return self._run_inference_on_all(prepared_instances)
 
     def _prepare_instance_for_inference(self, prediction, references, task_data):
         """Prepare a single instance for inference without keeping heavy data."""
@@ -1081,116 +997,10 @@ class LLMJudgePairwise(LLMJudge):
         references: List[Any], 
         task_data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Process a single instance for compatibility with MapReduceMetric."""
-        # Extract the evaluation inputs for a single instance
-        evaluation_inputs = [(prediction, references, task_data)]
-        
-        # Use map_stream with a single instance
-        results = list(self.map_stream(evaluation_inputs))
-        
-        # Return the first (and only) result
-        return results[0] if results else {}
-
-    def map_stream(self, evaluation_inputs_stream):
-        r"""Executes the pairwise comparison evaluation, including assessment, summarization, and option selection. It computes the winrate and ranking for the responses.
-
-        Returns:
-        --------
-        List[Dict[str,Dict]]
-            The results of the evaluation, including winrate, ranking, and other metrics.
-
-            For each instance result, the following metrics are included per response/system. Each of the metrics will have appended the systems name, if predictions were provided as a list of dicts, or their index, starting from 1, if predictions were provided as a list of lists.
-
-            All the fields are arrays with length equal to `len(systems) - 1`. For any result at index `i`: `response_name[i]`'s contest against `compared_to[i]`'s result is `contest_results[i]`.
-
-            Explanation of fields:
-
-            - `summaries`: A list of LLM-generated summaries explaining the comparison results for each response.
-            - `contest_results`: A list of boolean values indicating whether the response won in each comparison.
-            - `selections`: A list of the selected system names, representing the preferred response in each comparison.
-            - `compared_to`: A list of system names that were compared against the given response.
-            - `assessments`: A list of LLM-generated assessments explaining the reasoning behind the evaluation results.
-            - `positional_bias_assessments`: A list of LLM-generated assessments focused on detecting positional bias in the evaluation.
-            - `option_selection_outputs`: A list of response names selected as the best choice based on the evaluation.
-            - `positional_bias`: A list of boolean values indicating whether positional bias was detected in the contest.
-            - `positional_bias_selection`: A list of response names representing the selected option when considering positional bias.
-            - `prompts`: A dictionary of prompts used in different stages of evaluation.
-                - `assessment`: The prompt used to instruct the model on how to assess the responses.
-                - `positional_bias_assessment`: The prompt used to instruct the model on how to assess positional bias.
-                - `option_selection`: The prompt used to guide the model in selecting the best response.
-                - `positional_bias_option_selection`: The prompt used for selecting the best response while checking for positional bias.
-                - `summary`: The prompt used to generate a summary of the assessment.
-            - `winrate`: A float representing the proportion of comparisons the response won.
-            - `llm_as_judge`: Equal to `winrate`.
-            - `ranking`: An integer representing the ranking position of the response based on the evaluation results. Best is 1.
-            - `response_name`: A string identifying the response in the evaluation.
-
-            Result example:
-
-            .. code-block:: python
-
-                    [
-                        {
-                            "system1_contest_results": [
-                                true,
-                                true
-                            ],
-                            "system1_selections": [
-                                "system1",
-                                "system1"
-                            ],
-                            "system1_compared_to": [
-                                "system2",
-                                "system3"
-                            ],
-                            "system1_assessments": [
-                                "To determine the better response accordi...",
-                                "To determine the better response accordi..."
-                            ],
-                            "system1_positional_bias_assessments": [
-                                "To determine the better response accordi...",
-                                "To determine the better response accordi..."
-                            ],
-                            "system1_option_selection_outputs": [
-                                "system1",
-                                "system1"
-                            ],
-                            "system1_positional_bias": [
-                                false,
-                                false
-                            ],
-                            "system1_positional_bias_selection": [
-                                "system1",
-                                "system1"
-                            ],
-                            "system1_winrate": 1.0,
-                            "system1_llm_as_judge": 1.0,
-                            "system1_ranking": 1,
-                            "system1_response_name": "system1",
-                            "system2_winrate": 0.5,
-                            "system2_llm_as_judge": 0.5,
-                            "system2_ranking": 2,
-                            "system2_response_name": "system2",
-                            "system3_winrate": 0.0,
-                            "system3_llm_as_judge": 0.0,
-                            "system3_ranking": 3,
-                            "system3_response_name": "system3",
-                            "criteria": "{    \"__type__\": \"criteria\",    \"name\"..."
-                        }
-                    ]
-        """
-        logger.info(
-            f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
+        raise NotImplementedError(
+            "LLMJudgePairwise uses map_stream for efficient batch processing, not map"
         )
 
-        # Prepare all instances for inference without aggregating heavy data
-        prepared_instances = []
-        for prediction, references, task_data in evaluation_inputs_stream:
-            prepared_instance = self._prepare_instance_for_inference(prediction, references, task_data)
-            prepared_instances.append(prepared_instance)
-        
-        # Run all inference steps on the prepared instances
-        return self._run_inference_on_all(prepared_instances)
 
     def _prepare_instance_for_inference(self, prediction, references, task_data):
         """Prepare a single instance for pairwise inference without keeping heavy data."""

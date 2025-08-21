@@ -6,6 +6,7 @@ from .api import infer
 from .dataclass import Field
 from .formats import ChatAPIFormat, Format, SystemFormat
 from .inference import InferenceEngine, LogProbInferenceEngine, OpenAiInferenceEngine
+from .logging_utils import get_logger
 from .metrics import MapReduceMetric
 from .operator import SequentialOperator
 from .operators import ArtifactFetcherMixin
@@ -14,6 +15,7 @@ from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .templates import Template
 
 settings = get_settings()
+logger = get_logger(__name__)
 
 
 def get_task_data_dict(task_data):
@@ -91,9 +93,9 @@ class LLMAsJudgeBase(MapReduceMetric[Any, Dict[str, Any]], ArtifactFetcherMixin)
         pass
 
     def map(
-        self, 
-        prediction: Any, 
-        references: List[Any], 
+        self,
+        prediction: Any,
+        references: List[Any],
         task_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         raise NotImplementedError(
@@ -104,7 +106,7 @@ class LLMAsJudgeBase(MapReduceMetric[Any, Dict[str, Any]], ArtifactFetcherMixin)
         """Aggregate individual instance results into global scores."""
         if not intermediates:
             return {}
-        
+
         # Collect all numeric scores for averaging
         numeric_scores = {}
         for result in intermediates:
@@ -113,18 +115,18 @@ class LLMAsJudgeBase(MapReduceMetric[Any, Dict[str, Any]], ArtifactFetcherMixin)
                     if key not in numeric_scores:
                         numeric_scores[key] = []
                     numeric_scores[key].append(value)
-        
+
         # Calculate averages
         aggregated = {}
         for key, values in numeric_scores.items():
             if values:
                 aggregated[key] = sum(values) / len(values)
-        
+
         # Set the main score
         if self.main_score in aggregated:
             aggregated["score"] = aggregated[self.main_score]
             aggregated["score_name"] = self.main_score
-        
+
         return aggregated
 
     def reduce_one(self, intermediate: Dict[str, Any]) -> Dict[str, Any]:
@@ -134,6 +136,43 @@ class LLMAsJudgeBase(MapReduceMetric[Any, Dict[str, Any]], ArtifactFetcherMixin)
             result["score"] = result[self.main_score]
             result["score_name"] = self.main_score
         return result
+
+    def annotate_scores(self, scores):
+        """Default implementation - subclasses can override for custom score annotation."""
+        return scores
+
+    def map_stream(self, evaluation_inputs_stream):
+        """Common map_stream implementation for all LLM-as-judge subclasses."""
+        logger.info(
+            f'Starting evaluation with {self.__class__.__name__} using "{self.inference_model.get_engine_id()}"'
+        )
+
+        # Prepare all instances for inference without aggregating heavy data
+        prepared_instances = []
+        for prediction, references, task_data in evaluation_inputs_stream:
+            prepared_instance = self._prepare_instance_for_inference(prediction, references, task_data)
+            prepared_instances.append(prepared_instance)
+
+        # Run all inference steps on the prepared instances
+        return self._run_inference_on_all(prepared_instances)
+
+    @abstractmethod
+    def _prepare_instance_for_inference(self, prediction, references, task_data):
+        """Prepare a single instance for inference without keeping heavy data.
+
+        This method should be implemented by each judge subclass to prepare
+        an individual instance for batch inference processing.
+        """
+        pass
+
+    @abstractmethod
+    def _run_inference_on_all(self, prepared_instances):
+        """Run inference on all prepared instances efficiently.
+
+        This method should be implemented by each judge subclass to execute
+        inference on the batch of prepared instances and return results.
+        """
+        pass
 
     @abstractmethod
     def prepare_instances(
@@ -358,6 +397,26 @@ class LLMAsJudge(LLMAsJudgeBase):
         return instances
 
 
+    def _prepare_instance_for_inference(self, prediction, references, task_data):
+        """Prepare a single instance for inference without keeping heavy data."""
+        # Use the existing prepare_instances method to preprocess a single instance
+        instances = self.prepare_instances([references], [prediction], [task_data])
+        return instances[0] if instances else {}
+
+    def _run_inference_on_all(self, prepared_instances):
+        """Run inference on all prepared instances efficiently."""
+        if not prepared_instances:
+            return []
+
+        # Run inference on all instances
+        inference_outputs = self.infer_instances(prepared_instances)
+
+        # Get metric results
+        results = self.get_metric_results_from_prediction_outputs(inference_outputs)
+
+        return results
+
+
 class TaskBasedLLMasJudge(LLMAsJudgeBase):
     """LLM-as-judge-based metric class for evaluating correctness of generated predictions.
 
@@ -419,63 +478,47 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
             instance["references"] = [""]
         return instance
 
-    def compute(self, stream, stream_name=None):
-        """Override to handle batch processing like the original BulkInstanceMetric approach."""
-        # Process stream in batches to avoid memory issues with large datasets
-        batch_size = getattr(self, 'batch_size', 32)
-        
-        all_results = []
-        current_batch_instances = []
-        
-        for instance in stream:
-            # Apply preprocess_instance to handle missing fields
-            instance = self.preprocess_instance(instance)
-            current_batch_instances.append(instance)
-            
-            # Process when batch is full
-            if len(current_batch_instances) >= batch_size:
-                batch_results = self._process_batch(current_batch_instances)
-                all_results.extend(batch_results)
-                current_batch_instances = []  # Clear batch to free memory
-        
-        # Process remaining instances in final batch
-        if current_batch_instances:
-            batch_results = self._process_batch(current_batch_instances)
-            all_results.extend(batch_results)
-        
-        if not all_results:
-            return [], {}
-        
-        # Apply reduce to get global scores
-        global_scores = self.reduce(all_results)
-        
-        # Apply reduce_one to get individual scores
-        instance_scores = [self.reduce_one(result) for result in all_results]
-        
-        return instance_scores, global_scores
-    
-    def _process_batch(self, batch_instances):
-        """Process a batch of instances and return results."""
-        # Extract references, predictions, and task_data from batch
-        references = []
-        predictions = []
-        task_data = []
-        
-        for instance in batch_instances:
-            references.append(instance.get("references", [""]))
-            predictions.append(instance.get("prediction", ""))
-            task_data.append(instance)
-        
-        # Use the existing prepare_instances method to preprocess the data
-        instances = self.prepare_instances(references, predictions, task_data)
-        
-        # Run inference on batch instances
-        outputs = self.infer_instances(instances)
-        
-        # Get results for batch instances
-        batch_results = self.get_metric_results_from_prediction_outputs(outputs)
-        
-        return batch_results
+
+    def _prepare_instance_for_inference(self, prediction, references, task_data):
+        """Prepare a single instance for inference without keeping heavy data."""
+        # Use the existing prepare_instances method to preprocess a single instance
+        instances = self.prepare_instances([references], [prediction], [task_data])
+        return instances[0] if instances else {}
+
+    def _run_inference_on_all(self, prepared_instances):
+        """Run inference on all prepared instances efficiently."""
+        if not prepared_instances:
+            return []
+
+        # Run inference on all instances
+        inference_outputs = self.infer_instances(prepared_instances)
+
+        # Get metric results
+        results = self.get_metric_results_from_prediction_outputs(inference_outputs)
+
+        return results
+
+    def _instance_to_evaluation_input(self, instance):
+        """Override to handle TaskBasedLLMasJudge's special prediction field handling."""
+        # Apply preprocess_instance first to ensure required fields exist
+        instance = self.preprocess_instance(instance)
+
+        # For TaskBasedLLMasJudge, we bypass the standard field extraction
+        # and pass the entire instance as task_data since the judge will
+        # extract the fields it needs from there
+        task_data = instance.get("task_data", {})
+        prediction = instance.get("prediction")
+        references = instance.get("references", [""])
+
+        # Return the evaluation input with the full instance as task_data
+        from .metrics import EvaluationInput
+        return EvaluationInput(
+            prediction=prediction,
+            references=references,
+            task_data=instance  # Pass full instance as task_data
+        )
+
+
 
     def verify(self):
         super().verify()
@@ -523,19 +566,29 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
     def get_metric_results_from_prediction_outputs(self, outputs):
         results = []
         for instance in outputs:
+            # Use the score_prefix to create engine-prefixed score names
+            prefixed_main_score = f"{self.score_prefix}{self.main_score}"
             result = {
+                # Keep the unprefixed main score for the base class
                 self.main_score: instance["prediction"],
-                f"{self.main_score}_judge_raw_output": instance["raw_prediction"],
-                f"{self.main_score}_judge_raw_input": instance["source"],
+                # Add the prefixed versions for test compatibility
+                prefixed_main_score: instance["prediction"],
+                f"{prefixed_main_score}_judge_raw_output": instance["raw_prediction"],
+                f"{prefixed_main_score}_judge_raw_input": instance["source"],
             }
             if self.include_meta_data:
                 meta_data = {
-                    f"{self.main_score}_{k}": v
+                    f"{prefixed_main_score}_{k}": v
                     for k, v in instance["infer_meta_data"].items()
                 }
                 result.update(meta_data)
             results.append(result)
         return results
+
+    def annotate_scores(self, scores):
+        """Let the base class handle score prefixing correctly."""
+        # Just call the base class method to handle prefixing and score setting
+        return super().annotate_scores(scores)
 
     def prepare_instances(self, references, predictions, task_data):
         from . import get_from_catalog
@@ -558,10 +611,40 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
                 if new_val is not None:
                     instance_task_data[judge_task_input_field] = new_val
 
-            if self.prediction_field and prediction is not None:
-                if isinstance(prediction, dict):
-                    prediction = prediction[self.prediction_field]
-                instance_task_data[self.prediction_field] = prediction
+            # Handle prediction field assignment
+            if self.prediction_field:
+                # If prediction_field is explicitly set, use it
+                if prediction is not None:
+                    if isinstance(prediction, dict):
+                        prediction = prediction[self.prediction_field]
+                    instance_task_data[self.prediction_field] = prediction
+                else:
+                    # If prediction is None but prediction_field is set, try to get from task_data
+                    pred_value = input_instance.get(self.prediction_field)
+                    if pred_value is not None:
+                        instance_task_data[self.prediction_field] = pred_value
+            elif prediction is None:
+                # If no prediction_field is set and prediction is None, try to infer the prediction field
+                # Look for common prediction field names in the task input fields
+                prediction_field_candidates = ['answer', 'prediction', 'response', 'output']
+                for candidate in prediction_field_candidates:
+                    if candidate in judge_task_input_fields and candidate in input_instance:
+                        instance_task_data[candidate] = input_instance[candidate]
+                        break
+            elif prediction is not None:
+                # If prediction is provided but no prediction_field, we need to figure out where to put it
+                # This is the normal case handled by the field mapping above
+                pass
+
+            # Ensure all required fields have default values if missing
+            for field_name in judge_task_input_fields:
+                if field_name not in instance_task_data:
+                    # Set default values for missing fields
+                    if field_name in ["choices", "contexts", "ground_truths"]:
+                        instance_task_data[field_name] = ["-"]  # Default list value
+                    elif field_name in ["answer", "question"]:
+                        instance_task_data[field_name] = "-"  # Default string value
+
             instance_task_data = judge_task.process(instance_task_data)["input_fields"]
 
             data_classification_policy = input_instance.get("metadata", {}).get(
