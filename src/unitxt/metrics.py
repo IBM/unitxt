@@ -894,9 +894,26 @@ class MultiTurnToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]])
 class ReflectionToolCallingMetricSyntactic(
     ReductionInstanceMetric[str, Dict[str, float]]
 ):
-    """Evaluates tool calls without references using the reflection pipeline's static checker.
+    """Measures syntactic and schema validity of tool calls.
 
-    Uses schema validation to determine correctness without requiring reference examples.
+    Range: [0, 1] (higher is better)
+    Returns 1.0 if the tool call is valid (all checks pass), 0.0 otherwise.
+    Global score is the percentage of valid instances across the dataset.
+
+    Scores:
+    - non_existent_function: tool name not found.
+    - non_existent_parameter: argument name not in tool spec.
+    - incorrect_parameter_type: argument type mismatch.
+    - missing_required_parameter: required argument missing.
+    - allowed_values_violation: argument value outside allowed set.
+    - json_schema_violation: call violates JSON schema.
+    - empty_api_spec: no tool spec provided.
+    - invalid_api_spec: tool spec is invalid.
+    - invalid_tool_call: call is not a valid tool invocation.
+    - overall_valid: validity of the call (main score).
+    - score: alias of overall_valid.
+
+    Reference: https://github.ibm.com/MLT/LLMEvalKit
     """
 
     main_score = "overall_valid"

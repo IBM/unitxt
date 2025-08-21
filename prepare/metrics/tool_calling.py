@@ -56,7 +56,7 @@ add_to_catalog(
 
 add_to_catalog(
     ReflectionToolCallingMetricSyntactic(
-        __description__="""Metric that evaluates tool call predictions for their syntactic validity based on a set of predefined checks."""
+        __description__="""This metric evaluates whether a model's tool call outputs are structurally valid by checking their compliance with the provided tool schema. For each instance, it returns a binary score (True for valid, False for invalid), and aggregates these into a global percentage across all instances. The evaluation covers a wide range of possible issues, including nonexistent functions or parameters, incorrect parameter types, missing required parameters, values outside allowed ranges, JSON schema violations, invalid or empty API specifications, and malformed tool calls. The main reported score, overall_valid (aliased as score), reflects the proportion of calls that are fully valid, making the metric a measure of syntactic and schema-level correctness rather than semantic accuracy."""
     ),
     "metrics.tool_calling.reflection.syntactic",
     overwrite=True,
