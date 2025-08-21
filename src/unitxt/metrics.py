@@ -891,6 +891,67 @@ class MultiTurnToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]])
         }
 
 
+class ReflectionToolCallingMetricSyntactic(
+    ReductionInstanceMetric[str, Dict[str, float]]
+):
+    """Evaluates tool calls without references using the reflection pipeline's static checker.
+    Uses schema validation to determine correctness without requiring reference examples.
+    """
+
+    main_score = "overall_valid"
+    reduction = MeanReduction()
+    prediction_type = ToolCall
+    _requirements_list = {
+        "llmevalkit": "pip install 'git+ssh://git@github.ibm.com/MLT/LLMEvalKit.git'"
+    }
+
+    def map(
+        self,
+        prediction: ToolCall,
+        references: None,
+        task_data: Dict[str, Any],
+    ) -> Dict[str, float]:
+        from llmevalkit.function_calling.pipeline.types import (
+            ToolSpec as LLMEvalKitToolSpec,
+            ToolCall as LLMEvalKitToolCall,
+        )
+        from llmevalkit.function_calling.pipeline.pipeline import ReflectionPipeline
+
+        # Convert unitxt tool inventory to LLMEvalKit format
+        tools_inventory = []
+        for tool in task_data.get("tools", []):
+            tools_inventory.append(
+                LLMEvalKitToolSpec(
+                    type="function",
+                    function={**tool},
+                )
+            )
+
+        # Convert unitxt tool call to LLMEvalKit format
+        tool_call = LLMEvalKitToolCall(
+            type="function",
+            function={
+                "name": prediction["name"],
+                "arguments": json.dumps(prediction["arguments"]),
+                "parsed_arguments": prediction["arguments"],
+            },
+        )
+
+        # Run static validation
+        static_result = ReflectionPipeline.static_only(tools_inventory, tool_call)
+
+        result_dict = {
+            (
+                metric_name
+                if metric_name != "json_schema_validation"
+                else "json_schema_violation"
+            ): not metric_dict.valid
+            for metric_name, metric_dict in static_result.metrics.items()
+        }
+        result_dict["overall_valid"] = static_result.final_decision
+        return result_dict
+
+
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
     # Use None to disable confidence interval computation.
@@ -2558,13 +2619,11 @@ class HuggingfaceMetric(GlobalMetric):
                 Documentation.HUGGINGFACE_METRICS,
             )
 
-        assert (
-            self.hf_additional_input_fields is None
-            or isoftype(self.hf_additional_input_fields, List[str])
+        assert self.hf_additional_input_fields is None or isoftype(
+            self.hf_additional_input_fields, List[str]
         ), f"Argument hf_additional_input_fields should be either None or List[str]. It is now: {self.hf_additional_input_fields}."
-        assert (
-            self.hf_additional_input_fields_pass_one_value is None
-            or isoftype(self.hf_additional_input_fields_pass_one_value, List[str])
+        assert self.hf_additional_input_fields_pass_one_value is None or isoftype(
+            self.hf_additional_input_fields_pass_one_value, List[str]
         ), f"Argument hf_additional_input_fields_pass_one_value should be either None or List[str]. It is now: {self.hf_additional_input_fields_pass_one_value}."
 
         return super().verify()
@@ -3152,8 +3211,8 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
             labels=labels_param,
         )
         if isinstance(result[self.metric], numpy.ndarray):
-            assert (
-                len(result[self.metric]) == len(labels)
+            assert len(result[self.metric]) == len(
+                labels
             ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
             final_result = {self.main_score: nan_mean(result[self.metric])}
             for i, label in enumerate(labels):
@@ -4455,9 +4514,9 @@ class LlamaIndexLLMMetric(InstanceMetric):
     prediction_type = str
     reduction_map: Dict[str, List[str]] = None
     openai_models: List[str] = ["gpt-3.5-turbo"]
-    anthropic_models: List[
-        str
-    ] = []  # this is here for the sake of documentation for future models
+    anthropic_models: List[str] = (
+        []
+    )  # this is here for the sake of documentation for future models
     mock_models: List[str] = ["mock"]
     external_api_models = openai_models + anthropic_models
     data_classification_policy = ["public"]
@@ -6522,9 +6581,9 @@ class MetricsEnsemble(InstanceMetric, ArtifactFetcherMixin):
 
     def create_ensemble_scores(self, instance):
         score = self.ensemble(instance)
-        instance[
-            "prediction"
-        ] = score  # We use here the prediction field to pass the score to the compute method.
+        instance["prediction"] = (
+            score  # We use here the prediction field to pass the score to the compute method.
+        )
         return instance
 
     def ensemble(self, instance):

@@ -1,0 +1,4 @@
+{
+    "__type__": "reflection_tool_calling_metric_syntactic",
+    "__description__": "Metric that evaluates tool call predictions for their syntactic validity based on a set of predefined checks."
+}

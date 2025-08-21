@@ -1,6 +1,7 @@
 from unitxt.catalog import add_to_catalog
 from unitxt.metrics import (
     MultiTurnToolCallingMetric,
+    ReflectionToolCallingMetricSyntactic,
     ToolCallingMetric,
     ToolCallKeyValueExtraction,
 )
@@ -50,5 +51,13 @@ add_to_catalog(
         __description__="""Metric that evaluates tool call predictions for the validity with regards to the tools schema."""
     ),
     "metrics.tool_calling.multi_turn.validity",
+    overwrite=True,
+)
+
+add_to_catalog(
+    ReflectionToolCallingMetricSyntactic(
+        __description__="""Metric that evaluates tool call predictions for their syntactic validity based on a set of predefined checks."""
+    ),
+    "metrics.tool_calling.reflection.syntactic",
     overwrite=True,
 )
