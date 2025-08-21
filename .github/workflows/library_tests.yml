@@ -40,8 +40,9 @@ jobs:
 
     - name: Install Internal Dependencies
       run: |
-        echo "${{ secrets.LLMEVALKIT_SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
+        mkdir ~/.ssh
+        echo "${{ secrets.LLMEVALKIT_SSH_KEY }}" > ~/.ssh/id_ci
+        chmod 600 ~/.ssh/id_ci
         ssh-keyscan github.ibm.com >> ~/.ssh/known_hosts
         pip install "git+ssh://git@github.ibm.com/MLT/LLMEvalKit.git"
 
