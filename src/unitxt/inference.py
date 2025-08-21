@@ -1444,12 +1444,16 @@ class MockInferenceEngine(SingleInferenceEngine):
     )
     label: str = "mock_inference_engine"
     support_log_probs: bool = True
+    lazy_prepare = False
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, "mock")
 
     def _prepare_engine(self):
         return
+
+    def _is_prepared(self):
+        return True
 
     def _mock_infer(
         self,
