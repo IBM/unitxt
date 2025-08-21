@@ -41,6 +41,10 @@ jobs:
     - name: Install Dependencies
       run: bash utils/install.sh
 
+    - uses: ./.github/actions/install-internal-pip
+      with:
+        ssh-private-key: ${{ secrets.LLMEVALKIT_SSH_KEY }}
+
     - name: Hugging Face Login
       run: |
         for i in {1..5}; do
