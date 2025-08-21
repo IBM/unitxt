@@ -30,6 +30,7 @@ from typing import (
     TypedDict,
     TypeVar,
     Union,
+    cast,
 )
 
 from datasets import Dataset, DatasetDict, Image
@@ -1506,7 +1507,38 @@ class MockInferenceEngine(SingleInferenceEngine):
         return predict_result
 
 
-class GenericInferenceEngine(InferenceEngine, ArtifactFetcherMixin):
+class DecoratedInferenceEngine(InferenceEngine, LazyLoadMixin):
+    engine: InferenceEngine = InternalField(default=None)
+
+    def _is_loaded(self):
+        return hasattr(self, "engine") and self.engine is not None
+
+    async def _async_infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
+        if not self._is_loaded():
+            self.prepare_engine()
+        return await self.engine._async_infer(dataset, return_meta_data)
+
+    async def _infer_streaming(
+        self,
+        instances: Iterable[Tuple[Union[int, Dict[str, Any]]]],
+        total_len: int,
+        return_meta_data: bool = False,
+    ) -> AsyncIterable[Tuple[Union[int, str, TextGenerationInferenceOutput]]]:
+        if not self._is_loaded():
+            self.prepare_engine()
+        return await self.engine._infer_streaming(
+            instances, total_len, return_meta_data
+        )
+
+    def get_engine_id(self):
+        return self.engine.get_engine_id()
+
+
+class GenericInferenceEngine(DecoratedInferenceEngine, ArtifactFetcherMixin):
     default: Optional[str] = None
 
     def prepare_engine(self):
@@ -1522,15 +1554,9 @@ class GenericInferenceEngine(InferenceEngine, ArtifactFetcherMixin):
                 "\nor passing a similar required engine in the default argument"
             )
             engine_reference = self.default
-        self.engine = self.get_artifact(engine_reference)
-
-    def _infer_streaming(
-        self,
-        instances: Iterable[Tuple[Union[int, Dict[str, Any]]]],
-        total_len: int,
-        return_meta_data: bool = False,
-    ) -> AsyncIterable[Tuple[int, Union[str, TextGenerationInferenceOutput]]]:
-        return self.engine._infer_streaming(instances, total_len, return_meta_data)
+        self.engine: InferenceEngine = cast(
+            InferenceEngine, self.get_artifact(engine_reference)
+        )
 
 
 class OllamaInferenceEngine(
@@ -3210,7 +3236,7 @@ _supported_apis = Literal[
 ]
 
 
-class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
+class CrossProviderInferenceEngine(DecoratedInferenceEngine, StandardAPIParamsMixin):
     """Inference engine capable of dynamically switching between multiple providers APIs.
 
     This class extends the InferenceEngine and OpenAiInferenceEngineParamsMixin
@@ -3508,27 +3534,6 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
                     del args[param]
         self.engine: InferenceEngine = cls(**args)
         self.data_classification_policy = self.engine.data_classification_policy
-
-    async def _async_infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
-        if not hasattr(self, "engine"):
-            self.prepare_engine()
-        return await self.engine._async_infer(dataset, return_meta_data)
-
-    async def _infer_streaming(
-        self,
-        instances: Iterable[Tuple[Union[int, Dict[str, Any]]]],
-        total_len: int,
-        return_meta_data: bool = False,
-    ) -> AsyncIterable[Tuple[Union[int, str, TextGenerationInferenceOutput]]]:
-        if not hasattr(self, "engine"):
-            self.prepare_engine()
-        return await self.engine._infer_streaming(
-            instances, total_len, return_meta_data
-        )
 
     def get_engine_id(self):
         api = self.get_provider_name()
