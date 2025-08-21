@@ -1,0 +1,12 @@
+name: "Install LLMEvalKit"
+description: "Sets up SSH and installs LLMEvalKit"
+runs:
+  using: "composite"
+  steps:
+    - uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.LLMEVALKIT_SSH_KEY }}
+    - run: ssh-keyscan github.ibm.com >> ~/.ssh/known_hosts
+      shell: bash
+    - run: pip install "git+ssh://git@github.ibm.com/MLT/LLMEvalKit.git"
+      shell: bash

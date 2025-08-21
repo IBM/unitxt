@@ -40,6 +40,8 @@ jobs:
     - name: Install Dependencies
       run: bash utils/install.sh
 
+    - uses: ./.github/actions/llmevalkit
+
     - name:  Hugging Face Login
       run: |
         for i in {1..5}; do
