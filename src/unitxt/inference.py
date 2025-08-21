@@ -336,18 +336,6 @@ class InferenceEngine(
         ):
             return self.infer(dataset=dataset, return_meta_data=return_meta_data)
 
-    def get_instance_cache_key(self, instance):
-        instance_key_fields = ["media", "source", "task_data"]
-        return {key: instance[key] for key in instance if key in instance_key_fields}
-
-    def _get_cache_key(self, instance: Dict[str, Any]) -> str:
-        """Generate a unique cache key for each input."""
-        record = self.get_instance_cache_key(instance)
-        record["version"] = constants.version
-        record.update(self.to_dict())
-        instance_str = json.dumps(record, sort_keys=True)
-        return hashlib.md5(instance_str.encode()).hexdigest()
-
     def verify_infer_inputs(
         self, dataset: Union[List[Dict[str, Any]], Dataset], return_meta_data: bool
     ):
@@ -355,8 +343,8 @@ class InferenceEngine(
             raise Exception(
                 "Dataset passed to infer() is not list of dictionaries or Huggingface Dataset"
             )
-
-        [self.verify_instance(instance) for instance in dataset]
+        for instance in dataset:
+            self.verify_instance(instance)
 
     def infer(
         self,
@@ -400,7 +388,6 @@ class InferenceEngine(
         return_log_probs: bool = False,
     ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
         """Internal async method that handles all inference logic."""
-        self.prepare_engine()
         self.verify_infer_inputs(dataset, return_meta_data)
 
         if self.is_mock:
@@ -410,6 +397,7 @@ class InferenceEngine(
             else:
                 result = self._mock_infer(dataset, return_meta_data)
         else:
+            self.prepare_engine()
             logger.info(f"Running inference with {self.get_engine_id()}")
             results: Dict[int, Any] = {}
             async for index, prediction in self._infer_streaming(
@@ -530,7 +518,7 @@ class BatchInferenceEngine(InferenceEngine):
         total_generated = 0
         total_loaded = 0
         pbar = tqdm(
-            total=total_len, desc=f"Inference {self.get_engine_id()}", unit="inst"
+            total=total_len, desc=f"Inference ({self.get_engine_id()})", unit="item"
         )
         try:
             for idx, instance in instances:
@@ -562,22 +550,14 @@ class BatchInferenceEngine(InferenceEngine):
                 results = self._infer_batch(
                     current_batch, return_meta_data, return_log_probs
                 )
-                for original_idx, result in zip(current_indices, results):
+                for original_idx, instance, result in zip(
+                    current_indices, current_batch, results
+                ):
                     self._cache_result(instance, result)
                     pbar.update(1)
                     total_generated += 1
                     yield original_idx, result
         finally:
-            # Process remaining instances
-            if current_batch:
-                results = self._infer_batch(
-                    current_batch, return_meta_data, return_log_probs
-                )
-                for original_idx, result in zip(current_indices, results):
-                    self._cache_result(instance, result)
-                    pbar.update(1)
-                    total_generated += 1
-                    yield original_idx, result
             pbar.close()
 
         logger.info(
@@ -624,61 +604,57 @@ class SingleInferenceEngine(InferenceEngine):
         return_meta_data: bool = False,
         return_log_probs: bool = False,
     ) -> AsyncIterable[Tuple[int, Union[str, TextGenerationInferenceOutput]]]:
-        """Stream results concurrently without realizing the input iterable, with tqdm progress."""
         sem = asyncio.Semaphore(self.concurrency_limit)
         it = iter(instances)
         pending: set[asyncio.Task] = set()
 
-        # Initialize tqdm with total length
         pbar = tqdm(
             total=total_len, desc=f"Inference ({self.get_engine_id()})", unit="item"
         )
         total_loaded = 0
         total_generated = 0
 
-        async def bounded_infer(idx: int, instance: Dict[str, Any]):
-            nonlocal total_loaded, total_generated
+        async def process_instance(idx: int, instance: Dict[str, Any]):
             cached_result = self._get_cached_result(instance)
             if cached_result is not None:
-                total_loaded += 1
-                return idx, cached_result
+                return idx, cached_result, True
+
             async with sem:
                 result = await self._infer_single(
                     instance, return_meta_data, return_log_probs
                 )
-                total_generated += 1
                 self._cache_result(instance, result)
-                return idx, result
+                return idx, result, False
 
-        # Prime the pool
-        for _ in range(self.concurrency_limit):
-            try:
-                idx, inst = next(it)
-            except StopIteration:
-                break
-            pending.add(asyncio.create_task(bounded_infer(idx, inst)))
-
-        # Drain while refilling
         try:
+            for _ in range(self.concurrency_limit):
+                try:
+                    idx, inst = next(it)
+                    pending.add(asyncio.create_task(process_instance(idx, inst)))
+                except StopIteration:
+                    break
+
             while pending:
                 done, pending = await asyncio.wait(
                     pending, return_when=asyncio.FIRST_COMPLETED
                 )
 
                 for task in done:
-                    idx, result = await task
-                    pbar.update(1)  # update progress for each finished task
+                    idx, result, from_cache = await task
+                    total_loaded += from_cache
+                    total_generated += not from_cache
+                    pbar.update(1)
                     yield idx, result
 
                 while len(pending) < self.concurrency_limit:
                     try:
                         idx, inst = next(it)
+                        pending.add(asyncio.create_task(process_instance(idx, inst)))
                     except StopIteration:
                         break
-                    pending.add(asyncio.create_task(bounded_infer(idx, inst)))
+
         finally:
             pbar.close()
-
             logger.info(
                 f"Inference Summary: {total_generated} generated, {total_loaded} loaded from cache."
             )
@@ -1509,14 +1485,7 @@ class DecoratedInferenceEngine(InferenceEngine, LazyPrepareMixin):
     engine: InferenceEngine = InternalField(default=None)
 
     def _is_prepared(self):
-        return (
-            hasattr(self, "engine")
-            and self.engine is not None
-            and self.engine._is_prepared
-        )
-
-    def _prepare_engine(self):
-        return self.engine._prepare_engine()
+        return hasattr(self, "engine") and self.engine is not None
 
     async def _async_infer(
         self,
@@ -1538,7 +1507,8 @@ class DecoratedInferenceEngine(InferenceEngine, LazyPrepareMixin):
         )
 
     def get_engine_id(self):
-        self.prepare_engine()
+        if not self.is_mock:
+            self.prepare_engine()
         return self.engine.get_engine_id()
 
 
@@ -3253,7 +3223,7 @@ class CrossProviderInferenceEngine(DecoratedInferenceEngine, StandardAPIParamsMi
     label: str = "cross_provider"
     provider: Optional[_supported_apis] = None
     provider_specific_args: Optional[Dict[str, Dict[str, str]]] = None
-
+    lazy_prepare: bool = False
     provider_model_map: Dict[_supported_apis, Dict[str, str]] = {
         "watsonx-sdk": {  # checked from ibm_watsonx_ai.APIClient().foundation_models.ChatModels
             "granite-20b-code-instruct": "ibm/granite-20b-code-instruct",
