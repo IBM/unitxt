@@ -23,7 +23,6 @@ jobs:
        HF_DATASETS_DISABLE_PROGRESS_BARS: True
        HF_HUB_DOWNLOAD_TIMEOUT: 60
        HF_HUB_ETAG_TIMEOUT: 60
-       TQDM_DISABLE: True
 
      steps:
      - uses: actions/checkout@v4
