@@ -5,14 +5,14 @@ from unitxt.artifact import fetch_artifact
 
 logger = get_logger()
 
-card, _ = fetch_artifact("cards.info_vqa")
+card, _ = fetch_artifact("cards.doc_vqa.en")
 ds = hf_load_dataset(path=card.loader.path)
 logger.critical(f"ds as read by datasets.load_dataset:\n{ds}")
 cntr = 0
 for _ in ds["train"]:
     cntr = cntr + 1
 logger.critical(f"len of train split, read by datasets.load_dataset: {cntr}")
-recipe = load_recipe(card="cards.info_vqa")
+recipe = load_recipe(card="cards.doc_vqa.en")
 loader = recipe.steps[0].steps[0]
 logger.critical(f"unitxt loader.path = {loader.path}")
 ms = loader()
