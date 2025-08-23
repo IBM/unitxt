@@ -5,8 +5,8 @@ from unitxt.artifact import fetch_artifact
 
 logger = get_logger()
 
-card_name = "cards.frames"
-logger.critical(f"card tested: {card_name}. only _source_to_dataset")
+card_name = "cards.long_bench_v2"
+logger.critical(f"card tested: {card_name} .")
 
 card, _ = fetch_artifact(card_name)
 ds = hf_load_dataset(path=card.loader.path)
