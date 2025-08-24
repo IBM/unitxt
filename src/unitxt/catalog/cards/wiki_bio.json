@@ -6,17 +6,11 @@
         "revision": "refs/convert/parquet",
         "splits": [
             "train",
-            "val",
+            "validation",
             "test"
         ]
     },
     "preprocess_steps": [
-        {
-            "__type__": "rename_splits",
-            "mapper": {
-                "val": "validation"
-            }
-        },
         {
             "__type__": "list_to_key_val_pairs",
             "fields": [
