@@ -612,6 +612,12 @@ class HFInferenceEngineBase(
 
         logprobs: List[List[Dict[str, Any]]] = []
 
+        tokenizer = (
+            self.processor.tokenizer
+            if hasattr(self.processor, "tokenizer")
+            else self.processor
+        )
+
         for sample_no, sample_scores in enumerate(transition_scores.detach().cpu()):
             sample_logprobs: List[Dict[str, Any]] = []
 
@@ -622,7 +628,7 @@ class HFInferenceEngineBase(
                         "logprob": float(score.cpu()),
                         "top_tokens": [
                             {
-                                "text": self.processor.tokenizer.decode(idx),
+                                "text": tokenizer.decode(idx),
                                 "logprob": float(
                                     predictions.scores[n][sample_no][idx].cpu()
                                 ),
