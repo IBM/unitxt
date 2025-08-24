@@ -5,7 +5,7 @@ from unitxt.artifact import fetch_artifact
 
 logger = get_logger()
 
-card_name = "cards.seed_bench"
+card_name = "cards.turl_col_type"
 logger.critical(f"card tested: {card_name} .")
 
 card, _ = fetch_artifact(card_name)
