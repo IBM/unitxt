@@ -40,6 +40,12 @@
                 "cate-idx"
             ],
             "new_stream_name": "test"
+        },
+        {
+            "__type__": "delete_splits",
+            "splits": [
+                "judge_prompts"
+            ]
         }
     ],
     "task": {
