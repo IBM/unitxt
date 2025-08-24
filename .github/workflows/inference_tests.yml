@@ -32,6 +32,8 @@ jobs:
       WX_PROJECT_ID: ${{ secrets.WML_PROJECT_ID }} # Similar to WML_PROJECT_ID
       WX_API_KEY: ${{ secrets.WML_APIKEY }} # Similar to WML_APIKEY
       GENAI_KEY: ${{ secrets.GENAI_KEY }}
+      SKIP_HEAVY_LOCAL: "True"
+
 
     steps:
       - uses: actions/checkout@v4

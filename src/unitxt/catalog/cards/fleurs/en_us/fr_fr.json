@@ -1,0 +1,112 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "multiple_source_loader",
+        "sources": [
+            {
+                "__type__": "source_sequential_operator",
+                "steps": [
+                    {
+                        "__type__": "load_hf",
+                        "path": "google/fleurs",
+                        "revision": "refs/convert/parquet",
+                        "data_dir": "en_us",
+                        "splits": [
+                            "test"
+                        ],
+                        "data_classification_policy": [
+                            "public"
+                        ]
+                    },
+                    {
+                        "__type__": "remove_fields",
+                        "fields": [
+                            "num_samples",
+                            "path",
+                            "raw_transcription",
+                            "transcription",
+                            "gender",
+                            "lang_id",
+                            "language",
+                            "lang_group_id"
+                        ]
+                    },
+                    {
+                        "__type__": "rename_splits",
+                        "mapper": {
+                            "test": "test_input"
+                        }
+                    }
+                ]
+            },
+            {
+                "__type__": "source_sequential_operator",
+                "steps": [
+                    {
+                        "__type__": "load_hf",
+                        "path": "google/fleurs",
+                        "revision": "refs/convert/parquet",
+                        "data_dir": "fr_fr",
+                        "splits": [
+                            "test"
+                        ],
+                        "data_classification_policy": [
+                            "public"
+                        ]
+                    },
+                    {
+                        "__type__": "remove_fields",
+                        "fields": [
+                            "num_samples",
+                            "path",
+                            "audio",
+                            "raw_transcription",
+                            "gender",
+                            "lang_id",
+                            "language",
+                            "lang_group_id"
+                        ]
+                    },
+                    {
+                        "__type__": "rename_splits",
+                        "mapper": {
+                            "test": "test_target"
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "join_streams_fleurs",
+            "left_stream": "test_input",
+            "right_stream": "test_target",
+            "how": "inner",
+            "on": [
+                "id"
+            ],
+            "new_stream_name": "test"
+        },
+        {
+            "__type__": "to_audio",
+            "field": "audio"
+        },
+        {
+            "__type__": "rename",
+            "field": "transcription",
+            "to_field": "translation"
+        },
+        {
+            "__type__": "add_fields",
+            "fields": {
+                "source_language": "English",
+                "target_language": "French"
+            }
+        }
+    ],
+    "task": "tasks.translation.speech",
+    "templates": [
+        "templates.translation.speech.default"
+    ]
+}

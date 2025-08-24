@@ -1,0 +1,41 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "mozilla-foundation/common_voice_17_0",
+        "revision": "refs/convert/parquet",
+        "data_dir": "en",
+        "data_classification_policy": [
+            "public"
+        ],
+        "splits": [
+            "invalidated",
+            "other",
+            "test",
+            "train",
+            "validated",
+            "validation"
+        ],
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "to_audio",
+            "field": "audio"
+        },
+        {
+            "__type__": "rename",
+            "field": "sentence",
+            "to_field": "text"
+        },
+        {
+            "__type__": "strip_quotation",
+            "field": "text"
+        }
+    ],
+    "task": "tasks.speech_recognition",
+    "templates": [
+        "templates.speech_recognition.default"
+    ],
+    "__title__": "CommonVoice-17-en"
+}

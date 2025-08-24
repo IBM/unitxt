@@ -1,0 +1,21 @@
+{
+    "__type__": "task",
+    "input_fields": {
+        "audio": "Audio"
+    },
+    "reference_fields": {
+        "text": "str"
+    },
+    "prediction_type": "str",
+    "metrics": [
+        "metrics.wer"
+    ],
+    "default_template": {
+        "__type__": "input_output_template",
+        "input_format": "{audio}can you transcribe the speech into a written format?",
+        "output_format": "{text}",
+        "postprocessors": [
+            "processors.normalize_text_with_whisper"
+        ]
+    }
+}
