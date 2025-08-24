@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.blocks import InputOutputTemplate, Task, TaskCard
 from unitxt.loaders import LoadHF, MultipleSourceLoader
 from unitxt.operators import SelectFields
-from unitxt.stream_operators import JoinStreams
+from unitxt.stream_operators import DeleteSplits, JoinStreams
 from unitxt.templates import TemplatesDict
 from unitxt.test_utils.card import test_card
 
@@ -30,6 +30,7 @@ card = TaskCard(
             on=["cate-idx"],
             new_stream_name="test",
         ),
+        DeleteSplits(splits=["judge_prompts"]),
     ],
     task=Task(
         input_fields={
