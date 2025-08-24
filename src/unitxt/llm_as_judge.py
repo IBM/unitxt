@@ -1,5 +1,4 @@
 import itertools
-from abc import abstractmethod
 from difflib import get_close_matches
 from typing import Any, Dict, List, Optional, Union
 
@@ -10,6 +9,7 @@ from .error_utils import UnitxtError
 from .inference import (
     InferenceEngine,
 )
+from .llm_as_judge_base import BaseLLMJudge
 from .llm_as_judge_chat_templates import direct_template_dict, pairwise_template_dict
 from .llm_as_judge_constants import (
     DIRECT_CRITERIA,
@@ -52,41 +52,42 @@ from .templates import Template
 logger = get_logger(__name__)
 
 
-class LLMJudge(MapReduceMetric[Any, Dict[str, Any]]):
+class LLMJudge(BaseLLMJudge):
     """A metric class to evaluate instances using LLM as a Judge.
 
-    Evaluations are performed in two steps. First, the LLM is asked to generate an assessment following a CoT approach based on the criteria. Then, the same LLM is asked to select one of the available options. A summary of the general assessment can be generated for easy consumption by end users.
+    Evaluations are performed in two steps. First, the LLM is asked to generate an assessment
+    following a CoT approach based on the criteria. Then, the same LLM is asked to select one
+    of the available options. A summary of the general assessment can be generated for easy
+    consumption by end users.
+
+    Args:
+        inference_engine: The engine used for generating predictions in the different evaluation steps.
+        evaluator_name: The name of the evaluator. It is used for score naming. If not provided,
+            `self.inference_engine.get_engine_id()` is used.
+        check_positional_bias: Flag to check for positional bias. Detecting for positional bias
+            duplicates the amount of inference calls. Defaults to True.
+        context_fields: Fields to be used as context. If a dict is provided, the keys are used as
+            the final names in the prompts, while the values are used to access the context variable
+            values in the `task_data` object. Defaults to ["context"].
+        generate_summaries: Flag to generate summaries of the assessments. Defaults to False.
+        format: The format used for the inference. Defaults to "formats.chat_api" (only allowed value).
+        include_prompts_in_result: Flag to include prompts in the result. Defaults to True.
+        criteria_field: The field specifying the evaluation criteria in the `task_data` object.
+            If the `criteria` is provided, it will take precedence. Defaults to None.
+        criteria: The criteria used for evaluation. Defaults to None.
     """
 
     inference_engine: InferenceEngine
-    """The engine used for generating predictions in the different evaluation steps."""
-
-    evaluator_name: EvaluatorNameEnum = None
-    """The name of the evaluator. It is used for score naming. If not provided `self.inference_engine.get_engine_id()` is used."""
-
+    evaluator_name: Optional[EvaluatorNameEnum] = None
     check_positional_bias: bool = True
-    """Flag to check for positional bias. Detecting for positional bias duplicates the amount of inference calls."""
-
     context_fields: Union[str, List[str], Dict[str, str]] = ["context"]
-    """Fields to be used as context. If a dict is provided, the keys are used as the final names in the prompts, while the values are used to access the context variable values in the `task_data` object (it is recommended to provide the context_fields in the Criteria `context_fields` field as this field will be deprecated in the future)."""
-
     generate_summaries: bool = False
-    """Flag to generate summaries of the assessments. Defaults to `False`."""
-
     format: str = "formats.chat_api"
-    """The format used for the inference. Defaults to `formats.chat_api` (only allowed value)."""
-
     include_prompts_in_result: bool = True
-    """Flag to include prompts in the result. Defaults to `True`."""
-
-    criteria_field: str = None
-    """The field specifying the evaluation criteria in the `task_data` object. If the `criteria` is provided, it will take precedence."""
-
+    criteria_field: Optional[str] = None
     criteria: Criteria = None
-    """The criteria used for evaluation."""
 
     def prepare(self):
-        """Prepares the `LLMJudge` instance by setting up context fields and evaluator name."""
         super().prepare()
         self.context_fields = self.get_context_fields_as_dict(self.context_fields)
 
@@ -94,11 +95,6 @@ class LLMJudge(MapReduceMetric[Any, Dict[str, Any]]):
             self.evaluator_name = self.inference_engine.get_engine_id()
 
     def before_process_multi_stream(self):
-        """Checks the criteria-related fields correctness before processing multiple streams.
-
-        Raises:
-            UnitxtError: If both 'criteria' and 'criteria_field' are not set.
-        """
         super().before_process_multi_stream()
         # We check the criteria here and not in verify(), because we want catalog
         # may contain a partially initialized object, and verify() method
@@ -120,15 +116,6 @@ class LLMJudge(MapReduceMetric[Any, Dict[str, Any]]):
     def get_contexts(
         self, task_data: List[Dict[str, Any]], criteria: List[Criteria]
     ) -> List[Dict[str, str]]:
-        """Extracts and parses context fields from task data.
-
-        Args:
-            task_data (List[Dict[str, Any]]): The task data containing context information.
-            criteria ( List[Criteria]): The criteria list from which to take the context fields if they weren't provided in the self.context_fields field
-
-        Returns:
-            List[Dict[str, str]]: A list of parsed context dictionaries.
-        """
         parsed_contexts = []
         for i, td in enumerate(task_data):
             context_fields_for_td = self.context_fields
@@ -154,17 +141,6 @@ class LLMJudge(MapReduceMetric[Any, Dict[str, Any]]):
         template: Template,
         previous_messages: Optional[List[Dict[str, str]]] = None,
     ):
-        """Performs an evaluation step by generating predictions for the given instances.
-
-        Args:
-            instances (list): The list of instances to evaluate.
-            task (Task): The task associated with the instances.
-            template (Template): The template used for generating predictions.
-            previous_messages (Optional[List[Dict[str, str]]]): Previous messages for context.
-
-        Returns:
-            Tuple[List[str], List[str], List[str]]: A tuple containing prompts, raw predictions, and processed predictions. Raw predictions differ from processed predictions only in the completion step, where the processors.match_closest_option is used.
-        """
         outputs_dataset = infer(
             instances,
             task=task,
@@ -184,14 +160,6 @@ class LLMJudge(MapReduceMetric[Any, Dict[str, Any]]):
         return (prompts, raw_predictions, predictions)
 
     def clean_results(self, results: Union[dict, list]):
-        """Cleans the results by removing `None` values and empty lists and dictionaries.
-
-        Args:
-            results (Union[dict, list]): The results to clean.
-
-        Returns:
-            Union[dict, list]: The cleaned results.
-        """
         if isinstance(results, list):
             return [self.clean_results(x) for x in results]
         cleaned = {
@@ -199,7 +167,6 @@ class LLMJudge(MapReduceMetric[Any, Dict[str, Any]]):
             for k, v in results.items()
             if v is not None and not (isinstance(v, (list, dict)) and len(v) == 0)
         }
-        # Remove the dictionary itself if it becomes empty
         return {
             k: v
             for k, v in cleaned.items()
@@ -207,18 +174,6 @@ class LLMJudge(MapReduceMetric[Any, Dict[str, Any]]):
         }
 
     def get_criteria(self, task_data, eval_count) -> List[Criteria]:
-        """Retrieves the evaluation criteria from the `criteria_field` or from `self`.
-
-        Args:
-            task_data (List[Dict[str, Any]]): The task data containing criteria information.
-            eval_count (int): The number of evaluations to perform.
-
-        Returns:
-            List[Criteria]: A list of criteria for evaluation.
-
-        Raises:
-            UnitxtError: If the criteria field is not found in the task data.
-        """
         if self.criteria is None:
             if self.criteria_field not in task_data[0]:
                 raise UnitxtError(
@@ -271,108 +226,32 @@ class LLMJudge(MapReduceMetric[Any, Dict[str, Any]]):
 
         return predictions
 
-    def map(
-        self, 
-        prediction: Any, 
-        references: List[Any], 
-        task_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Process a single instance using the LLM judge.
-        
-        This method processes one instance at a time, but the actual implementation
-        will collect instances and process them in batches for efficiency.
-        """
-        # This method is implemented by subclasses like LLMJudgeDirect
-        raise NotImplementedError("Subclasses must implement map method")
+    def _prepare_common_instance_data(self, prediction, references, task_data):
+        criteria = self.get_criteria([task_data], 1)[0]
+        pred = self.get_predictions([task_data], [criteria], [prediction])[0]
+        context = self.get_contexts([task_data], [criteria])[0]
 
-    def map_stream(self, evaluation_inputs_stream):
-        """Common map_stream implementation for all LLM judge subclasses."""
-        logger.info(
-            f'Starting evaluation with {self.__class__.__name__} using "{self.inference_engine.get_engine_id()}"'
-        )
-
-        # Prepare all instances for inference without aggregating heavy data
-        prepared_instances = []
-        for prediction, references, task_data in evaluation_inputs_stream:
-            prepared_instance = self._prepare_instance_for_inference(prediction, references, task_data)
-            prepared_instances.append(prepared_instance)
-        
-        # Optional: Set main score for judges that need it (like LLMJudgeDirect)
-        if prepared_instances and hasattr(self, '_LLMJudgeDirect__set_main_score'):
-            self._LLMJudgeDirect__set_main_score([prepared_instances[0]['criteria']])
-        
-        # Run all inference steps on the prepared instances
-        return self._run_inference_on_all(prepared_instances)
-    
-    @abstractmethod
-    def _prepare_instance_for_inference(self, prediction, references, task_data):
-        """Prepare a single instance for inference without keeping heavy data.
-        
-        This method should be implemented by each judge subclass to prepare
-        an individual instance for batch inference processing.
-        """
-        pass
-    
-    @abstractmethod  
-    def _run_inference_on_all(self, prepared_instances):
-        """Run inference on all prepared instances efficiently.
-        
-        This method should be implemented by each judge subclass to execute
-        inference on the batch of prepared instances and return results.
-        """
-        pass
-
-    def reduce(self, intermediates: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Aggregate individual instance results into global scores."""
-        if not intermediates:
-            return {}
-        
-        # Collect all numeric scores for averaging
-        numeric_scores = {}
-        for result in intermediates:
-            for key, value in result.items():
-                if isinstance(value, (int, float)):
-                    if key not in numeric_scores:
-                        numeric_scores[key] = []
-                    numeric_scores[key].append(value)
-        
-        # Calculate averages
-        aggregated = {}
-        for key, values in numeric_scores.items():
-            if values:
-                aggregated[key] = sum(values) / len(values)
-        
-        # Set the main score
-        if self.main_score in aggregated:
-            aggregated["score"] = aggregated[self.main_score]
-            aggregated["score_name"] = self.main_score
-        
-        return aggregated
-
-    def reduce_one(self, intermediate: Dict[str, Any]) -> Dict[str, Any]:
-        """Return individual instance scores."""
-        result = dict(intermediate)
-        if self.main_score in result:
-            result["score"] = result[self.main_score]
-            result["score_name"] = self.main_score
-        return result
+        return criteria, pred, context
 
 
 class LLMJudgeDirect(LLMJudge):
-    """LLMJudgeDirect is a specialized evaluation metric that performs Direct Assessment using an LLM to score responses based on a predefined evaluation criteria.
+    """Specialized evaluation metric that performs Direct Assessment using an LLM.
 
     Direct Assessment is an evaluation paradigm in which the LLM selects one of a
     predefined set of options based on an assessment criterion. This approach can
     be used for Likert-scale scoring (e.g., 1-5) or selecting from semantically
     conditioned literals (e.g., Yes/No, Pass/Fail).
+
+    Attributes:
+        criteria: The evaluation criteria, including a name, description, a predefined
+            set of options and option_map. Defaults to None.
+        main_score: The primary score name used in the results. By default, it will
+            take the value of the criteria name (if only one criteria is being used
+            for evaluation) or "llm_as_judge" otherwise. Defaults to "llm_as_judge".
     """
 
     criteria: CriteriaWithOptions = None
-    """The evaluation criteria, including a name, description, a predefined set of options and and option_map."""
     main_score = "llm_as_judge"
-    """The primary score name used in the results. By default, it will take the value of the criteria name (if only one criteria is being used for evaluation) or "llm_as_judge" otherwise."""
-    reduction_map = {"mean": ["llm_as_judge"]}
-    """A mapping used for score aggregation. By default, it will take the value of ``{'mean': [<default_main_score_name>]}`` ."""
 
     def prepare(self):
         super().prepare()
@@ -411,7 +290,6 @@ class LLMJudgeDirect(LLMJudge):
         )
 
     def before_process_multi_stream(self):
-        """Ensures that the criteria is of type `CriteriaWithOptions`, raising an exception otherwise."""
         super().before_process_multi_stream()
         if self.criteria is not None and not isinstance(
             self.criteria, CriteriaWithOptions
@@ -422,18 +300,6 @@ class LLMJudgeDirect(LLMJudge):
         return
 
     def __get_parsed_criteria(self, criteria: CriteriaWithOptions):
-        """Extracts key information from the given criteria.
-
-        Args:
-            criteria (CriteriaWithOptions): The evaluation criteria.
-
-        Returns:
-            Tuple[str, List[str], str, str]:
-            - Criteria description.
-            - List of option names.
-            - Formatted instruction for displaying options.
-            - Instruction for scoring options.
-        """
         criteria_description = criteria.description
         criteria_option_names = [o.name for o in criteria.options]
 
@@ -454,7 +320,7 @@ class LLMJudgeDirect(LLMJudge):
         unique_criteria_names = list({criteria.name for criteria in criterias})
         if len(unique_criteria_names) == 1 and criterias[0].name != "":
             self.main_score = "_".join(criterias[0].name.lower().split(" "))
-            self.reduction_map = {"mean": [self.main_score]}
+            self.ci_score_names = ["score"]
 
     def __get_results(
         self,
@@ -535,106 +401,114 @@ class LLMJudgeDirect(LLMJudge):
         # add main_score to each result
         return [
             {
-                f"{self.main_score}_{k}" if k != self.main_score else self.main_score: v
+                # Special handling for prompts field - should use criteria name instead of main_score
+                f"{criterias[i].name}_{k}"
+                if k == "prompts"
+                else (
+                    f"{self.main_score}_{k}"
+                    if k != self.main_score
+                    else self.main_score
+                ): v
                 for k, v in r.items()
             }
-            for r in results
+            for i, r in enumerate(results)
         ]
 
-    def map(
-        self, 
-        prediction: Any, 
-        references: List[Any], 
-        task_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        raise NotImplementedError(
-            "LLMJudgeDirect uses map_stream for efficient batch processing, not map"
+    def _prepare_instance_for_inference(self, prediction, references, task_data):
+        criteria, pred, context = self._prepare_common_instance_data(
+            prediction, references, task_data
         )
 
+        (
+            criteria_description,
+            criteria_option_names,
+            display_options_instruction,
+        ) = self.__get_parsed_criteria(criteria)
 
-    def _prepare_instance_for_inference(self, prediction, references, task_data):
-        """Prepare a single instance for inference without keeping heavy data."""
-        # Get criteria for this specific instance
-        criteria = self.get_criteria([task_data], 1)[0]
-        
-        # Get prediction for this specific instance
-        pred = self.get_predictions([task_data], [criteria], [prediction])[0]
-        
-        # Get context for this specific instance
-        context = self.get_contexts([task_data], [criteria])[0]
-        
-        # Parse criteria for this instance
-        criteria_description, criteria_option_names, display_options_instruction = self.__get_parsed_criteria(criteria)
-        
         return {
-            'prediction': pred,
-            'context': context,
-            'criteria': criteria,
-            'criteria_description': criteria_description,
-            'criteria_option_names': criteria_option_names,
-            'display_options_instruction': display_options_instruction,
+            "prediction": pred,
+            "context": context,
+            "criteria": criteria,
+            "criteria_description": criteria_description,
+            "criteria_option_names": criteria_option_names,
+            "display_options_instruction": display_options_instruction,
         }
 
     def _run_inference_on_all(self, prepared_instances):
-        """Run inference on all prepared instances efficiently."""
+        if prepared_instances:
+            criteria_list = [prepared_instances[0]["criteria"]]
+            self.__set_main_score(criteria_list)
+
         # Prepare all assessment instances
         assessment_instances = []
         instance_metadata = []
-        
+
         for i, prep in enumerate(prepared_instances):
             # Store metadata for later use
-            instance_metadata.append({
-                'criteria': prep['criteria'],
-                'criteria_description': prep['criteria_description'],
-                'criteria_option_names': prep['criteria_option_names'],
-                'display_options_instruction': prep['display_options_instruction'],
-                'original_index': i
-            })
-            
+            instance_metadata.append(
+                {
+                    "criteria": prep["criteria"],
+                    "criteria_description": prep["criteria_description"],
+                    "criteria_option_names": prep["criteria_option_names"],
+                    "display_options_instruction": prep["display_options_instruction"],
+                    "original_index": i,
+                }
+            )
+
             # Create assessment instance
-            assessment_instances.append({
-                "context_variables": prep['context'],
-                "response": prep['prediction'],
-                "display_options_instruction": prep['display_options_instruction'],
-                "criteria_description": prep['criteria_description'],
-                "data_classification_policy": ["public"],
-            })
-            
+            assessment_instances.append(
+                {
+                    "context_variables": prep["context"],
+                    "response": prep["prediction"],
+                    "display_options_instruction": prep["display_options_instruction"],
+                    "criteria_description": prep["criteria_description"],
+                    "data_classification_policy": ["public"],
+                }
+            )
+
             # If checking positional bias, add reversed version
             if self.check_positional_bias:
                 reversed_criteria = CriteriaWithOptions(
-                    name=prep['criteria'].name,
-                    description=prep['criteria'].description,
-                    option_map=prep['criteria'].option_map,
-                    options=list(reversed(prep['criteria'].options)),
+                    name=prep["criteria"].name,
+                    description=prep["criteria"].description,
+                    option_map=prep["criteria"].option_map,
+                    options=list(reversed(prep["criteria"].options)),
                 )
-                rev_criteria_description, rev_criteria_option_names, rev_display_options_instruction = self.__get_parsed_criteria(reversed_criteria)
-                
+                (
+                    rev_criteria_description,
+                    rev_criteria_option_names,
+                    rev_display_options_instruction,
+                ) = self.__get_parsed_criteria(reversed_criteria)
+
                 # Store reversed metadata
-                instance_metadata.append({
-                    'criteria': reversed_criteria,
-                    'criteria_description': rev_criteria_description,
-                    'criteria_option_names': rev_criteria_option_names,
-                    'display_options_instruction': rev_display_options_instruction,
-                    'original_index': i,
-                    'is_positional_bias': True
-                })
-                
+                instance_metadata.append(
+                    {
+                        "criteria": reversed_criteria,
+                        "criteria_description": rev_criteria_description,
+                        "criteria_option_names": rev_criteria_option_names,
+                        "display_options_instruction": rev_display_options_instruction,
+                        "original_index": i,
+                        "is_positional_bias": True,
+                    }
+                )
+
                 # Add reversed assessment instance
-                assessment_instances.append({
-                    "context_variables": prep['context'],
-                    "response": prep['prediction'],
-                    "display_options_instruction": rev_display_options_instruction,
-                    "criteria_description": rev_criteria_description,
-                    "data_classification_policy": ["public"],
-                })
-        
+                assessment_instances.append(
+                    {
+                        "context_variables": prep["context"],
+                        "response": prep["prediction"],
+                        "display_options_instruction": rev_display_options_instruction,
+                        "criteria_description": rev_criteria_description,
+                        "data_classification_policy": ["public"],
+                    }
+                )
+
         # Perform assessment step on all instances at once
         assessment_prompts, assessment_outputs, _ = self.perform_evaluation_step(
             assessment_instances, self.assessment_task, self.assessment_template
         )
         logger.info("The assessment was generated successfully.")
-        
+
         # Summarization step (if enabled)
         summarization_prompts = None
         summarization_outputs = None
@@ -645,9 +519,11 @@ class LLMJudgeDirect(LLMJudge):
                     "assessment": assessment_output,
                     "data_classification_policy": ["public"],
                 }
-                for assessment_output in assessment_outputs[:evaluations_count]  # Only original assessments, not positional bias
+                for assessment_output in assessment_outputs[
+                    :evaluations_count
+                ]  # Only original assessments, not positional bias
             ]
-            
+
             (
                 summarization_prompts,
                 summarization_outputs,
@@ -658,24 +534,28 @@ class LLMJudgeDirect(LLMJudge):
                 self.summarization_template,
             )
             logger.info("The summary was generated successfully.")
-        
+
         # Option selection step
         option_selection_instances = []
         for metadata in instance_metadata:
-            option_selection_instances.append({
-                "criteria_description": metadata['criteria_description'],
-                "display_options_instruction": metadata['display_options_instruction'],
-                "options": metadata['criteria_option_names'],
-                "data_classification_policy": ["public"],
-            })
-        
+            option_selection_instances.append(
+                {
+                    "criteria_description": metadata["criteria_description"],
+                    "display_options_instruction": metadata[
+                        "display_options_instruction"
+                    ],
+                    "options": metadata["criteria_option_names"],
+                    "data_classification_policy": ["public"],
+                }
+            )
+
         previous_messages = [
             [assessment_prompt[0], {"role": "assistant", "content": assessment_output}]
             for assessment_prompt, assessment_output in zip(
                 assessment_prompts, assessment_outputs
             )
         ]
-        
+
         (
             option_selection_prompts,
             option_selection_outputs,
@@ -687,11 +567,11 @@ class LLMJudgeDirect(LLMJudge):
             previous_messages,
         )
         logger.info("The selections were calculated successfully.")
-        
+
         # Process results for each original instance
         evaluations_count = len(prepared_instances)
-        criteria_list = [meta['criteria'] for meta in instance_metadata]
-        
+        criteria_list = [meta["criteria"] for meta in instance_metadata]
+
         results = self.__get_results(
             assessment_prompts,
             assessment_outputs,
@@ -703,20 +583,25 @@ class LLMJudgeDirect(LLMJudge):
             evaluations_count,
             criteria_list,
         )
-        
+
         return self.clean_results(results)
 
 
 class LLMJudgePairwise(LLMJudge):
-    """A judge for pairwise comparison evaluations, where two or more responses are compared to determine which one is preferred based on a criterion."""
+    """Judge for pairwise comparison evaluations using an LLM.
+
+    This class performs pairwise comparison evaluations, where two or more responses
+    are compared to determine which one is preferred based on a criterion. It computes
+    win rates and rankings for different systems or responses.
+
+    Attributes:
+        main_score: The main score metric for pairwise evaluation. By default, its value
+            is "1_winrate", representing the win rate of the first system. Defaults to "1_winrate".
+    """
 
     main_score = "1_winrate"
-    """The main score metric for pairwise evaluation. By default, its value is `1_winrate`, and will take the value of the winrate of the first system."""
-    reduction_map = {"mean": ["score"]}
-    """A mapping specifying how scores should be reduced. By default, it will be ``{'main': ['score']}`` ."""
 
     def prepare(self):
-        """Prepares the pairwise comparison by initializing the necessary templates and tasks. These tasks will be used to assess, summarize, and select options from candidate responses."""
         super().prepare()
         self.assessment_template = pairwise_template_dict["assessment"]
         self.summarization_template = pairwise_template_dict["summarization"]
@@ -755,7 +640,6 @@ class LLMJudgePairwise(LLMJudge):
         )
 
     def before_process_multi_stream(self):
-        """Verifies that the criteria is of the correct type before processing the multi-stream data."""
         super().before_process_multi_stream()
         if self.criteria is not None and not isinstance(self.criteria, Criteria):
             raise Exception(
@@ -777,24 +661,6 @@ class LLMJudgePairwise(LLMJudge):
         combination_indexes,
         criterion: Criteria,
     ):
-        """Computes the results for each instance by comparing the responses and calculating metrics such as winrate, ranking, and the responses overall performance. This method processes assessment, summarization, and option selection outputs to track contest results, positional bias, and winrate.
-
-        Args:
-            instance_predictions (Dict[str, str]): The predictions for each response.
-            assessment_prompts (List[str]): The prompts for the assessment task.
-            assessment_outputs (List[str]): The results from the assessment task.
-            summarization_prompts (List[str]): The prompts for the summarization task.
-            summarization_outputs (List[str]): The results from the summarization task.
-            option_selection_prompts (List[str]): The prompts for the option selection task.
-            option_selection_outputs (List[str]): The results from the option selection task.
-            selections (List[str]): The selections made during the pairwise comparison.
-            contests_count (int): The total number of contests that were run.
-            combination_indexes (List[Tuple[int, int]]): The indexes of the response pairs that were compared.
-            criterion (Criteria): The criterion used to assess the responses.
-
-        Returns:
-            dict: A dictionary containing the results for each response, including winrate, ranking, and other metrics.
-        """
         response_names = list(instance_predictions.keys())
         per_response_results = {
             response_key: {
@@ -957,14 +823,6 @@ class LLMJudgePairwise(LLMJudge):
         return self.clean_results(all_results)
 
     def __parse_prediction_to_dict(self, predictions: Union[Dict[str, str], List[str]]):
-        """Converts a list or dictionary of predictions into a dictionary format.
-
-        Args:
-            predictions (Union[Dict[str, str], List[str]]): The prediction data to convert.
-
-        Returns:
-            dict: The prediction data in dictionary format.
-        """
         if isinstance(predictions, list):
             return {f"{key + 1}": value for key, value in enumerate(predictions)}
         if isinstance(predictions, dict):
@@ -973,94 +831,66 @@ class LLMJudgePairwise(LLMJudge):
             f"Prediction may be a list or a dict. Instead got type {type(predictions)}"
         )
 
-    def __convert_predictions_to_dicts(
-        self, predictions: Union[List[Dict[str, str]], List[str]]
-    ):
-        """Converts a list of predictions into a list of dictionaries.
-
-        Args:
-            predictions (Union[List[Dict[str, str]], List[str]]): The predictions to convert.
-
-        Returns:
-            List[dict]: A list of predictions in dictionary format.
-        """
-        return [
-            self.__parse_prediction_to_dict(prediction) for prediction in predictions
-        ]
-
     def __set_main_score(self, predictions: List[Dict[str, str]]):
         self.main_score = f"{next(iter(predictions[0].keys()))}_winrate"
 
-    def map(
-        self, 
-        prediction: Any, 
-        references: List[Any], 
-        task_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        raise NotImplementedError(
-            "LLMJudgePairwise uses map_stream for efficient batch processing, not map"
+    def _prepare_instance_for_inference(self, prediction, references, task_data):
+        criteria, pred, context = self._prepare_common_instance_data(
+            prediction, references, task_data
         )
 
-
-    def _prepare_instance_for_inference(self, prediction, references, task_data):
-        """Prepare a single instance for pairwise inference without keeping heavy data."""
-        # Get criteria for this specific instance
-        criteria = self.get_criteria([task_data], 1)[0]
-        
-        # Get context for this specific instance
-        context = self.get_contexts([task_data], [criteria])[0]
-        
-        # Get predictions for this specific instance and convert to dicts
-        pred = self.get_predictions([task_data], [criteria], [prediction])[0]
         pred_dict = self.__parse_prediction_to_dict(pred)
-        
+
         return {
-            'prediction_dict': pred_dict,
-            'context': context,
-            'criteria': criteria,
-            'task_data': task_data,
+            "prediction_dict": pred_dict,
+            "context": context,
+            "criteria": criteria,
+            "task_data": task_data,
         }
 
     def _run_inference_on_all(self, prepared_instances):
-        """Run pairwise inference on all prepared instances efficiently."""
         if not prepared_instances:
             return []
-        
-        # Set main score and reduction map based on first instance
-        first_pred_dict = prepared_instances[0]['prediction_dict']
+
+        # Set main score based on first instance
+        first_pred_dict = prepared_instances[0]["prediction_dict"]
         self.__set_main_score([first_pred_dict])
-        self.reduction_map = {"mean": ["score"]}
-        self.reduction_map["mean"].extend(
-            [f"{key}_winrate" for key in first_pred_dict.keys()]
-        )
-        
+        self._system_keys = list(first_pred_dict.keys())
+
         # Prepare all assessment instances without keeping heavy data aggregated
         all_assessment_instances = []
         all_instance_metadata = []
-        
+
         for prep_instance in prepared_instances:
-            assessment_instances, instance_metadata = self._prepare_assessment_instances(prep_instance)
+            (
+                assessment_instances,
+                instance_metadata,
+            ) = self._prepare_assessment_instances(prep_instance)
             all_assessment_instances.extend(assessment_instances)
             all_instance_metadata.append(instance_metadata)
-        
+
         # Perform assessment step on all instances at once
         assessment_prompts, assessment_outputs, _ = self.perform_evaluation_step(
             all_assessment_instances, self.assessment_task, self.assessment_template
         )
         logger.info("The assessment was generated successfully.")
-        
+
         # Summarization step (if enabled)
         summarization_prompts = None
         summarization_outputs = None
         if self.generate_summaries:
             summarization_instances = []
             for metadata in all_instance_metadata:
-                for i in range(metadata['contests_count']):
-                    summarization_instances.append({
-                        "assessment": assessment_outputs[metadata['assessment_start_idx'] + i],
-                        "data_classification_policy": ["public"],
-                    })
-            
+                for i in range(metadata["contests_count"]):
+                    summarization_instances.append(
+                        {
+                            "assessment": assessment_outputs[
+                                metadata["assessment_start_idx"] + i
+                            ],
+                            "data_classification_policy": ["public"],
+                        }
+                    )
+
             (
                 summarization_prompts,
                 summarization_outputs,
@@ -1071,23 +901,30 @@ class LLMJudgePairwise(LLMJudge):
                 self.summarization_template,
             )
             logger.info("The summary was generated successfully.")
-        
+
         # Option selection step
         option_selection_instances = []
         for assessment_instance in all_assessment_instances:
-            option_selection_instances.append({
-                "options": [f"Response {option}" for option in assessment_instance["option_pair"]],
-                "score_option_instruction": assessment_instance["score_option_instruction"],
-                "data_classification_policy": ["public"],
-            })
-        
+            option_selection_instances.append(
+                {
+                    "options": [
+                        f"Response {option}"
+                        for option in assessment_instance["option_pair"]
+                    ],
+                    "score_option_instruction": assessment_instance[
+                        "score_option_instruction"
+                    ],
+                    "data_classification_policy": ["public"],
+                }
+            )
+
         previous_messages = [
             [assessment_prompt[0], {"role": "assistant", "content": assessment_output}]
             for assessment_prompt, assessment_output in zip(
                 assessment_prompts, assessment_outputs
             )
         ]
-        
+
         (
             option_selection_prompts,
             option_selection_outputs,
@@ -1098,53 +935,61 @@ class LLMJudgePairwise(LLMJudge):
             self.option_selection_template,
             previous_messages,
         )
-        # Selections are of the form 'Response n', so we just keep n
         selections = [selection.split(" ")[-1] for selection in selections]
         logger.info("The selections were calculated successfully.")
-        
+
         # Process results for each instance
         results = []
         assessment_idx = 0
-        for i, (prep_instance, metadata) in enumerate(zip(prepared_instances, all_instance_metadata)):
-            contests_count = metadata['contests_count']
-            combination_indexes = metadata['combination_indexes']
-            
+        for prep_instance, metadata in zip(prepared_instances, all_instance_metadata):
+            contests_count = metadata["contests_count"]
+            combination_indexes = metadata["combination_indexes"]
+
             slice_end = assessment_idx + contests_count
             if self.check_positional_bias:
                 slice_end += contests_count
-            
+
             sli = slice(assessment_idx, slice_end)
-            sli_summarization = slice(assessment_idx, assessment_idx + contests_count) if self.generate_summaries else None
-            
+            sli_summarization = (
+                slice(assessment_idx, assessment_idx + contests_count)
+                if self.generate_summaries
+                else None
+            )
+
             instance_results = self.__get_instance_results(
-                prep_instance['prediction_dict'],
+                prep_instance["prediction_dict"],
                 assessment_prompts[sli],
                 assessment_outputs[sli],
-                summarization_prompts[sli_summarization] if self.generate_summaries else None,
-                summarization_outputs[sli_summarization] if self.generate_summaries else None,
+                summarization_prompts[sli_summarization]
+                if self.generate_summaries
+                else None,
+                summarization_outputs[sli_summarization]
+                if self.generate_summaries
+                else None,
                 option_selection_prompts[sli],
                 option_selection_outputs[sli],
                 selections[sli],
                 contests_count,
                 combination_indexes,
-                prep_instance['criteria'],
+                prep_instance["criteria"],
             )
             results.append(instance_results)
             assessment_idx = slice_end
-        
+
         return results
 
     def _prepare_assessment_instances(self, prep_instance):
-        """Prepare assessment instances for a single prepared instance."""
-        pred_dict = prep_instance['prediction_dict']
-        context = prep_instance['context']
-        criteria = prep_instance['criteria']
-        
+        pred_dict = prep_instance["prediction_dict"]
+        context = prep_instance["context"]
+        criteria = prep_instance["criteria"]
+
         # Calculate combinations and prepare pairs
         prediction_names = list(pred_dict.keys())
-        combination_indexes = list(itertools.combinations(range(len(prediction_names)), 2))
+        combination_indexes = list(
+            itertools.combinations(range(len(prediction_names)), 2)
+        )
         contests_count = len(combination_indexes)
-        
+
         # Prepare response pairs and option pairs
         response_pairs = []
         option_pairs = []
@@ -1152,39 +997,119 @@ class LLMJudgePairwise(LLMJudge):
             (idx_1, idx_2) = combination
             response_name_1 = prediction_names[idx_1]
             response_name_2 = prediction_names[idx_2]
-            response_pairs.append([pred_dict[response_name_1], pred_dict[response_name_2]])
+            response_pairs.append(
+                [pred_dict[response_name_1], pred_dict[response_name_2]]
+            )
             option_pairs.append([response_name_1, response_name_2])
-        
+
         # If checking positional bias, add reversed pairs
         if self.check_positional_bias:
             response_pairs += [list(reversed(pair)) for pair in response_pairs]
             option_pairs += [list(reversed(pair)) for pair in option_pairs]
-        
+
         # Create assessment instances
         assessment_instances = []
         for response_pair, option_pair in zip(response_pairs, option_pairs):
-            score_option_instruction = "".join([
-                f'Choose "{option}" if Response {option} is better quality.\n'
-                for option in option_pair
-            ])
-            
-            assessment_instances.append({
-                "context_variables": context,
-                "response_a": response_pair[0],
-                "response_b": response_pair[1],
-                "option_a": option_pair[0],
-                "option_b": option_pair[1],
-                "criteria_name": criteria.name,
-                "criteria_description": criteria.description,
-                "data_classification_policy": ["public"],
-                "option_pair": option_pair,  # Store for later use
-                "score_option_instruction": score_option_instruction,
-            })
-        
+            score_option_instruction = "".join(
+                [
+                    f'Choose "{option}" if Response {option} is better quality.\n'
+                    for option in option_pair
+                ]
+            )
+
+            assessment_instances.append(
+                {
+                    "context_variables": context,
+                    "response_a": response_pair[0],
+                    "response_b": response_pair[1],
+                    "option_a": option_pair[0],
+                    "option_b": option_pair[1],
+                    "criteria_name": criteria.name,
+                    "criteria_description": criteria.description,
+                    "data_classification_policy": ["public"],
+                    "option_pair": option_pair,  # Store for later use
+                    "score_option_instruction": score_option_instruction,
+                }
+            )
+
         metadata = {
-            'contests_count': contests_count,
-            'combination_indexes': combination_indexes,
-            'assessment_start_idx': 0,  # Will be set correctly when called
+            "contests_count": contests_count,
+            "combination_indexes": combination_indexes,
+            "assessment_start_idx": 0,  # Will be set correctly when called
         }
-        
+
         return assessment_instances, metadata
+
+    def reduce(self, intermediates: List[Dict[str, Any]]) -> Dict[str, Any]:
+        if not intermediates:
+            return {}
+
+        aggregated = {}
+
+        fields_to_aggregate = ["score"]
+        if hasattr(self, "_system_keys"):
+            fields_to_aggregate.extend([f"{key}_winrate" for key in self._system_keys])
+
+        for field_name in fields_to_aggregate:
+            values = []
+            for result in intermediates:
+                if field_name in result and isinstance(
+                    result[field_name], (int, float)
+                ):
+                    values.append(result[field_name])
+
+            if values:
+                aggregated[field_name] = sum(values) / len(values)
+
+        if (
+            hasattr(self, "main_score")
+            and self.main_score
+            and self.main_score in aggregated
+        ):
+            aggregated["score"] = aggregated[self.main_score]
+            aggregated["score_name"] = self.main_score
+
+        return aggregated
+
+
+__all__ = [
+    # llm_as_judge_chat_templates
+    "direct_template_dict",
+    "pairwise_template_dict",
+    # llm_as_judge_constants
+    "DIRECT_CRITERIA",
+    "EVALUATOR_TO_MODEL_ID",
+    "EVALUATORS_METADATA",
+    "PAIRWISE_CRITERIA",
+    "Criteria",
+    "CriteriaOption",
+    "CriteriaWithOptions",
+    "DirectCriteriaCatalogEnum",
+    "EvaluatorMetadata",
+    "EvaluatorNameEnum",
+    "EvaluatorTypeEnum",
+    "ModelProviderEnum",
+    "PairwiseCriteriaCatalogEnum",
+    # llm_as_judge_from_template
+    "LLMAsJudge",
+    "LLMAsJudgeBase",
+    "TaskBasedLLMasJudge",
+    # llm_as_judge_operators
+    "CreateCriteriaFromDict",
+    "CreateCriteriaFromJson",
+    "CreateCriteriaFromString",
+    "CreateCriteriaWithOptionsFromDict",
+    "CreateCriteriaWithOptionsFromJson",
+    "CreateYesNoCriteriaFromString",
+    "CreateYesNoPartiallyCriteriaFromString",
+    "LoadCriteria",
+    "LoadCriteriaWithOptions",
+    # llm_as_judge_utils
+    "get_evaluator_metadata",
+    "get_parsed_context",
+    "rank_indexes",
+    # judges
+    "LLMJudge",
+    "LLMJudgePairwise",
+    "LLMJudgeDirect",
+]

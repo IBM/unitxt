@@ -355,7 +355,9 @@ class MapReduceMetric(
             elif self.reference_field in instance:
                 references = instance[self.reference_field]
             else:
-                raise KeyError(f"Reference field '{self.reference_field}' not found in task_data or instance")
+                raise KeyError(
+                    f"Reference field '{self.reference_field}' not found in task_data or instance"
+                )
             if not isinstance(references, list):
                 references = [references]
         if self.prediction_field == "prediction":
@@ -367,7 +369,9 @@ class MapReduceMetric(
             elif self.prediction_field in instance:
                 prediction = instance[self.prediction_field]
             else:
-                raise KeyError(f"Prediction field '{self.prediction_field}' not found in task_data or instance")
+                raise KeyError(
+                    f"Prediction field '{self.prediction_field}' not found in task_data or instance"
+                )
 
         self._validate_prediction(prediction)
         self._validate_reference(references)
