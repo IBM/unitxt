@@ -3,7 +3,7 @@ from unitxt.api import load_dataset
 
 logger = get_logger()
 
-card_name = "cards.turl_col_type"
+card_name = "cards.wikitq"
 logger.critical(f"card tested: {card_name} .")
 
 # card, _ = fetch_artifact(card_name)
