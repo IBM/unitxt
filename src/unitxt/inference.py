@@ -1507,8 +1507,9 @@ class DecoratedInferenceEngine(InferenceEngine, LazyPrepareMixin):
         )
 
     def get_engine_id(self):
-        if not self.is_mock:
-            self.prepare_engine()
+        if self.is_mock:
+            return "mock"
+        self.prepare_engine()
         return self.engine.get_engine_id()
 
 
