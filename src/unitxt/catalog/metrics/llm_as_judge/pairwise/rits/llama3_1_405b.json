@@ -1,7 +1,13 @@
 {
-    "__type__": "llm_judge_pairwise",
+    "__type__": {
+        "module": "unitxt.llm_as_judge",
+        "name": "LLMJudgePairwise"
+    },
     "inference_engine": {
-        "__type__": "cross_provider_inference_engine",
+        "__type__": {
+            "module": "unitxt.inference",
+            "name": "CrossProviderInferenceEngine"
+        },
         "max_tokens": 1024,
         "seed": 42,
         "temperature": 0,

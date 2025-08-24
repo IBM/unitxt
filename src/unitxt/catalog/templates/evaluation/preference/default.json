@@ -1,5 +1,8 @@
 {
-    "__type__": "multiple_choice_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "MultipleChoiceTemplate"
+    },
     "instruction": "For any Instruction and {input_type} given to a model, assess which {output_type} written by the model aligns most closely with the given instruction (choose from {numerals}).",
     "input_format": "Instruction:\n{instance_instruction}\n{input_type}:\n{input}\nResponses:\n{choices}",
     "target_prefix": "{output_type}:\n",

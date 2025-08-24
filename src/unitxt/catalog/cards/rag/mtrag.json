@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadJsonFile"
+        },
         "files": {
             "test": "https://raw.githubusercontent.com/IBM/mt-rag-benchmark/refs/heads/main/human/generation_tasks/reference+RAG.jsonl"
         },
@@ -12,7 +18,10 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "filter_by_condition",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FilterByCondition"
+            },
             "values": {
                 "Answerability": [
                     [
@@ -29,7 +38,10 @@
             "condition": "in"
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "Answerability": {
                     "['UNANSWERABLE']": false,
@@ -39,7 +51,10 @@
             }
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "targets/*/text": "reference_answers",
                 "Answerability": "is_answerable_label",
@@ -51,7 +66,10 @@
             }
         },
         {
-            "__type__": "zip_field_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ZipFieldValues"
+            },
             "fields": [
                 "roles",
                 "contents"
@@ -59,7 +77,10 @@
             "to_field": "conversation"
         },
         {
-            "__type__": "dictify",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Dictify"
+            },
             "field": "conversation",
             "with_keys": [
                 "role",

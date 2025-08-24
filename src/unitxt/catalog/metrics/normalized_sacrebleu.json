@@ -1,5 +1,8 @@
 {
-    "__type__": "normalized_sacrebleu",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "NormalizedSacrebleu"
+    },
     "language_to_tokenizer": {
         "german": null,
         "deutch": null,

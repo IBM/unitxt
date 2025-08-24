@@ -1,5 +1,8 @@
 {
-    "__type__": "regard_metric",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "RegardMetric"
+    },
     "n_resamples": null,
     "prediction_type": "Any"
 }
