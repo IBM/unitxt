@@ -5,7 +5,7 @@ from unitxt.artifact import fetch_artifact
 
 logger = get_logger()
 
-card_name = "cards.rag.documents.real_mm_rag_fin_slides.en"
+card_name = "cards.rag.documents.real_mm_rag_tech_report.en"
 logger.critical(f"card tested: {card_name} .")
 
 card, _ = fetch_artifact(card_name)
