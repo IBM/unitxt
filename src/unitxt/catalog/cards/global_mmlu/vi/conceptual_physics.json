@@ -43,8 +43,10 @@
             "to_field": "choices"
         },
         {
-            "__type__": "filter_by_expression",
-            "expression": "None not in choices"
+            "__type__": "cast",
+            "to": "str",
+            "field": "choices",
+            "process_every_value": true
         },
         {
             "__type__": "set",

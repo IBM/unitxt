@@ -2,8 +2,8 @@ from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
+    Cast,
     Deduplicate,
-    FilterByExpression,
     ListFieldValues,
     MapInstanceValues,
     Set,
@@ -144,7 +144,7 @@ for language in languages:
                 ),
             ]
             + (
-                [FilterByExpression(expression="None not in choices")]
+                [Cast(to="str", field="choices", process_every_value=True)]
                 if (language, subject)
                 in [
                     ("am", "clinical_knowledge"),
