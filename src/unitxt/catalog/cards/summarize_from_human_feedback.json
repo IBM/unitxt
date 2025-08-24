@@ -23,6 +23,11 @@
             }
         },
         {
+            "__type__": "cast",
+            "field": "input",
+            "to": "str"
+        },
+        {
             "__type__": "rename",
             "field_to_field": {
                 "choice": "output_choice"
@@ -33,7 +38,7 @@
             "fields": {
                 "input_type": "post",
                 "output_type": "summary",
-                "instruction": "Summarize the following post"
+                "instance_instruction": "Summarize the following post"
             }
         }
     ],

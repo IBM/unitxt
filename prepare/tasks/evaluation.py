@@ -10,7 +10,7 @@ add_to_catalog(
             "input_type": str,
             "output_type": str,
             "choices": List[str],
-            "instruction": str,
+            "instance_instruction": str,
         },
         reference_fields={
             "choices": List[str],
@@ -19,7 +19,7 @@ add_to_catalog(
         metrics=[
             "metrics.accuracy",
         ],
-        augmentable_inputs=["input", "instruction"],
+        augmentable_inputs=["input", "instance_instruction"],
     ),
     "tasks.evaluation.preference",
     overwrite=True,

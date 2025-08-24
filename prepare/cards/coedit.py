@@ -106,8 +106,8 @@ card = TaskCard(
         Shuffle(page_size=sys.maxsize),
         "splitters.small_no_test",
         Split(field="src", by=": "),
+        Copy(field="src/0", to_field="instance_instruction"),
         Slice(field="src", start=1),
-        Copy(field="src/0", to_field="instruction"),
         Join(field="src", by=": "),
         ListFieldValues(
             fields=["tgt", "src"],

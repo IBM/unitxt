@@ -17,14 +17,14 @@
             "by": ": "
         },
         {
+            "__type__": "copy",
+            "field": "src/0",
+            "to_field": "instance_instruction"
+        },
+        {
             "__type__": "slice",
             "field": "src",
             "start": 1
-        },
-        {
-            "__type__": "copy",
-            "field": "src/0",
-            "to_field": "instruction"
         },
         {
             "__type__": "join",
