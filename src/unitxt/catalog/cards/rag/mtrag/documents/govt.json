@@ -13,6 +13,11 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "cast",
+            "field": "title",
+            "to": "str"
+        },
+        {
             "__type__": "wrap",
             "field": "text",
             "inside": "list",
