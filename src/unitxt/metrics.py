@@ -891,6 +891,87 @@ class MultiTurnToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]])
         }
 
 
+class ReflectionToolCallingMetricSyntactic(
+    ReductionInstanceMetric[str, Dict[str, float]]
+):
+    """Measures syntactic and schema validity of tool calls.
+
+    Range: [0, 1] (higher is better)
+    Returns 1.0 if the tool call is valid (all checks pass), 0.0 otherwise.
+    Global score is the percentage of valid instances across the dataset.
+
+    Scores:
+    - non_existent_function: tool name not found.
+    - non_existent_parameter: argument name not in tool spec.
+    - incorrect_parameter_type: argument type mismatch.
+    - missing_required_parameter: required argument missing.
+    - allowed_values_violation: argument value outside allowed set.
+    - json_schema_violation: call violates JSON schema.
+    - empty_api_spec: no tool spec provided.
+    - invalid_api_spec: tool spec is invalid.
+    - invalid_tool_call: call is not a valid tool invocation.
+    - overall_valid: validity of the call (main score).
+    - score: alias of overall_valid.
+
+    Reference: https://github.ibm.com/MLT/LLMEvalKit
+    """
+
+    main_score = "overall_valid"
+    reduction = MeanReduction()
+    prediction_type = ToolCall
+    _requirements_list = {
+        "llmevalkit": "Install with \"pip install 'git+ssh://git@github.ibm.com/MLT/LLMEvalKit.git'\".\nTo gain access please reach the team."
+    }
+
+    def map(
+        self,
+        prediction: ToolCall,
+        references: None,
+        task_data: Dict[str, Any],
+    ) -> Dict[str, float]:
+        from llmevalkit.function_calling.pipeline.pipeline import ReflectionPipeline
+        from llmevalkit.function_calling.pipeline.types import (
+            ToolCall as LLMEvalKitToolCall,
+        )
+        from llmevalkit.function_calling.pipeline.types import (
+            ToolSpec as LLMEvalKitToolSpec,
+        )
+
+        # Convert unitxt tool inventory to LLMEvalKit format
+        tools_inventory = []
+        for tool in task_data.get("tools", []):
+            tools_inventory.append(
+                LLMEvalKitToolSpec(
+                    type="function",
+                    function={**tool},
+                )
+            )
+
+        # Convert unitxt tool call to LLMEvalKit format
+        tool_call = LLMEvalKitToolCall(
+            type="function",
+            function={
+                "name": prediction["name"],
+                "arguments": json.dumps(prediction["arguments"]),
+                "parsed_arguments": prediction["arguments"],
+            },
+        )
+
+        # Run static validation
+        static_result = ReflectionPipeline.static_only(tools_inventory, tool_call)
+
+        result_dict = {
+            (
+                metric_name
+                if metric_name != "json_schema_validation"
+                else "json_schema_violation"
+            ): not metric_dict.valid
+            for metric_name, metric_dict in static_result.metrics.items()
+        }
+        result_dict["overall_valid"] = static_result.final_decision
+        return result_dict
+
+
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
     # Use None to disable confidence interval computation.
