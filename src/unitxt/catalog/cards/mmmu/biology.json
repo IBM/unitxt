@@ -37,6 +37,16 @@
             ]
         },
         {
+            "__type__": "execute_expression",
+            "expression": "options if options != '[]' else '[\"'+answer+'\"]'",
+            "to_field": "options"
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "'A' if options == '[\"'+answer+'\"]' else answer",
+            "to_field": "answer"
+        },
+        {
             "__type__": "map_replace",
             "field_to_field": {
                 "question": "question",
@@ -70,7 +80,10 @@
                 "C": 2,
                 "D": 3,
                 "E": 4,
-                "?": null
+                "F": 5,
+                "G": 6,
+                "H": 7,
+                "I": 8
             }
         }
     ],
