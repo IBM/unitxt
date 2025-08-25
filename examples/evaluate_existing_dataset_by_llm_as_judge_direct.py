@@ -21,7 +21,7 @@ metrics = [
 ]
 dataset = load_dataset(
     card="cards.squad",
-    # metrics=metrics,
+    metrics=metrics,
     loader_limit=2,
     max_test_instances=2,
     split="test",
@@ -40,7 +40,6 @@ For the arguments these inference engines can receive, please refer to the class
 about the the open ai api arguments the CrossProviderInferenceEngine follows.
 """
 predictions = inference_model(dataset)
-exit()
 gold_answers = [d[0] for d in dataset["references"]]
 
 # Evaluate the predictions using the defined metric.
