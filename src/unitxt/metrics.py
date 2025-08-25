@@ -6450,7 +6450,7 @@ class IsCodeMixed(BulkInstanceMetric):
             IsCodeMixed.inference_model = HFPipelineBasedInferenceEngine(
                 model_name="Nexusflow/Starling-LM-7B-beta",
                 max_new_tokens=1,
-                lazy_load=True,
+                lazy_prepare=True,
             )
         # the processing steps for preparing the prompt (instruction, answer prefix etc.)
         # that we send to the generative model

@@ -1042,7 +1042,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
 
 
 class HFLlavaInferenceEngine(HFInferenceEngineBase):
-    lazy_load: bool = True
     label: str = "hf_lava"
     image_token: str = "<image>"
     support_log_probs: bool = True
