@@ -37,6 +37,16 @@
             ]
         },
         {
+            "__type__": "execute_expression",
+            "expression": "options if options != '[]' else '[\"'+answer+'\"]'",
+            "to_field": "options"
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "'A' if options == '[\"'+answer+'\"]' else answer",
+            "to_field": "answer"
+        },
+        {
             "__type__": "map_replace",
             "field_to_field": {
                 "question": "question",
@@ -62,20 +72,6 @@
             "to_field": "topic"
         },
         {
-            "__type__": "filter_by_condition",
-            "values": {
-                "answer": [
-                    "A",
-                    "B",
-                    "C",
-                    "D",
-                    "E",
-                    "?"
-                ]
-            },
-            "condition": "in"
-        },
-        {
             "__type__": "map_values",
             "field": "answer",
             "mapping": {
@@ -84,12 +80,11 @@
                 "C": 2,
                 "D": 3,
                 "E": 4,
-                "?": null
+                "F": 5,
+                "G": 6,
+                "H": 7,
+                "I": 8
             }
-        },
-        {
-            "__type__": "filter_by_expression",
-            "expression": "answer < len(choices)"
         }
     ],
     "task": "tasks.qa.multiple_choice.with_topic",
