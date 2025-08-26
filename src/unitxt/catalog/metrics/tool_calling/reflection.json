@@ -1,0 +1,4 @@
+{
+    "__type__": "reflection_tool_calling_metric",
+    "__description__": "A metric that assesses tool call predictions for both syntactic correctness and semantic validity, using predefined checks combined with LLM-based evaluations."
+}

@@ -1,6 +1,7 @@
 from unitxt.catalog import add_to_catalog
 from unitxt.metrics import (
     MultiTurnToolCallingMetric,
+    ReflectionToolCallingMetric,
     ReflectionToolCallingMetricSyntactic,
     ToolCallingMetric,
     ToolCallKeyValueExtraction,
@@ -48,9 +49,17 @@ Reports average token_overlap for each key, as well as micro and macro averages 
 
 add_to_catalog(
     MultiTurnToolCallingMetric(
-        __description__="""Metric that evaluates tool call predictions for the validity with regards to the tools schema."""
+        __description__="""A metric that assesses tool call predictions for their conformity to the tool schema."""
     ),
     "metrics.tool_calling.multi_turn.validity",
+    overwrite=True,
+)
+
+add_to_catalog(
+    ReflectionToolCallingMetric(
+        __description__="""A metric that assesses tool call predictions for both syntactic correctness and semantic validity, using predefined checks combined with LLM-based evaluations."""
+    ),
+    "metrics.tool_calling.reflection",
     overwrite=True,
 )
 

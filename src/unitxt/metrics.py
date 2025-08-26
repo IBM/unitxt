@@ -1,9 +1,13 @@
 import ast
+import asyncio
+import contextlib
 import json
 import math
 import os
+from queue import Empty, Queue
 import re
 import string
+import threading
 import uuid
 import warnings
 from abc import ABC, abstractmethod
@@ -14,9 +18,11 @@ from enum import Enum
 from functools import lru_cache
 from typing import (
     Any,
+    AsyncIterator,
     Dict,
     Generator,
     Generic,
+    Iterable,
     List,
     Literal,
     Optional,
@@ -24,6 +30,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    override,
 )
 
 import evaluate
@@ -33,6 +40,8 @@ import pandas as pd
 import requests
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
+
+import unitxt
 
 from .artifact import Artifact
 from .base_metric import Metric
@@ -889,6 +898,257 @@ class MultiTurnToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]])
         return {
             "argument_schema_validation": argument_schema_validation,
         }
+    
+
+class ReflectionToolCallingMixin:
+    @staticmethod
+    def convert_tools_inventory(tools):
+        from llmevalkit.function_calling.pipeline.types import ToolSpec as LLMEvalKitToolSpec
+        return [
+            LLMEvalKitToolSpec(
+                type="function",
+                function={**tool},
+            )
+            for tool in tools
+        ]
+
+    @staticmethod
+    def convert_tool_call(prediction):
+        from llmevalkit.function_calling.pipeline.types import ToolCall as LLMEvalKitToolCall
+        return LLMEvalKitToolCall(
+            type="function",
+            function={
+                "name": prediction["name"],
+                "arguments": json.dumps(prediction["arguments"]),
+                "parsed_arguments": prediction["arguments"],
+            },
+        )
+    
+
+class ReflectionToolCallingMetric(
+    ReductionInstanceMetric[str, Dict[str, float]]
+):
+    """Measures syntactic and semantic validity of tool calls.
+
+    The final output contains two main fields: "semantic" and "static" (i.e., semantic).
+    Under the semantics we define two types of metrics: general and function selection.
+
+    General metrics evaluate the overall quality and correctness of the tool call.
+    These metrics contains:
+     1. General hallucination check: Evaluate whether each parameter value in the function call is correct and directly supported by the provided conversation history and adhere the tool specifications.
+     2. Value format alignment: Check if the format of the parameter values aligns with the expected formats defined in the tool specifications.
+
+    Function selection metrics evaluate the appropriateness of the selected function for the given context.
+    These metrics include:
+     1. Function selection appropriateness: Assess whether the chosen function is suitable for the task at hand.
+     2. Agentic constraints satisfaction: Assess whether the proposed tool call satisfies all agentic constraints required for execution.
+
+    Static metrics evaluate the syntactic validity of the tool call.
+    It contains the following metrics:
+    - non_existent_function: tool name not found.
+    - non_existent_parameter: argument name not in tool spec.
+    - incorrect_parameter_type: argument type mismatch.
+    - missing_required_parameter: required argument missing.
+    - allowed_values_violation: argument value outside allowed set.
+    - json_schema_violation: call violates JSON schema.
+    - empty_api_spec: no tool spec provided.
+    - invalid_api_spec: tool spec is invalid.
+    - invalid_tool_call: call is not a valid tool invocation.
+    - overall_valid: validity of the call (main score).
+    - score: alias of overall_valid.
+
+    Here is an example for a aggregated reflection output after calling reduce.
+    The range of each score is [0, 1] (where higher indicates less errors).
+    {
+        "static_non_existent_function": 1.0,
+        "static_non_existent_parameter": 1.0,
+        "static_incorrect_parameter_type": 1.0,
+        "static_missing_required_parameter": 1.0,
+        "static_allowed_values_violation": 1.0,
+        "static_json_schema_violation": 1.0,
+        "static_empty_api_spec": 1.0,
+        "static_invalid_api_spec": 1.0,
+        "static_invalid_tool_call": 1.0,
+        "semantic_general_hallucination_check": 0.0,
+        "semantic_general_value_format_alignment": 0.0,
+        "semantic_avg_score_general": 1.0,
+        "semantic_function_selection_appropriateness": 0.0,
+        "semantic_agentic_constraints_satisfaction": 0.0,
+        "semantic_avg_score_function_selection": 1.0,
+        "overall_valid": 1.0
+    }
+
+    Where overall_valid is the final decision made by the reflection pipeline, indicating whether the tool call is valid or not.
+
+    Before the aggregation each metric contains also evidence, explanation, a more fine-grained score, etc.
+
+    Reference: https://github.ibm.com/MLT/LLMEvalKit
+    """
+    from llmevalkit.function_calling.pipeline.pipeline import ReflectionPipeline
+    from llmevalkit.function_calling.pipeline.types import PipelineResult
+
+    main_score = "overall_valid"
+    reduction = MeanReduction()
+    prediction_type = ToolCall
+    _requirements_list = {
+        "llmevalkit": "pip install 'git+ssh://git@github.ibm.com/MLT/LLMEvalKit.git'"
+    }
+    runtime_pipeline: bool = True  # Whether to use the runtime pipeline or the longer evaluation pipeline with actionable recommendations
+
+    def prepare(self):
+        provider_to_default_reflector_model = {
+        "watsonx": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
+        "open-ai": "gpt-4o",
+        "rits": "openai/gpt-oss-120b",
+        "azure": "gpt-4o",
+        "mock": "mock"
+        }
+        self.requirements = self._check_missing_requirements_by_provider(unitxt.settings.default_provider)
+        super().prepare()
+        self.setup_pipeline(
+            reflector_model_name=provider_to_default_reflector_model.get(unitxt.settings.default_provider),
+            provider_name=unitxt.settings.default_provider
+        )
+    
+    def setup_pipeline(self, reflector_model_name: str, provider_name: str) -> ReflectionPipeline:
+        llmeval_provider_name = self._get_llmeval_provider_name(provider_name)
+        self._check_missing_requirements_by_provider(unitxt.settings.default_provider) # TODO: fix it
+        metrics_client = self._get_metrics_client(llmeval_provider_name, reflector_model_name)
+        self.reflection_pipeline = self._build_reflection_pipeline(metrics_client)
+        return self.reflection_pipeline
+
+    @staticmethod
+    def _get_llmeval_provider_name(provider_name: str) -> str:
+        mapping = {
+            "watsonx": "watsonx.output_val",
+            "open-ai": "openai.async.output_val",
+            "rits": "litellm.rits.output_val",
+            "azure": "azure_openai.async.output_val",
+            "mock": "mock",
+        }
+        llmeval_provider_name = mapping.get(provider_name)
+        if llmeval_provider_name is None:
+            raise ValueError(f"Unsupported provider by llmevalkit: {provider_name}")
+        return llmeval_provider_name
+
+    @staticmethod
+    def _check_missing_requirements_by_provider(provider_name: str):
+        provider_libs = {
+            "watsonx": "ibm_watsonx_ai",
+            "open-ai": "openai",
+            "rits": "litellm",
+            "azure": "openai"
+        }
+        required_lib = provider_libs.get(provider_name)
+        return [required_lib] if required_lib else []
+
+    @staticmethod
+    def _get_metrics_client(llmeval_provider_name: str, reflector_model_name: str):
+        from llmevalkit.llm import get_llm
+        MetricsClientCls = get_llm(llmeval_provider_name)
+        return MetricsClientCls(model_name=reflector_model_name)
+
+    def _build_reflection_pipeline(self, metrics_client):
+        from llmevalkit.function_calling.pipeline.pipeline import ReflectionPipeline
+        from llmevalkit.function_calling.consts import (
+            METRIC_GENERAL_HALLUCINATION_CHECK,
+            METRIC_AGENTIC_CONSTRAINTS_SATISFACTION,
+            METRIC_FUNCTION_SELECTION_APPROPRIATENESS,
+            METRIC_GENERAL_VALUE_FORMAT_ALIGNMENT
+        )
+        return ReflectionPipeline(
+            metrics_client=metrics_client,
+            general_metrics=[
+                METRIC_GENERAL_HALLUCINATION_CHECK,
+                METRIC_GENERAL_VALUE_FORMAT_ALIGNMENT,
+            ],
+            function_metrics=[
+                METRIC_FUNCTION_SELECTION_APPROPRIATENESS,
+                METRIC_AGENTIC_CONSTRAINTS_SATISFACTION,
+            ],
+            parameter_metrics=[],
+            runtime_pipeline=self.runtime_pipeline,
+        )
+
+    async def map(
+        self,
+        prediction: ToolCall,
+        references: None,
+        task_data: Dict[str, Any],
+    ) -> PipelineResult:
+        from llmevalkit.function_calling.pipeline.types import PipelineResult
+
+        # Convert unitxt dialog to LLMEvalKit format
+        conversation_history = [dict(turn) for turn in task_data["dialog"]]
+
+        # Convert unitxt tool inventory to LLMEvalKit format
+        tools_inventory = ReflectionToolCallingMixin.convert_tools_inventory(task_data.get("tools", []))
+
+        # Convert unitxt tool call to LLMEvalKit format
+        tool_call = ReflectionToolCallingMixin.convert_tool_call(prediction)
+
+        # Run reflection (syntactic + semantic)
+        result: PipelineResult = await self.reflection_pipeline.run_async(
+            conversation=conversation_history,
+            inventory=tools_inventory,
+            call=tool_call,
+            retries=3,
+            continue_on_static=True,
+        )
+        return result.model_dump()
+    
+
+    def map_stream(
+        self,
+        items: Iterable[Tuple[ToolCall, None, Dict[str, Any]]],
+        *,
+        max_concurrency: int = 8,
+    ) -> List[Dict[str, Any]]:
+        """
+        Run self.map in parallel over an iterable and return results in order.
+        """
+        async def process_all():
+            items_iter = iter(enumerate(items))
+            results = []
+            pending = set()
+            while True:
+                while len(pending) < max_concurrency:
+                    try:
+                        idx, (pred, refs, data) = next(items_iter)
+                        task = asyncio.create_task(self.map(pred, refs, data))
+                        task.idx = idx
+                        pending.add(task)
+                    except StopIteration:
+                        break
+                if not pending:
+                    break
+                done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+                for task in done:
+                    results.append((task.idx, await task))
+            results.sort()
+            return [r for _, r in results]
+        return asyncio.run(process_all())
+    
+    def reduce_one(self, intermidate: Dict[str, Any]) -> Dict[str, float]:
+        return intermidate
+    
+    def reduce(self, intermidates: List[Dict[str, Any]]) -> Dict[str, float]:
+        flat_instances = []
+        for instance in intermidates:
+            flat_instance_dict = {}
+            for metric, metric_type_dict in instance.get("static", {}).get("metrics", {}).items():
+                flat_instance_dict[f"static_{metric}"] = float(metric_type_dict["valid"])
+
+            for metric_type, metric_type_dict in instance.get("semantic", {}).items():
+                for metric, metric_dict in metric_type_dict.get("metrics", {}).items():
+                    flat_instance_dict[f"semantic_{metric}"] = float(metric_dict["is_issue"])
+                flat_instance_dict[f"semantic_avg_score_{metric_type}"] = float(metric_type_dict.get("avg_score"))
+
+            flat_instance_dict["overall_valid"] = float(instance["overall_valid"])
+            flat_instances.append(flat_instance_dict)
+
+
+        return self.reduction.reduce(flat_instances)
 
 
 class ReflectionToolCallingMetricSyntactic(
@@ -896,8 +1156,9 @@ class ReflectionToolCallingMetricSyntactic(
 ):
     """Measures syntactic and schema validity of tool calls.
 
-    Range: [0, 1] (higher is better)
-    Returns 1.0 if the tool call is valid (all checks pass), 0.0 otherwise.
+    Range: [0, 1] (higher indicates less errors).
+    Returns 1.0 if the tool call is valid for each metric, 0.0 otherwise.
+    overall_valid equals 1.0 if all metrics are valid, 0.0 otherwise.
     Global score is the percentage of valid instances across the dataset.
 
     Scores:
@@ -938,39 +1199,32 @@ class ReflectionToolCallingMetricSyntactic(
         )
 
         # Convert unitxt tool inventory to LLMEvalKit format
-        tools_inventory = []
-        for tool in task_data.get("tools", []):
-            tools_inventory.append(
-                LLMEvalKitToolSpec(
-                    type="function",
-                    function={**tool},
-                )
-            )
+        tools_inventory = ReflectionToolCallingMixin.convert_tools_inventory(task_data.get("tools", []))
 
         # Convert unitxt tool call to LLMEvalKit format
-        tool_call = LLMEvalKitToolCall(
-            type="function",
-            function={
-                "name": prediction["name"],
-                "arguments": json.dumps(prediction["arguments"]),
-                "parsed_arguments": prediction["arguments"],
-            },
-        )
+        tool_call = ReflectionToolCallingMixin.convert_tool_call(prediction)
 
         # Run static validation
         static_result = ReflectionPipeline.static_only(tools_inventory, tool_call)
 
-        result_dict = {
-            (
-                metric_name
-                if metric_name != "json_schema_validation"
-                else "json_schema_violation"
-            ): not metric_dict.valid
-            for metric_name, metric_dict in static_result.metrics.items()
-        }
-        result_dict["overall_valid"] = static_result.final_decision
+        result_dict = static_result.model_dump()
+        result_dict["overall_valid"] = result_dict.pop("final_decision")
+        result_dict["metrics"]["json_schema_violation"] = result_dict["metrics"].pop("json_schema_validation")
         return result_dict
 
+    def reduce_one(self, intermidate: Dict[str, float]) -> Dict[str, float]:
+        return intermidate
+    
+    def reduce(self, intermediates: List[Dict[str, float]]) -> Dict[str, float]:
+        flat_instances = []
+        for instance in intermediates:
+            flat_instance_dict = {}
+            for metric, metric_dict in instance.get("metrics", {}).items():
+                flat_instance_dict[metric] = float(metric_dict["valid"])
+            flat_instance_dict["overall_valid"] = instance["overall_valid"]
+            flat_instances.append(flat_instance_dict)
+
+        return self.reduction.reduce(flat_instances)
 
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
