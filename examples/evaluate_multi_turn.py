@@ -1,9 +1,12 @@
+from typing import List
+
 from unitxt.api import create_dataset, evaluate
 from unitxt.inference import (
     CrossProviderInferenceEngine,
 )
 from unitxt.task import Task
 from unitxt.templates import MultiTurnTemplate
+from unitxt.types import Conversation
 
 data = [
     {
@@ -85,12 +88,12 @@ llm_as_judge_metric = f"metrics.llm_as_judge.direct.watsonx.llama3_3_70b[criteri
 
 task = Task(
     input_fields={
-        "conversation": "Conversation",
+        "conversation": Conversation,
     },
     reference_fields={
-        "answers": "List[str]",
+        "answers": List[str],
     },
-    prediction_type="str",
+    prediction_type=str,
     metrics=[
         llm_as_judge_metric,
         "metrics.rouge",
