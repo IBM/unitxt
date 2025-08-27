@@ -94,6 +94,7 @@ task = Task(
     metrics=[
         llm_as_judge_metric,
         "metrics.rouge",
+        "metrics.normalized_sacrebleu",
         "metrics.accuracy",
     ],
     default_template=template,
@@ -108,7 +109,7 @@ dataset = create_dataset(
     max_test_instances=10,
 )
 predictions = model.infer(dataset)
-
+print(predictions[1])
 results = evaluate(predictions=predictions, data=dataset)
 
 print("Instance Results:")
