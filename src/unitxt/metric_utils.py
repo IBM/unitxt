@@ -733,7 +733,9 @@ class InstanceScores(list):
         ).head()
         df["score_name"] = df["score"].apply(lambda x: x["instance"]["score_name"])
         df["all_scores"] = df["score"].apply(
-            lambda x: "\n".join(f"{k}: {v}" for k, v in x["instance"].items())
+            lambda x: "\n".join(
+                f"{k}: {v}" for k, v in x["instance"].items() if isoftype(v, float)
+            )
         )
         df["score"] = df["score"].apply(lambda x: x["instance"]["score"])
 
