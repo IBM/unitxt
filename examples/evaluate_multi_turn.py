@@ -112,7 +112,7 @@ dataset = create_dataset(
     max_test_instances=10,
 )
 predictions = model.infer(dataset)
-print(predictions[1])
+
 results = evaluate(predictions=predictions, data=dataset)
 
 print("Instance Results:")
