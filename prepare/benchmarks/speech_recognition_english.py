@@ -28,24 +28,8 @@ benchmark = Benchmark(
             card="cards.esb.earnings22",
             format="formats.chat_api",
         ),
-        "commonvoice_en": DatasetRecipe(
-            card="cards.commonvoice.en",
-            format="formats.chat_api",
-        ),
-        "commonvoice_de": DatasetRecipe(
-            card="cards.commonvoice.de",
-            format="formats.chat_api",
-        ),
-        "commonvoice_es": DatasetRecipe(
-            card="cards.commonvoice.es",
-            format="formats.chat_api",
-        ),
-        "commonvoice_fr": DatasetRecipe(
-            card="cards.commonvoice.fr",
-            format="formats.chat_api",
-        ),
-        "commonvoice_pt": DatasetRecipe(
-            card="cards.commonvoice.pt",
+        "commonvoice": DatasetRecipe(
+            card="cards.esb.commonvoice",
             format="formats.chat_api",
         ),
     },

@@ -31,29 +31,9 @@
             "card": "cards.esb.earnings22",
             "format": "formats.chat_api"
         },
-        "commonvoice_en": {
+        "commonvoice": {
             "__type__": "dataset_recipe",
-            "card": "cards.commonvoice.en",
-            "format": "formats.chat_api"
-        },
-        "commonvoice_de": {
-            "__type__": "dataset_recipe",
-            "card": "cards.commonvoice.de",
-            "format": "formats.chat_api"
-        },
-        "commonvoice_es": {
-            "__type__": "dataset_recipe",
-            "card": "cards.commonvoice.es",
-            "format": "formats.chat_api"
-        },
-        "commonvoice_fr": {
-            "__type__": "dataset_recipe",
-            "card": "cards.commonvoice.fr",
-            "format": "formats.chat_api"
-        },
-        "commonvoice_pt": {
-            "__type__": "dataset_recipe",
-            "card": "cards.commonvoice.pt",
+            "card": "cards.esb.commonvoice",
             "format": "formats.chat_api"
         }
     }

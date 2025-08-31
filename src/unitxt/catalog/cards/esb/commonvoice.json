@@ -9,7 +9,7 @@
                     {
                         "__type__": "load_hf",
                         "path": "esb/diagnostic-dataset",
-                        "name": "spgispeech",
+                        "name": "common_voice",
                         "splits": [
                             "clean"
                         ],
@@ -32,7 +32,7 @@
                     {
                         "__type__": "load_hf",
                         "path": "esb/diagnostic-dataset",
-                        "name": "spgispeech",
+                        "name": "common_voice",
                         "splits": [
                             "other"
                         ],
@@ -73,21 +73,21 @@
         "templates.speech_recognition.default"
     ],
     "__tags__": {
-        "license": "other",
+        "license": "cc0-1.0",
         "language": "en",
         "task_categories": [
             "automatic-speech-recognition"
         ],
         "size_categories": [
-            "100K<n<1M"
+            "1K<n<10K"
         ],
         "modalities": [
             "audio",
             "text"
         ],
-        "source": "financial earnings calls",
+        "source": "European Parliament recordings",
         "benchmark": "ESB"
     },
-    "__description__": "SPGISpeech from ESB (End-to-End Speech Benchmark) - Financial earnings calls with standardized preprocessing and consistent formatting. Test-only split from the unified ESB dataset collection.",
-    "__title__": "ESB-SPGISpeech"
+    "__description__": "CommonVoice from ESB (End-to-End Speech Benchmark) - Common Voice is a series of crowd-sourced open-licensed speech datasets where speakers record text from Wikipedia in various languages.",
+    "__title__": "ESB-CommonVoice"
 }

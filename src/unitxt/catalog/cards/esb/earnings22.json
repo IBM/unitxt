@@ -1,21 +1,71 @@
 {
     "__type__": "task_card",
     "loader": {
-        "__type__": "load_hf",
-        "path": "hf-audio/esb-datasets-test-only-sorted",
-        "name": "earnings22",
-        "splits": [
-            "test"
-        ],
-        "data_classification_policy": [
-            "public"
-        ],
-        "streaming": true
+        "__type__": "multiple_source_loader",
+        "sources": [
+            {
+                "__type__": "source_sequential_operator",
+                "steps": [
+                    {
+                        "__type__": "load_hf",
+                        "path": "esb/diagnostic-dataset",
+                        "name": "earnings22",
+                        "splits": [
+                            "clean"
+                        ],
+                        "data_classification_policy": [
+                            "public"
+                        ],
+                        "streaming": true
+                    },
+                    {
+                        "__type__": "rename_splits",
+                        "mapper": {
+                            "clean": "test1"
+                        }
+                    }
+                ]
+            },
+            {
+                "__type__": "source_sequential_operator",
+                "steps": [
+                    {
+                        "__type__": "load_hf",
+                        "path": "esb/diagnostic-dataset",
+                        "name": "earnings22",
+                        "splits": [
+                            "other"
+                        ],
+                        "data_classification_policy": [
+                            "public"
+                        ],
+                        "streaming": true
+                    },
+                    {
+                        "__type__": "rename_splits",
+                        "mapper": {
+                            "other": "test2"
+                        }
+                    }
+                ]
+            }
+        ]
     },
     "preprocess_steps": [
         {
+            "__type__": "split_random_mix",
+            "mix": {
+                "test": "test1+test2"
+            }
+        },
+        {
             "__type__": "to_audio",
             "field": "audio"
+        },
+        {
+            "__type__": "rename",
+            "field": "norm_transcript",
+            "to_field": "text"
         }
     ],
     "task": "tasks.speech_recognition",

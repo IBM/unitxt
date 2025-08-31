@@ -40,7 +40,7 @@ if debug:
 
 model = HFGraniteSpeechInferenceEngine(
     model_name="ibm-granite/granite-speech-3.3-8b",  # two options for Granite Speech 3.3:  2b  and  8b
-    max_new_tokens=120,  # 200 for 2b,  120 for 8b
+    max_new_tokens=200,
 )
 
 predictions = model(test_dataset)

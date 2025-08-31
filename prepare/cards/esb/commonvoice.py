@@ -16,7 +16,7 @@ card = TaskCard(
                 steps=[
                     LoadHF(
                         path="esb/diagnostic-dataset",
-                        name="ami",
+                        name="common_voice",
                         splits=["clean"],
                         data_classification_policy=["public"],
                         streaming=True,
@@ -32,7 +32,7 @@ card = TaskCard(
                 steps=[
                     LoadHF(
                         path="esb/diagnostic-dataset",
-                        name="ami",
+                        name="common_voice",
                         splits=["other"],
                         data_classification_policy=["public"],
                         streaming=True,
@@ -56,21 +56,19 @@ card = TaskCard(
         "templates.speech_recognition.default",
     ],
     __tags__={
-        "license": "cc-by-4.0",
+        "license": "cc0-1.0",
         "language": "en",
         "task_categories": ["automatic-speech-recognition"],
-        "size_categories": ["10K<n<100K"],
+        "size_categories": ["1K<n<10K"],
         "modalities": ["audio", "text"],
-        "source": "AMI Meeting Corpus",
+        "source": "European Parliament recordings",
         "benchmark": "ESB",
     },
     __description__=(
-        "AMI Meeting Corpus from ESB (End-to-End Speech Benchmark) - Meeting recordings "
-        "with standardized preprocessing and consistent formatting. Test-only split from "
-        "the unified ESB dataset collection."
+        "CommonVoice from ESB (End-to-End Speech Benchmark) - Common Voice is a series of crowd-sourced open-licensed speech datasets where speakers record text from Wikipedia in various languages."
     ),
-    __title__="ESB-AMI",
+    __title__="ESB-CommonVoice",
 )
 
 test_card(card, strict=False)
-add_to_catalog(card, "cards.esb.ami", overwrite=True)
+add_to_catalog(card, "cards.esb.commonvoice", overwrite=True)

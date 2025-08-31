@@ -9,7 +9,8 @@ from unitxt.inference import (
 )
 from unitxt.system_prompts import TextualSystemPrompt
 
-USE_RITS = True  #  whether to use RITS service or running the model locally
+USE_RITS = False  #  whether to use RITS service
+USE_WML = False  #  whether to use WML service
 
 test_dataset = load_dataset(
     # select (uncomment) only one of the following cards (datasets)
@@ -36,21 +37,26 @@ test_dataset = load_dataset(
 if os.environ.get("SKIP_HEAVY_LOCAL", False):
     exit()
 
-if not USE_RITS:
+if not USE_RITS and not USE_WML:
     # locally running the model, it needs GPU to run properly
     model = HFGraniteSpeechInferenceEngine(
         model_name="ibm-granite/granite-speech-3.3-8b",  # two options for Granite Speech 3.3:  2b  and  8b
         revision="granite-speech-3.3.2-2b",
-        max_new_tokens=120,  # 200 for 2b,  120 for 8b
+        max_new_tokens=200,
     )
 if USE_RITS:
     # using the RITS remote service for inferencing
     model = CrossProviderInferenceEngine(
         model="granite-speech-3-3-8b",  # in RITS only the 8b version of Granite Speech is available
         provider="rits",
-        # provider_specific_args={"rits": {"max_new_tokens": 120}},
-        max_new_tokens=120,
+        # provider_specific_args={"rits": {"max_new_tokens": 200}},
+        max_new_tokens=200,
     )
+if USE_WML:
+    # using the WML remote service for inferencing
+    # code to be completed
+    model = None
+
 
 predictions = model(test_dataset)
 results = evaluate(

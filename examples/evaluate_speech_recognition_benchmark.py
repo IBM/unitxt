@@ -30,11 +30,13 @@ if os.environ.get("SKIP_HEAVY_LOCAL", False):
 model = HFGraniteSpeechInferenceEngine(
     model_name="ibm-granite/granite-speech-3.3-2b",  # two options for Granite Speech 3.3:  2b  and  8b
     revision="granite-speech-3.3.2-2b",
-    max_new_tokens=200,  # 200 for 2b,  120 for 8b
+    max_new_tokens=200,
 )
 
 predictions = model(dataset)
-results = evaluate(predictions=predictions, data=dataset)
+results = evaluate(
+    predictions=predictions, data=dataset, calc_confidence_intervals=False
+)
 
 print("Global scores:")
 print(results.global_scores.summary)
