@@ -30,7 +30,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    override,
 )
 
 import evaluate
