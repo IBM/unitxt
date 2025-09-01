@@ -1023,7 +1023,7 @@ class ReflectionToolCallingMetric(
             "open-ai": "openai.async.output_val",
             "rits": "litellm.rits.output_val",
             "azure": "azure_openai.async.output_val",
-            "mock": "mock",
+            "mock": "mock.output_val",
         }
         llmeval_provider_name = mapping.get(provider_name)
         if llmeval_provider_name is None:
