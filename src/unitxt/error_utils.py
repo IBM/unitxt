@@ -298,5 +298,7 @@ def error_context(context_object: Any = None, **context):
     try:
         yield
     except Exception as e:
+        if e.__class__.__name__ == "KeyError":
+            e = RuntimeError(e.__class__.__name__ + ": '" + e.args[0] + "'")
         _add_context_to_exception(e, context_object, **context)
-        raise
+        raise e

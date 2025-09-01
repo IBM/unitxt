@@ -47,7 +47,7 @@ class TestContextEnhancedErrors(UnitxtTestCase):
 
         processor = TestProcessor()
 
-        with self.assertRaises(KeyError) as cm:
+        with self.assertRaises(RuntimeError) as cm:
             with error_context(processor):
                 raise KeyError("Missing key")
 
@@ -186,12 +186,12 @@ class TestErrorContext(UnitxtTestCase):
 
     def test_error_context_without_object(self):
         """Test error_context without a context object."""
-        with self.assertRaises(KeyError) as cm:
+        with self.assertRaises(RuntimeError) as cm:
             with error_context(input_file="data.json", line_number=156):
                 raise KeyError("Missing field")
 
         error = cm.exception
-        self.assertIsInstance(error, KeyError)
+        self.assertIsInstance(error, RuntimeError)
         self.assertIsNone(error.context_object)
         # Context now includes version info plus the specified context
         self.assertIn("Unitxt", error.context)
