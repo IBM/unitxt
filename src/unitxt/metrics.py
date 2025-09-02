@@ -990,7 +990,7 @@ class ReflectionToolCallingMetric(
     reduction = MeanReduction()
     prediction_type = ToolCall
     _requirements_list = {
-        "llmevalkit": "pip install 'git+ssh://git@github.ibm.com/MLT/LLMEvalKit.git'"
+        "llmevalkit": "Install with \"pip install 'git+ssh://git@github.ibm.com/MLT/LLMEvalKit.git'\".\nTo gain access please reach the team."
     }
     runtime_pipeline: bool = True  # Whether to use the runtime pipeline or the longer evaluation pipeline with actionable recommendations
 
@@ -1033,7 +1033,7 @@ class ReflectionToolCallingMetric(
     @staticmethod
     def _check_missing_requirements_by_provider(provider_name: str):
         provider_libs = {
-            "watsonx": "ibm_watsonx_ai",
+            "watsonx": "ibm-watsonx-ai",
             "open-ai": "openai",
             "rits": "litellm",
             "azure": "openai"
@@ -1190,12 +1190,6 @@ class ReflectionToolCallingMetricSyntactic(
         task_data: Dict[str, Any],
     ) -> Dict[str, float]:
         from llmevalkit.function_calling.pipeline.pipeline import ReflectionPipeline
-        from llmevalkit.function_calling.pipeline.types import (
-            ToolCall as LLMEvalKitToolCall,
-        )
-        from llmevalkit.function_calling.pipeline.types import (
-            ToolSpec as LLMEvalKitToolSpec,
-        )
 
         # Convert unitxt tool inventory to LLMEvalKit format
         tools_inventory = ReflectionToolCallingMixin.convert_tools_inventory(task_data.get("tools", []))
