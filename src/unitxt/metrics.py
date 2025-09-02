@@ -40,8 +40,6 @@ import requests
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
-import unitxt
-
 from .artifact import Artifact
 from .base_metric import Metric
 from .collections import ListCollection
@@ -1002,16 +1000,16 @@ class ReflectionToolCallingMetric(
         "azure": "gpt-4o",
         "mock": "mock"
         }
-        self.requirements = self._check_missing_requirements_by_provider(unitxt.settings.default_provider)
+        self.requirements = self._check_missing_requirements_by_provider(settings.default_provider)
         super().prepare()
         self.setup_pipeline(
-            reflector_model_name=provider_to_default_reflector_model.get(unitxt.settings.default_provider),
-            provider_name=unitxt.settings.default_provider
+            reflector_model_name=provider_to_default_reflector_model.get(settings.default_provider),
+            provider_name=settings.default_provider
         )
     
     def setup_pipeline(self, reflector_model_name: str, provider_name: str) -> ReflectionPipeline:
         llmeval_provider_name = self._get_llmeval_provider_name(provider_name)
-        self._check_missing_requirements_by_provider(unitxt.settings.default_provider) # TODO: fix it
+        self._check_missing_requirements_by_provider(settings.default_provider) # TODO: fix it
         metrics_client = self._get_metrics_client(llmeval_provider_name, reflector_model_name)
         self.reflection_pipeline = self._build_reflection_pipeline(metrics_client)
         return self.reflection_pipeline
@@ -1033,7 +1031,7 @@ class ReflectionToolCallingMetric(
     @staticmethod
     def _check_missing_requirements_by_provider(provider_name: str):
         provider_libs = {
-            "watsonx": "ibm-watsonx-ai",
+            "watsonx": "ibm_watsonx_ai",
             "open-ai": "openai",
             "rits": "litellm",
             "azure": "openai"
