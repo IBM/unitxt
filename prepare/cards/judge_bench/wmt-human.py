@@ -57,7 +57,7 @@ for dataset_name, config in dataset_to_config.items():
             },
             reference_fields={"mean_score": float},
             prediction_type=float,
-            metrics=["metrics.spearman"],
+            metrics=["metrics.pearson", "metrics.spearman"],
             default_template="templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]",
         ),
         templates=[

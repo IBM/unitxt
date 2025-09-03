@@ -6,7 +6,7 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadJsonFile
-from unitxt.operators import Cast, Rename, Set
+from unitxt.operators import Cast, ExecuteExpression, Rename, Set
 from unitxt.processors import GroupDictWithRegex
 from unitxt.task import Task
 from unitxt.test_utils.card import test_card
@@ -32,6 +32,7 @@ for criteria_name, criteria_artifact in criteria_to_artifact.items():
                 field=f"annotations/{criteria_name}/mean_human", to_field="mean_score"
             ),
             Cast(field="mean_score", to="float"),
+            ExecuteExpression(expression="(mean_score - 1) / 4", to_field="mean_score"),
             GroupDictWithRegex(
                 field="instance",
                 pattern=r"### Generated Summary\s+(?P<generated_summary>.*?)\s+### Source Article\s+(?P<source_article>.*)",
@@ -45,9 +46,7 @@ for criteria_name, criteria_artifact in criteria_to_artifact.items():
             input_fields={"summary": str, "article": str, "criteria": Any},
             reference_fields={"mean_score": float},
             prediction_type=float,
-            metrics=[
-                "metrics.spearman",
-            ],
+            metrics=["metrics.spearman", "metrics.pearson"],
             default_template="templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]",
         ),
         templates=[],

@@ -3,7 +3,11 @@ from typing import Any
 from unitxt import add_to_catalog
 from unitxt.blocks import Copy, LoadHF, Set, Task, TaskCard
 from unitxt.llm_as_judge import CreateCriteriaWithOptionsFromDict
-from unitxt.operators import Cast, MergeStreams
+from unitxt.operators import (
+    ExecuteExpression,
+    FilterByCondition,
+    MergeStreams,
+)
 from unitxt.string_operators import FormatText
 from unitxt.test_utils.card import test_card
 
@@ -33,8 +37,10 @@ card = TaskCard(
             new_stream_name="test",
             add_origin_stream_name=True,
         ),
+        # Cast(field="human_score", to="str"),
+        FilterByCondition(values={"human_score": -1}, condition="ne"),
+        ExecuteExpression(expression="(human_score - 1) / 4", to_field="human_score"),
         Set(fields={"criteria": empty_criteria}),
-        Cast(field="human_score", to="float"),
         # biggen exposes to level of granularities, e.g. capability: theory_of_mind, task: guess_the_emotion
         FormatText(text="{capability}-{task}", to_field="criteria_name"),
         Copy(
@@ -56,6 +62,9 @@ card = TaskCard(
             "input": str,
             "response": str,
             "reference_answer": str,
+            "language": str,
+            "capability": str,
+            "task": str,
             "criteria": Any,
         },
         reference_fields={"human_score": float},
