@@ -33,6 +33,11 @@
             "to": "float"
         },
         {
+            "__type__": "execute_expression",
+            "expression": "(mean_score - 1) / 4",
+            "to_field": "mean_score"
+        },
+        {
             "__type__": "set",
             "fields": {
                 "criteria": "metrics.llm_as_judge.direct.criteria.step_by_step_reasoning_overall_quality",
@@ -55,6 +60,7 @@
         },
         "prediction_type": "float",
         "metrics": [
+            "metrics.pearson",
             "metrics.spearman"
         ],
         "default_template": "templates.empty[postprocessors=[processors.cast_to_float_return_nan_if_failed]]"
