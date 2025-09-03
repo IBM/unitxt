@@ -272,7 +272,7 @@ def _add_context_to_exception(
     context_parts = _build_context_parts(final_context_object, final_context)
     context_message = _create_context_box(context_parts)
     if type(original_error) == KeyError:
-        f = ExtKeyError(original_message)
+        f = ExtKeyError(KeyError(original_error))
     else:
         f = original_error
     _store_context_attributes(f, final_context_object, final_context, original_message)
