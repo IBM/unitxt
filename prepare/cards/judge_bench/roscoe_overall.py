@@ -7,7 +7,14 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.llm_as_judge_constants import DirectCriteriaCatalogEnum
 from unitxt.loaders import LoadJsonFile
-from unitxt.operators import Cast, Copy, MapInstanceValues, Rename, Set
+from unitxt.operators import (
+    Cast,
+    Copy,
+    ExecuteExpression,
+    MapInstanceValues,
+    Rename,
+    Set,
+)
 from unitxt.processors import GroupDictWithRegex
 from unitxt.task import Task
 from unitxt.test_utils.card import test_card
@@ -25,9 +32,10 @@ criteria_to_config = {
         "criteria_artifact": "metrics.llm_as_judge.direct.criteria.step_by_step_reasoning_coherency",
         "preprocess_steps": [
             Cast(field="mean_score", to="float"),
+            ExecuteExpression(expression="(mean_score - 1) / 4", to_field="mean_score"),
         ],
         "reference_fields": {"mean_score": float},
-        "metrics": ["metrics.spearman"],
+        "metrics": ["metrics.pearson", "metrics.spearman"],
     },
     "contradiction": {
         "label_mapping": {"annotations/Contradiction/majority_human": "label"},
@@ -72,11 +80,10 @@ criteria_to_config = {
         "criteria_artifact": "metrics.llm_as_judge.direct.criteria.step_by_step_reasoning_overall_quality",
         "preprocess_steps": [
             Cast(field="mean_score", to="float"),
+            ExecuteExpression(expression="(mean_score - 1) / 4", to_field="mean_score"),
         ],
         "reference_fields": {"mean_score": float},
-        "metrics": [
-            "metrics.spearman",
-        ],
+        "metrics": ["metrics.pearson", "metrics.spearman"],
     },
 }
 for criteria_name, config in criteria_to_config.items():
