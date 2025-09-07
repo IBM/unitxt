@@ -9,7 +9,7 @@ from unitxt.task import Task
 from unitxt.templates import MultiTurnTemplate
 from unitxt.types import Conversation
 
-original_data = [
+original_dialogs = [
     [
         {
             "role": "system",
@@ -31,8 +31,15 @@ original_data = [
     ],
 ]
 
+#
+# Converts a flat list of dialog messages into an evaluation dataset where each assistant response is
+# paired with the preceding conversation history as context.
+#
+# For every assistant message, the dialog up to the last user message is extracted and stored as a conversation,
+# while the assistant's reply becomes the corresponding reference answer.
+#
 data = []
-for id, dialog in enumerate(original_data):
+for id, dialog in enumerate(original_dialogs):
     new_dialog = []
     for turn in dialog:
         if turn["role"] == "assistant":
