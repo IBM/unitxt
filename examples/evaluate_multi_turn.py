@@ -1,3 +1,4 @@
+import copy
 from typing import List
 
 from unitxt.api import create_dataset, evaluate
@@ -8,73 +9,39 @@ from unitxt.task import Task
 from unitxt.templates import MultiTurnTemplate
 from unitxt.types import Conversation
 
-data = [
-    {
-        "conversation": {
-            "id": "1",
-            "dialog": [
-                {
-                    "role": "system",
-                    "content": "Have a dialog with the user and answer the questions.",
-                },
-                {"role": "user", "content": "Where is Paris?"},
-            ],
+original_data = [
+    [
+        {
+            "role": "system",
+            "content": "Have a dialog with the user and answer the questions.",
         },
-        "answers": ["Paris is in France"],
-    },
-    {
-        "conversation": {
-            "id": "1",
-            "dialog": [
-                {
-                    "role": "system",
-                    "content": "Have a dialog with the user and answer the questions.",
-                },
-                {"role": "user", "content": "Where is Paris?"},
-                {"role": "assistant", "content": "Paris is in France"},
-                {"role": "user", "content": "How is it also called?"},
-            ],
-        },
-        "answers": ["The City of Lights"],
-    },
-    {
-        "conversation": {
-            "id": "2",
-            "dialog": [
-                {"role": "system", "content": "Calculate and return only the number."},
-                {"role": "user", "content": "12+13"},
-            ],
-        },
-        "answers": ["25"],
-    },
-    {
-        "conversation": {
-            "id": "2",
-            "dialog": [
-                {"role": "system", "content": "Calculate and return only the number."},
-                {"role": "user", "content": "12+13"},
-                {"role": "assistant", "content": "25"},
-                {"role": "system", "content": "Multiply the result by 3.14159"},
-            ],
-        },
-        "answers": ["78.53975"],
-    },
-    {
-        "conversation": {
-            "id": "2",
-            "dialog": [
-                {"role": "system", "content": "Calculate and return only the number."},
-                {"role": "user", "content": "12+13"},
-                {"role": "assistant", "content": "25"},
-                {"role": "system", "content": "Multiply the result by 3.14159"},
-                {"role": "assistant", "content": "25"},
-                {"role": "system", "content": "Multiply the result by 0"},
-            ],
-        },
-        "answers": ["0"],
-    },
+        {"role": "user", "content": "Where is Paris?"},
+        {"role": "assistant", "content": "Paris is in France"},
+        {"role": "user", "content": "How is it also called?"},
+        {"role": "assistant", "content": "City of Lights"},
+    ],
+    [
+        {"role": "system", "content": "Calculate and return only the number."},
+        {"role": "user", "content": "12+13"},
+        {"role": "assistant", "content": "25"},
+        {"role": "user", "content": "Multiply the result by 3.14159"},
+        {"role": "assistant", "content": "78.53975"},
+        {"role": "user", "content": "Multiply the result by 0"},
+        {"role": "assistant", "content": "0"},
+    ],
 ]
 
+data = []
+for id, dialog in enumerate(original_data):
+    new_dialog = []
+    for turn in dialog:
+        if turn["role"] == "assistant":
+            new_data = {
+                "conversation": {"dialog": copy.deepcopy(new_dialog), "id": str(id)},
+                "answers": [turn["content"]],
+            }
+            data.append(new_data)
+        new_dialog.append(turn)
 
 template = MultiTurnTemplate(
     references_field="answers",
