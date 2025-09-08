@@ -910,7 +910,7 @@ class ReflectionToolCallingMixin:
         ]
 
     @staticmethod
-    def convert_tool_call(prediction):
+    def convert_tool_call(prediction: ToolCall):
         from llmevalkit.function_calling.pipeline.types import ToolCall as LLMEvalKitToolCall
         return LLMEvalKitToolCall(
             type="function",
@@ -1076,19 +1076,24 @@ class ReflectionToolCallingMetric(
         from llmevalkit.function_calling.pipeline.types import PipelineResult
 
         # Convert unitxt dialog to LLMEvalKit format
-        conversation_history = [dict(turn) for turn in task_data["dialog"]]
-
+        if "dialog" in task_data:
+            conversation_history = [dict(turn) for turn in task_data["dialog"]]
+        elif "query" in task_data:
+            conversation_history = [{"role": "user", "content": task_data["query"]}]
+        else:
+            raise ValueError("task_data must contain either 'dialog' or 'query' field.")
+        
         # Convert unitxt tool inventory to LLMEvalKit format
         tools_inventory = ReflectionToolCallingMixin.convert_tools_inventory(task_data.get("tools", []))
 
         # Convert unitxt tool call to LLMEvalKit format
-        tool_call = ReflectionToolCallingMixin.convert_tool_call(prediction)
+        tool_call_converted = ReflectionToolCallingMixin.convert_tool_call(prediction)
 
         # Run reflection (syntactic + semantic)
         result: PipelineResult = await self.reflection_pipeline.run_async(
             conversation=conversation_history,
             inventory=tools_inventory,
-            call=tool_call,
+            call=tool_call_converted,
             retries=3,
             continue_on_static=True,
         )
@@ -1112,9 +1117,15 @@ class ReflectionToolCallingMetric(
                 while len(pending) < max_concurrency:
                     try:
                         idx, (pred, refs, data) = next(items_iter)
-                        task = asyncio.create_task(self.map(pred, refs, data))
-                        task.idx = idx
-                        pending.add(task)
+                        if isinstance(pred, list):
+                            for p in pred:
+                                task = asyncio.create_task(self.map(p, refs, data))
+                                task.idx = idx
+                                pending.add(task)
+                        else:
+                            task = asyncio.create_task(self.map(pred, refs, data))
+                            task.idx = idx
+                            pending.add(task)
                     except StopIteration:
                         break
                 if not pending:
@@ -1137,13 +1148,13 @@ class ReflectionToolCallingMetric(
                 flat_instance_dict[f"static_{metric}"] = float(metric_type_dict["valid"])
 
             for metric_type, metric_type_dict in instance.get("semantic", {}).items():
-                for metric, metric_dict in metric_type_dict.get("metrics", {}).items():
-                    flat_instance_dict[f"semantic_{metric}"] = float(metric_dict["is_issue"])
-                flat_instance_dict[f"semantic_avg_score_{metric_type}"] = float(metric_type_dict.get("avg_score"))
+                if metric_type_dict is not None:
+                    for metric, metric_dict in metric_type_dict.get("metrics", {}).items():
+                        flat_instance_dict[f"semantic_{metric}"] = float(metric_dict["is_issue"])
+                    flat_instance_dict[f"semantic_avg_score_{metric_type}"] = float(metric_type_dict.get("avg_score"))
 
             flat_instance_dict["overall_valid"] = float(instance["overall_valid"])
             flat_instances.append(flat_instance_dict)
-
 
         return self.reduction.reduce(flat_instances)
 
