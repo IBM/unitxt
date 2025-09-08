@@ -981,9 +981,6 @@ class ReflectionToolCallingMetric(
 
     Reference: https://github.ibm.com/MLT/LLMEvalKit
     """
-    from llmevalkit.function_calling.pipeline.pipeline import ReflectionPipeline
-    from llmevalkit.function_calling.pipeline.types import PipelineResult
-
     main_score = "overall_valid"
     reduction = MeanReduction()
     prediction_type = ToolCall
@@ -1000,16 +997,22 @@ class ReflectionToolCallingMetric(
         "azure": "gpt-4o",
         "mock": "mock"
         }
-        self.requirements = self._check_missing_requirements_by_provider(settings.default_provider)
+        provider = settings.default_provider if not settings.mock_inference_mode else "mock"
+        if provider not in provider_to_default_reflector_model:
+            raise ValueError(f"Unsupported provider for ReflectionToolCallingMetric: {provider}. Supported providers are: {list(provider_to_default_reflector_model.keys())}")
+        self.requirements = self._get_missing_requirements_by_provider(provider)
         super().prepare()
         self.setup_pipeline(
-            reflector_model_name=provider_to_default_reflector_model.get(settings.default_provider),
-            provider_name=settings.default_provider
+            reflector_model_name=provider_to_default_reflector_model.get(provider),
+            provider_name=provider
         )
-    
-    def setup_pipeline(self, reflector_model_name: str, provider_name: str) -> ReflectionPipeline:
-        llmeval_provider_name = self._get_llmeval_provider_name(provider_name)
-        self._check_missing_requirements_by_provider(settings.default_provider) # TODO: fix it
+
+    def setup_pipeline(self, reflector_model_name: str, provider_name: Optional[str] = None):
+        if provider_name is not None:
+            llmeval_provider_name = self._get_llmeval_provider_name(provider_name)
+            requirements = self._get_missing_requirements_by_provider(provider_name)
+            self.check_missing_requirements(requirements)
+        
         metrics_client = self._get_metrics_client(llmeval_provider_name, reflector_model_name)
         self.reflection_pipeline = self._build_reflection_pipeline(metrics_client)
         return self.reflection_pipeline
@@ -1029,7 +1032,7 @@ class ReflectionToolCallingMetric(
         return llmeval_provider_name
 
     @staticmethod
-    def _check_missing_requirements_by_provider(provider_name: str):
+    def _get_missing_requirements_by_provider(provider_name: str):
         provider_libs = {
             "watsonx": "ibm_watsonx_ai",
             "open-ai": "openai",
@@ -1072,7 +1075,7 @@ class ReflectionToolCallingMetric(
         prediction: ToolCall,
         references: None,
         task_data: Dict[str, Any],
-    ) -> PipelineResult:
+    ):
         from llmevalkit.function_calling.pipeline.types import PipelineResult
 
         # Convert unitxt dialog to LLMEvalKit format
@@ -1098,7 +1101,7 @@ class ReflectionToolCallingMetric(
             continue_on_static=True,
         )
         return result.model_dump()
-    
+
 
     def map_stream(
         self,
