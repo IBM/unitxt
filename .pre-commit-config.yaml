@@ -28,7 +28,7 @@ repos:
     hooks:
       - id: enforce-relative-imports
         name: Enforce Relative Imports
-        entry: python utils/enforce_relative_imports.py
+        entry: python3 utils/enforce_relative_imports.py
         language: system
         # Adjust the files pattern to match your needs
         files: ^src/.*\.py$
@@ -40,7 +40,7 @@ repos:
     hooks:
       - id: enforce-library-imports
         name: Enforce Library Imports
-        entry: python utils/enforce_library_imports.py
+        entry: python3 utils/enforce_library_imports.py
         language: system
         # Adjust the files pattern to match your needs
         exclude: (^src/.*\.py$)|utils/enforce_library_imports.py|utils/enforce_relative_imports.py
