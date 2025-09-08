@@ -1015,7 +1015,7 @@ class ReflectionToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]
     def setup_pipeline(
         self, reflector_model_name: str, provider_name: Optional[str] = None
     ):
-        if provider_name is not None:
+        if provider_name:
             llmeval_provider_name = self._get_llmeval_provider_name(provider_name)
             requirements = self._get_missing_requirements_by_provider(provider_name)
             self.check_missing_requirements(requirements)
