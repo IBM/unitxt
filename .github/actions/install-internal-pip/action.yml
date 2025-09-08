@@ -30,4 +30,7 @@ runs:
         else
           URL="git+ssh://git@${{ inputs.host }}/${{ inputs.repo }}.git"
         fi
+        echo "Installing from URL: $URL"
         pip install --no-cache-dir --force-reinstall "$URL" ${{ inputs.pip-extra-args }}
+        # Get and print the installed version/commit hash
+        python -c "import importlib.metadata; import sys; print(f'Installed {importlib.metadata.version(\"llmevalkit\")} from {sys.modules.get(\"llmevalkit\").__path__[0] if \"llmevalkit\" in sys.modules else \"not loaded\"}')" || echo "Failed to get LLMEvalKit version info"
