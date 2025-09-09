@@ -1655,7 +1655,7 @@ class TestMetrics(UnitxtTestCase):
         )
 
     def test_reflection_tool_calling_metric(self):
-        unitxt.settings.default_provider = "mock" if self.use_mock_model else "rits"
+        unitxt.settings.mock_inference_mode = True
         metric = ReflectionToolCallingMetric()
 
         prediction = ToolCall(
@@ -1875,7 +1875,7 @@ class TestMetrics(UnitxtTestCase):
             },
         }
 
-        unitxt.settings.default_provider = "mock" if self.use_mock_model else "rits"
+        unitxt.settings.mock_inference_mode = True
         metric = ReflectionToolCallingMetric()
         reduced = metric.reduce([instance1, instance2, instance3])
 
