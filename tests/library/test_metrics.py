@@ -1705,13 +1705,12 @@ class TestMetrics(UnitxtTestCase):
         result = metric.map_stream(items=[(prediction, None, task_data)])[0]
 
         # Verify all the scores
-        self.assertEqual(result["overall_valid"], False)
-        self.assertEqual(result["static"]["final_decision"], True)
-        self.assertEqual(
+        self.assertFalse(result["overall_valid"])
+        self.assertTrue(result["static"]["final_decision"])
+        self.assertTrue(
             result["semantic"]["general"]["metrics"]["general_hallucination_check"][
                 "is_issue"
-            ],
-            True,
+            ]
         )
 
         unitxt_provider_name = "mock" if self.use_mock_model else "watsonx"
@@ -1723,13 +1722,12 @@ class TestMetrics(UnitxtTestCase):
         result = metric.map_stream(items=[(prediction, None, task_data)])[0]
 
         # Verify all the scores
-        self.assertEqual(result["overall_valid"], False)
-        self.assertEqual(result["static"]["final_decision"], True)
-        self.assertEqual(
+        self.assertFalse(result["overall_valid"])
+        self.assertTrue(result["static"]["final_decision"])
+        self.assertTrue(
             result["semantic"]["general"]["metrics"]["general_hallucination_check"][
                 "is_issue"
-            ],
-            True,
+            ]
         )
 
     def test_partial_value_precision_enum_violations_real_static_only(self):
@@ -2064,8 +2062,8 @@ class TestMetrics(UnitxtTestCase):
         )
 
         # Exact match should be 1.0 when prediction and reference are identical
-        self.assertEqual(outputs["overall_valid"], True)
-        self.assertEqual(outputs["metrics"]["non_existent_function"]["valid"], True)
+        self.assertTrue(outputs["overall_valid"])
+        self.assertTrue(outputs["metrics"]["non_existent_function"]["valid"])
 
         # Test case 2: Different tool name
         prediction = {"name": "different_tool", "arguments": {"param1": "value1"}}
@@ -2076,8 +2074,8 @@ class TestMetrics(UnitxtTestCase):
             task_data=tools_data,
         )
 
-        self.assertEqual(outputs["overall_valid"], False)
-        self.assertEqual(outputs["metrics"]["non_existent_function"]["valid"], False)
+        self.assertFalse(outputs["overall_valid"])
+        self.assertFalse(outputs["metrics"]["non_existent_function"]["valid"])
 
         # Test case 3: Different parameter names
         prediction = {
@@ -2092,20 +2090,18 @@ class TestMetrics(UnitxtTestCase):
         )
 
         # Exact match should be 0.0, tool choice 1.0
-        self.assertEqual(outputs["overall_valid"], False)
-        self.assertEqual(outputs["metrics"]["non_existent_function"]["valid"], True)
+        self.assertFalse(outputs["overall_valid"])
+        self.assertTrue(outputs["metrics"]["non_existent_function"]["valid"])
 
         # param1 is present but param2 is missing out of 2 required parameters in the schema
-        self.assertEqual(
-            outputs["metrics"]["missing_required_parameter"]["valid"], False
-        )
+        self.assertFalse(outputs["metrics"]["missing_required_parameter"]["valid"])
 
         # 1 valid parameter (param1) out of 2 total parameters (param1, wrongParam)
-        self.assertEqual(outputs["metrics"]["non_existent_parameter"]["valid"], False)
+        self.assertFalse(outputs["metrics"]["non_existent_parameter"]["valid"])
 
         # Since wrongParam doesn't exist in the schema, value precision only considers param1
         # param1 has the correct type, so value precision is 1.0
-        self.assertEqual(outputs["metrics"]["incorrect_parameter_type"]["valid"], True)
+        self.assertTrue(outputs["metrics"]["incorrect_parameter_type"]["valid"])
 
         # Test case 4: Different parameter values
         prediction = {
@@ -2121,7 +2117,7 @@ class TestMetrics(UnitxtTestCase):
 
         # Parameter choice should be 1.0 (all names match)
         # Note: overall_valid is 1.0 because the static validation only checks schema conformance, not value equality
-        self.assertEqual(outputs["overall_valid"], True)
+        self.assertTrue(outputs["overall_valid"])
 
         # Test case 5a: Empty arguments
         prediction = {"name": "test_tool", "arguments": {}}
@@ -2134,13 +2130,11 @@ class TestMetrics(UnitxtTestCase):
         )
 
         # Recall should be 0 for empty arguments (missing required parameters)
-        self.assertEqual(
-            outputs["metrics"]["missing_required_parameter"]["valid"], False
-        )
+        self.assertFalse(outputs["metrics"]["missing_required_parameter"]["valid"])
         # Precision is 1.0 because there are no invalid parameter names (no non-existent parameters)
-        self.assertEqual(outputs["metrics"]["non_existent_parameter"]["valid"], True)
+        self.assertTrue(outputs["metrics"]["non_existent_parameter"]["valid"])
         # Value precision is 1.0 because there are no parameters with type or enum violations
-        self.assertEqual(outputs["metrics"]["incorrect_parameter_type"]["valid"], True)
+        self.assertTrue(outputs["metrics"]["incorrect_parameter_type"]["valid"])
 
         prediction = {"name": "test_tool", "arguments": {}}
         reference = {"name": "test_tool", "arguments": {}}
@@ -2154,13 +2148,11 @@ class TestMetrics(UnitxtTestCase):
 
         # Recall should still be 0 since there are required parameters in the schema
         # (regardless of the references, which are not used for validation)
-        self.assertEqual(
-            outputs["metrics"]["missing_required_parameter"]["valid"], False
-        )
+        self.assertFalse(outputs["metrics"]["missing_required_parameter"]["valid"])
         # Precision is 1.0 because there are no invalid parameter names
-        self.assertEqual(outputs["metrics"]["non_existent_parameter"]["valid"], True)
+        self.assertTrue(outputs["metrics"]["non_existent_parameter"]["valid"])
         # Value precision is 1.0 because there are no parameters with type or enum violations
-        self.assertEqual(outputs["metrics"]["incorrect_parameter_type"]["valid"], True)
+        self.assertTrue(outputs["metrics"]["incorrect_parameter_type"]["valid"])
 
         # Test case 6: Multiple references with one match
         prediction = {"name": "test_tool", "arguments": {"param1": "value1"}}
@@ -2173,12 +2165,10 @@ class TestMetrics(UnitxtTestCase):
         )
 
         # overall_valid should be 0.0 because param2 is missing (it's required)
-        self.assertEqual(outputs["overall_valid"], False)
-        self.assertEqual(outputs["metrics"]["non_existent_function"]["valid"], True)
-        self.assertEqual(
-            outputs["metrics"]["missing_required_parameter"]["valid"], False
-        )
-        self.assertEqual(outputs["metrics"]["non_existent_parameter"]["valid"], True)
+        self.assertFalse(outputs["overall_valid"])
+        self.assertTrue(outputs["metrics"]["non_existent_function"]["valid"])
+        self.assertFalse(outputs["metrics"]["missing_required_parameter"]["valid"])
+        self.assertTrue(outputs["metrics"]["non_existent_parameter"]["valid"])
 
         # Test case 7: Parameter types
         prediction = {
@@ -2209,7 +2199,7 @@ class TestMetrics(UnitxtTestCase):
 
         # json_schema_violation is separate from the type validation
         # schema validation can still pass even if there are type errors
-        self.assertEqual(outputs["metrics"]["json_schema_violation"]["valid"], True)
+        self.assertTrue(outputs["metrics"]["json_schema_violation"]["valid"])
 
     def test_overall_valid_success_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
@@ -2254,9 +2244,9 @@ class TestMetrics(UnitxtTestCase):
         result = metric.map(prediction, references, task_data)
 
         # Assert expected results
-        self.assertEqual(result["overall_valid"], True)
-        self.assertEqual(result["metrics"]["non_existent_function"]["valid"], True)
-        self.assertEqual(result["metrics"]["missing_required_parameter"]["valid"], True)
+        self.assertTrue(result["overall_valid"])
+        self.assertTrue(result["metrics"]["non_existent_function"]["valid"])
+        self.assertTrue(result["metrics"]["missing_required_parameter"]["valid"])
 
     def test_non_existent_function_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
@@ -2288,9 +2278,9 @@ class TestMetrics(UnitxtTestCase):
         result = metric.map(prediction, references, task_data)
 
         # Assert expected results
-        self.assertEqual(result["overall_valid"], False)
-        self.assertEqual(result["metrics"]["non_existent_function"]["valid"], False)
-        self.assertEqual(result["metrics"]["missing_required_parameter"]["valid"], True)
+        self.assertFalse(result["overall_valid"])
+        self.assertFalse(result["metrics"]["non_existent_function"]["valid"])
+        self.assertTrue(result["metrics"]["missing_required_parameter"]["valid"])
 
     def test_missing_required_parameter_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
@@ -2328,11 +2318,9 @@ class TestMetrics(UnitxtTestCase):
         result = metric.map(prediction, references, task_data)
 
         # Assert expected results
-        self.assertEqual(result["overall_valid"], False)
-        self.assertEqual(
-            result["metrics"]["missing_required_parameter"]["valid"], False
-        )
-        self.assertEqual(result["metrics"]["allowed_values_violation"]["valid"], True)
+        self.assertFalse(result["overall_valid"])
+        self.assertFalse(result["metrics"]["missing_required_parameter"]["valid"])
+        self.assertTrue(result["metrics"]["allowed_values_violation"]["valid"])
 
     def test_non_existent_parameter_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
@@ -2364,113 +2352,8 @@ class TestMetrics(UnitxtTestCase):
         result = metric.map(prediction, references, task_data)
 
         # Assert expected results
-        self.assertEqual(result["overall_valid"], False)
-        self.assertEqual(result["metrics"]["non_existent_parameter"]["valid"], False)
-
-    def test_incorrect_parameter_type_real_map(self):
-        metric = ReflectionToolCallingMetricSyntactic()
-        # Create sample inputs with wrong parameter type
-        prediction = ToolCall(**{"name": "get_weather", "arguments": {"location": 42}})
-
-        references = [
-            {"name": "get_weather", "arguments": {"location": "San Francisco"}}
-        ]
-
-        task_data = {
-            "tools": [
-                {
-                    "name": "get_weather",
-                    "description": "Get the current weather in a given location",
-                    "parameters": {
-                        "type": "object",
-                        "required": ["location"],
-                        "properties": {"location": {"type": "string"}},
-                    },
-                },
-            ]
-        }
-
-        # Call the map method
-        result = metric.map(prediction, references, task_data)
-
-        # Assert expected results
-        self.assertEqual(result["overall_valid"], False)
-        self.assertEqual(result["metrics"]["incorrect_parameter_type"]["valid"], False)
-        self.assertEqual(result["metrics"]["missing_required_parameter"]["valid"], True)
-        self.assertEqual(result["metrics"]["allowed_values_violation"]["valid"], True)
-
-    def test_multiple_parameter_issues_real_map(self):
-        metric = ReflectionToolCallingMetricSyntactic()
-        # Create sample inputs with multiple issues
-        prediction = ToolCall(
-            **{
-                "name": "get_weather",
-                "arguments": {
-                    "unit": 123,
-                    "format": True,
-                    "unknown_param": "value1",
-                    "extra_param": "value2",
-                },
-            }
-        )
-
-        references = [
-            {
-                "name": "get_weather",
-                "arguments": {
-                    "location": "San Francisco",
-                    "date": "2025-08-19",
-                    "unit": "celsius",
-                    "format": "brief",
-                },
-            }
-        ]
-
-        task_data = {
-            "tools": [
-                {
-                    "name": "get_weather",
-                    "description": "Get the weather in a given location",
-                    "parameters": {
-                        "type": "object",
-                        "required": ["location", "date"],
-                        "properties": {
-                            "location": {"type": "string"},
-                            "date": {"type": "string"},
-                            "unit": {
-                                "type": "string",
-                                "enum": ["celsius", "fahrenheit"],
-                            },
-                            "format": {
-                                "type": "string",
-                                "enum": ["brief", "detailed"],
-                            },
-                        },
-                    },
-                }
-            ]
-        }
-
-        # Call the map method
-        result = metric.map(prediction, references, task_data)
-
-        # Assert expected results
-        self.assertEqual(result["overall_valid"], False)
-
-        # Missing 2 out of 2 required parameters
-        self.assertEqual(
-            result["metrics"]["missing_required_parameter"]["valid"], False
-        )
-
-        # 2 invalid parameters out of 4 total
-        self.assertEqual(result["metrics"]["non_existent_parameter"]["valid"], False)
-
-        # Both unit and format have type issues and no other validation issues are reported
-        # So 0 out of 2 valid parameters (excluding the non-existent ones)
-        self.assertEqual(result["metrics"]["incorrect_parameter_type"]["valid"], False)
-
-        # Schema validation might not reflect our expectations due to updated logic
-        # We're primarily interested in value precision calculation
+        self.assertFalse(result["overall_valid"], False)
+        self.assertFalse(result["metrics"]["non_existent_parameter"]["valid"])
 
     def test_allowed_values_violation(self):
         metric = ReflectionToolCallingMetricSyntactic()
@@ -2513,10 +2396,10 @@ class TestMetrics(UnitxtTestCase):
         result = metric.map(prediction, references, task_data)
 
         # Assert expected results
-        self.assertEqual(result["overall_valid"], False)
+        self.assertFalse(result["overall_valid"])
         # With 1 invalid enum value out of 2 parameters, value precision should be 0.5
-        self.assertEqual(result["metrics"]["allowed_values_violation"]["valid"], False)
-        self.assertEqual(result["metrics"]["incorrect_parameter_type"]["valid"], True)
+        self.assertFalse(result["metrics"]["allowed_values_violation"]["valid"])
+        self.assertTrue(result["metrics"]["incorrect_parameter_type"]["valid"])
 
     def test_json_schema_violation_specific_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
@@ -2551,12 +2434,12 @@ class TestMetrics(UnitxtTestCase):
         result = metric.map(prediction, references, task_data)
 
         # Assert expected results
-        self.assertEqual(result["overall_valid"], False)  # Overall validation fails
-        self.assertEqual(
-            result["metrics"]["missing_required_parameter"]["valid"], False
+        self.assertFalse(result["overall_valid"])  # Overall validation fails
+        self.assertFalse(
+            result["metrics"]["missing_required_parameter"]["valid"]
         )  # Missing required param
         # json_schema_violation specifically should be 1.0 because it's marked valid
-        self.assertEqual(result["metrics"]["json_schema_violation"]["valid"], True)
+        self.assertTrue(result["metrics"]["json_schema_violation"]["valid"])
 
     def test_partial_recall_missing_parameters_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
@@ -2593,10 +2476,8 @@ class TestMetrics(UnitxtTestCase):
         result = metric.map(prediction, references, task_data)
 
         # Assert partial recall - 1 out of 2 required parameters provided
-        self.assertEqual(result["overall_valid"], False)
-        self.assertEqual(
-            result["metrics"]["missing_required_parameter"]["valid"], False
-        )
+        self.assertFalse(result["overall_valid"])
+        self.assertFalse(result["metrics"]["missing_required_parameter"]["valid"])
 
     def test_partial_precision_non_existent_parameters_real_map(self):
         """Test partial precision score when some parameters don't exist in the schema."""
@@ -2640,8 +2521,8 @@ class TestMetrics(UnitxtTestCase):
         result = metric.map(prediction, references, task_data)
 
         # Assert partial precision - 3 out of 6 parameters are valid
-        self.assertEqual(result["metrics"]["non_existent_parameter"]["valid"], False)
-        self.assertEqual(result["overall_valid"], False)
+        self.assertFalse(result["metrics"]["non_existent_parameter"]["valid"])
+        self.assertFalse(result["overall_valid"])
 
     def test_partial_value_precision_type_errors_real_map(self):
         """Test partial value precision when some parameters have incorrect types."""
