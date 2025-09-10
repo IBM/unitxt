@@ -38,6 +38,49 @@ original_dialogs = [
 # For every assistant message, the dialog up to the last user message is extracted and stored as a conversation,
 # while the assistant's reply becomes the corresponding reference answer.
 #
+# For example, the following dialog
+# [
+#         {
+#             "role": "system",
+#             "content": "Have a dialog with the user and answer the questions.",
+#         },
+#         {"role": "user", "content": "Where is Paris?"},
+#         {"role": "assistant", "content": "Paris is in France"},
+#         {"role": "user", "content": "How is it also called?"},
+#         {"role": "assistant", "content": "City of Lights"},
+#     ]
+#
+# is converted to this evaluation set:
+#
+#  [
+#     {
+#         "conversation": {
+#             "id": "1",
+#             "dialog": [
+#                 {
+#                     "role": "system",
+#                     "content": "Have a dialog with the user and answer the questions.",
+#                 },
+#                 {"role": "user", "content": "Where is Paris?"},
+#             ],
+#         },
+#         "answers": ["Paris is in France"],
+#     },
+#     {
+#         "conversation": {
+#             "id": "1",
+#             "dialog": [
+#                 {
+#                     "role": "system",
+#                     "content": "Have a dialog with the user and answer the questions.",
+#                 },
+#                 {"role": "user", "content": "Where is Paris?"},
+#                 {"role": "assistant", "content": "Paris is in France"},
+#                 {"role": "user", "content": "How is it also called?"},
+#             ],
+#         },
+#         "answers": ["The City of Lights"],
+#     },
 data = []
 for id, dialog in enumerate(original_dialogs):
     new_dialog = []
