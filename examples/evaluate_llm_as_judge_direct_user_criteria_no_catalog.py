@@ -42,7 +42,6 @@ metric = LLMJudgeDirect(
     ),
     criteria=criteria,
     context_fields=["question"],
-    criteria_field="criteria",
 )
 
 
@@ -62,4 +61,4 @@ print("Global Scores:")
 print(results.global_scores.summary)
 
 print("Instance Scores:")
-print(results.instance_scores)
+print(results.instance_scores.summary)
