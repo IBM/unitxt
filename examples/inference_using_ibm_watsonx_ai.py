@@ -1,6 +1,5 @@
 from unitxt.api import load_dataset
 from unitxt.inference import WMLInferenceEngineGeneration
-from unitxt.text_utils import print_dict
 
 if __name__ == "__main__":
     # Set required env variables using your WML credentials:
@@ -32,6 +31,7 @@ if __name__ == "__main__":
 
     # Performing inference:
     predictions = wml_inference(test_data)
-    for inp, prediction in zip(test_data, predictions):
-        result = {**inp, "prediction": prediction}
-        print_dict(result, keys_to_print=["source", "prediction"])
+    for instance, prediction in zip(test_data, predictions):
+        print("*" * 10)
+        print("source:", instance["source"])
+        print("prediction:", prediction)
