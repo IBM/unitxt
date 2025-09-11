@@ -30,4 +30,5 @@ runs:
         else
           URL="git+ssh://git@${{ inputs.host }}/${{ inputs.repo }}.git"
         fi
-        pip install "$URL" ${{ inputs.pip-extra-args }}
+        echo "Installing from URL: $URL"
+        pip install --no-cache-dir --force-reinstall "$URL" ${{ inputs.pip-extra-args }}

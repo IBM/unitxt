@@ -1,0 +1,4 @@
+{
+    "__type__": "reflection_tool_calling_metric",
+    "__description__": "A metric that assesses tool call predictions for both syntactic correctness and semantic validity, using predefined checks combined with LLM-based evaluations. For each instance, it returns a score reflecting its overall validity, as well as a breakdown of the specific checks/metrics that passed or failed, including hallucination check, value format alignment, function selection and agentic constraints satisfaction. Each metric also contains an evidence from the input, an explanation describing the reflection decision, a confidence, and a validity score with a range of 1-5 (higher score -> more valid)."
+}
