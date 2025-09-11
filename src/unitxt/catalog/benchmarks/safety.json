@@ -1,0 +1,21 @@
+{
+    "__type__": "benchmark",
+    "subsets": {
+        "attaq": {
+            "__type__": "dataset_recipe",
+            "card": "cards.attaq"
+        },
+        "provoq": {
+            "__type__": "dataset_recipe",
+            "card": "cards.safety.provoq"
+        },
+        "airbench": {
+            "__type__": "dataset_recipe",
+            "card": "cards.safety.airbench2024"
+        },
+        "ailuminate": {
+            "__type__": "dataset_recipe",
+            "card": "cards.safety.mlcommons_ailuminate"
+        }
+    }
+}

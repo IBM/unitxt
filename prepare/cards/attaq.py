@@ -17,8 +17,9 @@ card = TaskCard(
         Shuffle(page_size=2800),
     ],
     task=Task(
-        input_fields=["input"],
-        reference_fields=["label"],
+        input_fields={"input": str},
+        reference_fields={"label": str},
+        prediction_type=str,
         metrics=["metrics.safety_metric"],
     ),
     templates=[
