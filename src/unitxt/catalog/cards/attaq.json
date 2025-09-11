@@ -18,12 +18,13 @@
     ],
     "task": {
         "__type__": "task",
-        "input_fields": [
-            "input"
-        ],
-        "reference_fields": [
-            "label"
-        ],
+        "input_fields": {
+            "input": "str"
+        },
+        "reference_fields": {
+            "label": "str"
+        },
+        "prediction_type": "str",
         "metrics": [
             "metrics.safety_metric"
         ]
