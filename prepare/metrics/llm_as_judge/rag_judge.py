@@ -105,6 +105,10 @@ inference_models_v2 = {
     "mistral_large_instruct_watsonx": "engines.classification.mistral_large_watsonx",
     "mistral_small_3_1_24b_instruct_2503_wml": "engines.classification.mistral_small_3_1_24b_instruct_2503_wml",
     "mistral_large_instruct_rits": "engines.classification.mistral_large_instruct_2407_rits",
+    "llama_4_maverick_watsonx": "engines.classification.llama_4_maverick_17b_128e_instruct_fp8_watsonx",
+    "llama_4_maverick_rits": "engines.classification.llama_4_maverick_17b_128e_instruct_fp8_rits",
+    "gpt_oss_120b_watsonx": "engines.classification.gpt_oss_120b_watsonx",
+    "gpt_oss_120b_rits": "engines.classification.gpt_oss_120b_rits",
     generic_engine_label: GenericInferenceEngine(),
 }
 

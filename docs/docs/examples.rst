@@ -83,6 +83,19 @@ This example demonstrates how to evaluate a multi choice question answering data
 
 Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`Multiple choice task in catalog <catalog.tasks.qa.multiple_choice.open>`, :ref:`Inference Engines <inference>`.
 
+Evaluate multi turn conversation
++++++++++++++++++++++++++++++++++++++++++
+
+This example demonstrates how to evaluate multi turn conversations.   Each instance is a complete conversation,
+and we evaluate the model response on the last user turn, comparing to gold answers using different metrics.
+
+It shows a case where LLM as judges are significantly more aligned with human evaluation that syntactic
+metrics like Rouge or Bleu.
+ 
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_multi_turn.py>`__
+
+Related documentation: :ref:`Using LLM as a Judge in Unitxt <llm_as_judge>`  :ref:`Types and Serializers Guide <types_and_serializers>`.
+
 Evaluate Tool Calling
 +++++++++++++++++++++++++++++++++++++++++
 

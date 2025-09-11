@@ -3268,6 +3268,7 @@ class CrossProviderInferenceEngine(
 
     provider_model_map: Dict[_supported_apis, Dict[str, str]] = {
         "watsonx-sdk": {  # checked from ibm_watsonx_ai.APIClient().foundation_models.ChatModels
+            "gpt-oss-120b": "openai/gpt-oss-120b",
             "granite-20b-code-instruct": "ibm/granite-20b-code-instruct",
             "granite-3-2b-instruct": "ibm/granite-3-2b-instruct",
             "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",
@@ -3290,6 +3291,7 @@ class CrossProviderInferenceEngine(
             "llama-3-2-3b-instruct": "meta-llama/llama-3-2-3b-instruct",
             "llama-3-2-90b-vision-instruct": "meta-llama/llama-3-2-90b-vision-instruct",
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
+            "llama-4-maverick": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
             "llama-guard-3-11b-vision": "meta-llama/llama-guard-3-11b-vision",
             "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7b-instruct-v01",
             "mistral-small-instruct": "mistralai/mistral-small-3-1-24b-instruct-2503",
