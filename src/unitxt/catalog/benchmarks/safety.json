@@ -3,19 +3,30 @@
     "subsets": {
         "attaq": {
             "__type__": "dataset_recipe",
-            "card": "cards.attaq"
+            "card": "cards.safety.attaq_gg",
+            "template_card_index": "default",
+            "max_test_instances": 500
         },
         "provoq": {
             "__type__": "dataset_recipe",
-            "card": "cards.safety.provoq"
+            "card": "cards.safety.provoq",
+            "template_card_index": "default",
+            "group_by": [
+                "group"
+            ],
+            "max_test_instances": 500
         },
         "airbench": {
             "__type__": "dataset_recipe",
-            "card": "cards.safety.airbench2024"
+            "card": "cards.safety.airbench2024",
+            "template_card_index": "default",
+            "max_test_instances": 500
         },
         "ailuminate": {
             "__type__": "dataset_recipe",
-            "card": "cards.safety.mlcommons_ailuminate"
+            "card": "cards.safety.mlcommons_ailuminate",
+            "template_card_index": "default",
+            "max_test_instances": 500
         }
     }
 }
