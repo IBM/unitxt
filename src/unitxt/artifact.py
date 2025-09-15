@@ -3,6 +3,7 @@ import inspect
 import json
 import os
 import re
+import subprocess
 import sys
 import sysconfig
 import warnings
@@ -24,6 +25,7 @@ from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
 )
 from .settings_utils import get_constants, get_settings
+from .text_utils import snake_to_camel_case
 from .type_utils import isoftype, issubtype
 from .utils import (
     artifacts_json_cache,
@@ -227,9 +229,29 @@ def get_module_class_names(artifact_type: dict):
     return artifact_type["module"], artifact_type["name"]
 
 
+def convert_str_type_to_dict(type: str) -> dict:
+    class_name = snake_to_camel_case(type)
+    module, class_name = find_unitxt_module_and_class_by_classname(
+        camel_case_class_name=class_name
+    )
+    return {
+        "module": module,
+        "name": class_name,
+    }
+
+
 # type is the dict read from a catelog entry, the value of a key "__type__"
 def get_class_from_artifact_type(type: dict):
-    module_path, class_name = get_module_class_names(type)
+    if isinstance(type, str):
+        if type in Artifact._class_register:
+            return Artifact._class_register[type]
+
+        module_path, class_name = find_unitxt_module_and_class_by_classname(
+            snake_to_camel_case(type)
+        )
+    else:
+        module_path, class_name = get_module_class_names(type)
+
     if module_path == "class_register":
         if class_name not in Artifact._class_register:
             raise ValueError(
@@ -487,12 +509,15 @@ class Artifact(Dataclass):
     @classmethod
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
         d = artifacts_json_cache(path)
-        if "__type__" in d and d["__type__"]["name"].endswith("ArtifactLink"):
-            from_dict(d)  # for verifications and warnings
-            catalog, artifact_rep, _ = get_catalog_name_and_args(name=d["to"])
-            return catalog.get_with_overwrite(
-                artifact_rep, overwrite_args=overwrite_args
-            )
+        if "__type__" in d:
+            if isinstance(d["__type__"], str):
+                d["__type__"] = convert_str_type_to_dict(d["__type__"])
+            if d["__type__"]["name"].endswith("ArtifactLink"):
+                from_dict(d)  # for verifications and warnings
+                catalog, artifact_rep, _ = get_catalog_name_and_args(name=d["to"])
+                return catalog.get_with_overwrite(
+                    artifact_rep, overwrite_args=overwrite_args
+                )
 
         new_artifact = from_dict(d, overwrite_args=overwrite_args)
         new_artifact.__id__ = artifact_identifier
@@ -898,3 +923,29 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
         return None
 
     return data_classification.get(artifact)
+
+
+def find_unitxt_module_and_class_by_classname(camel_case_class_name: str):
+    """Find a module, a member of src/unitxt, that contains the definition of the class."""
+    dir = os.path.dirname(__file__)  # dir  src/unitxt
+    try:
+        result = subprocess.run(
+            ["grep", "-irwE", "^class +" + camel_case_class_name, dir],
+            capture_output=True,
+        ).stdout.decode("ascii")
+        results = result.split("\n")
+        assert len(results) == 2, f"returned: {results}"
+        assert results[-1] == "", f"last result is {results[-1]} rather than ''"
+        to_return_module = (
+            results[0].split(":")[0][:-3].replace("/", ".")
+        )  # trim the .py and replace
+        to_return_class_name = results[0].split(":")[1][
+            6 : 6 + len(camel_case_class_name)
+        ]
+        return to_return_module[
+            to_return_module.rfind("unitxt.") :
+        ], to_return_class_name
+    except Exception as e:
+        raise ValueError(
+            f"Could not find the unitxt module, under unitxt/src/unitxt, in which class {camel_case_class_name} is defined"
+        ) from e
