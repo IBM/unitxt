@@ -18,11 +18,13 @@ benchmark = Benchmark(
         "airbench": DatasetRecipe(
             card="cards.safety.airbench2024",
             template_card_index="default",
+            group_by=["l2-name"],
             max_test_instances=500,
         ),
         "ailuminate": DatasetRecipe(
             card="cards.safety.mlcommons_ailuminate",
             template_card_index="default",
+            group_by=["hazard"],
             max_test_instances=500,
         ),
     }
