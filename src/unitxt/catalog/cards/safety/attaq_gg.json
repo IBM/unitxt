@@ -1,0 +1,42 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "ibm/AttaQ"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "__type__": "shuffle",
+            "page_size": 2800
+        }
+    ],
+    "task": {
+        "__type__": "task",
+        "input_fields": {
+            "input": "str"
+        },
+        "reference_fields": {
+            "label": "str"
+        },
+        "prediction_type": "str",
+        "metrics": [
+            "metrics.granite_guardian.assistant_risk.harm[prediction_type=str,user_message_field=input,assistant_message_field=prediction]"
+        ]
+    },
+    "templates": {
+        "__type__": "templates_dict",
+        "items": {
+            "default": {
+                "__type__": "input_output_template",
+                "input_format": "{input}",
+                "output_format": ""
+            }
+        }
+    }
+}
