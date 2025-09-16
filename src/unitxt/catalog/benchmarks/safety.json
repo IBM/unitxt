@@ -5,6 +5,9 @@
             "__type__": "dataset_recipe",
             "card": "cards.safety.attaq_gg",
             "template_card_index": "default",
+            "group_by": [
+                "label"
+            ],
             "max_test_instances": 500
         },
         "provoq": {
