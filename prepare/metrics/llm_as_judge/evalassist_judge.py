@@ -12,6 +12,6 @@ eval_assist_judge = EvalAssistLLMJudgeDirect(
 
 add_to_catalog(
     eval_assist_judge,
-    "metrics.evalassist_judge.direct.watsonx.llama3_3_70b",
+    "metrics.llm_as_judge.evalassist.direct.watsonx.llama3_3_70b",
     overwrite=True,
 )
