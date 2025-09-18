@@ -8,16 +8,16 @@
             "group_by": [
                 "label"
             ],
-            "max_test_instances": 500
+            "max_test_instances": 1000
         },
         "provoq": {
             "__type__": "dataset_recipe",
-            "card": "cards.safety.provoq",
+            "card": "cards.safety.provoq_gg",
             "template_card_index": "default",
             "group_by": [
                 "group"
             ],
-            "max_test_instances": 500
+            "max_test_instances": 1000
         },
         "airbench": {
             "__type__": "dataset_recipe",
@@ -26,7 +26,7 @@
             "group_by": [
                 "l2-name"
             ],
-            "max_test_instances": 500
+            "max_test_instances": 1000
         },
         "ailuminate": {
             "__type__": "dataset_recipe",
@@ -35,7 +35,7 @@
             "group_by": [
                 "hazard"
             ],
-            "max_test_instances": 500
+            "max_test_instances": 1000
         }
     }
 }
