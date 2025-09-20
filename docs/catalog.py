@@ -10,7 +10,7 @@ from docutils.core import publish_parts
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import PythonLexer
-from unitxt.artifact import Artifact
+from unitxt.artifact import get_class_from_artifact_type
 from unitxt.text_utils import print_dict_as_python
 from unitxt.utils import load_json
 
@@ -51,7 +51,7 @@ def imports_to_syntax_highlighted_html(subtypes: List[str]) -> str:
         return ""
     module_to_class_names = defaultdict(list)
     for subtype in subtypes:
-        subtype_class = Artifact._class_register.get(subtype)
+        subtype_class = get_class_from_artifact_type(subtype)
         module_to_class_names[subtype_class.__module__].append(subtype_class.__name__)
 
     imports_txt = ""
@@ -150,7 +150,7 @@ def get_all_type_elements(nested_dict):
 
 @lru_cache(maxsize=None)
 def artifact_type_to_link(artifact_type):
-    artifact_class = Artifact._class_register.get(artifact_type)
+    artifact_class = get_class_from_artifact_type(artifact_type)
     type_class_name = artifact_class.__name__
     artifact_class_id = f"{artifact_class.__module__}.{type_class_name}"
     return f'<a class="reference internal" href="../{artifact_class.__module__}.html#{artifact_class_id}" title="{artifact_class_id}"><code class="xref py py-class docutils literal notranslate"><span class="pre">{type_class_name}</span></code></a>'
@@ -159,7 +159,7 @@ def artifact_type_to_link(artifact_type):
 # flake8: noqa: C901
 def make_content(artifact, label, all_labels):
     artifact_type = artifact["__type__"]
-    artifact_class = Artifact._class_register.get(artifact_type)
+    artifact_class = get_class_from_artifact_type(artifact_type)
     type_class_name = artifact_class.__name__
     catalog_id = label.replace("catalog.", "")
 
@@ -243,7 +243,7 @@ def make_content(artifact, label, all_labels):
         result += artifact_class.__doc__ + "\n"
 
     for subtype in subtypes:
-        subtype_class = Artifact._class_register.get(subtype)
+        subtype_class = get_class_from_artifact_type(subtype)
         subtype_class_name = subtype_class.__name__
         if subtype_class.__doc__:
             explanation_str = f"Explanation about `{subtype_class_name}`"
