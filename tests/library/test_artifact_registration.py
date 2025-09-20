@@ -9,4 +9,4 @@ class TestArtifactRegistration(UnitxtTestCase):
             pass
 
         # assert Artifact.is_registered_type("dummy_should_be_registered")
-        # assert Artifact.is_registered_class(DummyShouldBeRegistered)
+        assert "dummy_should_be_registered" in Artifact._class_register

@@ -48,40 +48,30 @@ def import_module_from_file(file_path):
     return module
 
 
-# type is read from a catelog entry, the value of a key "__type__"
-def get_class_from_artifact_type(type: str):
-    if type in Artifact._class_register:
-        return Artifact._class_register[type]
+# snake_case_class_name is read from a catelog entry, the value of a key "__type__"
+# this method replaces the Artifact._class_register lookup, for all unitxt classes defined
+# top level in any of the src/unitxt/*.py modules, which are all the classes that were registered
+# by register_all_artifacts
+def get_class_from_artifact_type(snake_case_class_name: str):
+    if snake_case_class_name in Artifact._class_register:
+        return Artifact._class_register[snake_case_class_name]
 
     module_path, class_name = find_unitxt_module_and_class_by_classname(
-        snake_to_camel_case(type)
+        snake_to_camel_case(snake_case_class_name)
     )
-    if module_path == "class_register":
-        if class_name not in Artifact._class_register:
-            raise ValueError(
-                f"Can not instantiate a class from type {type}, because {class_name} is currently not registered in Artifact._class_register."
-            )
-        return Artifact._class_register[class_name]
 
     module = importlib.import_module(module_path)
 
-    if "." not in class_name:
-        if hasattr(module, class_name) and inspect.isclass(getattr(module, class_name)):
-            return getattr(module, class_name)
-        if class_name in Artifact._class_register:
-            return Artifact._class_register[class_name]
-        module_file = module.__file__ if hasattr(module, "__file__") else None
-        if module_file:
-            module = import_module_from_file(module_file)
+    if hasattr(module, class_name) and inspect.isclass(getattr(module, class_name)):
+        klass = getattr(module, class_name)
+        Artifact._class_register[
+            snake_case_class_name
+        ] = klass  # use _class_register as a cache
+        return klass
 
-        assert class_name in Artifact._class_register
-        return Artifact._class_register[class_name]
-
-    class_name_components = class_name.split(".")
-    klass = getattr(module, class_name_components[0])
-    for i in range(1, len(class_name_components)):
-        klass = getattr(klass, class_name_components[i])
-    return klass
+    raise ValueError(
+        f"Could not find the definition of class whose name, snake-cased is {snake_case_class_name}"
+    )
 
 
 def is_name_legal_for_catalog(name):
