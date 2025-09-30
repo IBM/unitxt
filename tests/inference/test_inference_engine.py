@@ -11,6 +11,7 @@ from unitxt.api import load_dataset
 from unitxt.error_utils import UnitxtError
 from unitxt.inference import (
     HFAutoModelInferenceEngine,
+    HFGraniteSpeechInferenceEngine,
     HFLlavaInferenceEngine,
     HFOptionSelectingInferenceEngine,
     HFPipelineBasedInferenceEngine,
@@ -55,6 +56,44 @@ def get_image_dataset(format=None):
             "context_type": "image",
             "question": "What is the color of the sky?",
             "answers": ["Blue"],
+        },
+    ]
+
+    return create_dataset(
+        task="tasks.qa.with_context",
+        format=format,
+        test_set=data,
+        split="test",
+        data_classification_policy=["public"],
+    )
+
+
+@lru_cache
+def get_audio_dataset(format=None):
+    import numpy as np
+
+    # Generate synthetic audio data (1 second of 16kHz audio)
+    sample_rate = 16000
+    duration = 1.0
+    num_samples = int(sample_rate * duration)
+
+    # Generate synthetic audio (simple sine wave)
+    frequency = 440  # A4 note
+    time_values = np.linspace(0, duration, num_samples)
+    audio_data = np.sin(2 * np.pi * frequency * time_values).astype(np.float32)
+
+    data = [
+        {
+            "context": {"audio": {"array": audio_data, "sampling_rate": sample_rate}},
+            "context_type": "audio",
+            "question": "What is the main topic of this audio?",
+            "answers": ["Music"],
+        },
+        {
+            "context": {"audio": {"array": audio_data, "sampling_rate": sample_rate}},
+            "context_type": "audio",
+            "question": "Describe the audio content",
+            "answers": ["Tone"],
         },
     ]
 
@@ -149,6 +188,36 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertListEqual(predictions, ["Austin", "Blue"])
 
+        prediction = model.infer_log_probs(dataset)
+
+        assert isoftype(prediction, List[List[Dict[str, Any]]])
+        self.assertListEqual(
+            list(prediction[0][0].keys()),
+            ["text", "logprob", "top_tokens"],
+        )
+
+    def test_granite_speech_inference_engine(self):
+        if os.environ.get("SKIP_HEAVY_LOCAL"):
+            return
+
+        model = HFGraniteSpeechInferenceEngine(
+            model_name="ibm-granite/granite-speech-3.3-2b",
+            revision="granite-speech-3.3.2-2b",
+            max_new_tokens=10,
+            temperature=0.0,
+        )
+
+        # Test with chat API format
+        dataset = get_audio_dataset(format="formats.chat_api")
+
+        predictions = model.infer(dataset)
+
+        # Check that we get predictions for both instances
+        self.assertEqual(len(predictions), 2)
+        self.assertIsInstance(predictions[0], str)
+        self.assertIsInstance(predictions[1], str)
+
+        # Test log probabilities inference
         prediction = model.infer_log_probs(dataset)
 
         assert isoftype(prediction, List[List[Dict[str, Any]]])

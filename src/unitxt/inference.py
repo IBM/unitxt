@@ -36,6 +36,7 @@ from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
 from .artifact import Artifact
+from .audio_operators import base64_to_audio
 from .base_metric import Metric
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
@@ -69,6 +70,7 @@ class StandardAPIParamsMixin(Artifact):
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
     max_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
     seed: Optional[int] = None
     stop: Union[Optional[str], List[str]] = None
     temperature: Optional[float] = None
@@ -610,6 +612,12 @@ class HFInferenceEngineBase(
 
         logprobs: List[List[Dict[str, Any]]] = []
 
+        tokenizer = (
+            self.processor.tokenizer
+            if hasattr(self.processor, "tokenizer")
+            else self.processor
+        )
+
         for sample_no, sample_scores in enumerate(transition_scores.detach().cpu()):
             sample_logprobs: List[Dict[str, Any]] = []
 
@@ -620,7 +628,7 @@ class HFInferenceEngineBase(
                         "logprob": float(score.cpu()),
                         "top_tokens": [
                             {
-                                "text": self.processor.decode(idx),
+                                "text": tokenizer.decode(idx),
                                 "logprob": float(
                                     predictions.scores[n][sample_no][idx].cpu()
                                 ),
@@ -1018,6 +1026,161 @@ class HFLlavaInferenceEngine(HFInferenceEngineBase):
                 self.get_return_object(
                     output=final_outputs[0],
                     generated_text=output_strings,
+                    output_tokens=len(output_tokens_strings[0]),
+                    inp=instance["source"],
+                    inp_tokens=None,
+                    return_meta_data=return_meta_data,
+                )
+            )
+
+        return results
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return self._infer_fn(dataset, return_meta_data, False)
+
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        return self._infer_fn(dataset, return_meta_data, True)
+
+
+class HFGraniteSpeechInferenceEngine(HFInferenceEngineBase):
+    revision: str = None
+    lazy_load: bool = True
+    label: str = "hf_granite_speech"
+    audio_token: str = "<|audio|>"
+    sampling_rate: int = 16000
+
+    _requirements_list = ["torchaudio"]
+
+    def compute_transition_scores(
+        self, sequences: Sequence, scores: Sequence, beam_indices: Optional[int]
+    ) -> Sequence:
+        if not hasattr(self.model.config, "vocab_size"):
+            try:
+                self.model.config.vocab_size = self.model.vocab_size
+            except:
+                self.model.config.vocab_size = self.model.config.text_config.vocab_size
+
+        return super().compute_transition_scores(sequences, scores, beam_indices)
+
+    def _init_processor(self):
+        from transformers import AutoProcessor
+
+        self.processor = AutoProcessor.from_pretrained(self.model_name)
+
+        if not self.pad_token_id and hasattr(self.processor, "eos_token_id"):
+            self.pad_token_id = self.processor.eos_token_id
+
+    def _init_model(self):
+        from transformers import AutoModelForSpeechSeq2Seq
+
+        self.model = AutoModelForSpeechSeq2Seq.from_pretrained(
+            self.model_name,
+            revision=self.revision,
+            torch_dtype=self._get_torch_dtype(),
+            low_cpu_mem_usage=self.low_cpu_mem_usage,
+            device_map=self.device_map,
+        )
+        if self.device_map is None:
+            self.model.to(self.device)
+
+    def _get_input(self, instance):
+        if isinstance(instance["source"], list):
+            # Chat API format - extract audio from content
+            audios = []
+            chat = []
+            for turn in instance["source"]:
+                if isinstance(turn["content"], list):
+                    turn_content = ""
+                    for content in turn["content"]:
+                        if content["type"] == "input_audio":
+                            audios.append(
+                                base64_to_audio(
+                                    content["input_audio"]["data"],
+                                    sampling_rate=self.sampling_rate,
+                                )
+                            )
+                            turn_content += self.audio_token
+                        elif content["type"] == "text":
+                            turn_content += content["text"]
+                        else:
+                            raise ValueError(
+                                f"Unsupported content type:{content['type']}"
+                            )
+                    turn = {"role": turn["role"], "content": turn_content}
+
+                chat.append(turn)
+
+            if len(audios) > 1:
+                raise ValueError(f"Unsupported number of audio contents:{len(audios)}")
+
+            audio = audios[0]
+
+            return chat, audio
+        raise ValueError("Supports only chat api.")
+
+    def prepare_inputs(self, instance) -> Mapping:
+        chat, audio = self._get_input(instance)
+
+        text = self.processor.tokenizer.apply_chat_template(
+            chat, tokenize=False, add_generation_prompt=True
+        )
+
+        inputs: Mapping = self.processor(
+            text=[text], audio=audio["array"], return_tensors="pt"
+        ).to(self.device or self.device_map, self._get_torch_dtype())
+
+        return inputs
+
+    def _infer_fn(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool,
+        return_logprobs: bool,
+    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
+        results = []
+
+        for instance in tqdm(dataset):
+            processed_inputs = self.prepare_inputs(instance)
+            input_len = len(processed_inputs["input_ids"][0])
+
+            predictions = self.make_predictions(processed_inputs)
+
+            sequences = predictions.sequences
+
+            output_tokens = sequences[:, input_len:]
+
+            output_tokens_strings = []
+            for tokens in output_tokens:
+                output_tokens_strings.append(
+                    [
+                        self.processor.tokenizer.decode(token, skip_special_tokens=True)
+                        for token in tokens
+                    ]
+                )
+
+            output_strings = []
+            for tokens in output_tokens:
+                output_strings.append(
+                    self.processor.tokenizer.decode(tokens, skip_special_tokens=True)
+                )
+
+            if return_logprobs:
+                final_outputs = self.get_logprobs(predictions, output_tokens_strings)
+            else:
+                final_outputs = output_strings
+
+            results.append(
+                self.get_return_object(
+                    output=final_outputs[0],
+                    generated_text=output_strings[0],
                     output_tokens=len(output_tokens_strings[0]),
                     inp=instance["source"],
                     inp_tokens=None,
@@ -1571,6 +1734,7 @@ class OpenAiInferenceEngineParamsMixin(Artifact):
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
     max_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
     seed: Optional[int] = None
     stop: Union[Optional[str], List[str]] = None
     temperature: Optional[float] = None
@@ -1588,6 +1752,7 @@ class OpenAiInferenceEngineParams(Artifact):
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
     max_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
     seed: Optional[int] = None
     stop: Union[Optional[str], List[str]] = None
     temperature: Optional[float] = None
@@ -1911,6 +2076,7 @@ class RITSInferenceEngine(
 
 class TogetherAiInferenceEngineParamsMixin(Artifact):
     max_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
     stop: Optional[List[str]] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
@@ -2071,6 +2237,7 @@ class WMLChatParamsMixin(Artifact):
     response_format: Optional[Dict[str, Any]] = None
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
     time_limit: Optional[int] = None
     top_p: Optional[float] = None
     n: Optional[int] = None
@@ -3028,6 +3195,7 @@ class VLLMParamsMixin(Artifact):
     bad_words: Optional[List[str]] = None
     ignore_eos: bool = False
     max_tokens: Optional[int] = 16
+    max_new_tokens: Optional[int] = None
     min_tokens: int = 0
     logprobs: Optional[int] = None
     prompt_logprobs: Optional[int] = None
@@ -3283,6 +3451,7 @@ class CrossProviderInferenceEngine(
             "granite-guardian-3-1-8b": "ibm/granite-guardian-3-8b",
             "granite-guardian-3-2-5b": "ibm/granite-guardian-3-2-5b",
             "granite-vision-3-2-2b": "ibm/granite-vision-3-2-2b",
+            "granite-speech-3-3-8b": "ibm-granite/granite-speech-3.3-8b",
             "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
             "llama-3-1-405b-instruct": "meta-llama/llama-3-405b-instruct",
@@ -3344,6 +3513,7 @@ class CrossProviderInferenceEngine(
             "granite-guardian-3-2-3b": "ibm-granite/granite-guardian-3.2-3b-a800m",
             "granite-guardian-3-2-5b": "ibm-granite/granite-guardian-3.2-5b",
             "granite-guardian-3-3-8b": "ibm-granite/granite-guardian-3.3-8b",
+            "granite-speech-3-3-8b": "ibm-granite/granite-speech-3.3-8b",
             "llama-3-1-8b-instruct": "meta-llama/Llama-3.1-8B-Instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
             "llama-3-1-405b-instruct": "meta-llama/llama-3-1-405b-instruct-fp8",

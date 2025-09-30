@@ -1,0 +1,40 @@
+{
+    "__type__": "benchmark",
+    "subsets": {
+        "voxpopuli": {
+            "__type__": "dataset_recipe",
+            "card": "cards.esb.voxpopuli",
+            "format": "formats.chat_api"
+        },
+        "ami": {
+            "__type__": "dataset_recipe",
+            "card": "cards.esb.ami",
+            "format": "formats.chat_api"
+        },
+        "librispeech": {
+            "__type__": "dataset_recipe",
+            "card": "cards.esb.librispeech",
+            "format": "formats.chat_api"
+        },
+        "spgispeech": {
+            "__type__": "dataset_recipe",
+            "card": "cards.esb.spgispeech",
+            "format": "formats.chat_api"
+        },
+        "tedlium": {
+            "__type__": "dataset_recipe",
+            "card": "cards.esb.tedlium",
+            "format": "formats.chat_api"
+        },
+        "earnings22": {
+            "__type__": "dataset_recipe",
+            "card": "cards.esb.earnings22",
+            "format": "formats.chat_api"
+        },
+        "commonvoice": {
+            "__type__": "dataset_recipe",
+            "card": "cards.esb.commonvoice",
+            "format": "formats.chat_api"
+        }
+    }
+}

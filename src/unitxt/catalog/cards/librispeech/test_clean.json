@@ -1,0 +1,43 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "openslr/librispeech_asr",
+        "data_dir": "clean",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "test"
+        ],
+        "data_classification_policy": [
+            "public"
+        ],
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "to_audio",
+            "field": "audio"
+        }
+    ],
+    "task": "tasks.speech_recognition",
+    "templates": [
+        "templates.speech_recognition.default"
+    ],
+    "__tags__": {
+        "license": "cc-by-4.0",
+        "language": "en",
+        "task_categories": [
+            "automatic-speech-recognition"
+        ],
+        "size_categories": [
+            "1K<n<10K"
+        ],
+        "modalities": [
+            "audio",
+            "text"
+        ],
+        "source": "LibriVox audiobooks"
+    },
+    "__description__": "LibriSpeech is a corpus of approximately 1000 hours of 16kHz read English speech derived from LibriVox audiobooks. This test.clean subset contains high-quality recordings from speakers with low Word Error Rate for clean speech recognition evaluation.",
+    "__title__": "LibriSpeech-test.clean"
+}

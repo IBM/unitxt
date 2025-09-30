@@ -4,13 +4,15 @@ import textwrap
 from collections import defaultdict
 from functools import lru_cache
 from statistics import mean
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 import pandas as pd
+from datasets import Dataset as HfDataset
 from datasets import Features, Value
+from datasets import IterableDataset as HfIterableDataset
 
-from .dataclass import Dataclass
-from .error_utils import Documentation, UnitxtError, error_context
+from .dataclass import Dataclass, Field
+from .error_utils import Documentation, UnitxtError
 from .operator import (
     InstanceOperator,
     MultiStreamOperator,
@@ -22,8 +24,8 @@ from .operators import (
     ApplyMetric,
     ApplyOperatorsField,
     ArtifactFetcherMixin,
-    FlattenInstances,
     RecursiveCopy,
+    RemoveFields,
     Rename,
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
@@ -145,6 +147,19 @@ def group_str(json_str):
     return ",".join(f"{k}:{v}" for k, v in data.items())
 
 
+@lru_cache(maxsize=None)
+def subset_stream_name(stream_name, subset, subset_depth):
+    return (
+        stream_name + DEFAULT_STREAM_SUBSET_SEPARATOR + "/".join(subset[:subset_depth])
+    )
+
+
+@lru_cache(maxsize=None)
+def subset_group_stream_name(stream_name, subset, subset_depth, group):
+    subset_name = subset_stream_name(stream_name, subset, subset_depth)
+    return subset_name + "?" + group_str(group)
+
+
 class SplitSubsetsAndGroups(MultiStreamOperator):
     """Splits a MultiStream that is small - for metrics, hence: whole stream can sit in memory, split by the value of field 'group'.
 
@@ -157,35 +172,69 @@ class SplitSubsetsAndGroups(MultiStreamOperator):
     subsets_depth  specifies the depth of the prefix by which to split the stream.
     """
 
-    subsets_field: str = "subset"
-    groups_field: str = "groups"
+    subset_groups: Dict[str, Set[str]]
     subset_depth: Optional[int] = None
 
+    def get_new_streams(self, stream_name):
+        new_streams = []
+        for subset, groups in self.subset_groups.items():
+            new_streams.append(
+                subset_stream_name(
+                    stream_name=stream_name,
+                    subset=subset,
+                    subset_depth=self.subset_depth,
+                )
+            )
+            for group in groups:
+                new_streams.append(
+                    subset_group_stream_name(
+                        stream_name=stream_name,
+                        subset=subset,
+                        subset_depth=self.subset_depth,
+                        group=group,
+                    )
+                )
+        return new_streams
+
+    def is_instance_included(self, instance, stream_name, new_stream_name) -> bool:
+        subset = tuple(instance.get("subset"))
+
+        if new_stream_name == subset_stream_name(
+            stream_name=stream_name, subset=subset, subset_depth=self.subset_depth
+        ):
+            return True
+
+        for group in instance.get("groups"):
+            if new_stream_name == subset_group_stream_name(
+                stream_name=stream_name,
+                subset=subset,
+                subset_depth=self.subset_depth,
+                group=group,
+            ):
+                return True
+
+        return False
+
+    def filter_stream(self, stream, stream_name, new_stream_name):
+        for i, instance in enumerate(stream):
+            instance["__idx__"] = i
+            if self.is_instance_included(instance, stream_name, new_stream_name):
+                yield instance
+
     def process(self, multi_stream: MultiStream) -> MultiStream:
-        result = defaultdict(list)
+        streams = {}
 
         for stream_name, stream in multi_stream.items():
-            for i, instance in enumerate(stream):
-                instance["__idx__"] = i
-
-                for field in [self.subsets_field, self.groups_field]:
-                    if field not in instance:
-                        raise ValueError(
-                            f"Field {field} is missing from instance {instance}"
-                        )
-
-                subset_stream_name = (
-                    stream_name
-                    + DEFAULT_STREAM_SUBSET_SEPARATOR
-                    + "/".join(instance[self.subsets_field][: self.subset_depth])
+            for new_stream_name in self.get_new_streams(stream_name):
+                streams[new_stream_name] = DynamicStream(
+                    generator=self.filter_stream,
+                    gen_kwargs={
+                        "stream": stream,
+                        "stream_name": stream_name,
+                        "new_stream_name": new_stream_name,
+                    },
                 )
-
-                result[subset_stream_name].append(instance)
-
-                for group in instance[self.groups_field]:
-                    result[subset_stream_name + "?" + group_str(group)].append(instance)
-
-        return MultiStream.from_iterables(result, copying=True)
+        return MultiStream(streams)
 
 
 @lru_cache(maxsize=None)
@@ -235,7 +284,15 @@ class JoinSubsetsAndGroups(MultiStreamOperator):
 
                 idx = instance.pop("__idx__")
                 if idx not in instances[origin]:
-                    instances[origin][idx] = instance
+                    instances[origin][idx] = {"score": instance["score"]}
+                    if "processed_prediction" in instance:
+                        instances[origin][idx]["processed_prediction"] = instance[
+                            "processed_prediction"
+                        ]
+                    if "processed_references" in instance:
+                        instances[origin][idx]["processed_references"] = instance[
+                            "processed_references"
+                        ]
 
                 # from here below setting the global scores from that stream
                 # can be done with first instance only
@@ -340,36 +397,59 @@ def _inference_post_process(
     return [instance["processed_prediction"] for instance in multi_stream[split_name]]
 
 
-class MetricRecipe(SequentialOperatorInitializer):
-    calc_confidence_intervals: bool = True
-    subset_depth: int = 2
-
+class PreProcessForEvaluation(SequentialOperatorInitializer):
     def prepare(self):
         register_all_artifacts()
         self.steps = [
             FromPredictionsAndOriginalData(),
             LoadJson(field="task_data"),
+            RecursiveCopy(
+                field="source",
+                to_field="task_data/source",
+            ),
+        ]
+
+
+class PostProcessAfterEvaluation(SequentialOperator):
+    steps = [
+        Rename(
+            field="raw_prediction",
+            to_field="prediction",
+            not_exist_ok=True,
+            not_exist_do_nothing=True,
+        ),
+        Rename(
+            field="raw_references",
+            to_field="references",
+            not_exist_ok=True,
+            not_exist_do_nothing=True,
+        ),
+        RecursiveCopy(
+            field="source",
+            to_field="task_data/source",
+        ),
+        RemoveFields(fields=["__idx__"], not_exist_ok=True),
+    ]
+
+
+class MainEvaluationPipeline(SequentialOperator):
+    calc_confidence_intervals: bool = True
+    subset_depth: int = 2
+    subset_groups: Dict[str, Set[str]] = Field(default_factory=dict)
+
+    def prepare(self):
+        register_all_artifacts()
+        self.steps = [
             _post_process_steps,
             SplitSubsetsAndGroups(
                 subset_depth=self.subset_depth,
+                subset_groups=self.subset_groups,
             ),
             ApplyMetric(
                 "metrics",
                 calc_confidence_intervals=self.calc_confidence_intervals,
             ),
             JoinSubsetsAndGroups(),
-            Rename(
-                field="raw_prediction",
-                to_field="prediction",
-            ),
-            Rename(
-                field="raw_references",
-                to_field="references",
-            ),
-            RecursiveCopy(
-                field="source",
-                to_field="task_data/source",
-            ),
         ]
 
 
@@ -436,7 +516,7 @@ class GlobalScores(dict):
 
     @property
     def summary(self):
-        df = self.to_df().round(2).fillna("")
+        df = self.to_df().round(4).fillna("")
         df = df.sort_index()
         df = df.drop("num_of_instances", axis=0)
         df = df.reset_index()
@@ -746,16 +826,139 @@ class InstanceScores(list):
 
 
 class EvaluationResults(list):
-    def __init__(self, *args, metadata=None, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, stream, metadata=None):
+        """Initialize EvaluationResults with lazy evaluation.
+
+        Args:
+            stream: An iterator or generator
+            metadata: Optional metadata dictionary
+        """
+        super().__init__()
+        self._generator = iter(stream)
+        self._realized = False
         self.metadata = metadata if metadata is not None else {}
+
+    def _realize_up_to(self, index):
+        """Realize elements from generator up to the given index."""
+        if self._realized:
+            return
+
+        current_len = super().__len__()
+
+        # For negative indices, we need to realize everything
+        if index < 0:
+            self._realize_all()
+            return
+
+        # Calculate how many more elements we need
+        needed = index + 1 - current_len
+
+        # Realize the needed elements
+        try:
+            for _ in range(needed):
+                item = next(self._generator)
+                super().append(item)
+        except StopIteration:
+            self._realized = True
+            self._generator = None
+
+    def _realize_all(self):
+        """Realize all remaining elements from the generator."""
+        if self._realized:
+            return
+
+        try:
+            while True:
+                item = next(self._generator)
+                super().append(item)
+        except StopIteration:
+            self._realized = True
+            self._generator = None
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            # For slices, we need to realize up to the maximum index
+            start, stop, step = index.indices(len(self))
+            if stop > 0:
+                self._realize_up_to(stop - 1)
+            else:
+                self._realize_all()
+        else:
+            self._realize_up_to(index)
+        return super().__getitem__(index)
+
+    def __len__(self):
+        # If not fully realized, we need to realize everything to know the length
+        if not self._realized:
+            self._realize_all()
+        return super().__len__()
+
+    def __iter__(self):
+        # Yield already realized elements
+        for i in range(super().__len__()):
+            yield super().__getitem__(i)
+
+        # Continue with unrealized elements
+        if self._generator is not None:
+            try:
+                while True:
+                    item = next(self._generator)
+                    super().append(item)
+                    yield item
+            except StopIteration:
+                self._realized = True
+                self._generator = None
+
+    def append(self, item):
+        self._realize_all()
+        super().append(item)
+
+    def extend(self, iterable):
+        self._realize_all()
+        super().extend(iterable)
+
+    def insert(self, index, item):
+        self._realize_up_to(index)
+        super().insert(index, item)
+
+    def remove(self, value):
+        self._realize_all()
+        super().remove(value)
+
+    def pop(self, index=-1):
+        self._realize_up_to(index)
+        return super().pop(index)
+
+    def index(self, value, start=0, stop=None):
+        if stop is None:
+            self._realize_all()
+        else:
+            self._realize_up_to(stop)
+        return super().index(value, start, stop)
+
+    def count(self, value):
+        self._realize_all()
+        return super().count(value)
+
+    def sort(self, key=None, reverse=False):
+        self._realize_all()
+        super().sort(key=key, reverse=reverse)
+
+    def reverse(self):
+        self._realize_all()
+        super().reverse()
+
+    def clear(self):
+        super().clear()
+        self._generator = None
+        self._realized = True
 
     @property
     def global_scores(self):
         return GlobalScores(self[0]["score"]["global"])
 
     @property
-    def instance_scores(self) -> InstanceScores:
+    def instance_scores(self):
         return InstanceScores(self)
 
     @property
@@ -777,6 +980,35 @@ class EvaluationResults(list):
         return SubsetsScores(self[0]["score"]["subsets"])
 
 
+def extract_subset_groups(dataset):
+    # Column-wise access types
+    subset_groups = {}
+    if not isinstance(dataset, (HfDataset, HfIterableDataset, pd.DataFrame)):
+        dataset = {
+            "subset": (item.get("subset", []) for item in dataset),
+            "groups": (item.get("groups", []) for item in dataset),
+        }
+
+    for subset, groups in zip(dataset["subset"], dataset["groups"]):
+        if len(subset) == 0:
+            subset = ""
+        else:
+            subset = tuple(subset)
+
+        if subset not in subset_groups:
+            subset_groups[subset] = set()
+        for group in groups:
+            subset_groups[subset].add(group)
+
+    return subset_groups
+
+
+def merge_evaluation_results(results, dataset):
+    for result, instance in zip(results, dataset):
+        instance.update(result)
+        yield instance
+
+
 def _compute(
     predictions: List[Any],
     references: Iterable,
@@ -786,19 +1018,34 @@ def _compute(
 ):
     _reset_env_local_catalogs()
     register_all_artifacts()
-    recipe = MetricRecipe(calc_confidence_intervals=calc_confidence_intervals)
 
-    with error_context(stage="Metric Processing"):
-        multi_stream = recipe(
-            predictions=predictions, references=references, split_name=split_name
+    if not isinstance(references, (HfDataset, HfIterableDataset, pd.DataFrame, list)):
+        raise ValueError(f"Unsupported data type: {type(references)}")
+
+    subset_groups = extract_subset_groups(references)
+
+    preprocess = PreProcessForEvaluation()
+
+    preprocess_multi_stream = preprocess(
+        predictions=predictions, references=references, split_name=split_name
+    )
+
+    evaluate = MainEvaluationPipeline(
+        calc_confidence_intervals=calc_confidence_intervals, subset_groups=subset_groups
+    )
+
+    results_multi_stream = evaluate(preprocess_multi_stream)
+
+    post_process = PostProcessAfterEvaluation()
+
+    data_multi_stream = post_process(preprocess_multi_stream)
+
+    return EvaluationResults(
+        merge_evaluation_results(
+            results_multi_stream[split_name],
+            data_multi_stream[split_name],
         )
-
-        if flatten:
-            operator = FlattenInstances()
-            multi_stream = operator(multi_stream)
-
-        stream = multi_stream[split_name]
-    return EvaluationResults(stream)
+    )
 
 
 """

@@ -108,7 +108,18 @@ tests = [
     "sqlparse",
     "diskcache",
     "pydantic",
-    "jsonschema_rs"
+    "jsonschema_rs",
+    "torchcodec",
+    "soundfile",
+    "librosa",
+    "torchaudio",
+    "protobuf"
+]
+audio = [
+    "torchcodec",
+    "soundfile",
+    "librosa",
+    "torchaudio"
 ]
 ui = [
     "gradio",
@@ -128,7 +139,8 @@ inference-tests = [
   "tenacity",
   "diskcache",
   "numpy==1.26.4",
-  "ollama"
+  "ollama",
+  "torchaudio"
 ]
 assistant = [
     "streamlit",

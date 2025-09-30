@@ -3,6 +3,8 @@ from unitxt.metrics import NormalizedSacrebleu
 from unitxt.test_utils.metrics import test_metric
 
 language_to_tokenizer = {
+    "italian": None,
+    "it": None,
     "german": None,
     "deutch": None,
     "de": None,
@@ -22,6 +24,8 @@ language_to_tokenizer = {
     "ko": "ko-mecab",
     "japanese": "ja-mecab",
     "ja": "ja-mecab",
+    "chinese": "zh",
+    "zh": "zh",
 }
 
 metric = NormalizedSacrebleu(language_to_tokenizer=language_to_tokenizer)
