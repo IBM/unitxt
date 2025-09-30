@@ -51,7 +51,6 @@ from .error_utils import Documentation, UnitxtError, UnitxtWarning, error_contex
 from .inference import (
     HFPipelineBasedInferenceEngine,
     InferenceEngine,
-    LogProbInferenceEngine,
     TorchDeviceMixin,
     WMLInferenceEngineGeneration,
 )
@@ -6820,7 +6819,7 @@ class IsCodeMixed(BulkInstanceMetric):
             IsCodeMixed.inference_model = HFPipelineBasedInferenceEngine(
                 model_name="Nexusflow/Starling-LM-7B-beta",
                 max_new_tokens=1,
-                lazy_load=True,
+                lazy_prepare=True,
             )
         # the processing steps for preparing the prompt (instruction, answer prefix etc.)
         # that we send to the generative model
@@ -7139,7 +7138,7 @@ class GraniteGuardianBase(InstanceMetric):
     safe_token = "No"
     unsafe_token = "Yes"
 
-    inference_engine: LogProbInferenceEngine = None
+    inference_engine: InferenceEngine = None
     generation_params: Dict = None
     risk_name: str = None
     risk_type: RiskType = None

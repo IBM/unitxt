@@ -39,8 +39,7 @@ watsonx, bam, openai, azure, aws and more.
 For the arguments these inference engines can receive, please refer to the classes documentation or read
 about the the open ai api arguments the CrossProviderInferenceEngine follows.
 """
-predictions = inference_model.infer(dataset)
-
+predictions = inference_model(dataset)
 gold_answers = [d[0] for d in dataset["references"]]
 
 # Evaluate the predictions using the defined metric.
