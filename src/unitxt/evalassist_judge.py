@@ -35,9 +35,6 @@ class EvalAssistLLMJudge(BulkInstanceMetric, PackageRequirementsMixin):
     context_fields: Union[str, List[str], Dict[str, str], None] = None
     """Fields to be used as context. If a dict is provided, the keys are used as the final names in the prompts, while the values are used to access the context variable values in the `task_data` object (it is recommended to provide the context_fields in the Criteria `context_fields` field as this field will be deprecated in the future)."""
 
-    check_positional_bias: bool = False
-    """Flag to check for positional bias. Detecting for positional bias duplicates the amount of inference calls."""
-
     criteria_field: Union[str, None] = None
     """The field specifying the evaluation criteria in the `task_data` object. If the `criteria` is provided, it will take precedence."""
 
@@ -48,6 +45,10 @@ class EvalAssistLLMJudge(BulkInstanceMetric, PackageRequirementsMixin):
         """Prepares the `LLMJudge` instance by setting up context fields and evaluator name."""
         if self.context_fields is not None:
             self.context_fields = self.get_context_fields_as_dict(self.context_fields)
+        if self.criteria is None and self.criteria_field is None:
+            raise UnitxtError(
+                f"You must set either the 'criteria' field of the {__class__.__name__} metric to define one criteria to evaluate on all instance, or set a 'criteria_field' of the metric to evaluate on each instance based on the criteria specified in that field of each instance."
+            )
         super().prepare()
 
     def before_process_multi_stream(self):
@@ -60,10 +61,7 @@ class EvalAssistLLMJudge(BulkInstanceMetric, PackageRequirementsMixin):
         # We check the criteria here and not in verify(), because we want catalog
         # may contain a partially initialized object, and verify() method
         # is called when creating the object and not when using it.
-        if self.criteria is None and self.criteria_field is None:
-            raise UnitxtError(
-                f"You must set either the 'criteria' field of the {__class__.__name__} metric to define one criteria to evaluate on all instance, or set a 'criteria_field' of the metric to evaluate on each instance based on the criteria specified in that field of each instance."
-            )
+
         return
 
     def get_context_fields_as_dict(
@@ -144,7 +142,7 @@ class EvalAssistLLMJudge(BulkInstanceMetric, PackageRequirementsMixin):
         if self.criteria is None:
             if any(self.criteria_field not in td for td in task_data):
                 raise UnitxtError(
-                    f"The criteria field `{self.criteria_field}` required for {__class__.__name__} is not found in instance. Perhaps you meant '{get_close_matches(cast(str, self.criteria_field), task_data[0].keys(), n=1, cutoff=0.0)[0]}'?"
+                    f"The criteria field {self.criteria_field}` required for {__class__.__name__} is not found in instance. Perhaps you meant '{get_close_matches(cast(str, self.criteria_field), task_data[0].keys(), n=1, cutoff=0.0)[0]}'?"
                 )
             logger.info(
                 f"Reading criteria from the task_data field '{self.criteria_field}'"
@@ -266,9 +264,7 @@ class EvalAssistLLMJudgeDirect(EvalAssistLLMJudge):
         ]
 
         results: list[DirectInstanceResult] = judge(
-            instances=instances,
-            criteria=eval_assist_criteria,
-            check_positional_bias=self.check_positional_bias,
+            instances=instances, criteria=eval_assist_criteria
         )
 
         parsed_results: list[dict] = [
