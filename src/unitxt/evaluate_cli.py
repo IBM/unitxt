@@ -7,7 +7,7 @@ import os
 import platform
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import partial
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -691,9 +691,8 @@ def _save_results_to_disk(
         "results": global_scores,
     }
 
-    # prepend to the results_path name the time in a wat like this: 2025-04-04T11:37:32
-
-    timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    # prepend the timestamp in UTC (e.g., 2025-01-18T11-37-32) to the file names
+    timestamp = datetime.now().astimezone(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
 
     results_path = prepend_timestamp_to_path(results_path, timestamp)
     samples_path = prepend_timestamp_to_path(samples_path, timestamp)
@@ -836,47 +835,112 @@ def main():
     logger.info("Unitxt Evaluation CLI finished successfully.")
 
 
-def extract_scores(directory):  # pragma: no cover
+def extract_scores(folder: str, subset: str, group: str):  # pragma: no cover
     import pandas as pd
+
+    def safe_score(d: dict, key="score"):
+        na = "N/A"
+        return d.get(key, na) if isinstance(d, dict) else na
+
+    def extract_subset(results: dict, subset: str, group: str):
+        subset_results = results.get(subset, {})
+        row = {subset: safe_score(subset_results)}
+
+        groups = subset_results.get("groups", {})
+
+        if not groups:
+            return row
+
+        group_results = groups.get(group) if group else next(iter(groups.values()), {})
+
+        if not isinstance(group_results, dict):
+            return row
+
+        row.update(
+            {k: safe_score(v) for k, v in group_results.items() if isinstance(v, dict)}
+        )
+        return row
+
+    def extract_all(results: dict):
+        row = {"Average": safe_score(results)}
+        row.update(
+            {k: safe_score(v) for k, v in results.items() if isinstance(v, dict)}
+        )
+        return row
 
     data = []
 
-    for filename in sorted(os.listdir(directory)):
-        if filename.endswith("evaluation_results.json"):
-            file_path = os.path.join(directory, filename)
-            try:
-                with open(file_path, encoding="utf-8") as f:
-                    content = json.load(f)
+    for filename in sorted(os.listdir(folder)):
+        if not filename.endswith("evaluation_results.json"):
+            continue
 
-                    env_info = content.get("environment_info", {})
-                    timestamp = env_info.get("timestamp_utc", "N/A")
-                    model = env_info.get("parsed_arguments", {}).get("model", "N/A")
-                    results = content.get("results", {})
+        file_path = os.path.join(folder, filename)
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                content = json.load(f)
 
-                    row = {}
-                    row["Model"] = model
-                    row["Timestamp"] = timestamp
-                    row["Average"] = results.get("score", "N/A")
+                env_info = content.get("environment_info", {})
+                row = {
+                    "Timestamp": safe_score(env_info, "timestamp_utc"),
+                    "Model": safe_score(env_info.get("parsed_arguments", {}), "model"),
+                }
 
-                    for key in results.keys():
-                        if isinstance(results[key], dict):
-                            score = results[key].get("score", "N/A")
-                            row[key] = score
+                results = content.get("results", {})
 
-                    data.append(row)
-            except Exception as e:
-                logger.error(f"Error parsing results file {filename}: {e}.")
+                extra = (
+                    extract_subset(results, subset, group)
+                    if subset
+                    else extract_all(results)
+                )
+                row.update(extra)
+                data.append(row)
+        except Exception as e:
+            logger.error(f"Error parsing results file {filename}: {e}.")
 
     return pd.DataFrame(data).sort_values(by="Timestamp", ascending=True)
 
 
-def summarize_cli():
-    if len(sys.argv) != 2:
-        logger.error("Usage: python summarize_cli_results.py <results-directory>")
-        sys.exit(1)
-    directory = sys.argv[1]
-    df = extract_scores(directory)
+def setup_summarization_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="CLI utility for summarizing evaluation results.",
+    )
 
+    parser.add_argument(
+        "--folder",
+        "-f",
+        dest="folder",
+        type=str,
+        default=".",
+        help="Directory containing evaluation results json files. Default: current folder.\n",
+    )
+
+    parser.add_argument(
+        "--subset",
+        "-s",
+        type=str,
+        dest="subset",
+        default=None,
+        help="Subset to filter results by. Default: none.",
+    )
+
+    parser.add_argument(
+        "--group",
+        "-g",
+        type=str,
+        dest="group",
+        default=None,
+        help="Group to filter results to. Requires specifying a subset. Default: first group.",
+    )
+
+    return parser
+
+
+def summarize_cli():
+    parser = setup_summarization_parser()
+    args = parser.parse_args()
+
+    df = extract_scores(args.folder, args.subset, args.group)
     logger.info(df.to_markdown(index=False))
 
 
