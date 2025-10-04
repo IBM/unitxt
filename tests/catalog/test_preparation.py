@@ -34,6 +34,9 @@ logger.critical(
 # the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,.. num_par-1
 modulo = 0
 all_preparation_files = [
+    file for i, file in enumerate(all_preparation_files) if i % num_par == 3
+]
+all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
 ]
 
