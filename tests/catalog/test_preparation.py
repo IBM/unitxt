@@ -37,6 +37,11 @@ all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == 3
 ]
 all_preparation_files = [
+    file
+    for i, file in enumerate(all_preparation_files)
+    if i % num_par == 3 or i % num_par == 0
+]
+all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
 ]
 
