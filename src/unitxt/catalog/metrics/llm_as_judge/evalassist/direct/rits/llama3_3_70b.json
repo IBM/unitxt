@@ -2,7 +2,7 @@
     "__type__": "eval_assist_llm_judge_direct",
     "inference_engine": {
         "__type__": "cross_provider_inference_engine",
-        "provider": "watsonx",
+        "provider": "rits",
         "model": "llama-3-3-70b-instruct",
         "max_tokens": 1024,
         "temperature": 0.0
