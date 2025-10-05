@@ -40,8 +40,6 @@ jobs:
     - name: Install Dependencies
       run: bash utils/install.sh
 
-    - run: uv pip install --system "sentence-transformers==5.1.0"
-
     - uses: ./.github/actions/install-internal-pip
       with:
         ssh-private-key: ${{ secrets.LLMEVALKIT_SSH_KEY }}
@@ -49,7 +47,7 @@ jobs:
     - name:  Hugging Face Login
       run: |
         for i in {1..5}; do
-          huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} && break || sleep $((2 ** i));
+          hf auth login --add-to-git-credential --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} && break || sleep $((2 ** i));
         done
     - name: Run Tests
       run: |
