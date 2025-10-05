@@ -881,8 +881,8 @@ def extract_scores(folder: str, subset: str, group: str):  # pragma: no cover
 
                 env_info = content.get("environment_info", {})
                 row = {
-                    "Timestamp": safe_score(env_info, "timestamp_utc"),
                     "Model": safe_score(env_info.get("parsed_arguments", {}), "model"),
+                    "Timestamp": safe_score(env_info, "timestamp_utc"),
                 }
 
                 results = content.get("results", {})
@@ -933,6 +933,16 @@ def setup_summarization_parser() -> argparse.ArgumentParser:
         help="Group to filter results to. Requires specifying a subset. Default: first group.",
     )
 
+    parser.add_argument(
+        "--output",
+        "-o",
+        type=str,
+        choices=["markdown", "csv"],
+        dest="output",
+        default="markdown",
+        help="Output format. Can be markdown or csv. Default: markdown",
+    )
+
     return parser
 
 
@@ -941,7 +951,13 @@ def summarize_cli():
     args = parser.parse_args()
 
     df = extract_scores(args.folder, args.subset, args.group)
-    logger.info(df.to_markdown(index=False))
+
+    if args.output == "markdown":
+        logger.info(df.to_markdown(index=False))
+    elif args.output == "csv":
+        logger.info(df.to_csv(index=False))
+    else:
+        logger.error(f"Unsupported output format: {args.output}")
 
 
 if __name__ == "__main__":
