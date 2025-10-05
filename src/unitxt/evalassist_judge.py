@@ -45,10 +45,6 @@ class EvalAssistLLMJudge(BulkInstanceMetric, PackageRequirementsMixin):
         """Prepares the `LLMJudge` instance by setting up context fields and evaluator name."""
         if self.context_fields is not None:
             self.context_fields = self.get_context_fields_as_dict(self.context_fields)
-        if self.criteria is None and self.criteria_field is None:
-            raise UnitxtError(
-                f"You must set either the 'criteria' field of the {__class__.__name__} metric to define one criteria to evaluate on all instance, or set a 'criteria_field' of the metric to evaluate on each instance based on the criteria specified in that field of each instance."
-            )
         super().prepare()
 
     def before_process_multi_stream(self):
@@ -61,7 +57,10 @@ class EvalAssistLLMJudge(BulkInstanceMetric, PackageRequirementsMixin):
         # We check the criteria here and not in verify(), because we want catalog
         # may contain a partially initialized object, and verify() method
         # is called when creating the object and not when using it.
-
+        if self.criteria is None and self.criteria_field is None:
+            raise UnitxtError(
+                f"You must set either the 'criteria' field of the {__class__.__name__} metric to define one criteria to evaluate on all instance, or set a 'criteria_field' of the metric to evaluate on each instance based on the criteria specified in that field of each instance."
+            )
         return
 
     def get_context_fields_as_dict(
