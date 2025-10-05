@@ -28,4 +28,4 @@ unitxt-evaluate \
     --batch_size 8 \
     --verbosity ERROR
 
-unitxt-summarize ./results/bluebench
+unitxt-summarize --folder ./results/bluebench
