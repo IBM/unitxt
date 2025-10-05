@@ -40,6 +40,8 @@ jobs:
     - name: Install Dependencies
       run: bash utils/install.sh
 
+    - run: uv pip install --system "huggingface-hub==0.35.0"
+
     - uses: ./.github/actions/install-internal-pip
       with:
         ssh-private-key: ${{ secrets.LLMEVALKIT_SSH_KEY }}
