@@ -39,14 +39,17 @@ subsets = {
     card_subset: DatasetRecipe(
         card=f"{card}.{card_subset}",
         template=template,
-        metrics=["metrics.f1_binary[average=binary]"],
+        metrics=[
+            "metrics.f1_binary",
+            "metrics.f1_binary[average=macro,score_prefix=macro_]",
+        ],
     )
     for card_subset in card_subsets
 }
 
 benchmark = Benchmark(
     format="formats.empty",
-    max_samples_per_subset=100,
+    max_samples_per_subset=20,
     loader_limit=300,
     subsets=subsets,
 )
@@ -74,14 +77,14 @@ llm_as_judge_metric = (
 )
 llm_score_name = "faithfulness_judge"
 metrics_to_score_names[llm_as_judge_metric] = llm_score_name
-
+metrics_to_score_names["all_one"] = "score"
 df = pd.DataFrame(
     columns=[
         "metric",
-        "f1_binary",
-        "recall_binary",
-        "precision_binary",
-        "num_instances",
+        "f1_macro",
+        "f1_faithful",
+        "f1_not_faithful",
+        "num_of_instances",
     ]
 )
 
@@ -90,9 +93,12 @@ for metric, score_name in metrics_to_score_names.items():
     # print(json.dumps(instance,indent=4))
     # print(instance["references"])
 
-    model = MetricInferenceEngine(metric=metric, prediction_field="answer")
-    predictions = model(dataset)
-    new_predictions = [prediction[score_name] for prediction in predictions]
+    if metric == "all_one":
+        new_predictions = [1.0] * len(dataset)
+    else:
+        model = MetricInferenceEngine(metric=metric, prediction_field="answer")
+        predictions = model(dataset)
+        new_predictions = [prediction[score_name] for prediction in predictions]
     results = evaluate(predictions=new_predictions, data=dataset)
 
     sums = {}
@@ -108,11 +114,11 @@ for metric, score_name in metrics_to_score_names.items():
     averages = {key: sums[key] / counts[key] for key in sums}
 
     df.loc[len(df)] = [
-        metric,
+        str(metric),
+        averages["macro_f1_binary"],
         averages["f1_binary"],
-        averages["recall_binary"],
-        averages["precision_binary"],
-        0,  # results.global_scores["num_instances"]
+        averages["f1_binary_neg"],
+        results.global_scores["num_of_instances"],
     ]
 
     print("Instance Results:")
