@@ -2,6 +2,7 @@
     "__type__": "recursive_replace",
     "key": "type",
     "map_values": {
+        "": "object",
         "dict": "object",
         "float": "number",
         "tuple": "array",

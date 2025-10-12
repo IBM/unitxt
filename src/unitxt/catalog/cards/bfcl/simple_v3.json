@@ -21,6 +21,13 @@
             "new_stream_name": "test"
         },
         {
+            "__type__": "delete_splits",
+            "splits": [
+                "questions",
+                "answers"
+            ]
+        },
+        {
             "__type__": "copy",
             "field": "question/0/0/content",
             "to_field": "query"
@@ -30,7 +37,10 @@
             "field": "function",
             "to_field": "tools"
         },
-        "operators.fix_json_schema",
+        {
+            "__type__": "fix_json_schema_of_parameter_types",
+            "main_field": "tools"
+        },
         {
             "__type__": "execute_expression",
             "expression": "[{\"name\": k, \"arguments\": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]",
