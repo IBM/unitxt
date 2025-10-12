@@ -22,7 +22,8 @@ card = TaskCard(
             "train": url.format("train"),
             "validation": url.format("dev"),
             "test": url.format("test"),
-        }
+        },
+        data_classification_policy=["public"],
     ),
     preprocess_steps=[
         Copy(field="qa/question", to_field="question"),

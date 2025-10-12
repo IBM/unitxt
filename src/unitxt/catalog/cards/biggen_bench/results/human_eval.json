@@ -19,6 +19,18 @@
             "add_origin_stream_name": true
         },
         {
+            "__type__": "filter_by_condition",
+            "values": {
+                "human_score": -1
+            },
+            "condition": "ne"
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "(human_score - 1) / 4",
+            "to_field": "human_score"
+        },
+        {
             "__type__": "set",
             "fields": {
                 "criteria": {
@@ -63,14 +75,14 @@
             }
         },
         {
-            "__type__": "cast",
-            "field": "human_score",
-            "to": "float"
+            "__type__": "format_text",
+            "text": "{capability}-{task}",
+            "to_field": "criteria_name"
         },
         {
             "__type__": "copy",
             "field_to_field": {
-                "task": "criteria/name",
+                "criteria_name": "criteria/name",
                 "score_rubric/criteria": "criteria/description",
                 "score_rubric/score1_description": "criteria/options/0/description",
                 "score_rubric/score2_description": "criteria/options/1/description",
@@ -91,6 +103,9 @@
             "input": "str",
             "response": "str",
             "reference_answer": "str",
+            "language": "str",
+            "capability": "str",
+            "task": "str",
             "criteria": "Any"
         },
         "reference_fields": {

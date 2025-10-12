@@ -43,6 +43,12 @@
             "to_field": "choices"
         },
         {
+            "__type__": "cast",
+            "to": "str",
+            "field": "choices",
+            "process_every_value": true
+        },
+        {
             "__type__": "set",
             "fields": {
                 "topic": "conceptual physics"

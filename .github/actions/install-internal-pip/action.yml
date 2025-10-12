@@ -1,0 +1,34 @@
+name: Install internal repo via pip (SSH)
+description: pip install git+ssh from GHES
+inputs:
+  ssh-private-key:
+    required: true
+    description: OpenSSH private key (with BEGIN/END)
+  host:
+    required: false
+    default: github.ibm.com
+  repo:
+    required: false
+    default: MLT/LLMEvalKit
+  ref:
+    required: false
+    default: ""   # branch/tag/sha (optional)
+  pip-extra-args:
+    required: false
+    default: ""   # e.g. -U or --no-deps
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ inputs.ssh-private-key }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan "${{ inputs.host }}" >> ~/.ssh/known_hosts
+        if [ -n "${{ inputs.ref }}" ]; then
+          URL="git+ssh://git@${{ inputs.host }}/${{ inputs.repo }}.git@${{ inputs.ref }}"
+        else
+          URL="git+ssh://git@${{ inputs.host }}/${{ inputs.repo }}.git"
+        fi
+        echo "Installing from URL: $URL"
+        pip install --no-cache-dir --force-reinstall "$URL" ${{ inputs.pip-extra-args }}

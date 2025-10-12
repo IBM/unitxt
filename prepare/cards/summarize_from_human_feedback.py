@@ -6,6 +6,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
+from unitxt.operators import Cast
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -24,12 +25,13 @@ card = TaskCard(
                 "summaries/*/text": "choices",
             }
         ),
+        Cast(field="input", to="str"),
         Rename(field_to_field={"choice": "output_choice"}),
         Set(
             fields={
                 "input_type": "post",
                 "output_type": "summary",
-                "instruction": "Summarize the following post",
+                "instance_instruction": "Summarize the following post",
             }
         ),
     ],

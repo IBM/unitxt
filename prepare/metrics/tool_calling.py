@@ -1,6 +1,8 @@
 from unitxt.catalog import add_to_catalog
 from unitxt.metrics import (
     MultiTurnToolCallingMetric,
+    ReflectionToolCallingMetric,
+    ReflectionToolCallingMetricSyntactic,
     ToolCallingMetric,
     ToolCallKeyValueExtraction,
 )
@@ -47,8 +49,24 @@ Reports average token_overlap for each key, as well as micro and macro averages 
 
 add_to_catalog(
     MultiTurnToolCallingMetric(
-        __description__="""Metric that evaluates tool call predictions for the validity with regards to the tools schema."""
+        __description__="""A metric that assesses tool call predictions for their conformity to the tool schema."""
     ),
     "metrics.tool_calling.multi_turn.validity",
+    overwrite=True,
+)
+
+add_to_catalog(
+    ReflectionToolCallingMetric(
+        __description__="""A metric that assesses tool call predictions for both syntactic correctness and semantic validity, using predefined checks combined with LLM-based evaluations. For each instance, it returns a score reflecting its overall validity, as well as a breakdown of the specific checks/metrics that passed or failed, including hallucination check, value format alignment, function selection and agentic constraints satisfaction. Each metric also contains an evidence from the input, an explanation describing the reflection decision, a confidence, and a validity score with a range of 1-5 (higher score -> more valid)."""
+    ),
+    "metrics.tool_calling.reflection",
+    overwrite=True,
+)
+
+add_to_catalog(
+    ReflectionToolCallingMetricSyntactic(
+        __description__="""This metric evaluates whether a model's tool call outputs are structurally valid by checking their compliance with the provided tool schema. For each instance, it returns a binary score (True for valid, False for invalid), and aggregates these into a global percentage across all instances. The evaluation covers a wide range of possible issues, including nonexistent functions or parameters, incorrect parameter types, missing required parameters, values outside allowed ranges, JSON schema violations, invalid or empty API specifications, and malformed tool calls. The main reported score, overall_valid (aliased as score), reflects the proportion of calls that are fully valid, making the metric a measure of syntactic and schema-level correctness rather than semantic accuracy. Each metric also contains an explanation describing the errors that it detected (if no errors were found - the explanation will be None)."""
+    ),
+    "metrics.tool_calling.reflection.syntactic",
     overwrite=True,
 )

@@ -3,7 +3,12 @@ from typing import Any
 from unitxt import add_to_catalog
 from unitxt.blocks import Copy, LoadHF, Set, Task, TaskCard
 from unitxt.llm_as_judge import CreateCriteriaWithOptionsFromDict
-from unitxt.operators import Cast, MergeStreams
+from unitxt.operators import (
+    ExecuteExpression,
+    FilterByCondition,
+    MergeStreams,
+)
+from unitxt.string_operators import FormatText
 from unitxt.test_utils.card import test_card
 
 empty_criteria = {
@@ -20,22 +25,27 @@ empty_criteria["option_map"] = {
     option["name"]: i / 4 for i, option in enumerate(empty_criteria["options"])
 }
 
+stream_names = ["human_eval", "multilingual_human_eval"]
 card = TaskCard(
     loader=LoadHF(
         path="prometheus-eval/BiGGen-Bench-Results",
-        splits=["human_eval", "multilingual_human_eval"],
+        splits=stream_names,
     ),
     preprocess_steps=[
         MergeStreams(
-            streams_to_merge=["human_eval", "multilingual_human_eval"],
+            streams_to_merge=stream_names,
             new_stream_name="test",
             add_origin_stream_name=True,
         ),
+        # Cast(field="human_score", to="str"),
+        FilterByCondition(values={"human_score": -1}, condition="ne"),
+        ExecuteExpression(expression="(human_score - 1) / 4", to_field="human_score"),
         Set(fields={"criteria": empty_criteria}),
-        Cast(field="human_score", to="float"),
+        # biggen exposes to level of granularities, e.g. capability: theory_of_mind, task: guess_the_emotion
+        FormatText(text="{capability}-{task}", to_field="criteria_name"),
         Copy(
             field_to_field={
-                "task": "criteria/name",
+                "criteria_name": "criteria/name",
                 "score_rubric/criteria": "criteria/description",
                 "score_rubric/score1_description": "criteria/options/0/description",
                 "score_rubric/score2_description": "criteria/options/1/description",
@@ -52,6 +62,9 @@ card = TaskCard(
             "input": str,
             "response": str,
             "reference_answer": str,
+            "language": str,
+            "capability": str,
+            "task": str,
             "criteria": Any,
         },
         reference_fields={"human_score": float},
@@ -67,5 +80,7 @@ card = TaskCard(
 
 test_card(card, demos_taken_from="test", debug=False)
 add_to_catalog(
-    artifact=card, name="cards.biggen_bench.results.human_eval", overwrite=True
+    artifact=card,
+    name="cards.biggen_bench.results.human_eval",
+    overwrite=True,
 )

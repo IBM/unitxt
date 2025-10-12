@@ -1,6 +1,8 @@
+import random
 from math import isnan
 from typing import Dict, List
 
+import unitxt
 from unitxt.api import create_dataset, evaluate
 from unitxt.inference import MockInferenceEngine
 from unitxt.llm_as_judge import LLMAsJudge, TaskBasedLLMasJudge
@@ -61,6 +63,8 @@ from unitxt.metrics import (
     Perplexity,
     PrecisionBinary,
     RecallBinary,
+    ReflectionToolCallingMetric,
+    ReflectionToolCallingMetricSyntactic,
     RelaxedCorrectness,
     RocAuc,
     Rouge,
@@ -79,6 +83,7 @@ from unitxt.test_utils.metrics import (
     check_scores,
     test_metric,
 )
+from unitxt.types import Dialog, Tool, ToolCall
 
 from tests.utils import UnitxtTestCase
 
@@ -144,6 +149,8 @@ GROUPED_INSTANCE_ADDL_INPUTS = [
 
 
 class TestMetrics(UnitxtTestCase):
+    use_mock_model: bool = True
+
     def test_unsorted_list_exact_match(self):
         metric = UnsortedListExactMatch()
 
@@ -1645,6 +1652,978 @@ class TestMetrics(UnitxtTestCase):
         # Only half of parameters have correct types
         self.assertEqual(
             outputs[0]["score"]["global"]["argument_schema_validation"], 0.0
+        )
+
+    def test_reflection_tool_calling_metric(self):
+        unitxt.settings.mock_inference_mode = True
+        metric = ReflectionToolCallingMetric()
+
+        prediction = ToolCall(
+            **{
+                "name": "advanced_weather",
+                "arguments": {
+                    "location": "San Francisco",
+                    "days": 7,
+                    "format": "summary",
+                },
+            }
+        )
+
+        task_data = {
+            "tools": [
+                Tool(
+                    {
+                        "name": "advanced_weather",
+                        "description": "Get advanced weather forecast",
+                        "parameters": {
+                            "type": "object",
+                            "required": ["location", "days"],
+                            "properties": {
+                                "location": {"type": "string"},
+                                "days": {"type": "integer"},
+                                "format": {
+                                    "type": "string",
+                                    "enum": ["brief", "detailed", "summary"],
+                                    "default": "detailed",
+                                },
+                            },
+                        },
+                    }
+                )
+            ],
+            "dialog": Dialog(
+                [
+                    {
+                        "role": "user",
+                        "content": "What's the weather like in San Francisco in the next 7 days? Give me a detailed forecast.",
+                    }
+                ],
+            ),
+        }
+
+        # Call the map method
+        result = metric.map_stream(items=[(prediction, None, task_data)])[0]
+
+        # Verify all the scores
+        self.assertFalse(result["overall_valid"])
+        self.assertTrue(result["static"]["final_decision"])
+        self.assertTrue(
+            result["semantic"]["general"]["metrics"]["general_hallucination_check"][
+                "is_issue"
+            ]
+        )
+
+        unitxt_provider_name = "mock" if self.use_mock_model else "watsonx"
+        model_name = "meta-llama/llama-4-maverick-17b-128e-instruct-fp8"
+        metric.setup_pipeline(
+            reflector_model_name=model_name, provider_name=unitxt_provider_name
+        )
+
+        result = metric.map_stream(items=[(prediction, None, task_data)])[0]
+
+        # Verify all the scores
+        self.assertFalse(result["overall_valid"])
+        self.assertTrue(result["static"]["final_decision"])
+        self.assertTrue(
+            result["semantic"]["general"]["metrics"]["general_hallucination_check"][
+                "is_issue"
+            ]
+        )
+
+    def test_partial_value_precision_enum_violations_real_static_only(self):
+        """Test partial value precision when some parameters have invalid enum values."""
+        metric = ReflectionToolCallingMetricSyntactic()
+
+        # Create sample inputs with some invalid enum values
+        prediction = ToolCall(
+            **{
+                "name": "get_weather",
+                "arguments": {
+                    "location": "San Francisco",
+                    "date": "2025-08-19",
+                    "unit": "kelvin",  # Invalid enum value
+                    "format": "full",  # Invalid enum value
+                    "include_map": True,  # Valid value
+                    "days": 5,  # Valid value
+                },
+            }
+        )
+
+        references = []
+
+        task_data = {
+            "tools": [
+                {
+                    "name": "get_weather",
+                    "description": "Get weather forecast",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "location": {"type": "string"},
+                            "date": {"type": "string"},
+                            "unit": {
+                                "type": "string",
+                                "enum": ["celsius", "fahrenheit"],
+                            },
+                            "format": {
+                                "type": "string",
+                                "enum": ["brief", "detailed"],
+                            },
+                            "include_map": {"type": "boolean"},
+                            "days": {"type": "integer"},
+                        },
+                    },
+                },
+            ]
+        }
+
+        # Call the map method
+        result = metric.map(prediction, references, task_data)
+
+        # Assert partial value precision - all parameters exist in the schema
+        # 4 out of 6 parameters have valid values (unit and format have enum violations)
+        self.assertAlmostEqual(
+            result["metrics"]["allowed_values_violation"]["valid"], False
+        )
+        self.assertAlmostEqual(result["overall_valid"], False)
+        self.assertAlmostEqual(
+            result["metrics"]["missing_required_parameter"]["valid"], True
+        )
+
+    def test_reflection_tool_calling_metric_reduce(self):
+        # Instance 1: valid call
+        instance1 = {
+            "overall_valid": True,
+            "static": {
+                "metrics": {
+                    "non_existent_function": {"valid": True},
+                    "missing_required_parameter": {"valid": True},
+                },
+                "final_decision": True,
+            },
+            "semantic": {
+                "general": {
+                    "metrics": {
+                        "general_hallucination_check": {"is_issue": False},
+                        "general_value_format_alignment": {"is_issue": False},
+                    },
+                    "avg_score": 1.0,
+                },
+                "function_selection": {
+                    "metrics": {
+                        "function_selection_appropriateness": {"is_issue": False},
+                        "agentic_constraints_satisfaction": {"is_issue": False},
+                    },
+                    "avg_score": 1.0,
+                },
+            },
+        }
+        # Instance 2: invalid call
+        instance2 = {
+            "overall_valid": False,
+            "static": {
+                "metrics": {
+                    "non_existent_function": {"valid": False},
+                    "missing_required_parameter": {"valid": False},
+                },
+                "final_decision": False,
+            },
+            "semantic": {
+                "general": {
+                    "metrics": {
+                        "general_hallucination_check": {"is_issue": True},
+                        "general_value_format_alignment": {"is_issue": True},
+                    },
+                    "avg_score": 0.0,
+                },
+                "function_selection": {
+                    "metrics": {
+                        "function_selection_appropriateness": {"is_issue": True},
+                        "agentic_constraints_satisfaction": {"is_issue": True},
+                    },
+                    "avg_score": 0.0,
+                },
+            },
+        }
+        # Instance 3: partially valid
+        instance3 = {
+            "overall_valid": True,
+            "static": {
+                "metrics": {
+                    "non_existent_function": {"valid": True},
+                    "missing_required_parameter": {"valid": False},
+                },
+                "final_decision": True,
+            },
+            "semantic": {
+                "general": {
+                    "metrics": {
+                        "general_hallucination_check": {"is_issue": False},
+                        "general_value_format_alignment": {"is_issue": True},
+                    },
+                    "avg_score": 0.5,
+                },
+                "function_selection": {
+                    "metrics": {
+                        "function_selection_appropriateness": {"is_issue": False},
+                        "agentic_constraints_satisfaction": {"is_issue": True},
+                    },
+                    "avg_score": 0.5,
+                },
+            },
+        }
+
+        unitxt.settings.mock_inference_mode = True
+        metric = ReflectionToolCallingMetric()
+        reduced = metric.reduce([instance1, instance2, instance3])
+
+        # All outputs should be floats in [0, 1]
+        import math
+
+        self.assertIsInstance(reduced, dict)
+        for k, v in reduced.items():
+            self.assertIsInstance(v, float, msg=f"value for {k} is not float")
+            self.assertFalse(math.isnan(v), msg=f"NaN at key {k}")
+            self.assertGreaterEqual(v, 0.0, msg=f"value for {k} < 0")
+            self.assertLessEqual(v, 1.0, msg=f"value for {k} > 1")
+
+        # Overall validity is the mean of booleans
+        expected_overall_valid = (1 + 0 + 1) / 3
+        self.assertAlmostEqual(reduced["overall_valid"], expected_overall_valid)
+
+        # Static aggregated metrics, now flattened
+        # non_existent_function: True, False, True -> 2/3
+        nef_expected = (1 + 0 + 1) / 3
+        # missing_required_parameter: True, False, False -> 1/3
+        mrp_expected = (1 + 0 + 0) / 3
+        self.assertIn("static_non_existent_function", reduced)
+        self.assertIn("static_missing_required_parameter", reduced)
+        self.assertAlmostEqual(reduced["static_non_existent_function"], nef_expected)
+        self.assertAlmostEqual(
+            reduced["static_missing_required_parameter"], mrp_expected
+        )
+
+        # Semantic per family average scores
+        semantic_avg_expected = (1.0 + 0.0 + 0.5) / 3
+        self.assertIn("semantic_avg_score_general", reduced)
+        self.assertIn("semantic_avg_score_function_selection", reduced)
+        self.assertAlmostEqual(
+            reduced["semantic_avg_score_general"], semantic_avg_expected
+        )
+        self.assertAlmostEqual(
+            reduced["semantic_avg_score_function_selection"], semantic_avg_expected
+        )
+
+        # Semantic issue rates for individual checks, flattened, mean of is_issue
+        # general_hallucination_check: False, True, False -> 1/3
+        ghc_expected = (0 + 1 + 0) / 3
+        # general_value_format_alignment: False, True, True -> 2/3
+        gvfa_expected = (0 + 1 + 1) / 3
+        # function_selection_appropriateness: False, True, False -> 1/3
+        fsa_expected = (0 + 1 + 0) / 3
+        # agentic_constraints_satisfaction: False, True, True -> 2/3
+        acs_expected = (0 + 1 + 1) / 3
+
+        self.assertIn("semantic_general_hallucination_check", reduced)
+        self.assertIn("semantic_general_value_format_alignment", reduced)
+        self.assertIn("semantic_function_selection_appropriateness", reduced)
+        self.assertIn("semantic_agentic_constraints_satisfaction", reduced)
+
+        self.assertAlmostEqual(
+            reduced["semantic_general_hallucination_check"], ghc_expected
+        )
+        self.assertAlmostEqual(
+            reduced["semantic_general_value_format_alignment"], gvfa_expected
+        )
+        self.assertAlmostEqual(
+            reduced["semantic_function_selection_appropriateness"], fsa_expected
+        )
+        self.assertAlmostEqual(
+            reduced["semantic_agentic_constraints_satisfaction"], acs_expected
+        )
+
+    def test_reflection_tool_calling_metric_syntactic_reduce(self):
+        from unitxt.metrics import ReflectionToolCallingMetricSyntactic
+
+        # Instance 1: invalid function, all other checks pass
+        instance1 = {
+            "metrics": {
+                "non_existent_function": {"valid": False},
+                "non_existent_parameter": {"valid": True},
+                "incorrect_parameter_type": {"valid": True},
+                "missing_required_parameter": {"valid": True},
+                "allowed_values_violation": {"valid": True},
+                "empty_api_spec": {"valid": True},
+                "invalid_api_spec": {"valid": True},
+                "invalid_tool_call": {"valid": True},
+                "json_schema_violation": {"valid": True},
+            },
+            "overall_valid": False,
+        }
+        # Instance 2: all checks pass
+        instance2 = {
+            "metrics": {
+                "non_existent_function": {"valid": True},
+                "non_existent_parameter": {"valid": True},
+                "incorrect_parameter_type": {"valid": True},
+                "missing_required_parameter": {"valid": True},
+                "allowed_values_violation": {"valid": True},
+                "empty_api_spec": {"valid": True},
+                "invalid_api_spec": {"valid": True},
+                "invalid_tool_call": {"valid": True},
+                "json_schema_violation": {"valid": True},
+            },
+            "overall_valid": True,
+        }
+        # Instance 3: missing required parameter, all others pass
+        instance3 = {
+            "metrics": {
+                "non_existent_function": {"valid": True},
+                "non_existent_parameter": {"valid": True},
+                "incorrect_parameter_type": {"valid": True},
+                "missing_required_parameter": {"valid": False},
+                "allowed_values_violation": {"valid": True},
+                "empty_api_spec": {"valid": True},
+                "invalid_api_spec": {"valid": True},
+                "invalid_tool_call": {"valid": True},
+                "json_schema_violation": {"valid": True},
+            },
+            "overall_valid": False,
+        }
+
+        metric = ReflectionToolCallingMetricSyntactic()
+        inputs = [instance1, instance2, instance3]
+        reduced = metric.reduce(inputs)
+
+        # 1) Key set is exactly metrics + overall_valid
+        metric_names = [*instance1["metrics"]]
+        expected_keys = set(metric_names) | {"overall_valid"}
+
+        self.assertEqual(set(reduced.keys()), expected_keys)
+
+        # 2) All values are floats in [0, 1] and not NaN
+        for k, v in reduced.items():
+            self.assertIsInstance(v, float, f"value for {k} is not float")
+            self.assertFalse(isnan(v), f"NaN at {k}")
+            self.assertGreaterEqual(v, 0.0, f"value for {k} < 0")
+            self.assertLessEqual(v, 1.0, f"value for {k} > 1")
+
+        # 3) Per metric aggregation equals mean of valid flags across instances
+        def mean_valid(name: str) -> float:
+            vals = [1.0 if inst["metrics"][name]["valid"] else 0.0 for inst in inputs]
+            return sum(vals) / len(vals)
+
+        for m in metric_names:
+            self.assertAlmostEqual(reduced[m], mean_valid(m), msg=f"mismatch for {m}")
+
+        # Spot checks, same as your original examples
+        self.assertAlmostEqual(reduced["non_existent_function"], (0 + 1 + 1) / 3)
+        self.assertAlmostEqual(reduced["missing_required_parameter"], (1 + 1 + 0) / 3)
+        self.assertAlmostEqual(reduced["json_schema_violation"], (1 + 1 + 1) / 3)
+
+        # 4) overall_valid equals mean of per instance overall_valid
+        expected_overall_valid = (0 + 1 + 0) / 3
+        self.assertAlmostEqual(reduced["overall_valid"], expected_overall_valid)
+
+        # 5) Order invariance, shuffle inputs and expect identical result
+        shuffled = inputs[:]
+        random.shuffle(shuffled)
+        reduced_shuffled = metric.reduce(shuffled)
+        self.assertEqual(reduced, reduced_shuffled)
+
+    def test_tool_calling_metric_syntactic_reflector(self):
+        metric = ReflectionToolCallingMetricSyntactic()
+        tools_data = {
+            "tools": [
+                {
+                    "name": "test_tool",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "param1": {"type": "string"},
+                            "param2": {"type": "integer"},
+                        },
+                        "required": ["param1", "param2"],
+                    },
+                }
+            ]
+        }
+
+        # Test case 1: Exact match
+        prediction = {
+            "name": "test_tool",
+            "arguments": {"param1": "value1", "param2": 42},
+        }
+
+        outputs = metric.map(
+            prediction=prediction,
+            references=[],
+            task_data=tools_data,
+        )
+
+        # Exact match should be 1.0 when prediction and reference are identical
+        self.assertTrue(outputs["overall_valid"])
+        self.assertTrue(outputs["metrics"]["non_existent_function"]["valid"])
+
+        # Test case 2: Different tool name
+        prediction = {"name": "different_tool", "arguments": {"param1": "value1"}}
+
+        outputs = metric.map(
+            prediction=prediction,
+            references=[],
+            task_data=tools_data,
+        )
+
+        self.assertFalse(outputs["overall_valid"])
+        self.assertFalse(outputs["metrics"]["non_existent_function"]["valid"])
+
+        # Test case 3: Different parameter names
+        prediction = {
+            "name": "test_tool",
+            "arguments": {"param1": "value1", "wrongParam": "value2"},
+        }
+
+        outputs = metric.map(
+            prediction=prediction,
+            references=[],
+            task_data=tools_data,
+        )
+
+        # Exact match should be 0.0, tool choice 1.0
+        self.assertFalse(outputs["overall_valid"])
+        self.assertTrue(outputs["metrics"]["non_existent_function"]["valid"])
+
+        # param1 is present but param2 is missing out of 2 required parameters in the schema
+        self.assertFalse(outputs["metrics"]["missing_required_parameter"]["valid"])
+
+        # 1 valid parameter (param1) out of 2 total parameters (param1, wrongParam)
+        self.assertFalse(outputs["metrics"]["non_existent_parameter"]["valid"])
+
+        # Since wrongParam doesn't exist in the schema, value precision only considers param1
+        # param1 has the correct type, so value precision is 1.0
+        self.assertTrue(outputs["metrics"]["incorrect_parameter_type"]["valid"])
+
+        # Test case 4: Different parameter values
+        prediction = {
+            "name": "test_tool",
+            "arguments": {"param1": "different", "param2": 42},
+        }
+
+        outputs = metric.map(
+            prediction=prediction,
+            references=[],
+            task_data=tools_data,
+        )
+
+        # Parameter choice should be 1.0 (all names match)
+        # Note: overall_valid is 1.0 because the static validation only checks schema conformance, not value equality
+        self.assertTrue(outputs["overall_valid"])
+
+        # Test case 5a: Empty arguments
+        prediction = {"name": "test_tool", "arguments": {}}
+        reference = {"name": "test_tool", "arguments": {"param1": "value1"}}
+
+        outputs = metric.map(
+            prediction=prediction,
+            references=[],
+            task_data=tools_data,
+        )
+
+        # Recall should be 0 for empty arguments (missing required parameters)
+        self.assertFalse(outputs["metrics"]["missing_required_parameter"]["valid"])
+        # Precision is 1.0 because there are no invalid parameter names (no non-existent parameters)
+        self.assertTrue(outputs["metrics"]["non_existent_parameter"]["valid"])
+        # Value precision is 1.0 because there are no parameters with type or enum violations
+        self.assertTrue(outputs["metrics"]["incorrect_parameter_type"]["valid"])
+
+        prediction = {"name": "test_tool", "arguments": {}}
+        reference = {"name": "test_tool", "arguments": {}}
+
+        # Test case 5b: Empty arguments (references too)
+        outputs = metric.map(
+            prediction=prediction,
+            references=[reference],
+            task_data=tools_data,
+        )
+
+        # Recall should still be 0 since there are required parameters in the schema
+        # (regardless of the references, which are not used for validation)
+        self.assertFalse(outputs["metrics"]["missing_required_parameter"]["valid"])
+        # Precision is 1.0 because there are no invalid parameter names
+        self.assertTrue(outputs["metrics"]["non_existent_parameter"]["valid"])
+        # Value precision is 1.0 because there are no parameters with type or enum violations
+        self.assertTrue(outputs["metrics"]["incorrect_parameter_type"]["valid"])
+
+        # Test case 6: Multiple references with one match
+        prediction = {"name": "test_tool", "arguments": {"param1": "value1"}}
+        # Note: References are completely ignored - validation is based only on schema
+
+        outputs = metric.map(
+            prediction=prediction,
+            references=[],
+            task_data=tools_data,
+        )
+
+        # overall_valid should be 0.0 because param2 is missing (it's required)
+        self.assertFalse(outputs["overall_valid"])
+        self.assertTrue(outputs["metrics"]["non_existent_function"]["valid"])
+        self.assertFalse(outputs["metrics"]["missing_required_parameter"]["valid"])
+        self.assertTrue(outputs["metrics"]["non_existent_parameter"]["valid"])
+
+        # Test case 7: Parameter types
+        prediction = {
+            "name": "test_tool",
+            "arguments": {"param1": "string", "param2": 42},
+        }
+
+        outputs = metric.map(
+            prediction=prediction,
+            references=[],
+            task_data=tools_data,
+        )
+
+        # Parameters should have correct types
+        self.assertEqual(outputs["metrics"]["json_schema_violation"]["valid"], True)
+
+        # Test case 8: Wrong parameter types
+        prediction = {
+            "name": "test_tool",
+            "arguments": {"param1": "string", "param2": "not_an_integer"},
+        }
+
+        outputs = metric.map(
+            prediction=prediction,
+            references=[],
+            task_data=tools_data,
+        )
+
+        # json_schema_violation is separate from the type validation
+        # schema validation can still pass even if there are type errors
+        self.assertTrue(outputs["metrics"]["json_schema_violation"]["valid"])
+
+    def test_overall_valid_success_real_map(self):
+        metric = ReflectionToolCallingMetricSyntactic()
+        # Create sample inputs
+        prediction = ToolCall(
+            **{
+                "name": "get_weather",
+                "arguments": {"location": "San Francisco", "unit": "celsius"},
+            }
+        )
+
+        references = [
+            ToolCall(
+                **{
+                    "name": "get_weather",
+                    "arguments": {"location": "San Francisco", "unit": "celsius"},
+                }
+            )
+        ]
+
+        task_data = {
+            "tools": [
+                {
+                    "name": "get_weather",
+                    "description": "Get the current weather in a given location",
+                    "parameters": {
+                        "type": "object",
+                        "required": ["location"],
+                        "properties": {
+                            "location": {"type": "string"},
+                            "unit": {
+                                "type": "string",
+                                "enum": ["celsius", "fahrenheit"],
+                            },
+                        },
+                    },
+                }
+            ]
+        }
+
+        # Call the map method
+        result = metric.map(prediction, references, task_data)
+
+        # Assert expected results
+        self.assertTrue(result["overall_valid"])
+        self.assertTrue(result["metrics"]["non_existent_function"]["valid"])
+        self.assertTrue(result["metrics"]["missing_required_parameter"]["valid"])
+
+    def test_non_existent_function_real_map(self):
+        metric = ReflectionToolCallingMetricSyntactic()
+        # Create sample inputs with wrong function name
+        prediction = ToolCall(
+            **{
+                "name": "unknown_function",
+                "arguments": {"location": "San Francisco"},
+            }
+        )
+
+        references = []
+
+        task_data = {
+            "tools": [
+                {
+                    "name": "get_weather",
+                    "description": "Get the current weather in a given location",
+                    "parameters": {
+                        "type": "object",
+                        "required": ["location"],
+                        "properties": {"location": {"type": "string"}},
+                    },
+                },
+            ]
+        }
+
+        # Call the map method
+        result = metric.map(prediction, references, task_data)
+
+        # Assert expected results
+        self.assertFalse(result["overall_valid"])
+        self.assertFalse(result["metrics"]["non_existent_function"]["valid"])
+        self.assertTrue(result["metrics"]["missing_required_parameter"]["valid"])
+
+    def test_missing_required_parameter_real_map(self):
+        metric = ReflectionToolCallingMetricSyntactic()
+        # Create sample inputs with missing required parameter
+        prediction = ToolCall(
+            **{
+                "name": "get_weather",
+                "arguments": {"unit": "celsius"},
+            }
+        )
+
+        references = []
+
+        task_data = {
+            "tools": [
+                {
+                    "name": "get_weather",
+                    "description": "Get the current weather in a given location",
+                    "parameters": {
+                        "type": "object",
+                        "required": ["location"],
+                        "properties": {
+                            "location": {"type": "string"},
+                            "unit": {
+                                "type": "string",
+                                "enum": ["celsius", "fahrenheit"],
+                            },
+                        },
+                    },
+                },
+            ]
+        }
+
+        # Call the map method
+        result = metric.map(prediction, references, task_data)
+
+        # Assert expected results
+        self.assertFalse(result["overall_valid"])
+        self.assertFalse(result["metrics"]["missing_required_parameter"]["valid"])
+        self.assertTrue(result["metrics"]["allowed_values_violation"]["valid"])
+
+    def test_non_existent_parameter_real_map(self):
+        metric = ReflectionToolCallingMetricSyntactic()
+        # Create sample inputs with extra undefined parameter
+        prediction = ToolCall(
+            **{
+                "name": "get_weather",
+                "arguments": {"location": "San Francisco", "unknown_param": "value"},
+            }
+        )
+
+        references = []
+
+        task_data = {
+            "tools": [
+                {
+                    "name": "get_weather",
+                    "description": "Get the current weather in a given location",
+                    "parameters": {
+                        "type": "object",
+                        "required": ["location"],
+                        "properties": {"location": {"type": "string"}},
+                    },
+                }
+            ]
+        }
+
+        # Call the map method
+        result = metric.map(prediction, references, task_data)
+
+        # Assert expected results
+        self.assertFalse(result["overall_valid"], False)
+        self.assertFalse(result["metrics"]["non_existent_parameter"]["valid"])
+
+    def test_allowed_values_violation(self):
+        metric = ReflectionToolCallingMetricSyntactic()
+        # Create sample inputs with invalid enum value
+        prediction = ToolCall(
+            **{
+                "name": "get_weather",
+                "arguments": {"location": "San Francisco", "unit": "kelvin"},
+            }
+        )
+
+        references = [
+            {
+                "name": "get_weather",
+                "arguments": {"location": "San Francisco", "unit": "celsius"},
+            }
+        ]
+
+        task_data = {
+            "tools": [
+                {
+                    "name": "get_weather",
+                    "description": "Get the current weather in a given location",
+                    "parameters": {
+                        "type": "object",
+                        "required": ["location"],
+                        "properties": {
+                            "location": {"type": "string"},
+                            "unit": {
+                                "type": "string",
+                                "enum": ["celsius", "fahrenheit"],
+                            },
+                        },
+                    },
+                }
+            ]
+        }
+
+        # Call the map method
+        result = metric.map(prediction, references, task_data)
+
+        # Assert expected results
+        self.assertFalse(result["overall_valid"])
+        # With 1 invalid enum value out of 2 parameters, value precision should be 0.5
+        self.assertFalse(result["metrics"]["allowed_values_violation"]["valid"])
+        self.assertTrue(result["metrics"]["incorrect_parameter_type"]["valid"])
+
+    def test_json_schema_violation_specific_real_map(self):
+        metric = ReflectionToolCallingMetricSyntactic()
+        # Create sample inputs
+        prediction = ToolCall(
+            **{
+                "name": "get_weather",
+                "arguments": {"unit": "celsius"},
+            }
+        )
+
+        references = []
+
+        task_data = {
+            "tools": [
+                {
+                    "name": "get_weather",
+                    "description": "Get weather information",
+                    "parameters": {
+                        "type": "object",
+                        "required": ["location"],
+                        "properties": {
+                            "location": {"type": "string"},
+                            "unit": {"type": "string"},
+                        },
+                    },
+                },
+            ]
+        }
+
+        # Call the map method
+        result = metric.map(prediction, references, task_data)
+
+        # Assert expected results
+        self.assertFalse(result["overall_valid"])  # Overall validation fails
+        self.assertFalse(
+            result["metrics"]["missing_required_parameter"]["valid"]
+        )  # Missing required param
+        # json_schema_violation specifically should be 1.0 because it's marked valid
+        self.assertTrue(result["metrics"]["json_schema_violation"]["valid"])
+
+    def test_partial_recall_missing_parameters_real_map(self):
+        metric = ReflectionToolCallingMetricSyntactic()
+        """Test partial recall score when some but not all required parameters are missing."""
+        # Create sample inputs with one required parameter missing
+        prediction = ToolCall(
+            **{
+                "name": "get_weather",
+                "arguments": {"location": "San Francisco", "unit": "celsius"},
+            }
+        )
+
+        references = []
+
+        task_data = {
+            "tools": [
+                {
+                    "name": "get_weather",
+                    "description": "Get weather forecast",
+                    "parameters": {
+                        "type": "object",
+                        "required": ["location", "date"],
+                        "properties": {
+                            "location": {"type": "string"},
+                            "date": {"type": "string"},
+                            "unit": {"type": "string"},
+                        },
+                    },
+                }
+            ]
+        }
+
+        # Call the map method
+        result = metric.map(prediction, references, task_data)
+
+        # Assert partial recall - 1 out of 2 required parameters provided
+        self.assertFalse(result["overall_valid"])
+        self.assertFalse(result["metrics"]["missing_required_parameter"]["valid"])
+
+    def test_partial_precision_non_existent_parameters_real_map(self):
+        """Test partial precision score when some parameters don't exist in the schema."""
+        metric = ReflectionToolCallingMetricSyntactic()
+        # Create sample inputs with some invalid parameters
+        prediction = ToolCall(
+            **{
+                "name": "get_weather",
+                "arguments": {
+                    "location": "San Francisco",
+                    "date": "2025-08-19",
+                    "unit": "celsius",
+                    "invalid1": "value1",
+                    "invalid2": "value2",
+                    "invalid3": "value3",
+                },
+            }
+        )
+
+        references = []
+
+        task_data = {
+            "tools": [
+                {
+                    "name": "get_weather",
+                    "description": "Get weather forecast",
+                    "parameters": {
+                        "type": "object",
+                        "required": ["location", "date"],
+                        "properties": {
+                            "location": {"type": "string"},
+                            "date": {"type": "string"},
+                            "unit": {"type": "string"},
+                        },
+                    },
+                }
+            ]
+        }
+
+        # Call the map method
+        result = metric.map(prediction, references, task_data)
+
+        # Assert partial precision - 3 out of 6 parameters are valid
+        self.assertFalse(result["metrics"]["non_existent_parameter"]["valid"])
+        self.assertFalse(result["overall_valid"])
+
+    def test_partial_value_precision_type_errors_real_map(self):
+        """Test partial value precision when some parameters have incorrect types."""
+        metric = ReflectionToolCallingMetricSyntactic()
+        # Create sample inputs with some type errors
+        prediction = ToolCall(
+            **{
+                "name": "get_weather_stats",
+                "arguments": {
+                    "location": "San Francisco",
+                    "date": "2025-08-19",
+                    "temperature": "warm",  # Should be number
+                    "humidity": 75,  # Correct type
+                    "wind": 10.5,  # Correct type
+                    "count": "5",  # Should be integer
+                },
+            }
+        )
+
+        references = []
+
+        task_data = {
+            "tools": [
+                {
+                    "name": "get_weather_stats",
+                    "description": "Get detailed weather statistics",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "location": {"type": "string"},
+                            "date": {"type": "string"},
+                            "temperature": {"type": "number"},
+                            "humidity": {"type": "number"},
+                            "wind": {"type": "number"},
+                            "count": {"type": "integer"},
+                        },
+                    },
+                }
+            ]
+        }
+
+        # Call the map method
+        result = metric.map(prediction, references, task_data)
+
+        self.assertAlmostEqual(result["overall_valid"], False)
+        self.assertAlmostEqual(
+            result["metrics"]["incorrect_parameter_type"]["valid"], False
+        )
+
+    def test_partial_value_precision_enum_violations_real_map(self):
+        """Test partial value precision when some parameters have invalid enum values."""
+        metric = ReflectionToolCallingMetricSyntactic()
+        # Create sample inputs with some invalid enum values
+        prediction = ToolCall(
+            **{
+                "name": "get_weather",
+                "arguments": {
+                    "location": "San Francisco",
+                    "date": "2025-08-19",
+                    "unit": "kelvin",  # Invalid enum value
+                    "format": "full",  # Invalid enum value
+                    "include_map": True,  # Valid value
+                    "days": 5,  # Valid value
+                },
+            }
+        )
+
+        references = []
+
+        task_data = {
+            "tools": [
+                {
+                    "name": "get_weather",
+                    "description": "Get weather forecast",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "location": {"type": "string"},
+                            "date": {"type": "string"},
+                            "unit": {
+                                "type": "string",
+                                "enum": ["celsius", "fahrenheit"],
+                            },
+                            "format": {
+                                "type": "string",
+                                "enum": ["brief", "detailed"],
+                            },
+                            "include_map": {"type": "boolean"},
+                            "days": {"type": "integer"},
+                        },
+                    },
+                }
+            ]
+        }
+
+        # Call the map method
+        result = metric.map(prediction, references, task_data)
+
+        self.assertAlmostEqual(result["overall_valid"], False)
+        self.assertAlmostEqual(
+            result["metrics"]["allowed_values_violation"]["valid"], False
         )
 
     def test_tool_calling_key_value_metric(self):

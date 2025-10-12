@@ -5,7 +5,7 @@
         "input_type": "str",
         "output_type": "str",
         "choices": "List[str]",
-        "instruction": "str"
+        "instance_instruction": "str"
     },
     "reference_fields": {
         "choices": "List[str]",
@@ -16,6 +16,6 @@
     ],
     "augmentable_inputs": [
         "input",
-        "instruction"
+        "instance_instruction"
     ]
 }

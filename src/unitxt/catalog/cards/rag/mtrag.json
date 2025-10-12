@@ -12,6 +12,23 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "filter_by_condition",
+            "values": {
+                "Answerability": [
+                    [
+                        "UNANSWERABLE"
+                    ],
+                    [
+                        "ANSWERABLE"
+                    ],
+                    [
+                        "PARTIAL"
+                    ]
+                ]
+            },
+            "condition": "in"
+        },
+        {
             "__type__": "map_instance_values",
             "mappers": {
                 "Answerability": {
