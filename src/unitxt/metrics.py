@@ -5258,6 +5258,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
     # single_reference_per_prediction = True
     max_context_words = 4096
     reduction_map = {"mean": [main_score]}
+    model = None
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
