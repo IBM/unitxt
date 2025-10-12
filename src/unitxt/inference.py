@@ -3037,6 +3037,7 @@ class VLLMParamsMixin(Artifact):
 
 
 class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsMixin):
+    _requirements_list: list = ["vllm"]
     label = "vllm"
 
     def get_engine_id(self):
