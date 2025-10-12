@@ -32,3 +32,6 @@ runs:
         fi
         echo "Installing from URL: $URL"
         pip install --no-cache-dir --force-reinstall "$URL" ${{ inputs.pip-extra-args }}
+        echo "Downgrading pydantic as required LLM eval kit library"
+        pip install pydantic==2.11.3 
+

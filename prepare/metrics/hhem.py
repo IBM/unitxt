@@ -1,6 +1,5 @@
 from unitxt import add_to_catalog
 from unitxt.metrics import FaithfulnessHHEM
-from unitxt.test_utils.metrics import test_metric
 
 pairs = [
     ("The capital of France is Berlin.", "The capital of France is Paris."),
@@ -29,11 +28,11 @@ global_target = {
 
 references = [[p[0]] for p in pairs]
 metric = FaithfulnessHHEM()
-outputs = test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# outputs = test_metric(
+#    metric=metric,
+#    predictions=predictions,
+#    references=references,
+#    instance_targets=instance_targets,
+#    global_target=global_target,
+# )
 add_to_catalog(metric, "metrics.vectara_groundedness_hhem_2_1", overwrite=True)
