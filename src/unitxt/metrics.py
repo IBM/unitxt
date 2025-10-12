@@ -5258,12 +5258,11 @@ class FaithfulnessHHEM(BulkInstanceMetric):
     # single_reference_per_prediction = True
     max_context_words = 4096
     reduction_map = {"mean": [main_score]}
+    model = None
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
-    @retry_connection_with_exponential_backoff(backoff_factor=2)
-    def prepare(self):
-        super().prepare()
+    def load_model(self):
         import torch
 
         if torch.cuda.is_available():
@@ -5281,6 +5280,11 @@ class FaithfulnessHHEM(BulkInstanceMetric):
             model_path, trust_remote_code=True
         ).to(device)
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
+    def prepare(self):
+        super().prepare()
+        # load_model() moved from prepare() to compute() because model is gated in HF
+
     def compute(
         self,
         references: List[List[Any]],
@@ -5289,6 +5293,8 @@ class FaithfulnessHHEM(BulkInstanceMetric):
     ) -> List[Dict[str, Any]]:
         from tqdm import tqdm
 
+        if self.model is None:
+            self.load_model()
         # treat the references as the contexts and the predictions as answers
         # concat references
 
