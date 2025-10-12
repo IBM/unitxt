@@ -265,10 +265,9 @@ class EvalAssistLLMJudgeDirect(EvalAssistLLMJudge):
         results: list[DirectInstanceResult] = judge(
             instances=instances, criteria=eval_assist_criteria
         )
-
         parsed_results: list[dict] = [
             {
-                "selected_option": r.option,
+                "selected_option": r.selected_option,
                 "explanation": r.explanation,
                 "feedback": r.feedback if r.feedback is not None else None,
                 "prompt": r.metadata["prompt"],

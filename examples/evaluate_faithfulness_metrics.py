@@ -49,7 +49,7 @@ subsets = {
 
 benchmark = Benchmark(
     format="formats.empty",
-    max_samples_per_subset=20,
+    max_samples_per_subset=40,
     loader_limit=300,
     subsets=subsets,
 )
@@ -69,8 +69,23 @@ llm_as_judge_metric = f"metrics.llm_as_judge.direct.rits.llama3_3_70b[check_posi
 llm_score_name = "reference_document_faithfulness"
 metrics_to_score_names[llm_as_judge_metric] = llm_score_name
 
+llm_as_judge_metric = f"metrics.llm_as_judge.direct.watsonx.llama3_3_70b[check_positional_bias=False,criteria={criterion}, context_fields=[contexts,question]]"
+metrics_to_score_names[llm_as_judge_metric] = llm_score_name
+
 llm_as_judge_metric = f"metrics.llm_as_judge.evalassist.direct.rits.llama3_3_70b[criteria={criterion},context_fields=[contexts,question]]"
 metrics_to_score_names[llm_as_judge_metric] = llm_score_name
+
+llm_as_judge_metric = f"metrics.llm_as_judge.evalassist.direct.watsonx.llama3_3_70b[criteria={criterion},context_fields=[contexts,question]]"
+metrics_to_score_names[llm_as_judge_metric] = llm_score_name
+
+criterion = "metrics.llm_as_judge.direct.criteria.reference_document_faithfulness2"
+llm_score_name = "reference_document_faithfulness2"
+llm_as_judge_metric = f"metrics.llm_as_judge.evalassist.direct.rits.llama3_3_70b[criteria={criterion},context_fields=[contexts,question]]"
+metrics_to_score_names[llm_as_judge_metric] = llm_score_name
+
+llm_as_judge_metric = f"metrics.llm_as_judge.evalassist.direct.watsonx.llama3_3_70b[criteria={criterion},context_fields=[contexts,question]]"
+metrics_to_score_names[llm_as_judge_metric] = llm_score_name
+
 
 llm_as_judge_metric = (
     "metrics.rag.external_rag.faithfulness.llama_3_3_70b_instruct_watsonx_judge"
@@ -99,7 +114,9 @@ for metric, score_name in metrics_to_score_names.items():
         model = MetricInferenceEngine(metric=metric, prediction_field="answer")
         predictions = model(dataset)
         new_predictions = [prediction[score_name] for prediction in predictions]
-    results = evaluate(predictions=new_predictions, data=dataset)
+    results = evaluate(
+        predictions=new_predictions, data=dataset, calc_confidence_intervals=False
+    )
 
     sums = {}
     counts = {}

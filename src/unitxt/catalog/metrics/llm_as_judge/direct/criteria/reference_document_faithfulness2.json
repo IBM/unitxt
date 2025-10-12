@@ -1,0 +1,37 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "reference_document_faithfulness2",
+    "description": "\n          Is the prediction grounded in the reference document?\n\n          To be grounded in the reference document, all the information of the prediction must either be present in the reference documentor deducible from the reference document.\n\nBase your answer only on the information in the reference document If the prediction is correct but not present in the reference document then it is not grounded.\n        ",
+    "prediction_field": "response",
+    "context_fields": [
+        "reference_document"
+    ],
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Completely Grounded",
+            "description": "The prediction is fully grounded in the reference document."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Mostly grounded",
+            "description": "the vast majority of the information in the prediction is grounded in the reference document, but there is a small or negligible part of the prediction which is not present in the reference document"
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Somewhat grounded",
+            "description": "Some of the information in the prediction is grounded in the reference document."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Not grounded",
+            "description": "Most or all of the information in the prediction is not grounded in the reference documemnt"
+        }
+    ],
+    "option_map": {
+        "Completely Grounded": 1.0,
+        "Mostly grounded": 0.75,
+        "Somewhat grounded": 0.25,
+        "Not grounded": 0.0
+    }
+}

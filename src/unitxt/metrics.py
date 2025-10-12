@@ -3275,6 +3275,7 @@ class F1Binary(GlobalMetric):
             y_pred=int_predictions,
             labels=[0, 1],
             average=self.average,
+            zero_division=0,
         )
         if self.average is None:
             return {
