@@ -217,7 +217,7 @@ for new_catalog_name, base_catalog_name, main_score in [
     ),
     ("sentence_bert_bge", "metrics.sentence_bert.bge_large_en_1_5", "sbert_score"),
     ("sentence_bert_mini_lm", "metrics.sentence_bert.minilm_l12_v2", "sbert_score"),
-    ("vectara_hhem_2_1", "metrics.vectara_groundedness_hhem_2_1", "hhem_score"),
+    #   ("vectara_hhem_2_1", "metrics.vectara_groundedness_hhem_2_1", "hhem_score"), # Removed because it is gated
 ]:
     add_to_catalog_with_default(
         main_score,
