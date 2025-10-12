@@ -1185,7 +1185,7 @@ Base your answer only on the information in the reference document If the predic
         context_fields=["reference_document"],
         options=[
             CriteriaOption(
-                name="Completely Grounded",
+                name="Completely grounded",
                 description="The prediction is fully grounded in the reference document.",
             ),
             CriteriaOption(

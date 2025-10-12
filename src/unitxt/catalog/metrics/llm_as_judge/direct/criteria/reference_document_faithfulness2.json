@@ -9,7 +9,7 @@
     "options": [
         {
             "__type__": "criteria_option",
-            "name": "Completely Grounded",
+            "name": "Completely grounded",
             "description": "The prediction is fully grounded in the reference document."
         },
         {
