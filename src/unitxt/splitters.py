@@ -312,11 +312,14 @@ class DiverseLabelsSampler(Sampler):
         sample_size: int,
         instances_pool: List[Dict[str, object]],
         instance: Optional[Dict[str, object]],
+        sampling_seed: Optional[int] = None,
     ) -> List[Dict[str, object]]:
         if self.labels_cache is None:
             self.labels_cache = self.divide_by_repr(instances_pool)
         all_labels = list(self.labels_cache.keys())
-        random_generator = get_random_generator_based_on_instance(instance)
+        random_generator = get_random_generator_based_on_instance(
+            instance, local_seed=sampling_seed
+        )
         random_generator.shuffle(all_labels)
         from collections import Counter
 
