@@ -98,6 +98,7 @@ tests = [
     "SentencePiece",
     "fuzzywuzzy",
     "openai",
+    "ibm-generative-ai",
     "bs4",
     "tenacity==8.3.0",
     "accelerate",
@@ -106,7 +107,7 @@ tests = [
     "sqlglot",
     "sqlparse",
     "diskcache",
-    "pydantic==2.11.3", # for tests with LLMEvalKit
+    "pydantic",
     "jsonschema_rs"
 ]
 ui = [
