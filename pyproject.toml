@@ -109,7 +109,6 @@ tests = [
     "diskcache",
     "pydantic",
     "jsonschema_rs",
-    "evalassist",
     "vllm"
 ]
 ui = [
