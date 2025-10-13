@@ -105,7 +105,7 @@ for subset in ["clapnq", "cloud", "fiqa", "govt"]:
     card = TaskCard(
         loader=LoadJsonFile(
             files={
-                "test": f"https://github.com/IBM/mt-rag-benchmark/raw/refs/heads/main/corpora/{subset}.jsonl.zip"
+                "test": f"https://github.com/IBM/mt-rag-benchmark/raw/refs/heads/main/corpora/document_level/{subset}.jsonl.zip"
             },
             compression="zip",
             lines=True,

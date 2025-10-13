@@ -3,7 +3,7 @@
     "loader": {
         "__type__": "load_json_file",
         "files": {
-            "test": "https://github.com/IBM/mt-rag-benchmark/raw/refs/heads/main/corpora/fiqa.jsonl.zip"
+            "test": "https://github.com/IBM/mt-rag-benchmark/raw/refs/heads/main/corpora/document_level/fiqa.jsonl.zip"
         },
         "compression": "zip",
         "lines": true,
