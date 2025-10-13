@@ -3014,26 +3014,30 @@ class VLLMParamsMixin(Artifact):
     model: str
     n: int = 1
     best_of: Optional[int] = None
-    _real_n: Optional[int] = None
+    temperature: float = 1.0
+    top_p: float = 1.0
+    top_k: int = 0
+    min_p: float = 0.0
+    seed: Optional[int] = None
     presence_penalty: float = 0.0
     frequency_penalty: float = 0.0
     repetition_penalty: float = 1.0
-    temperature: float = 0.0
-    top_p: float = 1.0
-    top_k: int = -1
-    min_p: float = 0.0
-    seed: Optional[int] = None
     stop: Optional[Union[str, List[str]]] = None
     stop_token_ids: Optional[List[int]] = None
     bad_words: Optional[List[str]] = None
+    include_stop_str_in_output: bool = False
     ignore_eos: bool = False
     max_tokens: Optional[int] = 16
     min_tokens: int = 0
     logprobs: Optional[int] = None
     prompt_logprobs: Optional[int] = None
+    detokenize: bool = True
+    skip_special_tokens: bool = True
+    spaces_between_special_tokens: bool = True
 
 
 class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsMixin):
+    _requirements_list: list = ["vllm"]
     label = "vllm"
 
     def get_engine_id(self):
@@ -3047,7 +3051,6 @@ class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsM
         self.sampling_params = SamplingParams(**args)
         self.llm = LLM(
             model=self.model,
-            device="auto",
             trust_remote_code=True,
             max_num_batched_tokens=4096,
             gpu_memory_utilization=0.7,
@@ -3231,6 +3234,7 @@ _supported_apis = Literal[
     "vertex-ai",
     "replicate",
     "hf-local",
+    "vllm",
 ]
 
 
@@ -3477,6 +3481,7 @@ class CrossProviderInferenceEngine(
     provider_model_map["watsonx"] = {
         k: f"watsonx/{v}" for k, v in provider_model_map["watsonx-sdk"].items()
     }
+    provider_model_map["vllm"] = provider_model_map["hf-local"]
 
     _provider_to_base_class = {
         "watsonx": LiteLLMInferenceEngine,
@@ -3490,12 +3495,14 @@ class CrossProviderInferenceEngine(
         "vertex-ai": LiteLLMInferenceEngine,
         "replicate": LiteLLMInferenceEngine,
         "hf-local": HFAutoModelInferenceEngine,
+        "vllm": VLLMInferenceEngine,
     }
 
     _provider_param_renaming = {
         "watsonx-sdk": {"model": "model_name"},
         "rits": {"model": "model_name"},
         "hf-local": {"model": "model_name", "max_tokens": "max_new_tokens"},
+        "vllm": {"top_logprobs": "logprobs", "logprobs": "prompt_logprobs"},
     }
 
     def get_return_object(self, **kwargs):

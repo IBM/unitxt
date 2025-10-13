@@ -108,7 +108,8 @@ tests = [
     "sqlparse",
     "diskcache",
     "pydantic",
-    "jsonschema_rs"
+    "jsonschema_rs",
+    "vllm"
 ]
 ui = [
     "gradio",
@@ -128,7 +129,8 @@ inference-tests = [
   "tenacity",
   "diskcache",
   "numpy==1.26.4",
-  "ollama"
+  "ollama",
+  "vllm"
 ]
 assistant = [
     "streamlit",
