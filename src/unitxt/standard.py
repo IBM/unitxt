@@ -7,10 +7,10 @@ from .artifact import fetch_artifact
 from .augmentors import Augmentor, NullAugmentor
 from .card import TaskCard
 from .collections_operators import GetLength
-from .dataclass import Field, InternalField, NonPositionalField, OptionalField
+from .dataclass import InternalField, NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .error_utils import UnitxtError
-from .formats import Format, SystemFormat
+from .formats import Format
 from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
 from .operator import (
@@ -25,7 +25,7 @@ from .serializers import SingleTypeSerializer
 from .settings_utils import get_constants, get_settings
 from .splitters import ConstantSizeSample, RandomSizeSample, Sampler
 from .stream import MultiStream
-from .system_prompts import EmptySystemPrompt, SystemPrompt
+from .system_prompts import SystemPrompt
 from .task import Task
 from .templates import (
     ApplyRandomTemplate,
@@ -248,7 +248,7 @@ class DatasetRecipe(SourceSequentialOperator):
     card: TaskCard = None
     task: Task = None
     template: Union[Template, List[Template], TemplatesList] = None
-    system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
+    system_prompt: SystemPrompt = None
     format: Format = None
     serializer: Union[SingleTypeSerializer, List[SingleTypeSerializer]] = None
 
@@ -490,7 +490,10 @@ class DatasetRecipe(SourceSequentialOperator):
             if settings.default_format is not None:
                 self.format, _ = fetch_artifact(settings.default_format)
             else:
-                self.format = SystemFormat()
+                self.format, _ = fetch_artifact("formats.empty")
+
+        if self.system_prompt is None:
+            self.system_prompt, _ = fetch_artifact("system_prompts.empty")
 
         if self.card and self.card.preprocess_steps is None:
             self.card.preprocess_steps = []
