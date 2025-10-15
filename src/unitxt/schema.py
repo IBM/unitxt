@@ -171,6 +171,12 @@ class FinalizeDataset(InstanceOperatorValidator):
         task_data["metadata"]["template"] = self.artifact_to_jsonable(
             instance["recipe_metadata"]["template"]
         )
+        task_data["metadata"]["format"] = self.artifact_to_jsonable(
+            instance["recipe_metadata"]["format"]
+        )
+        task_data["metadata"]["system_prompt"] = self.artifact_to_jsonable(
+            instance["recipe_metadata"]["system_prompt"]
+        )
         if "criteria" in task_data and isinstance(task_data["criteria"], Artifact):
             task_data["criteria"] = self.artifact_to_jsonable(task_data["criteria"])
         if constants.demos_field in instance:
