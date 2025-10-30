@@ -750,13 +750,15 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         """Test saving only the summary results file (log_samples=False)."""
         # --- Arrange ---
         # (Arrange section remains the same as previous version)
-        mock_timestamp = "2025-04-14T08:00:00"
+        mock_timestamp = "2025-04-14T10:00:00"
         mock_now = MagicMock()
         mock_now.strftime.return_value = mock_timestamp
         mock_datetime.now.return_value = mock_now
         mock_utcnow = MagicMock()
         mock_utcnow.isoformat.return_value = "2025-04-14T08:00:00"
         mock_datetime.utcnow.return_value = mock_utcnow
+        mock_astimezone = MagicMock()
+        mock_astimezone.strftime.return_value = "2025-04-14T08:00:00"
 
         args = argparse.Namespace(
             log_samples=False,
