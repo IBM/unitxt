@@ -1892,9 +1892,9 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(reduced["overall_valid"], expected_overall_valid)
 
         # Static aggregated metrics, now flattened
-        # non_existent_function: True, False, True -> 2/3
+        # non_existent_function validity: True, False, True -> 2/3
         nef_expected = (1 + 0 + 1) / 3
-        # missing_required_parameter: True, False, False -> 1/3
+        # missing_required_parameter validity: True, False, False -> 1/3
         mrp_expected = (1 + 0 + 0) / 3
         self.assertIn("static_non_existent_function", reduced)
         self.assertIn("static_missing_required_parameter", reduced)
@@ -1914,15 +1914,15 @@ class TestMetrics(UnitxtTestCase):
             reduced["semantic_avg_score_function_selection"], semantic_avg_expected
         )
 
-        # Semantic issue rates for individual checks, flattened, mean of is_issue
-        # general_hallucination_check: False, True, False -> 1/3
-        ghc_expected = (0 + 1 + 0) / 3
-        # general_value_format_alignment: False, True, True -> 2/3
-        gvfa_expected = (0 + 1 + 1) / 3
-        # function_selection_appropriateness: False, True, False -> 1/3
-        fsa_expected = (0 + 1 + 0) / 3
-        # agentic_constraints_satisfaction: False, True, True -> 2/3
-        acs_expected = (0 + 1 + 1) / 3
+        # Semantic issue rates for individual checks, flattened, mean of 1 - is_issue
+        # general_hallucination_check: False, True, False -> 2/3
+        ghc_expected = (1 + 0 + 1) / 3
+        # general_value_format_alignment: False, True, True -> 1/3
+        gvfa_expected = (1 + 0 + 0) / 3
+        # function_selection_appropriateness: False, True, False -> 2/3
+        fsa_expected = (1 + 0 + 1) / 3
+        # agentic_constraints_satisfaction: False, True, True -> 1/3
+        acs_expected = (1 + 0 + 0) / 3
 
         self.assertIn("semantic_general_hallucination_check", reduced)
         self.assertIn("semantic_general_value_format_alignment", reduced)
