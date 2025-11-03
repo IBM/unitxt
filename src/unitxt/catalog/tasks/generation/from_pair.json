@@ -1,5 +1,8 @@
 {
-    "__type__": "task",
+    "__type__": {
+        "module": "unitxt.task",
+        "name": "Task"
+    },
     "input_fields": {
         "input_a": "Union[Text, Image, Audio, Table, Dialog]",
         "type_of_input_a": "str",

@@ -1,12 +1,21 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "akariasai/PopQA"
     },
     "preprocess_steps": [
         {
-            "__type__": "apply",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Apply"
+            },
             "function": "json.loads",
             "to_field": "possible_answers",
             "_argv": [
@@ -14,7 +23,10 @@
             ]
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": [
                 [
                     "prop_id",
@@ -23,18 +35,27 @@
             ]
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field": "obj",
             "to_field": "variant_id"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field": "prop",
             "to_field": "variant_type"
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "inputs": [
             "group_id",
             "id",
@@ -50,10 +71,16 @@
         ]
     },
     "templates": {
-        "__type__": "templates_list",
+        "__type__": {
+            "module": "unitxt.templates",
+            "name": "TemplatesList"
+        },
         "items": [
             {
-                "__type__": "multi_reference_template",
+                "__type__": {
+                    "module": "unitxt.templates",
+                    "name": "MultiReferenceTemplate"
+                },
                 "input_format": "Question: {question}\nAnswer:",
                 "references_field": "possible_answers",
                 "postprocessors": [
@@ -63,7 +90,10 @@
                 ]
             },
             {
-                "__type__": "multi_reference_template",
+                "__type__": {
+                    "module": "unitxt.templates",
+                    "name": "MultiReferenceTemplate"
+                },
                 "input_format": "Question: {question}\nI'm not certain, I think the answer is:",
                 "references_field": "possible_answers",
                 "postprocessors": [
@@ -73,7 +103,10 @@
                 ]
             },
             {
-                "__type__": "multi_reference_template",
+                "__type__": {
+                    "module": "unitxt.templates",
+                    "name": "MultiReferenceTemplate"
+                },
                 "input_format": "Question: {question}\nI'm absolutely sure the answer is:",
                 "references_field": "possible_answers",
                 "postprocessors": [

@@ -1,8 +1,14 @@
 {
-    "__type__": "post_process",
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "PostProcess"
+    },
     "process_references": false,
     "process_prediction": true,
     "operator": {
-        "__type__": "scale_number_to_zero_one_return_zero_if_fails"
+        "__type__": {
+            "module": "unitxt.processors",
+            "name": "ScaleNumberToZeroOneReturnZeroIfFails"
+        }
     }
 }

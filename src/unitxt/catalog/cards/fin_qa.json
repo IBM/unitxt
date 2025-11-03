@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadJsonFile"
+        },
         "files": {
             "train": "https://raw.githubusercontent.com/czyssrs/FinQA/0f16e2867befa6840783e58be38c9efb9229d742/dataset/train.json",
             "validation": "https://raw.githubusercontent.com/czyssrs/FinQA/0f16e2867befa6840783e58be38c9efb9229d742/dataset/dev.json",
@@ -13,50 +19,77 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "qa/question",
             "to_field": "question"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "qa/answer",
             "to_field": "answer"
         },
         {
-            "__type__": "cast",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Cast"
+            },
             "field": "qa/program",
             "to": "str",
             "to_field": "program_re"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "pre_text/0",
             "to_field": "pre_text"
         },
         {
-            "__type__": "get_length",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "GetLength"
+            },
             "field": "table",
             "to_field": "table_length"
         },
         {
-            "__type__": "filter_by_condition",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FilterByCondition"
+            },
             "values": {
                 "table_length": 1
             },
             "condition": "gt"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "post_text/0",
             "to_field": "post_text"
         },
         {
-            "__type__": "map_table_lists_to_std_table_json",
+            "__type__": {
+                "module": "unitxt.struct_data_operators",
+                "name": "MapTableListsToStdTableJSON"
+            },
             "field": "table"
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "inputs": {
             "pre_text": "str",
             "table": "Table",
@@ -80,7 +113,10 @@
     },
     "templates": [
         {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "instruction": "Presented with a financial report consisting of textual contents and a structured table, given a question, generate the reasoning program in the domain specific language (DSL) that will be executed to get the answer. \nThe DSL consists of mathematical operations and table operations as executable programs. The program consists of a sequence of operations. Each operation takes a list of arguments. \nThere are 6 mathematical operations: add, subtract, multiply, divide, greater, exp, and 4 table aggregation operations table-max, table-min, table-sum, table-average, that apply aggregation operations on table rows. The mathematical operations take arguments of either numbers from the given reports, or a numerical result from a previous step.\nThe table operations take arguments of table row names. We use the special token #n to denote the result from the nth step. \nFor example, in the example \"divide(9413, 20.01), divide(8249, 9.48), subtract(#0, #1)\", the program consists of 3 steps; The first and the second division steps take arguments from the table and the text, respectively, then the third step subtracts the results from the two previous steps.\n                Definitions of all operations:\n                [[\"Name\", \"Arguments\", \"Output\", \"Description\"],\n                [\"add\", \"number1, number2\", \"number\", \"add two numbers: number1 + number2\"],\n                [\"subtract\", \"number1, number2\", \"number\", \"subtract two numbers: number1 - number2\"],\n                [\"multiply\", \"number1, number2\", \"number\", \"multiply two numbers: number1 * number2\"],\n                [\"divide\", \"number1, number2\", \"number\", \"multiply two numbers: number1 / number2\"],\n                [\"exp\", \"number1, number2\", \"number\", \"exponential: number1 ^ number2\"],\n                [\"greater\", \"number1, number2\", \"bool\", \"comparison: number1 > number2\"],\n                [\"table-sum\", \"table header\", \"number\", \"the summation of one table row\"],\n                [\"table-average\", \"table header\", \"number\", \"the average of one table row\"],\n                [\"table-max\", \"table header\", \"number\", \"the maximum number of one table row\"],\n                [\"table-min\", \"table header\", \"number\", \"the minimum number of one table row\"]]\n                \nAnswer with only the program, without any additional explanation or introductory text.\n                \nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.\n                ",
             "input_format": "Pre-table text: {pre_text}\n                Table: {table}\n                Post-table text: {post_text}\n                Question: {question}\n                Program:\n                    ",
             "output_format": "{program_re}",

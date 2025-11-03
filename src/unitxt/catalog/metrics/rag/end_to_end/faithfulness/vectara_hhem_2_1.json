@@ -1,9 +1,15 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricPipeline"
+    },
     "main_score": "hhem_score",
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "prediction/contexts": "references",
                 "prediction/answer": "prediction"

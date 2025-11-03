@@ -1,16 +1,25 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricPipeline"
+    },
     "main_score": "precision",
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "task_data/contexts",
             "to_field": "references"
         }
     ],
     "postprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "score/instance/f1": "score/instance/faithfullness_f1_token_overlap",
                 "score/instance/recall": "score/instance/faithfullness_recall_token_overlap",

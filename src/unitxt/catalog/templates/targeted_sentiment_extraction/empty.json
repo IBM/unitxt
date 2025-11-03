@@ -1,5 +1,8 @@
 {
-    "__type__": "span_labeling_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "SpanLabelingTemplate"
+    },
     "input_format": "{text}",
     "postprocessors": [
         "processors.to_span_label_pairs"

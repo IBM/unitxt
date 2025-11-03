@@ -1,13 +1,22 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "cais/mmlu",
         "name": "moral_disputes"
     },
     "preprocess_steps": [
         {
-            "__type__": "deduplicate",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Deduplicate"
+            },
             "by": [
                 "question",
                 "subject",
@@ -16,13 +25,19 @@
             ]
         },
         {
-            "__type__": "rename_splits",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "RenameSplits"
+            },
             "mapper": {
                 "dev": "train"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "topic": "moral disputes"
             }

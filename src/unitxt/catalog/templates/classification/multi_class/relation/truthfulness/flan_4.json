@@ -1,5 +1,8 @@
 {
-    "__type__": "input_output_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "InputOutputTemplate"
+    },
     "input_format": "input question: Is it true that \"{text_b}\" if \"{text_a}\" is true?",
     "output_format": "{label}",
     "target_prefix": "output answer:",

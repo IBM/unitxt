@@ -433,4 +433,7 @@ outputs = test_metric(
     global_target=global_target,
 )
 
-add_to_catalog(metric, "metrics.ner", overwrite=True)
+if __name__ == "__main__" or __name__ == "custom_f1":
+    # because a class is defined in this module, need to not add_to_catalog just for importing that module in order to retrieve the defined class
+    # and need to prepare for case when this module is run directly from python (__main__) or, for example, from test_preparation (custom_f1)
+    add_to_catalog(metric, "metrics.ner", overwrite=True)

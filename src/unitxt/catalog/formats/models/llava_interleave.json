@@ -1,4 +1,7 @@
 {
-    "__type__": "hf_system_format",
+    "__type__": {
+        "module": "unitxt.formats",
+        "name": "HFSystemFormat"
+    },
     "model_name": "llava-hf/llava-interleave-qwen-0.5b-hf"
 }

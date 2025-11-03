@@ -1,56 +1,89 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "Anthropic/hh-rlhf"
     },
     "preprocess_steps": [
         "splitters.small_no_dev",
         {
-            "__type__": "strip",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Strip"
+            },
             "field": "chosen"
         },
         {
-            "__type__": "replace",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Replace"
+            },
             "field": "chosen",
             "old": "\n\n",
             "new": "\n"
         },
         {
-            "__type__": "split",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Split"
+            },
             "field": "chosen",
             "by": "\nAssistant:"
         },
         {
-            "__type__": "get",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Get"
+            },
             "field": "chosen",
             "item": -1,
             "to_field": "output_choice"
         },
         {
-            "__type__": "slice",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Slice"
+            },
             "field": "chosen",
             "stop": -1
         },
         {
-            "__type__": "join",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Join"
+            },
             "field": "chosen",
             "by": "\nAssistant:",
             "to_field": "input"
         },
         {
-            "__type__": "split",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Split"
+            },
             "field": "rejected",
             "by": "\nAssistant:"
         },
         {
-            "__type__": "get",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Get"
+            },
             "field": "rejected",
             "item": -1,
             "to_field": "output_rejected"
         },
         {
-            "__type__": "list_field_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ListFieldValues"
+            },
             "fields": [
                 "output_choice",
                 "output_rejected"
@@ -58,11 +91,17 @@
             "to_field": "choices"
         },
         {
-            "__type__": "shuffle_field_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ShuffleFieldValues"
+            },
             "field": "choices"
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "input_type": "dialog",
                 "output_type": "response",
@@ -70,7 +109,10 @@
             }
         },
         {
-            "__type__": "index_of",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "IndexOf"
+            },
             "search_in": "choices",
             "index_of": "output_choice",
             "to_field": "output_choice"

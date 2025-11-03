@@ -1,5 +1,8 @@
 {
-    "__type__": "dataset_recipe",
+    "__type__": {
+        "module": "unitxt.standard",
+        "name": "DatasetRecipe"
+    },
     "demos_pool_size": 100,
     "num_demos": 2,
     "demos_taken_from": "train",

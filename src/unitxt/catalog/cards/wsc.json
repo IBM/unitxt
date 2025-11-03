@@ -1,14 +1,23 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "super_glue",
         "name": "wsc"
     },
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "label": {
                     "0": "False",
@@ -17,7 +26,10 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "choices": [
                     "False",
@@ -27,7 +39,10 @@
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": [
             "choices",
             "text",
@@ -43,7 +58,10 @@
     },
     "templates": [
         {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "Given this sentence: {text} classify if \"{span2_text}\" refers to \"{span1_text}\".",
             "output_format": "{label}"
         }

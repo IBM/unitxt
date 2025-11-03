@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "rag-datasets/rag-mini-wikipedia",
         "name": "question-answer",
         "data_classification_policy": [
@@ -10,19 +16,28 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "SplitRandomMix"
+            },
             "mix": {
                 "train": "test[70%]",
                 "test": "test[30%]"
             }
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "id",
             "to_field": "question_id"
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "answer",
             "inside": "list",
             "to_field": "reference_answers"

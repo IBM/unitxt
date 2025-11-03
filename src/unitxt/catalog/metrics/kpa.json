@@ -1,3 +1,6 @@
 {
-    "__type__": "kpa"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "KPA"
+    }
 }

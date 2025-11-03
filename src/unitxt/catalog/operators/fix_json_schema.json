@@ -1,5 +1,8 @@
 {
-    "__type__": "recursive_replace",
+    "__type__": {
+        "module": "unitxt.operators",
+        "name": "RecursiveReplace"
+    },
     "key": "type",
     "map_values": {
         "dict": "object",

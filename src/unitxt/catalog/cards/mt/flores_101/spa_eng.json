@@ -1,10 +1,19 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "multiple_source_loader",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "MultipleSourceLoader"
+        },
         "sources": [
             {
-                "__type__": "load_hf",
+                "__type__": {
+                    "module": "unitxt.loaders",
+                    "name": "LoadHF"
+                },
                 "path": "gsarti/flores_101",
                 "data_dir": "all/devtest",
                 "data_classification_policy": [
@@ -16,7 +25,10 @@
                 ]
             },
             {
-                "__type__": "load_hf",
+                "__type__": {
+                    "module": "unitxt.loaders",
+                    "name": "LoadHF"
+                },
                 "path": "gsarti/flores_101",
                 "data_dir": "all",
                 "data_classification_policy": [
@@ -31,20 +43,29 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_splits",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "RenameSplits"
+            },
             "mapper": {
                 "train": "test"
             }
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "sentence_spa": "text",
                 "sentence_eng": "translation"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "source_language": "spanish",
                 "target_language": "english"

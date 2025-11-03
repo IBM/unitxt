@@ -1,5 +1,8 @@
 {
-    "__type__": "multiple_choice_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "MultipleChoiceTemplate"
+    },
     "input_format": "Consider the given context and choose the appropriate answer to the question by selecting one option among {numerals}. Please provide your answer using a single letter, uppercase, without any explanations or any other characters.\nContext:\n{context}\nQuestion:\n{question}\nChoices:\n{choices}",
     "target_prefix": "Answer:\n",
     "target_field": "answer",

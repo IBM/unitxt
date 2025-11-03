@@ -36,4 +36,4 @@ jobs:
      - run: uv pip install --system -e ".[tests]"
 
      - name: Run Tests
-       run: python utils/prepare_all_artifacts.py
+       run: python utils/check_catalog_consistency.py

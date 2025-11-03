@@ -1,3 +1,6 @@
 {
-    "__type__": "substring"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "Substring"
+    }
 }

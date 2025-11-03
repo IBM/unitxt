@@ -1,15 +1,24 @@
 {
-    "__type__": "dialog_pairwise_choice_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "DialogPairwiseChoiceTemplate"
+    },
     "dialog_fields": [
         {
-            "__type__": "dialog_fields_data",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "DialogFieldsData"
+            },
             "dialog_field": "dialog_a",
             "assistant_role_label": "### Assistant A:",
             "user_role_label": "### User:",
             "system_role_label": "### System:"
         },
         {
-            "__type__": "dialog_fields_data",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "DialogFieldsData"
+            },
             "dialog_field": "dialog_b",
             "assistant_role_label": "### Assistant B:",
             "user_role_label": "### User:",

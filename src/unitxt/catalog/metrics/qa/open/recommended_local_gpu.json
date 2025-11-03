@@ -1,5 +1,8 @@
 {
-    "__type__": "metrics_list",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricsList"
+    },
     "items": [
         "metrics.sentence_bert.bge_large_en_1_5"
     ]

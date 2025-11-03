@@ -1,14 +1,23 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricPipeline"
+    },
     "main_score": "match_at_1",
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "context_ids",
             "to_field": "prediction"
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "ground_truths_context_ids",
             "inside": "list",
             "to_field": "references"

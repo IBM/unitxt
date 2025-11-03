@@ -1,4 +1,7 @@
 {
-    "__type__": "get_string_after",
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "GetStringAfter"
+    },
     "substring": ":"
 }

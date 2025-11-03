@@ -1,5 +1,8 @@
 {
-    "__type__": "templates_list",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "TemplatesList"
+    },
     "items": [
         "templates.summarization.abstractive.instruct_full",
         "templates.summarization.abstractive.instruct_one_sentence",

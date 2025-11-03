@@ -1,8 +1,14 @@
 {
-    "__type__": "post_process",
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "PostProcess"
+    },
     "process_references": true,
     "process_prediction": true,
     "operator": {
-        "__type__": "str_to_float_format"
+        "__type__": {
+            "module": "unitxt.processors",
+            "name": "StrToFloatFormat"
+        }
     }
 }

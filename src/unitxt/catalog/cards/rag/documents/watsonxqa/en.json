@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "ibm-research/watsonxDocsQA",
         "name": "corpus",
         "data_classification_policy": [
@@ -10,12 +16,18 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "doc_id",
             "to_field": "document_id"
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "document",
             "inside": "list",
             "to_field": "passages"
@@ -24,7 +36,10 @@
     "task": "tasks.rag.corpora",
     "templates": {
         "empty": {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "",
             "output_format": ""
         }

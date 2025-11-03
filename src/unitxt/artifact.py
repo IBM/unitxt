@@ -1,11 +1,14 @@
-import difflib
+import importlib
 import inspect
 import json
 import os
-import pkgutil
 import re
+import subprocess
+import sys
+import sysconfig
 import warnings
 from abc import abstractmethod
+from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple, Union, final
 
 from .dataclass import (
@@ -22,7 +25,7 @@ from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
 )
 from .settings_utils import get_constants, get_settings
-from .text_utils import camel_to_snake_case, is_camel_case
+from .text_utils import snake_to_camel_case
 from .type_utils import isoftype, issubtype
 from .utils import (
     artifacts_json_cache,
@@ -34,6 +37,298 @@ from .utils import (
 logger = get_logger()
 settings = get_settings()
 constants = get_constants()
+
+
+@lru_cache(maxsize=1)
+def _get_stdlib_path():
+    return sysconfig.get_path("stdlib")
+
+
+@lru_cache(maxsize=1)
+def _get_site_packages_path():
+    return sysconfig.get_path("purelib")
+
+
+@lru_cache(maxsize=1)
+def _get_stdlib_pattern():
+    return re.compile(r"/lib/python\d+\.\d+/")
+
+
+@lru_cache(maxsize=1)
+def _get_all_site_packages_paths():
+    paths = []
+    # Get standard paths
+    paths.append(sysconfig.get_path("purelib"))
+    paths.append(sysconfig.get_path("platlib"))
+    # Also check sys.path for additional site-packages and dist-packages
+    for path in sys.path:
+        if "site-packages" in path or "dist-packages" in path:
+            paths.append(path)
+    return list(set(paths))  # Remove duplicates
+
+
+@lru_cache(maxsize=1)
+def _get_site_packages_files():
+    all_files = {}
+    for site_packages in _get_all_site_packages_paths():
+        if os.path.exists(site_packages):
+            try:
+                files = os.listdir(site_packages)
+                all_files[site_packages] = frozenset(files)
+            except (OSError, PermissionError):
+                all_files[site_packages] = frozenset()
+    return all_files
+
+
+@lru_cache(maxsize=1)
+def _get_editable_packages():
+    editable_packages = set()
+    all_site_packages_files = _get_site_packages_files()
+
+    for _, files in all_site_packages_files.items():
+        for filename in files:
+            if filename.endswith(".egg-link"):
+                # Extract package name from egg-link file
+                package_name = filename[:-9]  # Remove .egg-link
+                editable_packages.add(package_name)
+            elif filename.endswith(".pth"):
+                if filename.startswith("__editable__."):
+                    # Modern pip editable installs: __editable__.package.pth
+                    parts = filename.split(".")
+                    if len(parts) >= 3:
+                        package_name = parts[1]
+                        editable_packages.add(package_name)
+                # Also check for other .pth files that might contain package names
+                # This mimics the original glob pattern *{package_name}*.pth behavior
+                # but we'll check this during the main function call
+
+    return frozenset(editable_packages)
+
+
+# flake8: noqa: C901
+@lru_cache(maxsize=512)
+def is_library_module(module_name):
+    r"""Determines if a given module is a library module (as opposed to a local/project module).
+
+    A module is considered a library module if it falls into any of these categories:
+
+    1. **Built-in modules**: Modules with no __file__ attribute or __file__ = None
+       - Examples: sys, builtins, __main__
+
+    2. **Standard library modules**: Modules that are part of Python's standard library
+       - Direct path match: modules in sysconfig.get_path('stdlib')
+       - Pattern match: modules in paths matching /lib/python\\d+\\.\\d+/ (but not in site-packages)
+       - Examples: os, json, re, collections, urllib.parse
+
+    3. **Installed packages**: Third-party packages installed via pip/conda
+       - Modules in site-packages or dist-packages directories
+       - Examples: requests, numpy, pandas
+
+    4. **Editable installs**: Development packages installed with pip install -e
+       - Modules outside site-packages but with corresponding installation files:
+         - .egg-link files (older pip versions)
+         - .pth files (various installation methods)
+         - __editable__.{package}.pth files (modern pip versions)
+       - Examples: local packages installed in development mode
+
+    Returns False for:
+    - **Local/project modules**: Modules that are part of the current project but not installed
+    - **Non-existent modules**: Modules that cannot be imported
+    - **Invalid input**: Empty strings, None, or other invalid module names
+
+    Args:
+        module_name (str): The name of the module to check (e.g., 'os', 'requests.api')
+
+    Returns:
+        bool: True if the module is a library module, False otherwise
+
+    Raises:
+        ValueError: If module_name is an empty string
+        TypeError: If module_name is None or not a string
+
+    Examples:
+        >>> is_library_module('os')           # Standard library
+        True
+        >>> is_library_module('requests')     # Installed package
+        True
+        >>> is_library_module('my_project')   # Local module
+        False
+        >>> is_library_module('unitxt')       # Editable install
+        True
+    """
+    if (
+        module_name is None
+        or (not isinstance(module_name, str))
+        or len(module_name) == 0
+    ):
+        return False
+
+    """Determines if a given module is a library module (as opposed to a local/project module).
+    Fully cached version that minimizes all OS operations.
+    """
+    if not module_name or not isinstance(module_name, str):
+        return False
+
+    if module_name not in sys.modules:
+        try:
+            __import__(module_name)
+        except ImportError:
+            return False
+
+    module = sys.modules[module_name]
+
+    # Built-in modules
+    if not hasattr(module, "__file__") or module.__file__ is None:
+        return True
+
+    file_path = module.__file__
+
+    # Check for standard library (cached path)
+    stdlib_path = _get_stdlib_path()
+    if file_path.startswith(stdlib_path):
+        return True
+
+    # Check stdlib pattern (cached regex)
+    stdlib_pattern = _get_stdlib_pattern()
+    if stdlib_pattern.search(file_path) and "site-packages" not in file_path:
+        return True
+
+    # Check if it's in site-packages
+    if any(pkg_dir in file_path for pkg_dir in ["site-packages", "dist-packages"]):
+        return True
+
+    # Check for editable installs (cached set + additional .pth file check)
+    package_name = module_name.split(".")[0]
+    editable_packages = _get_editable_packages()
+    if package_name in editable_packages:
+        return True
+
+    # Additional check for .pth files containing package name (mimics original glob behavior)
+    all_site_packages_files = _get_site_packages_files()
+    for _, files in all_site_packages_files.items():
+        for filename in files:
+            if filename.endswith(".pth") and package_name in filename:
+                return True
+
+    return False
+
+
+def import_module_from_file(file_path):
+    # Get the module name (file name without extension)
+    module_name = os.path.splitext(os.path.basename(file_path))[0]
+    # Create a module specification
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    # Create a new module based on the specification
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+# type is the dict read from a catelog entry, the value of a key "__type__"
+def get_module_class_names(artifact_type: dict):
+    return artifact_type["module"], artifact_type["name"]
+
+
+def convert_str_type_to_dict(type: str) -> dict:
+    class_name = snake_to_camel_case(type)
+    module, class_name = find_unitxt_module_and_class_by_classname(
+        camel_case_class_name=class_name
+    )
+    return {
+        "module": module,
+        "name": class_name,
+    }
+
+
+# type is the dict read from a catelog entry, the value of a key "__type__"
+def get_class_from_artifact_type(type: dict):
+    if isinstance(type, str):
+        if type in Artifact._class_register:
+            return Artifact._class_register[type]
+
+        module_path, class_name = find_unitxt_module_and_class_by_classname(
+            snake_to_camel_case(type)
+        )
+    else:
+        module_path, class_name = get_module_class_names(type)
+
+    if module_path == "class_register":
+        if class_name not in Artifact._class_register:
+            raise ValueError(
+                f"Can not instantiate a class from type {type}, because {class_name} is currently not registered in Artifact._class_register."
+            )
+        return Artifact._class_register[class_name]
+
+    module = importlib.import_module(module_path)
+
+    if "." not in class_name:
+        if hasattr(module, class_name) and inspect.isclass(getattr(module, class_name)):
+            return getattr(module, class_name)
+        if class_name in Artifact._class_register:
+            return Artifact._class_register[class_name]
+        module_file = module.__file__ if hasattr(module, "__file__") else None
+        if module_file:
+            module = import_module_from_file(module_file)
+
+        assert class_name in Artifact._class_register
+        return Artifact._class_register[class_name]
+
+    class_name_components = class_name.split(".")
+    klass = getattr(module, class_name_components[0])
+    for i in range(1, len(class_name_components)):
+        klass = getattr(klass, class_name_components[i])
+    return klass
+
+
+def get_class_or_function_from_artifact_type(type: dict):
+    module_path, class_name = get_module_class_names(type)
+    module = importlib.import_module(module_path)
+
+    if "." not in class_name:
+        return getattr(module, class_name)
+
+    class_name_components = class_name.split(".")
+    klass = getattr(module, class_name_components[0])
+    for i in range(1, len(class_name_components)):
+        klass = getattr(klass, class_name_components[i])
+    return klass
+
+
+def is_artifact_dict(obj):
+    return isinstance(obj, dict) and "__type__" in obj
+
+
+def verify_artifact_dict(d):
+    if not isinstance(d, dict):
+        raise ValueError(
+            f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'."
+        )
+    if "__type__" not in d:
+        raise MissingArtifactTypeError(d)
+
+
+def from_dict(d, overwrite_args=None):
+    if overwrite_args is not None:
+        d = {**d, **overwrite_args}
+    verify_artifact_dict(d)
+    return _recursive_load(d)
+
+
+def _recursive_load(obj):
+    if isinstance(obj, dict):
+        obj = {key: _recursive_load(value) for key, value in obj.items()}
+        if is_artifact_dict(obj):
+            try:
+                artifact_type = obj.pop("__type__")
+                artifact_class = get_class_from_artifact_type(artifact_type)
+                obj = artifact_class.process_data_after_load(obj)
+                return artifact_class(**obj)
+            except (ImportError, AttributeError) as e:
+                raise UnrecognizedArtifactTypeError(artifact_type) from e
+    elif isinstance(obj, list):
+        return [_recursive_load(value) for value in obj]
+
+    return obj
 
 
 def is_name_legal_for_catalog(name):
@@ -133,21 +428,10 @@ def maybe_recover_artifacts_structure(obj):
     return obj
 
 
-def get_closest_artifact_type(type):
-    artifact_type_options = list(Artifact._class_register.keys())
-    matches = difflib.get_close_matches(type, artifact_type_options)
-    if matches:
-        return matches[0]  # Return the closest match
-    return None
-
-
 class UnrecognizedArtifactTypeError(ValueError):
     def __init__(self, type) -> None:
-        maybe_class = "".join(word.capitalize() for word in type.split("_"))
-        message = f"'{type}' is not a recognized artifact 'type'. Make sure a the class defined this type (Probably called '{maybe_class}' or similar) is defined and/or imported anywhere in the code executed."
-        closest_artifact_type = get_closest_artifact_type(type)
-        if closest_artifact_type is not None:
-            message += f"\n\nDid you mean '{closest_artifact_type}'?"
+        maybe_class = type["name"].split(".")[-1]
+        message = f"'{type}' is not a recognized artifact 'type'. Make sure a class (Probably called '{maybe_class}' or similar) is defined and/or imported anywhere in the code executed."
         super().__init__(message)
 
 
@@ -162,7 +446,7 @@ class MissingArtifactTypeError(ValueError):
 class Artifact(Dataclass):
     _class_register = {}
 
-    __type__: str = Field(default=None, final=True, init=False)
+    __type__: dict = Field(default=None, final=True, init=False)
     __title__: str = NonPositionalField(
         default=None, required=False, also_positional=False
     )
@@ -184,54 +468,35 @@ class Artifact(Dataclass):
         default=None, required=False, also_positional=False
     )
 
-    @classmethod
-    def is_artifact_dict(cls, obj):
-        return isinstance(obj, dict) and "__type__" in obj
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        module = inspect.getmodule(cls)
+        # standardize module name
+        module_name = getattr(module, "__name__", None)
+        if not is_library_module(module_name):
+            cls.register_class()
 
     @classmethod
     def is_possible_identifier(cls, obj):
-        return isinstance(obj, str) or cls.is_artifact_dict(obj)
-
-    @classmethod
-    def verify_artifact_dict(cls, d):
-        if not isinstance(d, dict):
-            raise ValueError(
-                f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'."
-            )
-        if "__type__" not in d:
-            raise MissingArtifactTypeError(d)
-        if not cls.is_registered_type(d["__type__"]):
-            raise UnrecognizedArtifactTypeError(d["__type__"])
+        return isinstance(obj, str) or is_artifact_dict(obj)
 
     @classmethod
     def get_artifact_type(cls):
-        return camel_to_snake_case(cls.__name__)
+        module = inspect.getmodule(cls)
+        # standardize module name
+        module_name = getattr(module, "__name__", None)
+        if not is_library_module(module_name):
+            non_library_module_warning = f"module named {module_name} is not importable. Class {cls} is thus registered into Artifact.class_register, indexed by {cls.__name__}, accessible there as long as this class_register lives."
+            warnings.warn(non_library_module_warning, ImportWarning, stacklevel=2)
+            cls.register_class()
+            return {"module": "class_register", "name": cls.__name__}
+        if hasattr(cls, "__qualname__") and "." in cls.__qualname__:
+            return {"module": module_name, "name": cls.__qualname__}
+        return {"module": module_name, "name": cls.__name__}
 
     @classmethod
-    def register_class(cls, artifact_class):
-        assert issubclass(
-            artifact_class, Artifact
-        ), f"Artifact class must be a subclass of Artifact, got '{artifact_class}'"
-        assert is_camel_case(
-            artifact_class.__name__
-        ), f"Artifact class name must be legal camel case, got '{artifact_class.__name__}'"
-
-        snake_case_key = camel_to_snake_case(artifact_class.__name__)
-
-        if cls.is_registered_type(snake_case_key):
-            assert (
-                str(cls._class_register[snake_case_key]) == str(artifact_class)
-            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for {cls._class_register[snake_case_key]}. Cannot be overridden by {artifact_class}."
-
-            return snake_case_key
-
-        cls._class_register[snake_case_key] = artifact_class
-
-        return snake_case_key
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.register_class(cls)
+    def register_class(cls):
+        Artifact._class_register[cls.__name__] = cls
 
     @classmethod
     def is_artifact_file(cls, path):
@@ -239,58 +504,22 @@ class Artifact(Dataclass):
             return False
         with open(path) as f:
             d = json.load(f)
-        return cls.is_artifact_dict(d)
-
-    @classmethod
-    def is_registered_type(cls, type: str):
-        return type in cls._class_register
-
-    @classmethod
-    def is_registered_class_name(cls, class_name: str):
-        snake_case_key = camel_to_snake_case(class_name)
-        return cls.is_registered_type(snake_case_key)
-
-    @classmethod
-    def is_registered_class(cls, clz: object):
-        return clz in set(cls._class_register.values())
-
-    @classmethod
-    def _recursive_load(cls, obj):
-        if isinstance(obj, dict):
-            new_d = {}
-            for key, value in obj.items():
-                new_d[key] = cls._recursive_load(value)
-            obj = new_d
-        elif isinstance(obj, list):
-            obj = [cls._recursive_load(value) for value in obj]
-        else:
-            pass
-        if cls.is_artifact_dict(obj):
-            cls.verify_artifact_dict(obj)
-            artifact_class = cls._class_register[obj.pop("__type__")]
-            obj = artifact_class.process_data_after_load(obj)
-            return artifact_class(**obj)
-
-        return obj
-
-    @classmethod
-    def from_dict(cls, d, overwrite_args=None):
-        if overwrite_args is not None:
-            d = {**d, **overwrite_args}
-        cls.verify_artifact_dict(d)
-        return cls._recursive_load(d)
+        return is_artifact_dict(d)
 
     @classmethod
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
         d = artifacts_json_cache(path)
-        if "__type__" in d and d["__type__"] == "artifact_link":
-            cls.from_dict(d)  # for verifications and warnings
-            catalog, artifact_rep, _ = get_catalog_name_and_args(name=d["to"])
-            return catalog.get_with_overwrite(
-                artifact_rep, overwrite_args=overwrite_args
-            )
+        if "__type__" in d:
+            if isinstance(d["__type__"], str):
+                d["__type__"] = convert_str_type_to_dict(d["__type__"])
+            if d["__type__"]["name"].endswith("ArtifactLink"):
+                from_dict(d)  # for verifications and warnings
+                catalog, artifact_rep, _ = get_catalog_name_and_args(name=d["to"])
+                return catalog.get_with_overwrite(
+                    artifact_rep, overwrite_args=overwrite_args
+                )
 
-        new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
+        new_artifact = from_dict(d, overwrite_args=overwrite_args)
         new_artifact.__id__ = artifact_identifier
         return new_artifact
 
@@ -329,7 +558,19 @@ class Artifact(Dataclass):
 
     @final
     def __post_init__(self):
-        self.__type__ = self.register_class(self.__class__)
+        # record module and class name as they are, without verifying instantiationability via python imports
+        module = inspect.getmodule(self.__class__)
+        # standardize module name
+        module_name = getattr(module, "__name__", None)
+        class_name = (
+            self.__class__.__qualname__
+            if hasattr(self.__class__, "__qualname__")
+            and "." in self.__class__.__qualname__
+            else self.__class__.__name__
+        )
+        self.__type__ = {"module": module_name, "name": class_name}
+        ## now verify
+        self.maybe_fix_type_to_ensure_instantiation_ability()
 
         for field in fields(self):
             if issubtype(
@@ -356,7 +597,11 @@ class Artifact(Dataclass):
     def __deepcopy__(self, memo):
         if id(self) in memo:
             return memo[id(self)]
-        new_obj = Artifact.from_dict(self.to_dict())
+        try:
+            new_obj = from_dict(self.to_dict())
+        except:
+            # needed only for artifacts defined inline for testing etc. E.g. 'NERWithoutClassReporting'
+            new_obj = self
         memo[id(self)] = new_obj
         return new_obj
 
@@ -383,8 +628,20 @@ class Artifact(Dataclass):
             return self.__id__
         return self.to_json()
 
+    def maybe_fix_type_to_ensure_instantiation_ability(self):
+        if (
+            not is_library_module(self.__type__["module"])
+            or "<locals>" in self.__type__["name"]
+        ):
+            self.__class__.register_class()
+            self.__type__ = {
+                "module": "class_register",
+                "name": self.__class__.__name__,
+            }
+            return
+
     def save(self, path):
-        original_args = Artifact.from_dict(self.to_dict()).get_repr_dict()
+        original_args = from_dict(self.to_dict()).get_repr_dict()
         current_args = self.get_repr_dict()
         diffs = dict_diff_string(original_args, current_args)
         if diffs:
@@ -583,7 +840,7 @@ def fetch_artifact(
     if isinstance(artifact_rep, str):
         artifact_rep = json.loads(artifact_rep)
     # Load from dictionary (fails if not valid dictionary)
-    return Artifact.from_dict(artifact_rep), None
+    return from_dict(artifact_rep), None
 
 
 def get_catalog_name_and_args(
@@ -615,24 +872,6 @@ def maybe_recover_artifact(obj):
     if Artifact.is_possible_identifier(obj):
         return verbosed_fetch_artifact(obj)
     return obj
-
-
-def register_all_artifacts(path):
-    for loader, module_name, _is_pkg in pkgutil.walk_packages(path):
-        logger.info(__name__)
-        if module_name == __name__:
-            continue
-        logger.info(f"Loading {module_name}")
-        # Import the module
-        module = loader.find_module(module_name).load_module(module_name)
-
-        # Iterate over every object in the module
-        for _name, obj in inspect.getmembers(module):
-            # Make sure the object is a class
-            if inspect.isclass(obj):
-                # Make sure the class is a subclass of Artifact (but not Artifact itself)
-                if issubclass(obj, Artifact) and obj is not Artifact:
-                    logger.info(obj)
 
 
 def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
@@ -684,3 +923,29 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
         return None
 
     return data_classification.get(artifact)
+
+
+def find_unitxt_module_and_class_by_classname(camel_case_class_name: str):
+    """Find a module, a member of src/unitxt, that contains the definition of the class."""
+    dir = os.path.dirname(__file__)  # dir  src/unitxt
+    try:
+        result = subprocess.run(
+            ["grep", "-irwE", "^class +" + camel_case_class_name, dir],
+            capture_output=True,
+        ).stdout.decode("ascii")
+        results = result.split("\n")
+        assert len(results) == 2, f"returned: {results}"
+        assert results[-1] == "", f"last result is {results[-1]} rather than ''"
+        to_return_module = (
+            results[0].split(":")[0][:-3].replace("/", ".")
+        )  # trim the .py and replace
+        to_return_class_name = results[0].split(":")[1][
+            6 : 6 + len(camel_case_class_name)
+        ]
+        return to_return_module[
+            to_return_module.rfind("unitxt.") :
+        ], to_return_class_name
+    except Exception as e:
+        raise ValueError(
+            f"Could not find the unitxt module, under unitxt/src/unitxt, in which class {camel_case_class_name} is defined"
+        ) from e

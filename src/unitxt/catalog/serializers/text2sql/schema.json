@@ -1,3 +1,6 @@
 {
-    "__type__": "sql_database_as_schema_serializer"
+    "__type__": {
+        "module": "unitxt.serializers",
+        "name": "SQLDatabaseAsSchemaSerializer"
+    }
 }

@@ -1,5 +1,8 @@
 {
-    "__type__": "cross_provider_inference_engine",
+    "__type__": {
+        "module": "unitxt.inference",
+        "name": "CrossProviderInferenceEngine"
+    },
     "model": "mistral-large-instruct",
     "logprobs": true,
     "max_tokens": 5,

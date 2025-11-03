@@ -1,5 +1,8 @@
 {
-    "__type__": "metrics_list",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricsList"
+    },
     "items": [
         "metrics.rag.response_generation.answer_correctness.gpt_4o_azure_judge",
         "metrics.rag.response_generation.faithfulness.gpt_4o_azure_judge",

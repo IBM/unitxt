@@ -1,3 +1,6 @@
 {
-    "__type__": "gray_scale"
+    "__type__": {
+        "module": "unitxt.image_operators",
+        "name": "GrayScale"
+    }
 }

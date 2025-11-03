@@ -1,5 +1,8 @@
 {
-    "__type__": "task_based_ll_mas_judge",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_from_template",
+        "name": "TaskBasedLLMasJudge"
+    },
     "inference_model": "engines.classification.gpt_oss_120b_watsonx",
     "template": "templates.rag_eval.faithfulness.judge_with_question_simplified_verbal",
     "task": "tasks.rag_eval.faithfulness.binary",

@@ -1,5 +1,8 @@
 {
-    "__type__": "minimum_one_example_per_label_refiner",
+    "__type__": {
+        "module": "unitxt.operators",
+        "name": "MinimumOneExamplePerLabelRefiner"
+    },
     "fields": [
         "reference_fields/label"
     ]

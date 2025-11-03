@@ -1,5 +1,8 @@
 {
-    "__type__": "cross_provider_inference_engine",
+    "__type__": {
+        "module": "unitxt.inference",
+        "name": "CrossProviderInferenceEngine"
+    },
     "model": "meta-llama/llama-3-8b-instruct",
     "provider": "watsonx",
     "max_tokens": 2048,

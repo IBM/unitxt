@@ -1,5 +1,8 @@
 {
-    "__type__": "multi_reference_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "MultiReferenceTemplate"
+    },
     "instruction": "The following {document_type} is to be summarized into one sentence.",
     "input_format": "{document_type}:\n{document}\nSummary:\n",
     "references_field": "summaries",

@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "PolyAI/banking77",
         "revision": "refs/convert/parquet",
         "splits": [
@@ -11,11 +17,17 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "shuffle",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Shuffle"
+            },
             "page_size": 9223372036854775807
         },
         {
-            "__type__": "split_random_mix",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "SplitRandomMix"
+            },
             "mix": {
                 "train": "train[85%]",
                 "validation": "train[15%]",
@@ -23,7 +35,10 @@
             }
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "label": {
                     "0": "activate my card",
@@ -107,7 +122,10 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "classes": [
                     "activate my card",

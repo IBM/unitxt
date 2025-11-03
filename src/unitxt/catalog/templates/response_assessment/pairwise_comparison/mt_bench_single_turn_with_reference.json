@@ -1,5 +1,8 @@
 {
-    "__type__": "pairwise_choice_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "PairwiseChoiceTemplate"
+    },
     "choice_a_field": "answer_a",
     "choice_b_field": "answer_b",
     "answer_field": "winner",

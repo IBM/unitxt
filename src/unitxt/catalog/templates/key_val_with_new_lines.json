@@ -1,5 +1,8 @@
 {
-    "__type__": "key_val_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "KeyValTemplate"
+    },
     "pairs_separator": "\n",
     "use_keys_for_outputs": true
 }

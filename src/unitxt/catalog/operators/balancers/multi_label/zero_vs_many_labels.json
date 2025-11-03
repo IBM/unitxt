@@ -1,5 +1,8 @@
 {
-    "__type__": "length_balancer",
+    "__type__": {
+        "module": "unitxt.operators",
+        "name": "LengthBalancer"
+    },
     "fields": [
         "reference_fields/labels"
     ],

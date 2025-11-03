@@ -1,3 +1,6 @@
 {
-    "__type__": "serialize_table_as_indexed_row_major"
+    "__type__": {
+        "module": "unitxt.struct_data_operators",
+        "name": "SerializeTableAsIndexedRowMajor"
+    }
 }

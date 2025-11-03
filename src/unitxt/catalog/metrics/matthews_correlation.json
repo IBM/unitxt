@@ -1,3 +1,6 @@
 {
-    "__type__": "matthews_correlation"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MatthewsCorrelation"
+    }
 }

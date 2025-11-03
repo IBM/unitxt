@@ -1,5 +1,8 @@
 {
-    "__type__": "input_output_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "InputOutputTemplate"
+    },
     "instruction": "Translate the provided Text from {source_language} to {target_language}",
     "input_format": "Text:\n{text}",
     "target_prefix": "Translation:\n",

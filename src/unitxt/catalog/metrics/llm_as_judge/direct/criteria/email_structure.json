@@ -1,17 +1,26 @@
 {
-    "__type__": "criteria_with_options",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_constants",
+        "name": "CriteriaWithOptions"
+    },
     "name": "email_structure",
     "description": "Does the email response have a clear and logical structure?",
     "prediction_field": "email response",
     "context_fields": [],
     "options": [
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "Yes",
             "description": "The response has a clear, logical structure with well-organized ideas."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "No",
             "description": "The response lacks a clear structure, and ideas are poorly organized."
         }

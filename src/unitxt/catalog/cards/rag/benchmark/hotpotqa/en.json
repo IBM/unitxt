@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "hotpotqa/hotpot_qa",
         "data_dir": "distractor",
         "revision": "refs/convert/parquet",
@@ -15,14 +21,20 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "SplitRandomMix"
+            },
             "mix": {
                 "test": "train[30%]",
                 "train": "train[70%]"
             }
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "question": "question",
                 "id": "question_id",
@@ -30,25 +42,37 @@
             }
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "context/title",
             "to_field": "reference_context_ids"
         },
         {
-            "__type__": "join",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Join"
+            },
             "field": "context/sentences",
             "by": " ",
             "to_field": "reference_contexts",
             "process_every_value": true
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "is_answerable_label": true
             }
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "answer",
             "inside": "list",
             "to_field": "reference_answers"

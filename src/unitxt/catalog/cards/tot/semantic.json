@@ -1,12 +1,21 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "baharef/ToT",
         "name": "tot_semantic"
     },
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "prompt": "str",
             "question": "str"
@@ -21,14 +30,23 @@
     },
     "templates": [
         {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "{prompt}",
             "output_format": "{{\"answer\": \"{label}\"}}",
             "postprocessors": [
                 {
-                    "__type__": "post_process",
+                    "__type__": {
+                        "module": "unitxt.processors",
+                        "name": "PostProcess"
+                    },
                     "operator": {
-                        "__type__": "extract_with_regex",
+                        "__type__": {
+                            "module": "unitxt.processors",
+                            "name": "ExtractWithRegex"
+                        },
                         "regex": "\"answer\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\""
                     }
                 }

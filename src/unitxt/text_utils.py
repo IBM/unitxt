@@ -71,6 +71,19 @@ def camel_to_snake_case(s):
     return s.lower()
 
 
+def snake_to_camel_case(s):
+    """Converts a snake_case string s to CamelCase. Assume a class name is in question so result to start with an upper case.
+
+    Not always the reciprocal of the above camel_to_snake_case.  e.g: camel_to_snake_case(LoadHF) = load_hf,
+    whereas snake_to_camel_case(load_hf) = LoadHf
+    """
+    s = s.strip()
+    words = s.split("_")
+    # Capitalize all words and join them
+    camel_case_parts = [word.capitalize() for word in words]
+    return "".join(camel_case_parts)
+
+
 def to_pretty_string(
     value,
     indent=0,
@@ -247,7 +260,9 @@ def construct_dict_as_python_lines(d, indent_delta=4) -> List[str]:
             return ["{}"]
         if "__type__" in d:
             istype = True
-            res = ["__type__" + d["__type__"] + "("]
+            res = [
+                "__type__" + d["__type__"]["module"] + "." + d["__type__"]["name"] + "("
+            ]
             if len(d) == 1:
                 res[0] += ")"
                 return res

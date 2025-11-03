@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "nguha/legalbench",
         "revision": "refs/convert/parquet",
         "splits": [
@@ -15,23 +21,35 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "shuffle",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Shuffle"
+            },
             "page_size": 9223372036854775807
         },
         {
-            "__type__": "format_text",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "FormatText"
+            },
             "text": "Official title of bill: {bill_title}\nOfficial summary of bill: {bill_summary}\nCompany name: {company_name}\nCompany business description: {company_description}",
             "to_field": "text"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "text": "text",
                 "answer": "label"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "text_type": "",
                 "classes": [
@@ -46,7 +64,10 @@
     "task": "tasks.classification.multi_class.with_classes_descriptions",
     "templates": {
         "default": {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "{text}\nIs this bill potentially relevant to the company? FINAL ANSWER:",
             "output_format": "{label}",
             "instruction": "{classes_descriptions}, it is your job to determine {type_of_class} (by saying Yes or No).",

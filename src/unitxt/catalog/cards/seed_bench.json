@@ -1,23 +1,38 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "lmms-lab/SEED-Bench"
     },
     "preprocess_steps": [
         {
-            "__type__": "to_image",
+            "__type__": {
+                "module": "unitxt.image_operators",
+                "name": "ToImage"
+            },
             "field": "image",
             "to_field": "context",
             "process_every_value": true
         },
         {
-            "__type__": "to_rgb",
+            "__type__": {
+                "module": "unitxt.image_operators",
+                "name": "ToRGB"
+            },
             "field": "context",
             "process_every_value": true
         },
         {
-            "__type__": "list_field_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ListFieldValues"
+            },
             "fields": [
                 "choice_a",
                 "choice_b",
@@ -27,13 +42,19 @@
             "to_field": "choices"
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "context_type": "video"
             }
         },
         {
-            "__type__": "map_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapValues"
+            },
             "mapping": {
                 "A": 0,
                 "B": 1,
@@ -46,7 +67,10 @@
     "task": "tasks.qa.multiple_choice.with_context",
     "templates": [
         {
-            "__type__": "multiple_choice_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "MultipleChoiceTemplate"
+            },
             "input_format": "{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
             "choices_separator": "\n",
             "target_field": "answer",

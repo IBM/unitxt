@@ -1,9 +1,15 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricPipeline"
+    },
     "main_score": "precision",
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "task_data/contexts": "references",
                 "answer": "prediction"
@@ -11,7 +17,10 @@
             "not_exist_do_nothing": true
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "contexts": "references"
             },

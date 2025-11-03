@@ -1,4 +1,7 @@
 {
-    "__type__": "ollama_inference_engine",
+    "__type__": {
+        "module": "unitxt.inference",
+        "name": "OllamaInferenceEngine"
+    },
     "model": "llama2"
 }

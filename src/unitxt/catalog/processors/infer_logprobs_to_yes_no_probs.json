@@ -1,8 +1,14 @@
 {
-    "__type__": "sequential_operator",
+    "__type__": {
+        "module": "unitxt.operator",
+        "name": "SequentialOperator"
+    },
     "steps": [
         {
-            "__type__": "infer_dicts_to_binary_logprobs",
+            "__type__": {
+                "module": "unitxt.processors",
+                "name": "InferDictsToBinaryLogprobs"
+            },
             "neg_class_name": "No",
             "pos_class_name": "Yes",
             "num_logprobs_to_take": 3,

@@ -1,17 +1,26 @@
 {
-    "__type__": "criteria_with_options",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_constants",
+        "name": "CriteriaWithOptions"
+    },
     "name": "examples_and_details",
     "description": "Does the response provide relevant examples or details?",
     "prediction_field": "response",
     "context_fields": [],
     "options": [
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "Yes",
             "description": "The response provides relevant examples or details to support its content."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "No",
             "description": "The response does not provide relevant examples or details."
         }

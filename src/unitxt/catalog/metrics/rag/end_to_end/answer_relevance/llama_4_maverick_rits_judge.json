@@ -1,5 +1,8 @@
 {
-    "__type__": "task_based_ll_mas_judge",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_from_template",
+        "name": "TaskBasedLLMasJudge"
+    },
     "inference_model": "engines.classification.llama_4_maverick_17b_128e_instruct_fp8_rits",
     "template": "templates.rag_eval.answer_relevance.judge_answer_relevance_numeric",
     "task": "tasks.rag_eval.answer_relevance.binary",

@@ -1,4 +1,7 @@
 {
-    "__type__": "hf_system_format",
+    "__type__": {
+        "module": "unitxt.formats",
+        "name": "HFSystemFormat"
+    },
     "model_name": "llava-hf/llava-1.5-7b-hf"
 }

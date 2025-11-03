@@ -1,3 +1,6 @@
 {
-    "__type__": "anls"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "ANLS"
+    }
 }

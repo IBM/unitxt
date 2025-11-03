@@ -1,4 +1,7 @@
 {
-    "__type__": "span_labeling_json_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "SpanLabelingJsonTemplate"
+    },
     "input_format": "{text}"
 }

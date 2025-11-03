@@ -1,5 +1,8 @@
 {
-    "__type__": "templates_list",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "TemplatesList"
+    },
     "items": [
         "templates.qa.multiple_choice.with_context.with_topic.fr.mmlu",
         "templates.qa.multiple_choice.with_context.with_topic.fr.helm",

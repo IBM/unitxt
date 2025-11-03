@@ -1,17 +1,26 @@
 {
-    "__type__": "criteria_with_options",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_constants",
+        "name": "CriteriaWithOptions"
+    },
     "name": "engagement",
     "description": "Does the email response encourage engagement or action?",
     "prediction_field": "email response",
     "context_fields": [],
     "options": [
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "Yes",
             "description": "The email response is engaging and encourages action from the recipient."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "No",
             "description": "The email response lacks engagement and does not encourage action."
         }

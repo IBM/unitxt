@@ -1,4 +1,7 @@
 {
-    "__type__": "granite_guardian_user_risk",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "GraniteGuardianUserRisk"
+    },
     "risk_name": "jailbreak"
 }

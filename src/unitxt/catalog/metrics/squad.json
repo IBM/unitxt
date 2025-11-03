@@ -1,12 +1,21 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricPipeline"
+    },
     "main_score": "f1",
     "preprocess_steps": [
         {
-            "__type__": "add_id"
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "AddID"
+            }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "use_deepcopy": true,
             "fields": {
                 "prediction_template": {
@@ -25,7 +34,10 @@
             }
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": [
                 [
                     "references",
@@ -46,7 +58,10 @@
             ]
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": [
                 [
                     "reference_template",
@@ -60,6 +75,9 @@
         }
     ],
     "metric": {
-        "__type__": "squad"
+        "__type__": {
+            "module": "unitxt.metrics",
+            "name": "Squad"
+        }
     }
 }

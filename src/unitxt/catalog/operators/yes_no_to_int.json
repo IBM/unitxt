@@ -1,3 +1,6 @@
 {
-    "__type__": "yes_no_to_int"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "YesNoToInt"
+    }
 }

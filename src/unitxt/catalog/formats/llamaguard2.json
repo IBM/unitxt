@@ -1,5 +1,8 @@
 {
-    "__type__": "system_format",
+    "__type__": {
+        "module": "unitxt.formats",
+        "name": "SystemFormat"
+    },
     "demo_format": "",
     "model_input_format": "[INST] {source} [/INST]"
 }

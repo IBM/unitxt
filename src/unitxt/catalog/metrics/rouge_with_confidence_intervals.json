@@ -1,4 +1,7 @@
 {
-    "__type__": "rouge",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "Rouge"
+    },
     "__deprecated_msg__": " Use 'metrics.rouge' which also generate confidence intervals"
 }

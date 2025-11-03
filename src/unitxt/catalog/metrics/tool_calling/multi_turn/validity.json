@@ -1,4 +1,7 @@
 {
-    "__type__": "multi_turn_tool_calling_metric",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MultiTurnToolCallingMetric"
+    },
     "__description__": "A metric that assesses tool call predictions for their conformity to the tool schema."
 }

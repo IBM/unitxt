@@ -1,3 +1,6 @@
 {
-    "__type__": "first_character"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "FirstCharacter"
+    }
 }

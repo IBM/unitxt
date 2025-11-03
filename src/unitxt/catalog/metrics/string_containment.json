@@ -1,3 +1,6 @@
 {
-    "__type__": "string_containment"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "StringContainment"
+    }
 }

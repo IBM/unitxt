@@ -1,5 +1,8 @@
 {
-    "__type__": "criteria",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_constants",
+        "name": "Criteria"
+    },
     "name": "factually_consistent",
     "description": "A factually consistent response contains only statements that are entailed by the source document.",
     "prediction_field": "response",

@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "EdinburghNLP/xsum",
         "revision": "refs/convert/parquet",
         "data_classification_policy": [
@@ -16,7 +22,10 @@
     "task": "tasks.summarization.abstractive",
     "preprocess_steps": [
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "summary",
             "inside": "list",
             "to_field": "summaries"

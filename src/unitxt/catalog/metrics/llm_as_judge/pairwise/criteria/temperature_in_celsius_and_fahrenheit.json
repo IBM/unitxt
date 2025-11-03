@@ -1,5 +1,8 @@
 {
-    "__type__": "criteria",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_constants",
+        "name": "Criteria"
+    },
     "name": "temperature_in_celsius_and_fahrenheit",
     "description": "In the response, the temperature is described in both Fahrenheit and Celsius.",
     "prediction_field": "response",

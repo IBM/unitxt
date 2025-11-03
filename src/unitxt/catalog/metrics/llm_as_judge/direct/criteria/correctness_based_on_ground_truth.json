@@ -1,5 +1,8 @@
 {
-    "__type__": "criteria_with_options",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_constants",
+        "name": "CriteriaWithOptions"
+    },
     "name": "correctness_based_on_ground_truth",
     "description": "Does the response correctly convey the same factual information as the ground truth?",
     "prediction_field": "response",
@@ -8,17 +11,26 @@
     ],
     "options": [
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "correct",
             "description": "The response conveys the same factual meaning as the ground truth. Minor rewording, synonyms, or grammatical differences are acceptable. The response is relevant to the question and does not introduce unrelated or misleading information."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "partially_correct",
             "description": "The response contains some correct information but is incomplete or lacks essential details. It may also contain minor inaccuracies or extraneous information that slightly misrepresents the ground truth."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "incorrect",
             "description": "The response does not align with the ground truth. It either presents incorrect, unrelated, or misleading information, or omits key details that change the intended meaning."
         }

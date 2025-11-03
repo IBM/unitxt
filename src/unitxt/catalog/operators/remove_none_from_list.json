@@ -1,5 +1,8 @@
 {
-    "__type__": "remove_values",
+    "__type__": {
+        "module": "unitxt.operators",
+        "name": "RemoveValues"
+    },
     "unallowed_values": [
         "none"
     ]

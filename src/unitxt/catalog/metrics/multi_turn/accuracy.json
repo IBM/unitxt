@@ -1,6 +1,12 @@
 {
-    "__type__": "multi_turn_metric",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MultiTurnMetric"
+    },
     "metric": {
-        "__type__": "accuracy_fast"
+        "__type__": {
+            "module": "unitxt.metrics",
+            "name": "AccuracyFast"
+        }
     }
 }
