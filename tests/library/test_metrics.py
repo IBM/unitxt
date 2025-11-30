@@ -3093,317 +3093,6 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertEqual(0.0, non_execution_outputs["score"])
 
-
-class TestConfidenceIntervals(UnitxtTestCase):
-    def test_confidence_interval_off(self):
-        """Test that when metric.n_resamples is set to None, no confidence intervals are computed."""
-        # Test one GlobalMetric and one InstanceMetric
-        for metric in [Accuracy(), F1Macro()]:
-            metric.set_confidence_interval_calculation(return_confidence_interval=False)
-            outputs = apply_metric(metric=metric, predictions=["A"], references=[["A"]])
-
-            global_result = outputs[0]["score"]["global"]
-            # Check there are no confidence intervals in the result
-            for key in global_result:
-                self.assertTrue("ci_low" not in key)
-                self.assertTrue("ci_high" not in key)
-
-    def test_instance_metric_confidence_interval(self):
-        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
-        self._test_confidence_interval(
-            metric=Accuracy(),
-            expected_ci_low=0.71,
-            expected_ci_high=0.87,
-        )
-
-    def test_map_reduce_metric_confidence_interval(self):
-        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
-        self._test_confidence_interval(
-            metric=AccuracyFast(),
-            expected_ci_low=0.71,
-            expected_ci_high=0.87,
-        )
-
-    def test_f1_micro_confidence_interval(self):
-        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
-        self._test_confidence_interval(
-            metric=F1Micro(n_resamples=1000),
-            expected_ci_low=0.83,
-            expected_ci_high=0.93,
-        )
-
-    def test_f1_micro_fast_confidence_interval(self):
-        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
-        self._test_confidence_interval(
-            metric=F1Fast(main_score="f1_micro", averages=["micro"]),
-            expected_ci_low=0.83,
-            expected_ci_high=0.93,
-        )
-
-    def test_instance_metric_with_multiple_scores_confidence_interval(self):
-        self._test_confidence_interval(
-            metric=TokenOverlap(),
-            expected_ci_low=0.71,
-            expected_ci_high=0.87,
-        )
-
-    def test_global_metric_confidence_interval(self):
-        """Test the calculation of confidence intervals for global metrics (F1Macro and F1Micro are used as instances of a GlobalMetric)."""
-        f1_macro_low, f1_macro_high = 0.8809213119223925, 0.9439681645177271
-        self._test_confidence_interval(
-            metric=F1Macro(),
-            expected_ci_low=f1_macro_low,
-            expected_ci_high=f1_macro_high,
-        )
-        f1_micro_low, f1_micro_high = 0.8439306358381503, 0.9223675337263242
-        self._test_confidence_interval(
-            metric=F1Micro(),
-            expected_ci_low=f1_micro_low,
-            expected_ci_high=f1_micro_high,
-        )
-
-        # Now reverse the order and check things don't change
-        self._test_confidence_interval(
-            metric=F1Micro(),
-            expected_ci_low=f1_micro_low,
-            expected_ci_high=f1_micro_high,
-        )
-        self._test_confidence_interval(
-            metric=F1Macro(),
-            expected_ci_low=f1_macro_low,
-            expected_ci_high=f1_macro_high,
-        )
-
-    def _test_confidence_interval(self, metric, expected_ci_low, expected_ci_high):
-        """Test the calculation of confidence intervals for a given metric."""
-        predictions = ["A", "B", "C", "D", "E"] * 20  # 100 predictions
-        references = [["B"], ["B"], ["C"], ["D"], ["E"]] * 20  # 80% are correct (4/5)
-
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-
-        expected_global_result = {
-            f"{metric.main_score}_ci_low": expected_ci_low,
-            f"{metric.main_score}_ci_high": expected_ci_high,
-            "score_ci_low": expected_ci_low,
-            "score_ci_high": expected_ci_high,
-        }
-
-        global_result = outputs[0]["score"]["global"].copy()
-        logger.info(global_result)
-        for score_name, score_value in global_result.items():
-            if score_name in expected_global_result:
-                # Verify that the output value is as the expected value
-                self.assertAlmostEqual(
-                    score_value, expected_global_result[score_name], places=3
-                )
-            else:
-                # An output score that is not expected
-                # This is ok if the score_name is not related to confidence intervals
-                # Otherwise, there was some confidence interval calculation that was not supposed to occur.
-                self.assertTrue(
-                    ("ci_low" not in score_name and "ci_high" not in score_name)
-                    or score_name not in metric.ci_scores,
-                    msg=f"Unexpected confidence interval score '{score_name}'.",
-                )
-
-    def test_grouped_instance_metric_confidence_interval(self):
-        """Test the calculation of confidence intervals for grouped instance metrics (sub-types of InstanceMetric with group_mean reduction)."""
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupMeanAccuracy(),
-            expected_ci_low=0.1,
-            expected_ci_high=0.48178555627359004,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=GroupMeanAccuracy(),
-            expected_ci_low=0.025,
-            expected_ci_high=0.4407250456645065,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupMeanStringContainment(),
-            expected_ci_low=0.0,
-            expected_ci_high=0.675,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=GroupMeanStringContainment(),
-            expected_ci_low=0.15627449950197503,
-            expected_ci_high=0.7080527276705952,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupMeanBaselineAccuracy(),
-            expected_ci_low=0.0,
-            expected_ci_high=1.0,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupMeanParaphraseAccuracy(),
-            expected_ci_low=0.0,
-            expected_ci_high=0.3333333333333333,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupMeanBaselineStringContainment(),
-            expected_ci_low=0.25,
-            expected_ci_high=1.0,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupMeanParaphraseStringContainment(),
-            expected_ci_low=0.5,
-            expected_ci_high=0.6666666666666666,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupNormCohensHParaphraseAccuracy(),
-            expected_ci_low=-1.0,
-            expected_ci_high=0.33333333333333337,
-        )
-
-        # note, this metric has an issue where the ci_high on PCs on Travis slightly diverges from the local results
-        # hence this test may fail on a PC
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupNormCohensHParaphraseStringContainment(),
-            expected_ci_low=-0.49999999999999994,
-            expected_ci_high=-0.39182655203060723,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupPDRParaphraseAccuracy(),
-            expected_ci_low=0.6666666666666666,
-            expected_ci_high=1.0,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupPDRParaphraseStringContainment(),
-            expected_ci_low=0.3333333333333333,
-            expected_ci_high=0.5,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupNormHedgesGParaphraseAccuracy(),
-            expected_ci_low=-1.0,
-            expected_ci_high=0.01892225367237965,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupNormHedgesGParaphraseStringContainment(),
-            expected_ci_low=-0.09757387538180902,
-            expected_ci_high=-0.046656947481584346,
-        )
-
-        # absolute value of Hedges' g and Cohen's h
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupAbsvalNormCohensHParaphraseAccuracy(),
-            expected_ci_low=0.33333333333333337,
-            expected_ci_high=1.0,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupAbsvalNormCohensHParaphraseStringContainment(),
-            expected_ci_low=0.39182655203060723,
-            expected_ci_high=0.49999999999999994,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupAbsvalNormHedgesGParaphraseAccuracy(),
-            expected_ci_low=0.05633430321756243,
-            expected_ci_high=1.0,
-        )
-
-        self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupAbsvalNormHedgesGParaphraseStringContainment(),
-            expected_ci_low=0.046656947481584346,
-            expected_ci_high=0.09757387538180902,
-        )
-
-        # pass global dict because there are additional fields other than the main score
-        for score_prefix in ["my_", ""]:
-            self._test_grouped_instance_confidence_interval(
-                metric=GroupMeanTokenOverlap(),
-                expected_global_result={
-                    f"group_mean_{score_prefix}recall": 0.525,
-                    f"group_mean_{score_prefix}f1": 0.5083333333333333,
-                    "score": 0.5083333333333333,
-                    "score_name": f"group_mean_{score_prefix}f1",
-                    f"group_mean_{score_prefix}precision": 0.5,
-                    f"group_mean_{score_prefix}recall_ci_low": 0.25,
-                    f"group_mean_{score_prefix}recall_ci_high": 0.7083333333333334,
-                    f"group_mean_{score_prefix}f1_ci_low": 0.22302503471948287,
-                    f"group_mean_{score_prefix}f1_ci_high": 0.6805555555555555,
-                    "score_ci_low": 0.22302503471948287,
-                    "score_ci_high": 0.6805555555555555,
-                    f"group_mean_{score_prefix}precision_ci_low": 0.2095091529536007,
-                    f"group_mean_{score_prefix}precision_ci_high": 0.6666666666666666,
-                },
-                input_score_prefixes=[score_prefix],
-            )
-
-    def _test_grouped_instance_confidence_interval(
-        self,
-        metric,
-        expected_ci_low=0.0,
-        expected_ci_high=1.0,
-        expected_global_result=None,
-        input_score_prefixes=None,
-    ):
-        """Test the calculation of confidence intervals for a given metric with group_mean reduction."""
-        input_expected_global_result_is_none = expected_global_result is None
-        # to remember between score_prefixes
-
-        for score_prefix in (
-            ["my_", ""] if input_score_prefixes is None else input_score_prefixes
-        ):
-            metric.score_prefix = score_prefix
-            outputs = apply_metric(
-                metric=metric,
-                predictions=GROUPED_INSTANCE_PREDICTIONS,
-                references=GROUPED_INSTANCE_REFERENCES,
-                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
-            )
-            # get first element of reduction_map values
-            reduction_params = next(iter(metric.reduction_map.values()))
-            prefix = "fixed_group" if reduction_params["agg_func"][2] else "group"
-            group_score_name = "_".join(
-                [
-                    prefix,
-                    metric.reduction_map["group_mean"]["agg_func"][0],
-                    score_prefix,
-                    metric.main_score,
-                ]
-            ).replace("__", "_")  # for the case of empty score_prefix
-
-            if input_expected_global_result_is_none:
-                expected_global_result = {
-                    f"{group_score_name}_ci_low": expected_ci_low,
-                    f"{group_score_name}_ci_high": expected_ci_high,
-                    "score_ci_low": expected_ci_low,
-                    "score_ci_high": expected_ci_high,
-                }
-
-        global_result = outputs[0]["score"]["global"].copy()
-        logger.info(global_result)
-        for score_name, score_value in global_result.items():
-            if score_name in expected_global_result:
-                self.assertAlmostEqual(
-                    expected_global_result[score_name],
-                    score_value,
-                    places=5,
-                    msg=f"{score_name} score mismatch for {metric.__class__.__name__}, expected {expected_global_result[score_name]} but got {score_value}",
-                )
-            else:
-                # An output score that is not expected
-                # This is ok if the score_name is not related to confidence intervals
-                # Otherwise, there was some confidence interval calculation that was not supposed to occur.
-                self.assertTrue(
-                    "ci_low" not in score_name and "ci_high" not in score_name,
-                    msg=f"Unexpected confidence interval score '{score_name}'.",
-                )
-
     def test_task_based_llm_as_judge_metric(self):
         model_id = "meta-llama/llama-3-8b-instruct"
         format = "formats.llama3_instruct"
@@ -3564,6 +3253,10 @@ Answer: """,
             metric_label: 1.0,
             "score": 1.0,
             "score_name": metric_label,
+            f"{metric_label}_ci_high": 1.0,
+            f"{metric_label}_ci_low": 1.0,
+            "score_ci_high": 1.0,
+            "score_ci_low": 1.0,
             "num_of_instances": 3,
         }
 
@@ -3642,6 +3335,10 @@ Answer: """,
             metric_label: 1.0,
             "score": 1.0,
             "score_name": metric_label,
+            f"{metric_label}_ci_high": 1.0,
+            f"{metric_label}_ci_low": 1.0,
+            "score_ci_high": 1.0,
+            "score_ci_low": 1.0,
             "num_of_instances": 3,
         }
 
@@ -4391,6 +4088,319 @@ Answer: """,
                 "num_of_instances": 3,
                 "answer_relevance": 0.5,
                 "score": 0.5,
+                "score_ci_high": 0.5,
+                "score_ci_low": 0.5,
                 "score_name": "answer_relevance",
             },
         )
+
+
+class TestConfidenceIntervals(UnitxtTestCase):
+    def test_confidence_interval_off(self):
+        """Test that when metric.n_resamples is set to None, no confidence intervals are computed."""
+        # Test one GlobalMetric and one InstanceMetric
+        for metric in [Accuracy(), F1Macro()]:
+            metric.set_confidence_interval_calculation(return_confidence_interval=False)
+            outputs = apply_metric(metric=metric, predictions=["A"], references=[["A"]])
+
+            global_result = outputs[0]["score"]["global"]
+            # Check there are no confidence intervals in the result
+            for key in global_result:
+                self.assertTrue("ci_low" not in key)
+                self.assertTrue("ci_high" not in key)
+
+    def test_instance_metric_confidence_interval(self):
+        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
+        self._test_confidence_interval(
+            metric=Accuracy(),
+            expected_ci_low=0.71,
+            expected_ci_high=0.87,
+        )
+
+    def test_map_reduce_metric_confidence_interval(self):
+        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
+        self._test_confidence_interval(
+            metric=AccuracyFast(),
+            expected_ci_low=0.71,
+            expected_ci_high=0.87,
+        )
+
+    def test_f1_micro_confidence_interval(self):
+        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
+        self._test_confidence_interval(
+            metric=F1Micro(n_resamples=1000),
+            expected_ci_low=0.83,
+            expected_ci_high=0.93,
+        )
+
+    def test_f1_micro_fast_confidence_interval(self):
+        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
+        self._test_confidence_interval(
+            metric=F1Fast(main_score="f1_micro", averages=["micro"]),
+            expected_ci_low=0.83,
+            expected_ci_high=0.93,
+        )
+
+    def test_instance_metric_with_multiple_scores_confidence_interval(self):
+        self._test_confidence_interval(
+            metric=TokenOverlap(),
+            expected_ci_low=0.71,
+            expected_ci_high=0.87,
+        )
+
+    def test_global_metric_confidence_interval(self):
+        """Test the calculation of confidence intervals for global metrics (F1Macro and F1Micro are used as instances of a GlobalMetric)."""
+        f1_macro_low, f1_macro_high = 0.8809213119223925, 0.9439681645177271
+        self._test_confidence_interval(
+            metric=F1Macro(),
+            expected_ci_low=f1_macro_low,
+            expected_ci_high=f1_macro_high,
+        )
+        f1_micro_low, f1_micro_high = 0.8439306358381503, 0.9223675337263242
+        self._test_confidence_interval(
+            metric=F1Micro(),
+            expected_ci_low=f1_micro_low,
+            expected_ci_high=f1_micro_high,
+        )
+
+        # Now reverse the order and check things don't change
+        self._test_confidence_interval(
+            metric=F1Micro(),
+            expected_ci_low=f1_micro_low,
+            expected_ci_high=f1_micro_high,
+        )
+        self._test_confidence_interval(
+            metric=F1Macro(),
+            expected_ci_low=f1_macro_low,
+            expected_ci_high=f1_macro_high,
+        )
+
+    def _test_confidence_interval(self, metric, expected_ci_low, expected_ci_high):
+        """Test the calculation of confidence intervals for a given metric."""
+        predictions = ["A", "B", "C", "D", "E"] * 20  # 100 predictions
+        references = [["B"], ["B"], ["C"], ["D"], ["E"]] * 20  # 80% are correct (4/5)
+
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+
+        expected_global_result = {
+            f"{metric.main_score}_ci_low": expected_ci_low,
+            f"{metric.main_score}_ci_high": expected_ci_high,
+            "score_ci_low": expected_ci_low,
+            "score_ci_high": expected_ci_high,
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        logger.info(global_result)
+        for score_name, score_value in global_result.items():
+            if score_name in expected_global_result:
+                # Verify that the output value is as the expected value
+                self.assertAlmostEqual(
+                    score_value, expected_global_result[score_name], places=3
+                )
+            else:
+                # An output score that is not expected
+                # This is ok if the score_name is not related to confidence intervals
+                # Otherwise, there was some confidence interval calculation that was not supposed to occur.
+                self.assertTrue(
+                    ("ci_low" not in score_name and "ci_high" not in score_name)
+                    or score_name not in metric.ci_scores,
+                    msg=f"Unexpected confidence interval score '{score_name}'.",
+                )
+
+    def test_grouped_instance_metric_confidence_interval(self):
+        """Test the calculation of confidence intervals for grouped instance metrics (sub-types of InstanceMetric with group_mean reduction)."""
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanAccuracy(),
+            expected_ci_low=0.1,
+            expected_ci_high=0.48178555627359004,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=GroupMeanAccuracy(),
+            expected_ci_low=0.025,
+            expected_ci_high=0.4407250456645065,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanStringContainment(),
+            expected_ci_low=0.0,
+            expected_ci_high=0.675,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=GroupMeanStringContainment(),
+            expected_ci_low=0.15627449950197503,
+            expected_ci_high=0.7080527276705952,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanBaselineAccuracy(),
+            expected_ci_low=0.0,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanParaphraseAccuracy(),
+            expected_ci_low=0.0,
+            expected_ci_high=0.3333333333333333,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanBaselineStringContainment(),
+            expected_ci_low=0.25,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanParaphraseStringContainment(),
+            expected_ci_low=0.5,
+            expected_ci_high=0.6666666666666666,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupNormCohensHParaphraseAccuracy(),
+            expected_ci_low=-1.0,
+            expected_ci_high=0.33333333333333337,
+        )
+
+        # note, this metric has an issue where the ci_high on PCs on Travis slightly diverges from the local results
+        # hence this test may fail on a PC
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupNormCohensHParaphraseStringContainment(),
+            expected_ci_low=-0.49999999999999994,
+            expected_ci_high=-0.39182655203060723,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupPDRParaphraseAccuracy(),
+            expected_ci_low=0.6666666666666666,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupPDRParaphraseStringContainment(),
+            expected_ci_low=0.3333333333333333,
+            expected_ci_high=0.5,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupNormHedgesGParaphraseAccuracy(),
+            expected_ci_low=-1.0,
+            expected_ci_high=0.01892225367237965,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupNormHedgesGParaphraseStringContainment(),
+            expected_ci_low=-0.09757387538180902,
+            expected_ci_high=-0.046656947481584346,
+        )
+
+        # absolute value of Hedges' g and Cohen's h
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupAbsvalNormCohensHParaphraseAccuracy(),
+            expected_ci_low=0.33333333333333337,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupAbsvalNormCohensHParaphraseStringContainment(),
+            expected_ci_low=0.39182655203060723,
+            expected_ci_high=0.49999999999999994,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupAbsvalNormHedgesGParaphraseAccuracy(),
+            expected_ci_low=0.05633430321756243,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupAbsvalNormHedgesGParaphraseStringContainment(),
+            expected_ci_low=0.046656947481584346,
+            expected_ci_high=0.09757387538180902,
+        )
+
+        # pass global dict because there are additional fields other than the main score
+        for score_prefix in ["my_", ""]:
+            self._test_grouped_instance_confidence_interval(
+                metric=GroupMeanTokenOverlap(),
+                expected_global_result={
+                    f"group_mean_{score_prefix}recall": 0.525,
+                    f"group_mean_{score_prefix}f1": 0.5083333333333333,
+                    "score": 0.5083333333333333,
+                    "score_name": f"group_mean_{score_prefix}f1",
+                    f"group_mean_{score_prefix}precision": 0.5,
+                    f"group_mean_{score_prefix}recall_ci_low": 0.25,
+                    f"group_mean_{score_prefix}recall_ci_high": 0.7083333333333334,
+                    f"group_mean_{score_prefix}f1_ci_low": 0.22302503471948287,
+                    f"group_mean_{score_prefix}f1_ci_high": 0.6805555555555555,
+                    "score_ci_low": 0.22302503471948287,
+                    "score_ci_high": 0.6805555555555555,
+                    f"group_mean_{score_prefix}precision_ci_low": 0.2095091529536007,
+                    f"group_mean_{score_prefix}precision_ci_high": 0.6666666666666666,
+                },
+                input_score_prefixes=[score_prefix],
+            )
+
+    def _test_grouped_instance_confidence_interval(
+        self,
+        metric,
+        expected_ci_low=0.0,
+        expected_ci_high=1.0,
+        expected_global_result=None,
+        input_score_prefixes=None,
+    ):
+        """Test the calculation of confidence intervals for a given metric with group_mean reduction."""
+        input_expected_global_result_is_none = expected_global_result is None
+        # to remember between score_prefixes
+
+        for score_prefix in (
+            ["my_", ""] if input_score_prefixes is None else input_score_prefixes
+        ):
+            metric.score_prefix = score_prefix
+            outputs = apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+            # get first element of reduction_map values
+            reduction_params = next(iter(metric.reduction_map.values()))
+            prefix = "fixed_group" if reduction_params["agg_func"][2] else "group"
+            group_score_name = "_".join(
+                [
+                    prefix,
+                    metric.reduction_map["group_mean"]["agg_func"][0],
+                    score_prefix,
+                    metric.main_score,
+                ]
+            ).replace("__", "_")  # for the case of empty score_prefix
+
+            if input_expected_global_result_is_none:
+                expected_global_result = {
+                    f"{group_score_name}_ci_low": expected_ci_low,
+                    f"{group_score_name}_ci_high": expected_ci_high,
+                    "score_ci_low": expected_ci_low,
+                    "score_ci_high": expected_ci_high,
+                }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        logger.info(global_result)
+        for score_name, score_value in global_result.items():
+            if score_name in expected_global_result:
+                self.assertAlmostEqual(
+                    expected_global_result[score_name],
+                    score_value,
+                    places=5,
+                    msg=f"{score_name} score mismatch for {metric.__class__.__name__}, expected {expected_global_result[score_name]} but got {score_value}",
+                )
+            else:
+                # An output score that is not expected
+                # This is ok if the score_name is not related to confidence intervals
+                # Otherwise, there was some confidence interval calculation that was not supposed to occur.
+                self.assertTrue(
+                    "ci_low" not in score_name and "ci_high" not in score_name,
+                    msg=f"Unexpected confidence interval score '{score_name}'.",
+                )

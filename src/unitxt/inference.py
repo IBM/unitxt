@@ -1339,7 +1339,10 @@ class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return [
             self.get_return_object(
-                self.default_inference_value, instance, return_meta_data
+                self.default_inference_value,
+                self.default_inference_value,
+                instance,
+                return_meta_data,
             )
             for instance in dataset
         ]
@@ -1351,7 +1354,10 @@ class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         return [
             self.get_return_object(
-                self.default_inference_value_logprob, instance, return_meta_data
+                self.default_inference_value_logprob,
+                self.default_inference_value_logprob,
+                instance,
+                return_meta_data,
             )
             for instance in dataset
         ]
