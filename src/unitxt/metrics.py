@@ -1113,7 +1113,9 @@ class ReflectionToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]
             retries=3,
             continue_on_static=True,
         )
-        return result.model_dump()
+        result_dict = result.model_dump()
+        result_dict["overall_valid"] = float(result_dict["overall_valid"])
+        return result_dict
 
     def map_stream(
         self,
@@ -1173,7 +1175,7 @@ class ReflectionToolCallingMetric(ReductionInstanceMetric[str, Dict[str, float]]
                     for metric, metric_dict in metric_type_dict.get(
                         "metrics", {}
                     ).items():
-                        flat_instance_dict[f"semantic_{metric}"] = float(
+                        flat_instance_dict[f"semantic_{metric}"] = 1 - float(
                             metric_dict["is_issue"]
                         )
                     flat_instance_dict[f"semantic_avg_score_{metric_type}"] = float(
@@ -1239,7 +1241,7 @@ class ReflectionToolCallingMetricSyntactic(
         static_result = ReflectionPipeline.static_only(tools_inventory, tool_call)
 
         result_dict = static_result.model_dump()
-        result_dict["overall_valid"] = result_dict.pop("final_decision")
+        result_dict["overall_valid"] = float(result_dict.pop("final_decision"))
         result_dict["metrics"]["json_schema_violation"] = result_dict["metrics"].pop(
             "json_schema_validation"
         )
@@ -1254,7 +1256,7 @@ class ReflectionToolCallingMetricSyntactic(
             flat_instance_dict = {}
             for metric, metric_dict in instance.get("metrics", {}).items():
                 flat_instance_dict[metric] = float(metric_dict["valid"])
-            flat_instance_dict["overall_valid"] = instance["overall_valid"]
+            flat_instance_dict["overall_valid"] = float(instance["overall_valid"])
             flat_instances.append(flat_instance_dict)
 
         return self.reduction.reduce(flat_instances)
