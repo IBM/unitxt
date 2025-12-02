@@ -24,6 +24,12 @@ model_names_to_provider = {
 }
 
 
+def get_num_output_tokens(model_name):
+    if "gpt-oss-120b" in model_name:
+        return None
+    return 5
+
+
 def get_inference_engine(model_name, provider):
     if provider == "ibm_wml":
         return WMLInferenceEngineGeneration(
@@ -45,7 +51,7 @@ def get_inference_engine(model_name, provider):
     return CrossProviderInferenceEngine(
         model=model_name,
         logprobs=True,
-        max_tokens=5,
+        max_tokens=get_num_output_tokens(model_name),
         temperature=0.0,
         top_logprobs=5,
         provider=provider,
@@ -55,7 +61,12 @@ def get_inference_engine(model_name, provider):
 for judge_model_name, infer_frameworks in model_names_to_provider.items():
     for infer_framework in infer_frameworks:
         inference_engine = get_inference_engine(judge_model_name, infer_framework)
-        inference_engine_label = inference_engine.get_engine_id().replace("-", "_")
+        inference_engine_label = (
+            inference_engine.get_engine_id()
+            .replace("-", "_")
+            .replace(":", "_")
+            .replace(",", "_")
+        )
 
         add_to_catalog(
             inference_engine,
