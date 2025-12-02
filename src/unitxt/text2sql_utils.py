@@ -856,8 +856,10 @@ def compare_dfs_ignore_colnames_subset(
 
     def sort_df(df):
         sorted_df = df.copy()
-        for col in sorted_df.columns:
-            sorted_df[col] = sorted_df[col].astype(str).sort_values(ignore_index=True)
+        for i in range(len(sorted_df.columns)):
+            sorted_df.iloc[:, i] = (
+                sorted_df.iloc[:, i].astype(str).sort_values(ignore_index=True)
+            )
         return sorted_df
 
     if df1.empty or df2.empty or len(df1) != len(df2):
