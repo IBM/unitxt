@@ -2,7 +2,7 @@
     "__type__": "cross_provider_inference_engine",
     "model": "gpt-oss-120b",
     "logprobs": true,
-    "max_tokens": 5,
+    "max_tokens": null,
     "temperature": 0.0,
     "top_logprobs": 5,
     "provider": "watsonx"
