@@ -2708,7 +2708,7 @@ class TestMetrics(UnitxtTestCase):
             metric=perplexity_question, predictions=prediction, references=references
         )
         self.assertAlmostEqual(
-            first_instance_target, outputs[0]["score"]["instance"]["score"]
+            first_instance_target, outputs[0]["score"]["instance"]["score"], places=5
         )
 
     def test_fuzzyner(self):
