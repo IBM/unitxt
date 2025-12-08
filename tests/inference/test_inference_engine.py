@@ -464,7 +464,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             {"source": "Answer in one word only. What is the capital of Canada"},
         ]
 
-        engine = OllamaInferenceEngine(model="llama3:8b", temperature=0.0)
+        engine = OllamaInferenceEngine(model="llama3.2:1b", temperature=0.0)
         predictions = engine.infer(dataset)
 
         self.assertTrue("Ottawa" in predictions[0], predictions[0])
