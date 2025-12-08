@@ -751,8 +751,12 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         # --- Arrange ---
         # (Arrange section remains the same as previous version)
         mock_timestamp = "2025-04-14T10:00:00"
+        mock_timestamp_utc = "2025-04-14T08:00:00"
         mock_now = MagicMock()
         mock_now.strftime.return_value = mock_timestamp
+        mock_astimezone = MagicMock()
+        mock_astimezone.strftime.return_value = mock_timestamp_utc
+        mock_now.astimezone.return_value = mock_astimezone
         mock_datetime.now.return_value = mock_now
         mock_utcnow = MagicMock()
         mock_utcnow.isoformat.return_value = "2025-04-14T08:00:00"
@@ -784,7 +788,9 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         }
         base_results_path = "/out/results_prefix.json"
         base_samples_path = "/out/results_prefix_samples.json"
-        expected_timestamped_results_path = f"/out/{mock_timestamp}_results_prefix.json"
+        expected_timestamped_results_path = (
+            f"/out/{mock_timestamp_utc}_results_prefix.json"
+        )
 
         # --- Act ---
         cli._save_results_to_disk(
@@ -844,7 +850,7 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         )
         log_calls = [call[0][0] for call in mock_logger.info.call_args_list]
         expected_timestamped_samples_path = (
-            f"/out/{mock_timestamp}_results_prefix_samples.json"
+            f"/out/{mock_timestamp_utc}_results_prefix_samples.json"
         )
         self.assertNotIn(
             f"Saving detailed samples to: {expected_timestamped_samples_path}",
