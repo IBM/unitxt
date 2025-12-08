@@ -159,7 +159,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_watsonx_inference(self):
         model = WMLInferenceEngineGeneration(
-            model_name="google/flan-t5-xl",
+            model_name="ibm/granite-3-8b-instruct",
             data_classification_policy=["public"],
             random_seed=111,
             min_new_tokens=1,
@@ -193,7 +193,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         from ibm_watsonx_ai.client import APIClient, Credentials
 
         model = WMLInferenceEngineGeneration(
-            model_name="google/flan-t5-xl",
+            model_name="ibm/granite-3-8b-instruct",
             data_classification_policy=["public"],
             random_seed=111,
             min_new_tokens=1,
@@ -279,7 +279,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         ]
 
         watsonx_engine = WMLInferenceEngineGeneration(
-            model_name="meta-llama/llama-3-2-1b-instruct"
+            model_name="ibm/granite-3-8b-instruct"
         )
 
         for engine in [watsonx_engine]:
@@ -383,7 +383,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_lite_llm_inference_engine_without_task_data_not_failing(self):
         LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-2-1b-instruct",
+            model="watsonx/meta-llama/llama-3-2-11b-instruct",
             max_tokens=2,
             temperature=0,
             top_p=1,
