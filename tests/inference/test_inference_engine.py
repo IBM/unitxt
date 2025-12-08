@@ -383,7 +383,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_lite_llm_inference_engine_without_task_data_not_failing(self):
         LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-2-11b-instruct",
+            model="watsonx/meta-llama/llama-3-2-11b-vision-instruct",
             max_tokens=2,
             temperature=0,
             top_p=1,
@@ -464,7 +464,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             {"source": "Answer in one word only. What is the capital of Canada"},
         ]
 
-        engine = OllamaInferenceEngine(model="llama3.2:1b", temperature=0.0)
+        engine = OllamaInferenceEngine(model="llama3:8b", temperature=0.0)
         predictions = engine.infer(dataset)
 
         self.assertTrue("Ottawa" in predictions[0], predictions[0])
