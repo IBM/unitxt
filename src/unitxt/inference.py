@@ -1461,7 +1461,18 @@ class OllamaInferenceEngine(
                 options=args,
             )
             results.append(response)
-
+        if return_meta_data:
+            return [
+                TextGenerationInferenceOutput(
+                    prediction=element["message"]["content"],
+                    generated_text=element["message"]["content"],
+                    input_tokens=element.get("prompt_eval_count", 0),
+                    output_tokens=element.get("eval_count", 0),
+                    model_name=self.model,
+                    inference_type=self.label,
+                )
+                for element in results
+            ]
         return [element["message"]["content"] for element in results]
 
 
