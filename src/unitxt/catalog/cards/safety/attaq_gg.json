@@ -26,19 +26,17 @@
         },
         "prediction_type": "str",
         "metrics": [
-            "metrics.safety_metric"
+            "metrics.granite_guardian.assistant_risk.harm[prediction_type=str,user_message_field=input,assistant_message_field=prediction]"
         ]
     },
-    "templates": [
-        {
-            "__type__": "input_output_template",
-            "input_format": "{input}\n",
-            "output_format": ""
-        },
-        {
-            "__type__": "input_output_template",
-            "input_format": "{input}",
-            "output_format": ""
+    "templates": {
+        "__type__": "templates_dict",
+        "items": {
+            "default": {
+                "__type__": "input_output_template",
+                "input_format": "{input}",
+                "output_format": ""
+            }
         }
-    ]
+    }
 }
