@@ -12,7 +12,8 @@ from tests.utils import UnitxtTestCase
 class HFTests(UnitxtTestCase):
     def test_dataset_imports(self):
         missing_imports = get_missing_imports(
-            unitxt.dataset_file, exclude=["dataset", "evaluate_cli", "__init__", "api"]
+            unitxt.dataset_file,
+            exclude=["dataset", "evaluate_cli", "__init__", "api", "evalassist_judge"],
         )
         self.assertEqual(missing_imports, [])
 
@@ -27,6 +28,7 @@ class HFTests(UnitxtTestCase):
                 "dataset_utils",
                 "evaluate_cli",
                 "api",
+                "evalassist_judge",
             ],
         )
         self.assertEqual(missing_imports, [])

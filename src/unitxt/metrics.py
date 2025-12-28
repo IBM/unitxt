@@ -3242,7 +3242,7 @@ class F1Binary(GlobalMetric):
 
     process_single_instances = False
     main_score = "f1_binary"
-    average = None
+    average: str = None
     threshold = 0.5
     prediction_type = Union[float, int]
     _metric = None
@@ -3277,6 +3277,7 @@ class F1Binary(GlobalMetric):
             y_pred=int_predictions,
             labels=[0, 1],
             average=self.average,
+            zero_division=0,
         )
         if self.average is None:
             return {

@@ -1173,6 +1173,42 @@ class DirectCriteriaCatalogEnum(Enum):
         },
     )
 
+    REFERENCE_DOCUMENT_FAITHFULNESS2 = CriteriaWithOptions(
+        name="reference_document_faithfulness2",
+        description="""
+          Is the prediction grounded in the reference document?
+
+          To be grounded in the reference document, all the information of the prediction must either be present in the reference documentor deducible from the reference document.\n
+Base your answer only on the information in the reference document If the prediction is correct but not present in the reference document then it is not grounded.
+        """,
+        prediction_field="response",
+        context_fields=["reference_document"],
+        options=[
+            CriteriaOption(
+                name="Completely grounded",
+                description="The prediction is fully grounded in the reference document.",
+            ),
+            CriteriaOption(
+                name="Mostly grounded",
+                description="the vast majority of the information in the prediction is grounded in the reference document, but there is a small or negligible part of the prediction which is not present in the reference document",
+            ),
+            CriteriaOption(
+                name="Somewhat grounded",
+                description="Some of the information in the prediction is grounded in the reference document.",
+            ),
+            CriteriaOption(
+                name="Not grounded",
+                description="Most or all of the information in the prediction is not grounded in the reference documemnt",
+            ),
+        ],
+        option_map={
+            "Completely Grounded": 1.0,
+            "Mostly grounded": 0.75,
+            "Somewhat grounded": 0.25,
+            "Not grounded": 0.0,
+        },
+    )
+
     GENERAL_HARM_USER_MESSAGE = CriteriaWithOptions(
         name="user_message_general_harm",
         description="The User message is considered universally harmful.",
