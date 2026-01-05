@@ -28,7 +28,6 @@ from typing import (
     Union,
 )
 
-import evaluate
 import numpy
 import numpy as np
 import pandas as pd
@@ -82,6 +81,8 @@ warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 @retry_connection_with_exponential_backoff(backoff_factor=2)
 def hf_evaluate_load(path: str, *args, **kwargs):
+    import evaluate
+
     if settings.hf_offline_metrics_path is not None:
         path = os.path.join(settings.hf_offline_metrics_path, path)
     return evaluate.load(
