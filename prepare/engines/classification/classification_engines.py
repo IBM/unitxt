@@ -7,7 +7,7 @@ from unitxt.inference import (
 
 model_names_to_provider = {
     "mistral-large-instruct": ["watsonx", "rits"],
-    "llama-3-3-70b-instruct": ["watsonx", "rits"],
+    "llama-3-3-70b-instruct": ["watsonx", "rits", "ollama"],
     "llama-3-1-70b-instruct": ["watsonx", "rits"],
     "gpt-4o": ["open-ai"],
     "gpt-4-turbo": ["open-ai"],
@@ -21,6 +21,7 @@ model_names_to_provider = {
     "llama-3-1-405b-instruct-fp8": ["rits"],
     "llama-4-maverick": ["watsonx", "rits"],
     "gpt-oss-120b": ["watsonx", "rits"],
+    "llama-3-8b-instruct": ["ollama"],
 }
 
 
