@@ -32,8 +32,6 @@ import numpy
 import numpy as np
 import pandas as pd
 import requests
-from scipy.stats import bootstrap
-from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
 from .base_metric import Metric
@@ -75,8 +73,6 @@ from .utils import deep_copy, recursive_copy, retry_connection_with_exponential_
 
 logger = get_logger()
 settings = get_settings()
-
-warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 
 @retry_connection_with_exponential_backoff(backoff_factor=2)
@@ -221,6 +217,11 @@ class ConfidenceIntervalMixin(Artifact):
         pass
 
     def bootstrap(self, data: List[Any], score_names: List[str]):
+        from scipy.stats import bootstrap
+        from scipy.stats._warnings_errors import DegenerateDataWarning
+
+        warnings.filterwarnings("ignore", category=DegenerateDataWarning)
+
         if self.ci_score_names is not None:
             score_names = self.ci_score_names
 
@@ -1349,6 +1350,11 @@ class MetricWithConfidenceInterval(Metric):
         Returns:
             Dict of confidence interval values
         """
+        from scipy.stats import bootstrap
+        from scipy.stats._warnings_errors import DegenerateDataWarning
+
+        warnings.filterwarnings("ignore", category=DegenerateDataWarning)
+
         result = {}
 
         if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
@@ -1433,6 +1439,11 @@ class MetricWithConfidenceInterval(Metric):
         self, references, predictions, task_data, score_name
     ):
         """Computed confidence intervals for a set of references and predictions."""
+        from scipy.stats import bootstrap
+        from scipy.stats._warnings_errors import DegenerateDataWarning
+
+        warnings.filterwarnings("ignore", category=DegenerateDataWarning)
+
         random_gen = self.new_random_generator()
 
         def statistic(arr, axis):
