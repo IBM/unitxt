@@ -728,9 +728,9 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             args["quantization_config"] = quantization_config
         elif self.use_fp16:
             if self.device == torch.device("mps"):
-                args["torch_dtype"] = torch.float16
+                args["dtype"] = torch.float16
             else:
-                args["torch_dtype"] = torch.bfloat16
+                args["dtype"] = torch.bfloat16
 
         # We do this, because in some cases, using device:auto will offload some weights to the cpu
         # (even though the model might *just* fit to a single gpu), even if there is a gpu available, and this will
@@ -937,7 +937,7 @@ class HFLlavaInferenceEngine(HFInferenceEngineBase):
 
         self.model = LlavaForConditionalGeneration.from_pretrained(
             self.model_name,
-            torch_dtype=self._get_torch_dtype(),
+            dtype=self._get_torch_dtype(),
             low_cpu_mem_usage=self.low_cpu_mem_usage,
             device_map=self.device_map,
         )
@@ -1108,7 +1108,7 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
             trust_remote_code=True,
             device_map=self.device_map,
             low_cpu_mem_usage=self.low_cpu_mem_usage,
-            torch_dtype=self._get_torch_dtype(),
+            dtype=self._get_torch_dtype(),
         )
         self.model = self.model.to(
             dtype=self._get_torch_dtype()
@@ -1197,9 +1197,9 @@ class HFPipelineBasedInferenceEngine(
             args["quantization_config"] = quantization_config
         elif self.use_fp16:
             if self.device == torch.device("mps"):
-                args["torch_dtype"] = torch.float16
+                args["dtype"] = torch.float16
             else:
-                args["torch_dtype"] = torch.bfloat16
+                args["dtype"] = torch.bfloat16
 
         # We do this, because in some cases, using device:auto will offload some weights to the cpu
         # (even though the model might *just* fit to a single gpu), even if there is a gpu available, and this will
