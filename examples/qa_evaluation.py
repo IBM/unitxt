@@ -26,6 +26,7 @@ dataset = create_dataset(
     template="templates.qa.open",
     split="test",
     format="formats.chat_api",
+    data_classification_policy=["public"],
 )
 
 model = CrossProviderInferenceEngine(model="SmolLM2-1.7B-Instruct", provider="hf-local")
