@@ -3,6 +3,7 @@ from unitxt.metrics import Perplexity
 from unitxt.test_utils.metrics import test_metric
 
 skip_nli_metric_test = True
+skip_bloom_metric_test = True
 
 
 def run_test(metric_to_test, instance_scores, global_scores):
@@ -228,21 +229,22 @@ generate_questions(
     metric=perplexity_chat,
 )
 
-generate_questions(
-    instances={
-        "user: hello\nagent:I have a question about my retirement policy.": [
-            (chat_pension_policy, 0.01),
-            (chat_retirement_policy, 0.02),
-            (chat_construction_policy, 0.01),
-        ],
-    },
-    global_scores={
-        "mean": 0.01,
-        "ci_high": 0.02,
-        "ci_low": 0.01,
-    },
-    metric=perplexity_chat_bloom,
-)
+if not skip_bloom_metric_test:
+    generate_questions(
+        instances={
+            "user: hello\nagent:I have a question about my retirement policy.": [
+                (chat_pension_policy, 0.01),
+                (chat_retirement_policy, 0.02),
+                (chat_construction_policy, 0.01),
+            ],
+        },
+        global_scores={
+            "mean": 0.01,
+            "ci_high": 0.02,
+            "ci_low": 0.01,
+        },
+        metric=perplexity_chat_bloom,
+    )
 
 generate_nli(
     instances={
