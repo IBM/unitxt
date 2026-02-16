@@ -10,7 +10,6 @@ from unitxt.operators import (
     Set,
 )
 from unitxt.splitters import RenameSplits
-from unitxt.test_utils.card import test_card
 
 languages = [
     ["Bengali", "bn"],
@@ -88,7 +87,7 @@ for language in languages:
         )
 
         if is_first:
-            test_card(card, strict=False)
+            # test_card(card, strict=False)  # Disable test card because requires dataset is gated
             is_first = False
 
         subject = subtask.replace("&", "and").replace(" ", "_")
