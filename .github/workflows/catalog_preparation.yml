@@ -24,6 +24,7 @@ jobs:
       HF_HUB_DOWNLOAD_TIMEOUT: 60
       HF_HUB_ETAG_TIMEOUT: 60
       TQDM_DISABLE: "True"
+      HF_TOKEN: ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
 
     strategy:
       matrix:
@@ -44,11 +45,6 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.LLMEVALKIT_SSH_KEY }}
 
-    - name:  Hugging Face Login
-      run: |
-        for i in {1..5}; do
-          huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} && break || sleep $((2 ** i));
-        done
     - name: Run Tests
       run: |
         modulo="${{ matrix.modulo }}"
