@@ -164,6 +164,11 @@ class Dataset(datasets.GeneratorBasedBuilder):
         """
         return (
             super()
-            .as_dataset(split, run_post_process, verification_mode, in_memory)
+            .as_dataset(
+                split=split,
+                run_post_process=run_post_process,
+                verification_mode=verification_mode,
+                in_memory=in_memory,
+            )
             .with_transform(loads_batch)
         )
