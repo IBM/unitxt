@@ -4467,6 +4467,7 @@ class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
             cands=predictions,
             refs=references,
             batch_size=self.batch_size,
+            verbose=True,
         )
 
         intermediates = []
