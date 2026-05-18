@@ -5105,7 +5105,11 @@ class Perplexity(BulkInstanceMetric):
             model_path = self.model_name
             if settings.hf_offline_models_path is not None:
                 model_path = os.path.join(settings.hf_offline_models_path, model_path)
-            self.model = self.model_class().from_pretrained(model_path).to(self.device)
+            self.model = (
+                self.model_class()
+                .from_pretrained(model_path, dtype=torch.float32)
+                .to(self.device)
+            )
             self.tokenizer = AutoTokenizer.from_pretrained(model_path)
             if self.tokenizer.pad_token_id is None:
                 self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
