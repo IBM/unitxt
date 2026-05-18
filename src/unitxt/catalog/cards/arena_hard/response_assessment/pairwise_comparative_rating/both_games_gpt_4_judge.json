@@ -2,8 +2,8 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_from_hf_space",
-        "space_name": "lmsys/arena-hard-browser",
-        "revision": "03b91ca",
+        "space_name": "lmarena-ai/arena-hard-viewer",
+        "revision": "56c7614",
         "data_files": {
             "questions": "data/arena-hard-v0.1/question.jsonl",
             "model_answer": "data/arena-hard-v0.1/model_answer/*.jsonl",

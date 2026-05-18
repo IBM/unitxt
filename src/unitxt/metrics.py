@@ -1929,10 +1929,12 @@ class WeightedWinRateCorrelation(GlobalMetric):
             pred_df_win_rate, ref_df_win_rate, on="model", suffixes=("_pred", "_ref")
         )
         pearson_corr, _ = pearsonr(
-            merged_df["win_rate_pred"], merged_df["win_rate_ref"]
+            merged_df["win_rate_pred"].astype(float),
+            merged_df["win_rate_ref"].astype(float),
         )
         spearman_corr, _ = spearmanr(
-            merged_df["win_rate_pred"], merged_df["win_rate_ref"]
+            merged_df["win_rate_pred"].astype(float),
+            merged_df["win_rate_ref"].astype(float),
         )
 
         return {"pearson_corr": pearson_corr, "spearman_corr": spearman_corr}

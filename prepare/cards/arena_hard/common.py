@@ -5,6 +5,7 @@ from unitxt.operators import (
     Cast,
     Copy,
     FilterByCondition,
+    RemoveFields,
     Rename,
     SelectFields,
     Set,
@@ -18,18 +19,22 @@ arena_hard_scores = ["A=B", "A>B", "A>>B", "B>A", "B>>A"]
 arena_hard_hf_space_processing_steps = SequentialOperator(
     steps=[
         # region Question file
-        Rename(field_to_field={"cluster": "group"}, apply_to_streams=["questions"]),
+        Rename(
+            field_to_field={"uid": "question_id", "cluster": "category"},
+            apply_to_streams=["questions"],
+        ),
         Copy(
-            field_to_field={"turns/0/content": "model_input"},
+            field_to_field={"prompt": "model_input"},
             apply_to_streams=["questions"],
         ),
         # endregion
         # region Answers file processing
+        Rename(
+            field_to_field={"uid": "question_id", "model": "model_id"},
+            apply_to_streams=["model_answer"],
+        ),
         Copy(
-            field_to_field={
-                "choices/0/turns/0/content": "model_output",
-                "choices/0/turns/0/token_len": "model_output_token_len",
-            },
+            field_to_field={"messages/1/content/answer": "model_output"},
             apply_to_streams=["model_answer"],
         ),
         Apply(
@@ -52,9 +57,14 @@ arena_hard_hf_space_processing_steps = SequentialOperator(
             apply_to_streams=["judgment"],
         ),
         Rename(
-            field_to_field={"model": "model_2", "judge": "judge_model_id"},
+            field_to_field={
+                "uid": "question_id",
+                "model": "model_2",
+                "judge": "judge_model_id",
+            },
             apply_to_streams=["judgment"],
         ),
+        RemoveFields(fields=["category"], apply_to_streams=["judgment"]),
         Set(fields={"model_1": "gpt-4-0314"}, apply_to_streams=["judgment"]),
         Cast(
             field="judge_input_model_1_ordered_first",
