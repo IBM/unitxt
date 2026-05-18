@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import warnings
 from collections import Counter
 from typing import Any
 
@@ -2334,12 +2335,17 @@ label (str):
             tester=self,
         )
 
-        with self.assertWarns(DeprecationWarning) as dw:
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
             Rename(field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True)
-            self.assertEqual(
-                "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code.",
-                dw.warnings[0].message.args[0],
-            )
+        deprecation_warnings = [
+            x for x in w if issubclass(x.category, DeprecationWarning)
+        ]
+        self.assertTrue(len(deprecation_warnings) > 0)
+        self.assertEqual(
+            "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code.",
+            deprecation_warnings[0].message.args[0],
+        )
 
     def test_add(self):
         check_operator(

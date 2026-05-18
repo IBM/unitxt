@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 from unitxt.deprecation_utils import warn_on_call
 
@@ -10,10 +11,13 @@ class TestWarnOnCall(unittest.TestCase):
             def __init__(self, name):
                 self.name = name
 
-        with self.assertWarns(UserWarning) as warning_context:
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
             obj = TestClass("Initialized_object")
 
-        self.assertEqual(str(warning_context.warning), "Class object initialized!")
+        user_warnings = [x for x in w if issubclass(x.category, UserWarning)]
+        self.assertTrue(len(user_warnings) > 0)
+        self.assertEqual(str(user_warnings[0].message), "Class object initialized!")
         self.assertEqual(obj.name, "Initialized_object")
 
     def test_warning_called_on_instance_creation(self):
