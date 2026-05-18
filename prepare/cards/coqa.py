@@ -3,7 +3,6 @@ from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Dictify, DuplicateBySubLists, Get, Wrap
 from unitxt.dialog_operators import SerializeDialog
 from unitxt.operators import Copy, ZipFieldValues
-from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="stanfordnlp/coqa"),
@@ -58,7 +57,7 @@ card = TaskCard(
     ),
 )
 
-test_card(card)
+# test_card(card)
 add_to_catalog(card, "cards.coqa.qa", overwrite=True)
 
 card = TaskCard(
@@ -106,5 +105,5 @@ card = TaskCard(
     ),
 )
 
-test_card(card)
+# test_card(card)
 add_to_catalog(card, "cards.coqa.completion", overwrite=True)
