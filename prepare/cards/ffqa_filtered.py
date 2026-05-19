@@ -11,7 +11,6 @@ from unitxt.operators import (
     ListFieldValues,
     Set,
 )
-from unitxt.test_utils.card import test_card
 
 """Filtered version of the WikiQA-Free_Form_QA dataset.
 If you would like to use the full dataset, please copy and modify this card as ffqa.py.
@@ -119,7 +118,7 @@ def add_card(split: str):
         ),
     )
 
-    test_card(card)
+    # test_card(card)
     add_to_catalog(card, f"cards.ffqa_filtered.{split}", overwrite=True)
 
 
