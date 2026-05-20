@@ -1929,10 +1929,12 @@ class WeightedWinRateCorrelation(GlobalMetric):
             pred_df_win_rate, ref_df_win_rate, on="model", suffixes=("_pred", "_ref")
         )
         pearson_corr, _ = pearsonr(
-            merged_df["win_rate_pred"], merged_df["win_rate_ref"]
+            merged_df["win_rate_pred"].astype(float),
+            merged_df["win_rate_ref"].astype(float),
         )
         spearman_corr, _ = spearmanr(
-            merged_df["win_rate_pred"], merged_df["win_rate_ref"]
+            merged_df["win_rate_pred"].astype(float),
+            merged_df["win_rate_ref"].astype(float),
         )
 
         return {"pearson_corr": pearson_corr, "spearman_corr": spearman_corr}
@@ -4427,13 +4429,33 @@ class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
         super().prepare()
         self.bertscore = None
 
+    def _get_scorer(self):
+        from bert_score import BERTScorer
+
+        if self.bertscore is None:
+            self.bertscore = BERTScorer(
+                model_type=self.model_name,
+                num_layers=self.model_layer,
+                batch_size=self.batch_size,
+                device=self.get_device(),
+            )
+            # Some models (e.g. DeBERTa) report an absurdly large
+            # model_max_length that overflows the tokenizers Rust backend.
+            # Cap it to the model's actual max_position_embeddings.
+            tokenizer = self.bertscore._tokenizer
+            if tokenizer.model_max_length > 1_000_000:
+                from transformers import AutoConfig
+
+                config = AutoConfig.from_pretrained(self.model_name)
+                tokenizer.model_max_length = getattr(
+                    config, "max_position_embeddings", 512
+                )
+        return self.bertscore
+
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
-        from evaluate import load
-
-        if self.bertscore is None:
-            self.bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
+        scorer = self._get_scorer()
 
         predictions = []
         references = []
@@ -4441,18 +4463,16 @@ class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
             predictions.append(prediction)
             references.append(reference)
 
-        results = self.bertscore.compute(
-            predictions=predictions,
-            references=references,
+        (precisions, recalls, f1s) = scorer.score(
+            cands=predictions,
+            refs=references,
             batch_size=self.batch_size,
-            device=self.get_device(),
-            model_type=self.model_name,
-            num_layers=self.model_layer,
+            verbose=True,
         )
 
         intermediates = []
         for precision, recall, f1 in zip(
-            results["precision"], results["recall"], results["f1"]
+            precisions.tolist(), recalls.tolist(), f1s.tolist()
         ):
             intermediates.append(
                 {
@@ -5103,7 +5123,11 @@ class Perplexity(BulkInstanceMetric):
             model_path = self.model_name
             if settings.hf_offline_models_path is not None:
                 model_path = os.path.join(settings.hf_offline_models_path, model_path)
-            self.model = self.model_class().from_pretrained(model_path).to(self.device)
+            self.model = (
+                self.model_class()
+                .from_pretrained(model_path, dtype=torch.float32)
+                .to(self.device)
+            )
             self.tokenizer = AutoTokenizer.from_pretrained(model_path)
             if self.tokenizer.pad_token_id is None:
                 self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
