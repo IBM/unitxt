@@ -3,7 +3,7 @@
     "loader": {
         "__type__": "load_json_file",
         "files": {
-            "test": "https://raw.githubusercontent.com/IBM/mt-rag-benchmark/refs/heads/main/human/generation_tasks/reference+RAG.jsonl"
+            "test": "https://raw.githubusercontent.com/IBM/mt-rag-benchmark/refs/heads/main/mtrag-human/generation_tasks/reference+RAG.jsonl"
         },
         "lines": true,
         "data_classification_policy": [
