@@ -17,6 +17,7 @@ jobs:
     timeout-minutes: 30
     env:
       OS: ubuntu-latest
+      PYTHONUNBUFFERED: "1"
       UNITXT_DEFAULT_VERBOSITY: error
       DATASETS_VERBOSITY: error
       HF_HUB_VERBOSITY: error
