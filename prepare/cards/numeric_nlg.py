@@ -7,6 +7,7 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import Copy
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="kasnerz/numericnlg"),
@@ -36,5 +37,5 @@ card = TaskCard(
     },
 )
 
-# test_card(card, num_demos=2, demos_pool_size=5, strict=False)
+test_card(card, num_demos=2, demos_pool_size=5, strict=False)
 add_to_catalog(card, "cards.numeric_nlg", overwrite=True)
