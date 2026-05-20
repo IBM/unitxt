@@ -221,9 +221,7 @@ def _source_to_dataset(
         if streaming:
             return ds_builder.as_streaming_dataset(split=split)
 
-        return ds_builder.as_dataset(
-            split=split, run_post_process=False, verification_mode="no_checks"
-        )
+        return ds_builder.as_dataset(split=split)
 
     except DatasetGenerationError as e:
         raise e.__cause__
