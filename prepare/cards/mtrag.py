@@ -20,7 +20,7 @@ from unitxt.test_utils.card import test_card
 card = TaskCard(
     loader=LoadJsonFile(
         files={
-            "test": "https://raw.githubusercontent.com/IBM/mt-rag-benchmark/refs/heads/main/human/generation_tasks/reference+RAG.jsonl"
+            "test": "https://raw.githubusercontent.com/IBM/mt-rag-benchmark/refs/heads/main/mtrag-human/generation_tasks/reference+RAG.jsonl"
         },
         lines=True,
         data_classification_policy=["public"],
