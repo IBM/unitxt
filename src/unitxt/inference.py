@@ -2770,7 +2770,10 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             if tool_call:
                 if "tool_calls" in output:
                     func = output["tool_calls"][0]["function"]
-                    prediction = f'{{"name": "{func["name"]}", "arguments": {func["arguments"]}}}'
+                    arguments = func["arguments"]
+                    while isinstance(arguments, str):
+                        arguments = json.loads(arguments)
+                    prediction = f'{{"name": "{func["name"]}", "arguments": {json.dumps(arguments)}}}'
                 else:
                     prediction = output["content"]
             else:
