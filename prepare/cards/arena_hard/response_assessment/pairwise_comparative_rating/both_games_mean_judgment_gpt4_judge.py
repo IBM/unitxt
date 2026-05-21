@@ -16,8 +16,8 @@ score_mapper_reversed = {k: -1 * v for k, v in score_mapper.items()}
 
 card = TaskCard(
     loader=LoadFromHFSpace(
-        space_name="lmsys/arena-hard-browser",
-        revision="03b91ca",  # May 26, 2024
+        space_name="lmarena-ai/arena-hard-viewer",
+        revision="56c7614",  # Apr 23, 2025 - first commit with v0.1 data in new space
         data_files={
             "questions": "data/arena-hard-v0.1/question.jsonl",
             "model_answer": "data/arena-hard-v0.1/model_answer/*.jsonl",

@@ -9,7 +9,7 @@ from unitxt.metric_utils import (
     get_remote_metrics_names,
 )
 from unitxt.metrics import RemoteMetric
-from unitxt.test_utils.metrics import test_metric
+from unitxt.test_utils.metrics import test_metric as apply_metric_test
 
 from tests.utils import UnitxtTestCase
 
@@ -130,7 +130,7 @@ class TestRemoteMetrics(UnitxtTestCase):
 
         metric = RemoteMetric(endpoint=endpoint, metric_name=metric_name)
 
-        test_metric(
+        apply_metric_test(
             metric=metric,
             predictions=predictions,
             references=references,

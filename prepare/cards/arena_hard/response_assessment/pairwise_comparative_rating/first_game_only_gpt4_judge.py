@@ -13,8 +13,8 @@ score_mapper = {"A=B": 0, "A>B": 1, "A>>B": 3, "B>A": -1, "B>>A": -3}
 
 card = TaskCard(
     loader=LoadFromHFSpace(
-        space_name="lmsys/arena-hard-browser",
-        revision="03b91ca",  # May 26, 2024
+        space_name="lmarena-ai/arena-hard-viewer",
+        revision="56c7614",  # Apr 23, 2025 - first commit with v0.1 data in new space
         data_files={
             "questions": "data/arena-hard-v0.1/question.jsonl",
             "model_answer": "data/arena-hard-v0.1/model_answer/*.jsonl",
