@@ -658,3 +658,41 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             self.assertEqual(
                 pipeline_inference_model_predictions, auto_inference_model_predictions
             )
+
+    def test_torch_dtype_security_fix_fast(self):
+        """Fast unit test for CWE-95 security fix that doesn't load models.
+
+        This test directly tests the _get_torch_dtype() method without
+        initializing the full inference engine, making it much faster.
+        """
+        import torch
+
+        # Create a minimal mock engine with just torch_dtype attribute
+        engine = HFAutoModelInferenceEngine.__new__(HFAutoModelInferenceEngine)
+
+        # Test valid dtypes
+        valid_dtypes = [
+            ("torch.float16", torch.float16),
+            ("torch.float32", torch.float32),
+            ("torch.bfloat16", torch.bfloat16),
+        ]
+
+        for dtype_str, expected_dtype in valid_dtypes:
+            engine.torch_dtype = dtype_str
+            result = engine._get_torch_dtype()
+            self.assertEqual(result, expected_dtype)
+
+        # Test malicious payload is rejected
+        malicious_payload = 'torch.typename.__globals__["__builtins__"]["__import__"]("os").system("id")'
+        engine.torch_dtype = malicious_payload
+
+        with self.assertRaises(ValueError) as context:
+            engine._get_torch_dtype()
+
+        self.assertIn("Incorrect value of 'torch_dtype'", str(context.exception))
+
+        # Test invalid dtypes are rejected
+        for invalid_dtype in ["torch.invalid_dtype", "torch.float128", "numpy.float32"]:
+            engine.torch_dtype = invalid_dtype
+            with self.assertRaises(ValueError):
+                engine._get_torch_dtype()
