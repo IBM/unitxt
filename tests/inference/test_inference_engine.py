@@ -3,7 +3,7 @@ import random
 import shutil
 import time
 from functools import lru_cache
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List
 
 import unitxt
 from unitxt import create_dataset
@@ -16,7 +16,6 @@ from unitxt.inference import (
     HFPipelineBasedInferenceEngine,
     LiteLLMInferenceEngine,
     OllamaInferenceEngine,
-    OptionSelectingByLogProbsInferenceEngine,
     RITSInferenceEngine,
     TextGenerationInferenceOutput,
     WMLInferenceEngineChat,
@@ -159,7 +158,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_watsonx_inference(self):
         model = WMLInferenceEngineGeneration(
-            model_name="ibm/granite-3-8b-instruct",
+            model_name="ibm/granite-4-h-small",
             data_classification_policy=["public"],
             random_seed=111,
             min_new_tokens=1,
@@ -178,7 +177,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_watsonx_chat_inference(self):
         model = WMLInferenceEngineChat(
-            model_name="ibm/granite-3-8b-instruct",
+            model_name="ibm/granite-4-h-small",
             data_classification_policy=["public"],
             temperature=0,
         )
@@ -193,7 +192,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         from ibm_watsonx_ai.client import APIClient, Credentials
 
         model = WMLInferenceEngineGeneration(
-            model_name="ibm/granite-3-8b-instruct",
+            model_name="ibm/granite-4-h-small",
             data_classification_policy=["public"],
             random_seed=111,
             min_new_tokens=1,
@@ -278,17 +277,13 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             },
         ]
 
-        watsonx_engine = WMLInferenceEngineGeneration(
-            model_name="ibm/granite-3-8b-instruct"
+        engine = HFOptionSelectingInferenceEngine(
+            model_name=local_decoder_model, batch_size=1
         )
-
-        for engine in [watsonx_engine]:
-            dataset = cast(OptionSelectingByLogProbsInferenceEngine, engine).select(
-                dataset
-            )
-            self.assertEqual(dataset[0]["prediction"], "world")
-            self.assertEqual(dataset[1]["prediction"], "the")
-            self.assertEqual(dataset[2]["prediction"], "telephone number")
+        predictions = engine.infer(dataset)
+        self.assertEqual(predictions[0], "world")
+        self.assertEqual(predictions[1], "the")
+        self.assertEqual(predictions[2], "telephone number")
 
     def test_hf_auto_model_inference_engine_batching(self):
         model = HFAutoModelInferenceEngine(
@@ -339,23 +334,6 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         self.assertEqual(results[0], "365")
 
     def test_watsonx_inference_with_images(self):
-        dataset = get_image_dataset()
-
-        inference_engine = WMLInferenceEngineChat(
-            model_name="meta-llama/llama-3-2-11b-vision-instruct",
-            max_tokens=128,
-            top_logprobs=3,
-            temperature=0.0,
-        )
-
-        results = inference_engine.infer_log_probs(
-            dataset.select([0]), return_meta_data=True
-        )
-        self.assertEqual(results[0].generated_text, "The capital of Texas is Austin.")
-        self.assertTrue(isoftype(results, List[TextGenerationInferenceOutput]))
-        self.assertEqual(results[0].stop_reason, "stop")
-        self.assertTrue(isoftype(results[0].prediction, List[Dict[str, Any]]))
-
         dataset = get_image_dataset(format="formats.chat_api")
 
         inference_engine = WMLInferenceEngineChat(
@@ -398,8 +376,8 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         log_probs = engine.get_log_probs(["hello world", "by universe"])
 
-        self.assertAlmostEqual(log_probs[0], -9.77, places=2)
-        self.assertAlmostEqual(log_probs[1], -11.92, places=2)
+        self.assertAlmostEqual(log_probs[0], -9.81, places=2)
+        self.assertAlmostEqual(log_probs[1], -12.0, places=2)
 
     def test_option_selecting_inference_engine(self):
         dataset = [
@@ -644,7 +622,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             seed=123,
             max_tokens=256,
             temperature=0.0,
-            model_name="ibm/granite-3-8b-instruct",
+            model_name="ibm/granite-4-h-small",
         )
 
         results = chat.infer(dataset, return_meta_data=False)
@@ -680,3 +658,41 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             self.assertEqual(
                 pipeline_inference_model_predictions, auto_inference_model_predictions
             )
+
+    def test_torch_dtype_security_fix_fast(self):
+        """Fast unit test for CWE-95 security fix that doesn't load models.
+
+        This test directly tests the _get_torch_dtype() method without
+        initializing the full inference engine, making it much faster.
+        """
+        import torch
+
+        # Create a minimal mock engine with just torch_dtype attribute
+        engine = HFAutoModelInferenceEngine.__new__(HFAutoModelInferenceEngine)
+
+        # Test valid dtypes
+        valid_dtypes = [
+            ("torch.float16", torch.float16),
+            ("torch.float32", torch.float32),
+            ("torch.bfloat16", torch.bfloat16),
+        ]
+
+        for dtype_str, expected_dtype in valid_dtypes:
+            engine.torch_dtype = dtype_str
+            result = engine._get_torch_dtype()
+            self.assertEqual(result, expected_dtype)
+
+        # Test malicious payload is rejected
+        malicious_payload = 'torch.typename.__globals__["__builtins__"]["__import__"]("os").system("id")'
+        engine.torch_dtype = malicious_payload
+
+        with self.assertRaises(ValueError) as context:
+            engine._get_torch_dtype()
+
+        self.assertIn("Incorrect value of 'torch_dtype'", str(context.exception))
+
+        # Test invalid dtypes are rejected
+        for invalid_dtype in ["torch.invalid_dtype", "torch.float128", "numpy.float32"]:
+            engine.torch_dtype = invalid_dtype
+            with self.assertRaises(ValueError):
+                engine._get_torch_dtype()

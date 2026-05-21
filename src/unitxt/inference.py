@@ -546,17 +546,37 @@ class HFInferenceEngineBase(
                 f"'{self.torch_dtype}' was given instead."
             )
 
-        try:
-            dtype = eval(self.torch_dtype)
-        except (AttributeError, TypeError) as e:
-            raise ValueError(
-                f"Incorrect value of 'torch_dtype' was given: '{self.torch_dtype}'."
-            ) from e
+        # Security fix: Use a lookup table instead of eval() to prevent code injection
+        # This addresses CWE-95 (Eval Injection) vulnerability
+        torch_dtypes = {
+            "torch.float16": torch.float16,
+            "torch.float32": torch.float32,
+            "torch.float64": torch.float64,
+            "torch.bfloat16": torch.bfloat16,
+            "torch.float": torch.float,
+            "torch.double": torch.double,
+            "torch.half": torch.half,
+            "torch.int8": torch.int8,
+            "torch.int16": torch.int16,
+            "torch.int32": torch.int32,
+            "torch.int64": torch.int64,
+            "torch.int": torch.int,
+            "torch.long": torch.long,
+            "torch.short": torch.short,
+            "torch.uint8": torch.uint8,
+            "torch.bool": torch.bool,
+            "torch.complex64": torch.complex64,
+            "torch.complex128": torch.complex128,
+            "torch.cfloat": torch.cfloat,
+            "torch.cdouble": torch.cdouble,
+        }
 
-        if not isinstance(dtype, torch.dtype):
+        dtype = torch_dtypes.get(self.torch_dtype)
+
+        if dtype is None:
             raise ValueError(
-                f"'torch_dtype' must be an instance of 'torch.dtype', however, "
-                f"'{dtype}' is an instance of '{type(dtype)}'."
+                f"Incorrect value of 'torch_dtype' was given: '{self.torch_dtype}'. "
+                f"Supported values are: {', '.join(sorted(torch_dtypes.keys()))}"
             )
 
         return dtype
@@ -2770,7 +2790,10 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             if tool_call:
                 if "tool_calls" in output:
                     func = output["tool_calls"][0]["function"]
-                    prediction = f'{{"name": "{func["name"]}", "arguments": {func["arguments"]}}}'
+                    arguments = func["arguments"]
+                    while isinstance(arguments, str):
+                        arguments = json.loads(arguments)
+                    prediction = f'{{"name": "{func["name"]}", "arguments": {json.dumps(arguments)}}}'
                 else:
                     prediction = output["content"]
             else:

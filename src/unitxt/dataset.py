@@ -126,8 +126,6 @@ class Dataset(datasets.GeneratorBasedBuilder):
     def as_dataset(
         self,
         split: Optional[datasets.Split] = None,
-        run_post_process=True,
-        verification_mode: Optional[Union[datasets.VerificationMode, str]] = None,
         in_memory=False,
     ) -> Union[datasets.Dataset, datasets.DatasetDict]:
         """Return a Dataset for the specified split.
@@ -135,12 +133,6 @@ class Dataset(datasets.GeneratorBasedBuilder):
         Args:
             split (`datasets.Split`):
                 Which subset of the data to return.
-            run_post_process (`bool`, defaults to `True`):
-                Whether to run post-processing dataset transforms and/or add
-                indexes.
-            verification_mode ([`VerificationMode`] or `str`, defaults to `BASIC_CHECKS`):
-                Verification mode determining the checks to run on the
-                downloaded/processed dataset information (checksums/size/splits/...).
             in_memory (`bool`, defaults to `False`):
                 Whether to copy the data in-memory.
 
@@ -164,6 +156,6 @@ class Dataset(datasets.GeneratorBasedBuilder):
         """
         return (
             super()
-            .as_dataset(split, run_post_process, verification_mode, in_memory)
+            .as_dataset(split=split, in_memory=in_memory)
             .with_transform(loads_batch)
         )

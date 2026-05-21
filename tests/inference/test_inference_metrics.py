@@ -3,7 +3,7 @@ from unitxt.metrics import (
     BertScore,
 )
 from unitxt.settings_utils import get_settings
-from unitxt.test_utils.metrics import test_metric
+from unitxt.test_utils.metrics import test_metric as apply_metric_test
 
 from tests.utils import UnitxtInferenceTestCase
 
@@ -51,7 +51,7 @@ class TestInferenceMetrics(UnitxtInferenceTestCase):
             "score_name": "f1",
             "num_of_instances": 2,
         }
-        test_metric(
+        apply_metric_test(
             metric=metric,
             predictions=predictions,
             references=references,

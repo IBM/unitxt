@@ -51,7 +51,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         for file in all_preparation_files:
             passed = True
             error = None
-            logger.info(
+            logger.critical(
                 "\n_____________________________________________\n"
                 f"  Testing preparation file:\n  {file}."
                 "\n_____________________________________________\n"
