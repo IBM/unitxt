@@ -7,7 +7,7 @@ from unitxt.inference import (
 
 model_names_to_provider = {
     "mistral-large-instruct": ["watsonx", "rits"],
-    "llama-3-3-70b-instruct": ["watsonx", "rits"],
+    "llama-3-3-70b-instruct": ["watsonx", "rits", "ollama"],
     "llama-3-1-70b-instruct": ["watsonx", "rits"],
     "gpt-4o": ["open-ai"],
     "gpt-4-turbo": ["open-ai"],
@@ -21,7 +21,14 @@ model_names_to_provider = {
     "llama-3-1-405b-instruct-fp8": ["rits"],
     "llama-4-maverick": ["watsonx", "rits"],
     "gpt-oss-120b": ["watsonx", "rits"],
+    "llama-3-8b-instruct": ["ollama"],
 }
+
+
+def get_num_output_tokens(model_name):
+    if "gpt-oss-120b" in model_name:
+        return None
+    return 5
 
 
 def get_inference_engine(model_name, provider):
@@ -45,7 +52,7 @@ def get_inference_engine(model_name, provider):
     return CrossProviderInferenceEngine(
         model=model_name,
         logprobs=True,
-        max_tokens=5,
+        max_tokens=get_num_output_tokens(model_name),
         temperature=0.0,
         top_logprobs=5,
         provider=provider,
@@ -55,7 +62,12 @@ def get_inference_engine(model_name, provider):
 for judge_model_name, infer_frameworks in model_names_to_provider.items():
     for infer_framework in infer_frameworks:
         inference_engine = get_inference_engine(judge_model_name, infer_framework)
-        inference_engine_label = inference_engine.get_engine_id().replace("-", "_")
+        inference_engine_label = (
+            inference_engine.get_engine_id()
+            .replace("-", "_")
+            .replace(":", "_")
+            .replace(",", "_")
+        )
 
         add_to_catalog(
             inference_engine,

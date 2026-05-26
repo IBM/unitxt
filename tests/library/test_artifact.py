@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import warnings
 
 from unitxt.artifact import (
     Artifact,
@@ -346,13 +347,15 @@ class TestArtifact(UnitxtTestCase):
                 overwrite=True,
             )
 
-            with self.assertWarns(DeprecationWarning):
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
                 rename_fields = ArtifactLink(
                     to="rename.for.test.artifact.link",
                     __deprecated_msg__="Artifact is deprecated. "
                     "'rename.for.test.artifact.link' is now instantiated instead. "
                     "\nIn the future, please use 'rename.for.test.artifact.link'.",
                 )
+            self.assertTrue(any(issubclass(x.category, DeprecationWarning) for x in w))
 
             add_to_catalog(
                 rename_fields,
@@ -361,8 +364,10 @@ class TestArtifact(UnitxtTestCase):
                 overwrite=True,
             )
 
-            with self.assertWarns(DeprecationWarning):
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
                 artifact, _ = fetch_artifact("renamefields.for.test.artifact.link")
+            self.assertTrue(any(issubclass(x.category, DeprecationWarning) for x in w))
             self.assertDictEqual(rename.to_dict(), artifact.to_dict())
 
             # test again, now employing add_link_to_catalog()
@@ -374,8 +379,10 @@ class TestArtifact(UnitxtTestCase):
                 overwrite=True,
             )
 
-            with self.assertWarns(DeprecationWarning):
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
                 artifact = get_from_catalog("renamefields3")
+            self.assertTrue(any(issubclass(x.category, DeprecationWarning) for x in w))
             self.assertDictEqual(rename.to_dict(), artifact.to_dict())
 
     def test_artifact_link_with_overwrites(self):

@@ -24,7 +24,7 @@ metric_type_to_realization = {
 
 generic_engine_label = "generic_inference_engine"
 inference_models = {
-    "llama_3_1_70b_instruct_wml": "engines.classification.llama_3_1_70b_instruct_wml",
+    "llama_3_3_70b_instruct_wml": "engines.classification.llama_3_3_70b_instruct_wml",
     generic_engine_label: GenericInferenceEngine(),
 }
 

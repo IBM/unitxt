@@ -546,17 +546,37 @@ class HFInferenceEngineBase(
                 f"'{self.torch_dtype}' was given instead."
             )
 
-        try:
-            dtype = eval(self.torch_dtype)
-        except (AttributeError, TypeError) as e:
-            raise ValueError(
-                f"Incorrect value of 'torch_dtype' was given: '{self.torch_dtype}'."
-            ) from e
+        # Security fix: Use a lookup table instead of eval() to prevent code injection
+        # This addresses CWE-95 (Eval Injection) vulnerability
+        torch_dtypes = {
+            "torch.float16": torch.float16,
+            "torch.float32": torch.float32,
+            "torch.float64": torch.float64,
+            "torch.bfloat16": torch.bfloat16,
+            "torch.float": torch.float,
+            "torch.double": torch.double,
+            "torch.half": torch.half,
+            "torch.int8": torch.int8,
+            "torch.int16": torch.int16,
+            "torch.int32": torch.int32,
+            "torch.int64": torch.int64,
+            "torch.int": torch.int,
+            "torch.long": torch.long,
+            "torch.short": torch.short,
+            "torch.uint8": torch.uint8,
+            "torch.bool": torch.bool,
+            "torch.complex64": torch.complex64,
+            "torch.complex128": torch.complex128,
+            "torch.cfloat": torch.cfloat,
+            "torch.cdouble": torch.cdouble,
+        }
 
-        if not isinstance(dtype, torch.dtype):
+        dtype = torch_dtypes.get(self.torch_dtype)
+
+        if dtype is None:
             raise ValueError(
-                f"'torch_dtype' must be an instance of 'torch.dtype', however, "
-                f"'{dtype}' is an instance of '{type(dtype)}'."
+                f"Incorrect value of 'torch_dtype' was given: '{self.torch_dtype}'. "
+                f"Supported values are: {', '.join(sorted(torch_dtypes.keys()))}"
             )
 
         return dtype
@@ -728,9 +748,9 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             args["quantization_config"] = quantization_config
         elif self.use_fp16:
             if self.device == torch.device("mps"):
-                args["torch_dtype"] = torch.float16
+                args["dtype"] = torch.float16
             else:
-                args["torch_dtype"] = torch.bfloat16
+                args["dtype"] = torch.bfloat16
 
         # We do this, because in some cases, using device:auto will offload some weights to the cpu
         # (even though the model might *just* fit to a single gpu), even if there is a gpu available, and this will
@@ -937,7 +957,7 @@ class HFLlavaInferenceEngine(HFInferenceEngineBase):
 
         self.model = LlavaForConditionalGeneration.from_pretrained(
             self.model_name,
-            torch_dtype=self._get_torch_dtype(),
+            dtype=self._get_torch_dtype(),
             low_cpu_mem_usage=self.low_cpu_mem_usage,
             device_map=self.device_map,
         )
@@ -1108,7 +1128,7 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
             trust_remote_code=True,
             device_map=self.device_map,
             low_cpu_mem_usage=self.low_cpu_mem_usage,
-            torch_dtype=self._get_torch_dtype(),
+            dtype=self._get_torch_dtype(),
         )
         self.model = self.model.to(
             dtype=self._get_torch_dtype()
@@ -1197,9 +1217,9 @@ class HFPipelineBasedInferenceEngine(
             args["quantization_config"] = quantization_config
         elif self.use_fp16:
             if self.device == torch.device("mps"):
-                args["torch_dtype"] = torch.float16
+                args["dtype"] = torch.float16
             else:
-                args["torch_dtype"] = torch.bfloat16
+                args["dtype"] = torch.bfloat16
 
         # We do this, because in some cases, using device:auto will offload some weights to the cpu
         # (even though the model might *just* fit to a single gpu), even if there is a gpu available, and this will
@@ -1461,7 +1481,18 @@ class OllamaInferenceEngine(
                 options=args,
             )
             results.append(response)
-
+        if return_meta_data:
+            return [
+                TextGenerationInferenceOutput(
+                    prediction=element["message"]["content"],
+                    generated_text=element["message"]["content"],
+                    input_tokens=element.get("prompt_eval_count", 0),
+                    output_tokens=element.get("eval_count", 0),
+                    model_name=self.model,
+                    inference_type=self.label,
+                )
+                for element in results
+            ]
         return [element["message"]["content"] for element in results]
 
 
@@ -2759,7 +2790,10 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             if tool_call:
                 if "tool_calls" in output:
                     func = output["tool_calls"][0]["function"]
-                    prediction = f'{{"name": "{func["name"]}", "arguments": {func["arguments"]}}}'
+                    arguments = func["arguments"]
+                    while isinstance(arguments, str):
+                        arguments = json.loads(arguments)
+                    prediction = f'{{"name": "{func["name"]}", "arguments": {json.dumps(arguments)}}}'
                 else:
                     prediction = output["content"]
             else:

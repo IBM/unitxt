@@ -1,6 +1,6 @@
 {
     "__type__": "task_based_ll_mas_judge",
-    "inference_model": "engines.classification.llama_3_1_70b_instruct_wml",
+    "inference_model": "engines.classification.llama_3_3_70b_instruct_wml",
     "template": "templates.rag_eval.correctness_holistic.judge_correctness_simple_numeric",
     "task": "tasks.rag_eval.correctness_holistic.binary",
     "format": null,
