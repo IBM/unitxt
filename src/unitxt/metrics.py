@@ -3477,10 +3477,19 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
     single_reference_per_prediction = True
     _requirements_list = ["scikit-learn"]
 
+    _sklearn_metric_fn = None
+
     def prepare(self):
         super().prepare()
 
-        self._metric = hf_evaluate_load(self.metric, "multilabel")
+        from sklearn.metrics import f1_score, precision_score, recall_score
+
+        metric_fn_map = {
+            "f1": f1_score,
+            "precision": precision_score,
+            "recall": recall_score,
+        }
+        self._sklearn_metric_fn = metric_fn_map[self.metric]
 
     def add_str_to_id(self, str):
         if str not in self.str_to_id:
@@ -3530,21 +3539,25 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
         else:
             labels_param = None
 
-        result = self._metric.compute(
-            predictions=formatted_predictions,
-            references=formatted_references,
-            average=self.average,
-            labels=labels_param,
-        )
-        if isinstance(result[self.metric], numpy.ndarray):
-            assert (
-                len(result[self.metric]) == len(labels)
-            ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
-            final_result = {self.main_score: nan_mean(result[self.metric])}
+        kwargs = {
+            "y_pred": formatted_predictions,
+            "y_true": formatted_references,
+            "average": self.average,
+        }
+        if labels_param is not None:
+            kwargs["labels"] = labels_param
+
+        score = self._sklearn_metric_fn(**kwargs)
+
+        if isinstance(score, numpy.ndarray):
+            assert len(score) == len(
+                labels
+            ), f"F1 result ({score}) has more entries than labels ({labels})"
+            final_result = {self.main_score: nan_mean(score)}
             for i, label in enumerate(labels):
-                final_result[self.metric + "_" + label] = result[self.metric][i]
+                final_result[self.metric + "_" + label] = float(score[i])
         else:
-            final_result = {self.main_score: result[self.metric]}
+            final_result = {self.main_score: float(score)}
         return final_result
 
 
