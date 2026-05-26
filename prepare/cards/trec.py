@@ -124,7 +124,7 @@ classes = [expand_label_text[label] for label in classes]
 
 card = TaskCard(
     loader=LoadHF(
-        path="trec", revision="refs/convert/parquet", splits=["train", "test"]
+        path="CogComp/trec", revision="refs/convert/parquet", splits=["train", "test"]
     ),
     preprocess_steps=[
         Shuffle(page_size=sys.maxsize),
