@@ -12,7 +12,7 @@ langs = ["de", "es", "fr", "ru", "tu"]
 for lang in langs:
     card = TaskCard(
         loader=LoadHF(
-            path="mlsum",
+            path="reciTAL/mlsum",
             revision="refs/convert/parquet",
             data_dir=lang,
             splits=["train", "test", "validation"],

@@ -30,7 +30,7 @@ classes = [
 mappers = {str(i): cls for i, cls in enumerate(classes)}
 
 card = TaskCard(
-    loader=LoadHF(path=f"{dataset_name}"),
+    loader=LoadHF(path="community-datasets/yahoo_answers_topics"),
     preprocess_steps=[
         Shuffle(page_size=sys.maxsize),
         SplitRandomMix(

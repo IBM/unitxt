@@ -216,7 +216,7 @@ class TestLoaders(UnitxtTestCase):
                     )
 
     def test_load_from_HF(self):
-        loader = LoadHF(path="sst2", loader_limit=10, split="train")
+        loader = LoadHF(path="stanfordnlp/sst2", loader_limit=10, split="train")
         ms = loader()
         instance = next(iter(ms["train"]))
         self.assertEqual(
@@ -272,7 +272,7 @@ class TestLoaders(UnitxtTestCase):
         self.assertEqual(instance["language"], "eng")
 
     def test_load_from_HF_split(self):
-        loader = LoadHF(path="sst2", split="train")
+        loader = LoadHF(path="stanfordnlp/sst2", split="train")
         ms = loader()
         instance = next(iter(ms["train"]))
         self.assertEqual(

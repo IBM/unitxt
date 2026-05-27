@@ -2,7 +2,7 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "piqa",
+        "path": "ybisk/piqa",
         "revision": "refs/pr/9"
     },
     "preprocess_steps": [

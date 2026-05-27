@@ -34,7 +34,7 @@ classes = [
 mappers = {str(i): cls for i, cls in enumerate(classes)}
 
 card = TaskCard(
-    loader=LoadHF(path=f"{dataset_name}"),
+    loader=LoadHF(path="fancyzhx/dbpedia_14"),
     preprocess_steps=[
         Shuffle(page_size=sys.maxsize),
         SplitRandomMix(

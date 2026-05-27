@@ -11,7 +11,7 @@ from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(
-        path="wiki_bio",
+        path="michaelauli/wiki_bio",
         revision="refs/convert/parquet",
         splits=["train", "validation", "test"],
     ),
