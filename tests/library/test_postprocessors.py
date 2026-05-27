@@ -377,8 +377,9 @@ class TestPostProcessors(UnitxtTestCase):
             "[[9]] because",
             "good",
             "bad [[x]]",
+            "[[1232]]",
         ]
-        targets = [0.3, 0.6, 0.62, 0.9, 0.0, 0.0]
+        targets = [0.3, 0.6, 0.62, 0.9, 0.0, 0.0, 0.0]
 
         check_operator(
             operator=postprocessor,

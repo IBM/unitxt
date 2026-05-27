@@ -315,7 +315,10 @@ class ExtractMtBenchRatingJudgment(FieldOperator):
     def process_value(self, text: Any) -> Any:
         match = re.search(r"\[\[([\s*\d]+\.?[\d]*\s*)(/\s*10)?\s*\]\]", text)
         try:
-            return float(match.group(1)) / 10
+            score = float(match.group(1)) / 10
+            if score > 1.0 or score < 0:
+                return 0.0
+            return score
         except:
             return 0.0
 
