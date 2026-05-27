@@ -12,7 +12,7 @@ from unitxt.blocks import (
 from tests.utils import UnitxtTestCase
 
 card = TaskCard(
-    loader=LoadHF(path="glue", name="wnli"),
+    loader=LoadHF(path="nyu-mll/glue", name="wnli"),
     preprocess_steps=[
         SplitRandomMix(
             {"train": "train[95%]", "validation": "train[5%]", "test": "validation"}

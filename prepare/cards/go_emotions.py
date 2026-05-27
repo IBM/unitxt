@@ -11,13 +11,13 @@ from unitxt.test_utils.card import test_card
 dataset_name = "go_emotions"
 subset = "simplified"
 
-ds_builder = load_dataset_builder(dataset_name, subset)
+ds_builder = load_dataset_builder("google-research-datasets/go_emotions", subset)
 classes = ds_builder.info.features["labels"].feature.names
 
 mappers = {str(i): cls for i, cls in enumerate(classes)}
 
 card = TaskCard(
-    loader=LoadHF(path=dataset_name, name=subset),
+    loader=LoadHF(path="google-research-datasets/go_emotions", name=subset),
     preprocess_steps=[
         MapInstanceValues(mappers={"labels": mappers}, process_every_value=True),
         Set(

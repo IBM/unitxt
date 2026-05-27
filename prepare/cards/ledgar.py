@@ -10,7 +10,7 @@ from unitxt.test_utils.card import test_card
 
 dataset_name = "ledgar"
 
-ds_builder = load_dataset_builder("lex_glue", dataset_name)
+ds_builder = load_dataset_builder("coastalcph/lex_glue", dataset_name)
 classlabels = ds_builder.info.features["label"]
 
 mappers = {}
@@ -18,7 +18,7 @@ for i in range(len(classlabels.names)):
     mappers[str(i)] = classlabels.names[i]
 
 card = TaskCard(
-    loader=LoadHF(path="lex_glue", name=f"{dataset_name}"),
+    loader=LoadHF(path="coastalcph/lex_glue", name=f"{dataset_name}"),
     preprocess_steps=[
         MapInstanceValues({"label": mappers}),
         Set(
