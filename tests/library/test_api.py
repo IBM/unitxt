@@ -520,7 +520,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_load_dataset_from_dict(self):
         card = TaskCard(
-            loader=LoadHF(path="glue", name="wnli"),
+            loader=LoadHF(path="nyu-mll/glue", name="wnli"),
             task=Task(
                 input_fields=["sentence1", "sentence2"],
                 reference_fields=["label"],

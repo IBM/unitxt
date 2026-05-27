@@ -4,7 +4,7 @@ from unitxt.operators import IndexOf, Rename
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="openbookqa"),
+    loader=LoadHF(path="allenai/openbookqa"),
     preprocess_steps=[
         Rename(
             field_to_field={"choices/text": "choices_text", "choices/label": "labels"},

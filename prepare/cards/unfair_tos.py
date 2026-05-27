@@ -11,7 +11,7 @@ from unitxt.test_utils.card import test_card
 
 dataset_name = "unfair_tos"
 
-ds_builder = load_dataset_builder("lex_glue", dataset_name)
+ds_builder = load_dataset_builder("coastalcph/lex_glue", dataset_name)
 classlabels = ds_builder.info.features["labels"]
 
 mappers = {}
@@ -19,7 +19,7 @@ for i in range(len(classlabels.feature.names)):
     mappers[str(i)] = classlabels.feature.names[i]
 
 card = TaskCard(
-    loader=LoadHF(path="lex_glue", name=f"{dataset_name}"),
+    loader=LoadHF(path="coastalcph/lex_glue", name=f"{dataset_name}"),
     preprocess_steps=[
         MapInstanceValues(mappers={"labels": mappers}, process_every_value=True),
         Set(

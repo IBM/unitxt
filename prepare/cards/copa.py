@@ -10,7 +10,7 @@ from unitxt.operators import (
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="super_glue", name="copa"),
+    loader=LoadHF(path="aps/super_glue", name="copa"),
     preprocess_steps=[
         "splitters.small_no_test",
         ListFieldValues(fields=["choice1", "choice2"], to_field="choices"),

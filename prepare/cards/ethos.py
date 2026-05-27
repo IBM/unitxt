@@ -12,7 +12,7 @@ from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(
-        path="ethos",
+        path="iamollas/ethos",
         revision="refs/convert/parquet",
         data_dir="binary",
         splits=["train"],
