@@ -1,7 +1,11 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Filter
-from unitxt.operators import ListFieldValues, MapValues
+from unitxt.operators import (
+    ExecuteExpression,
+    ListFieldValues,
+    MapValues,
+)
 from unitxt.processors import LiteralEval, Lower
 from unitxt.splitters import RenameSplits
 from unitxt.string_operators import MapReplace
@@ -40,6 +44,8 @@ config_names = [
     "Sociology",
 ]
 
+mapping = {"A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "F": 5, "G": 6, "H": 7, "I": 8}
+
 for name in config_names:
     card = TaskCard(
         loader=LoadHF(
@@ -51,6 +57,14 @@ for name in config_names:
                 fields=[f"image_{i}" for i in range(1, 8)], to_field="media/images"
             ),
             Filter(field="media/images", values=[None]),
+            ExecuteExpression(
+                expression="options if options != '[]' else '[\"'+answer+'\"]'",
+                to_field="options",
+            ),
+            ExecuteExpression(
+                expression="'A' if options == '[\"'+answer+'\"]' else answer",
+                to_field="answer",
+            ),
             MapReplace(
                 field_to_field={"question": "question", "options": "choices"},
                 mapping={
@@ -62,7 +76,7 @@ for name in config_names:
             Lower(field="subfield", to_field="topic"),
             MapValues(
                 field="answer",
-                mapping={"A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "?": None},
+                mapping=mapping,
             ),
         ],
         task="tasks.qa.multiple_choice.with_topic",
