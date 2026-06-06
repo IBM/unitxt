@@ -109,7 +109,7 @@ def _get_existing_context(error: Exception):
             existing["context_object"],
             existing["context"],
         )
-    return str(error), None, {}
+    return error.original_error if type(error) == ExtKeyError else str(error), None, {}
 
 
 def _format_object_context(obj: Any) -> Optional[str]:
@@ -239,11 +239,20 @@ def _store_context_attributes(
         "original_message": original_message,
     }
     try:
-        error.original_error = type(error)(original_message)
+        error.original_error = (
+            original_message
+            if type(error) == KeyError
+            else type(error)(original_message)
+        )
     except (TypeError, ValueError):
         error.original_error = Exception(original_message)
     error.context_object = context_object
     error.context = context
+
+
+class ExtKeyError(KeyError):
+    def __str__(self):
+        return "\n" + self.args[0]
 
 
 def _add_context_to_exception(
@@ -262,14 +271,17 @@ def _add_context_to_exception(
     }
     context_parts = _build_context_parts(final_context_object, final_context)
     context_message = _create_context_box(context_parts)
-    _store_context_attributes(
-        original_error, final_context_object, final_context, original_message
-    )
+    if type(original_error) == KeyError:
+        f = ExtKeyError(KeyError(original_error))
+    else:
+        f = original_error
+    _store_context_attributes(f, final_context_object, final_context, original_message)
     if context_parts:
         formatted_message = f"\n{context_message}\n\n{original_message}"
-        original_error.args = (formatted_message,)
+        f.args = (formatted_message,)
     else:
-        original_error.args = (original_message,)
+        f.args = (original_message,)
+    return f
 
 
 @contextmanager
@@ -298,5 +310,5 @@ def error_context(context_object: Any = None, **context):
     try:
         yield
     except Exception as e:
-        _add_context_to_exception(e, context_object, **context)
-        raise
+        f = _add_context_to_exception(e, context_object, **context)
+        raise f from None
