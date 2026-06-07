@@ -9,7 +9,7 @@ from tests.utils import UnitxtTestCase
 
 class TestMetricUtils(UnitxtTestCase):
     def test_split_none(self):
-        operator = SplitSubsetsAndGroups()
+        operator = SplitSubsetsAndGroups(subset_groups={"": {}})
 
         ms = MultiStream.from_iterables(
             {
@@ -61,7 +61,15 @@ class TestMetricUtils(UnitxtTestCase):
         self.assertEqual({k: list(v) for k, v in result.items()}, target)
 
     def test_split_groups(self):
-        operator = SplitSubsetsAndGroups()
+        operator = SplitSubsetsAndGroups(
+            subset_groups={
+                "": {
+                    '{"template":"templates.t1"}',
+                    '{"num_demos": 1}',
+                    '{"template":"templates.t2"}',
+                }
+            }
+        )
 
         ms = MultiStream.from_iterables(
             {
@@ -143,7 +151,7 @@ class TestMetricUtils(UnitxtTestCase):
         self.assertEqual({k: list(v) for k, v in result.items()}, target)
 
     def test_split_subsets(self):
-        operator = SplitSubsetsAndGroups()
+        operator = SplitSubsetsAndGroups(subset_groups={("mnli",): {}, ("squad",): {}})
 
         ms = MultiStream.from_iterables(
             {
@@ -197,7 +205,16 @@ class TestMetricUtils(UnitxtTestCase):
         self.assertEqual({k: list(v) for k, v in result.items()}, target)
 
     def test_split_subset_and_groups(self):
-        operator = SplitSubsetsAndGroups()
+        operator = SplitSubsetsAndGroups(
+            subset_groups={
+                ("mnli",): {
+                    '{"template":"templates.t1"}',
+                    '{"template":"templates.t2"}',
+                    '{"num_demos": 1}',
+                },
+                ("squad",): {'{"template":"templates.t1"}', '{"num_demos": 1}'},
+            }
+        )
 
         ms = MultiStream.from_iterables(
             {
@@ -339,9 +356,6 @@ class TestMetricUtils(UnitxtTestCase):
             list(result["test"]),
             [
                 {
-                    "subset": [],
-                    "groups": [],
-                    "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "accuracy": 1.0,
@@ -358,9 +372,6 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
                 {
-                    "subset": [],
-                    "groups": [],
-                    "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "accuracy": 0.0,
@@ -571,8 +582,6 @@ class TestMetricUtils(UnitxtTestCase):
             list(result["test"]),
             [
                 {
-                    "subset": [],
-                    "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
                     "score": {
                         "instance": {
                             "accuracy": 1.0,
@@ -613,8 +622,6 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
                 {
-                    "subset": [],
-                    "groups": ['{"template":"templates.t2"}', '{"num_demos": 1}'],
                     "score": {
                         "instance": {
                             "accuracy": 0.0,
@@ -655,8 +662,6 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
                 {
-                    "subset": [],
-                    "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
                     "score": {
                         "instance": {
                             "f1": 1.0,
@@ -776,9 +781,9 @@ class TestMetricUtils(UnitxtTestCase):
             list(result["test"]),
             [
                 {
-                    "subset": ["mnli"],
-                    "groups": [],
-                    "media": {"audios": [], "images": []},
+                    # "subset": ["mnli"],
+                    # "groups": [],
+                    # "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "accuracy": 1.0,
@@ -810,9 +815,9 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
                 {
-                    "subset": ["mnli"],
-                    "groups": [],
-                    "media": {"audios": [], "images": []},
+                    # "subset": ["mnli"],
+                    # "groups": [],
+                    # "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "accuracy": 0.0,
@@ -844,9 +849,9 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
                 {
-                    "subset": ["squad"],
-                    "groups": [],
-                    "media": {"audios": [], "images": []},
+                    # "subset": ["squad"],
+                    # "groups": [],
+                    # "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "f1": 1.0,
@@ -977,9 +982,6 @@ class TestMetricUtils(UnitxtTestCase):
             list(result["test"]),
             [
                 {
-                    "subset": ["mnli", "first"],
-                    "groups": [],
-                    "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "accuracy": 1.0,
@@ -1015,9 +1017,6 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
                 {
-                    "subset": ["mnli", "first"],
-                    "groups": [],
-                    "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "accuracy": 0.0,
@@ -1254,8 +1253,6 @@ class TestMetricUtils(UnitxtTestCase):
             list(result["test"]),
             [
                 {
-                    "subset": ["mnli"],
-                    "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
                     "score": {
                         "instance": {
                             "accuracy": 1.0,
@@ -1329,8 +1326,6 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
                 {
-                    "subset": ["mnli"],
-                    "groups": ['{"template":"templates.t2"}', '{"num_demos": 1}'],
                     "score": {
                         "instance": {
                             "accuracy": 0.0,
@@ -1404,8 +1399,6 @@ class TestMetricUtils(UnitxtTestCase):
                     },
                 },
                 {
-                    "subset": ["squad"],
-                    "groups": ['{"template":"templates.t1"}', '{"num_demos": 1}'],
                     "score": {
                         "instance": {
                             "f1": 1.0,

@@ -127,6 +127,99 @@ class JoinStreams(MultiStreamOperator):
         return multi_stream
 
 
+class JoinStreamsFleurs(MultiStreamOperator):
+    """Join multiple streams into a single stream - special version for the fleurs speech translation dataset.
+
+    left_stream contains the input speech in English, 1-3 spoken samples per unique text instance
+        The inference and the evaluation are done on all the spoken samples, including the repetitions, as they
+        represennt different speakers and different recording conditions, potentially resulting in different
+        output translations
+    right_stream contains the target translation text, 1-3 repetitions of the same target text translation
+        The code below removes the redundant target translations, to avoid duplications during later merging
+        of the two parts - the left and the right
+
+    Args:
+        left_stream (str): the left stream.
+        right_stream (str): the right stream.
+        how: use "inner".
+        on: use "id".
+        new_stream_name (str): The name of the new stream resulting from the merge.
+    """
+
+    left_stream: str
+    right_stream: str
+    how: Literal["inner"]
+    on: Optional[List[str]] = None
+    left_on: Optional[List[str]] = None
+    right_on: Optional[List[str]] = None
+    new_stream_name: str
+
+    def merge(self, multi_stream) -> List:
+        assert self.right_stream in multi_stream and self.left_stream in multi_stream
+        stream_dict = dict(multi_stream.items())
+        left_stream = list(stream_dict[self.left_stream])
+        right_stream = list(stream_dict[self.right_stream])
+        left_stream_df = pd.DataFrame(left_stream)
+        # right_stream_df = pd.DataFrame(right_stream)
+
+        # remove duplications from the right stream, this is intended for the FLEURS dataset (spoken translation)
+        # it removes unnecessary repetitions of the target translations, before merging the input speech with the target translations
+        right_deduplicate = []
+        seen_ids = set()
+        for item in right_stream:
+            if item["id"] not in seen_ids:
+                seen_ids.add(item["id"])
+                text = item["transcription"].strip()
+                if text[-1] not in [".", "!", "?"]:
+                    item["transcription"] = (
+                        text + "."
+                    )  # add '.' at the end of the reference translations
+                right_deduplicate.append(item)
+        right_stream_df = pd.DataFrame(right_deduplicate)
+
+        merged_df = pd.merge(
+            left_stream_df,
+            right_stream_df,
+            how=self.how,
+            on=self.on,
+            left_on=self.left_on,
+            right_on=self.right_on,
+        )
+
+        def assert_col_values_are_identical(df: pd.DataFrame, col_name):
+            (col_name_1, col_name_2) = (f"{col_name}_x", f"{col_name}_y")
+            if not df.apply(
+                lambda row: str(row[col_name_1]) == str(row[col_name_2]),
+                axis=1,
+            ).all():
+                raise UnitxtError(
+                    f"'{col_name}' field is not identical in both left and right instances merged in JoinStreams."
+                )
+
+        # If 2 streams / Dataframes contains column with the same names, which are not the columns the join is operated
+        # on they will be renamed to "[column_name]_x" and "[column_name]_y". Some of these columns are metadsta
+        # columns that unitxt adds, which must be kept the same. This code verify that all datasets have
+        # the same metadata values and rename the columns accordingly.
+        common_cols_to_verify = ["data_classification_policy", "recipe_metadata"]
+        for common_col in common_cols_to_verify:
+            assert_col_values_are_identical(merged_df, common_col)
+            merged_df[common_col] = merged_df[f"{common_col}_x"]
+            merged_df = merged_df.drop(
+                columns=[f"{common_col}_x", f"{common_col}_y"], errors="ignore"
+            )
+
+        if len(merged_df) == 0:
+            raise UnitxtError(
+                f"JoinStreams resulted in an empty stream. It means that that keys in fields '{self.on}' on the left and on right streams do not match the merge policy of '{self.how}'."
+            )
+        return merged_df.to_dict(orient="records")
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        merged_records = self.merge(multi_stream)
+        multi_stream[self.new_stream_name] = ListStream(instances_list=merged_records)
+        return multi_stream
+
+
 class DeleteSplits(MultiStreamOperator):
     """Operator which delete splits in stream.
 

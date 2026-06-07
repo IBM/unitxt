@@ -1,0 +1,8 @@
+{
+    "__type__": "input_output_template",
+    "input_format": "{audio}can you transcribe the speech into a written format?",
+    "output_format": "{text}",
+    "postprocessors": [
+        "processors.normalize_text_basic_with_whisper"
+    ]
+}

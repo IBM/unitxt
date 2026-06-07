@@ -5,6 +5,7 @@ import datasets
 
 from .api import __file__ as _
 from .artifact import __file__ as _
+from .audio_operators import __file__ as _
 from .augmentors import __file__ as _
 from .base_metric import __file__ as _
 from .benchmark import __file__ as _

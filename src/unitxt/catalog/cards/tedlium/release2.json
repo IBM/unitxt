@@ -1,0 +1,45 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "LIUM/tedlium",
+        "data_dir": "release2",
+        "revision": "refs/convert/parquet",
+        "splits": [
+            "train",
+            "validation",
+            "test"
+        ],
+        "data_classification_policy": [
+            "public"
+        ],
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "to_audio",
+            "field": "audio"
+        }
+    ],
+    "task": "tasks.speech_recognition",
+    "templates": [
+        "templates.speech_recognition.default"
+    ],
+    "__tags__": {
+        "license": "cc-by-nc-nd-3.0",
+        "language": "en",
+        "task_categories": [
+            "automatic-speech-recognition"
+        ],
+        "size_categories": [
+            "10K<n<100K"
+        ],
+        "modalities": [
+            "audio",
+            "text"
+        ],
+        "source": "TED Talks"
+    },
+    "__description__": "The TED-LIUM corpus is English-language TED talks, with transcriptions, sampled at 16kHz. This release2 contains progressively more transcribed speech training data, ranging from 118 hours (Release 1), to 207 hours (Release 2), to 452 hours (Release 3). The dataset includes speaker information and is commonly used for automatic speech recognition evaluation.",
+    "__title__": "TEDLIUM-release2"
+}

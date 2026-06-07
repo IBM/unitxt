@@ -130,6 +130,9 @@ class FinalizeDataset(InstanceOperatorValidator):
             if isoftype(instance["media"]["images"][i], Image):
                 instance["media"]["images"][i] = instance["media"]["images"][i]["image"]
 
+        for i in range(len(instance["media"]["audios"])):
+            instance["media"]["audios"][i] = instance["media"]["audios"][i]["audio"]
+
         return instance
 
     def _get_instance_task_data(
