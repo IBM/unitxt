@@ -12,16 +12,15 @@ from .operators import ArtifactFetcherMixin
 from .settings_utils import get_settings
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .templates import Template
+from .utils import json_load
 
 settings = get_settings()
 
 
 def get_task_data_dict(task_data):
-    import json
-
     # seems like the task data sometimes comes as a string, not a dict
     # this fixes it
-    return json.loads(task_data) if isinstance(task_data, str) else task_data
+    return json_load(task_data) if isinstance(task_data, str) else task_data
 
 
 class LLMAsJudgeBase(BulkInstanceMetric, ArtifactFetcherMixin):

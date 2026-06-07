@@ -26,7 +26,7 @@ from .schema import loads_batch
 from .settings_utils import get_constants, get_settings
 from .standard import DatasetRecipe
 from .task import Task
-from .utils import lru_cache_decorator
+from .utils import json_dump, lru_cache_decorator
 
 logger = get_logger()
 constants = get_constants()
@@ -180,6 +180,20 @@ def object_to_str_without_addresses(obj):
     return obj_str
 
 
+def _remove_id_keys(obj):
+    if isinstance(obj, dict):
+        return {k: _remove_id_keys(v) for k, v in obj.items() if k != "__id__"}
+    if isinstance(obj, list):
+        return [_remove_id_keys(item) for item in obj]
+    return obj
+
+
+def _artifact_string_repr(artifact):
+    artifact_dict = to_dict(artifact, object_to_str_without_addresses)
+    artifact_dict_without_ids = _remove_id_keys(artifact_dict)
+    return json_dump(artifact_dict_without_ids)
+
+
 def _source_to_dataset(
     source: SourceOperator,
     split=None,
@@ -189,9 +203,7 @@ def _source_to_dataset(
     from .dataset import Dataset as UnitxtDataset
 
     # Generate a unique signature for the source
-    source_signature = json.dumps(
-        to_dict(source, object_to_str_without_addresses), sort_keys=True
-    )
+    source_signature = _artifact_string_repr(source)
     config_name = "recipe-" + short_hex_hash(source_signature)
     # Obtain data stream from the source
     stream = source()
