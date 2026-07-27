@@ -1190,6 +1190,17 @@ class TestMetrics(UnitxtTestCase):
         for target, value in global_targets.items():
             self.assertAlmostEqual(value, outputs[0]["score"]["global"][target])
 
+    def test_token_overlap_empty_references(self):
+        metric = TokenOverlap()
+        predictions = ["hello there"]
+        references = [[]]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_targets = {"f1": 0, "precision": 0, "recall": 0}
+        for target, value in global_targets.items():
+            self.assertAlmostEqual(value, outputs[0]["score"]["global"][target])
+
     def test_roc_auc(self):
         metric = RocAuc()
         predictions = [0.2, 0.8, 1.0]
