@@ -152,6 +152,15 @@ def is_possible_field(field_name, field_value):
     return True
 
 
+def _get_class_annotations(obj):
+    cls = obj if isinstance(obj, type) else type(obj)
+    if hasattr(inspect, "Format"):
+        return inspect.get_annotations(cls, format=inspect.Format.FORWARDREF)
+    if hasattr(inspect, "get_annotations"):
+        return inspect.get_annotations(cls)
+    return dict(vars(cls).get("__annotations__", {}))
+
+
 def get_fields(cls, attrs):
     """Get the fields for a class based on its attributes.
 
@@ -165,7 +174,7 @@ def get_fields(cls, attrs):
     fields = {}
     for base in cls.__bases__:
         fields = {**getattr(base, _FIELDS, {}), **fields}
-    annotations = {**attrs.get("__annotations__", {})}
+    annotations = _get_class_annotations(cls)
 
     for attr_name, attr_value in attrs.items():
         if attr_name not in annotations and is_possible_field(attr_name, attr_value):
@@ -593,7 +602,7 @@ class Dataclass(metaclass=DataclassMeta):
         else:
             attributes = []
             for cls in classes:
-                attributes += list(cls.__annotations__.keys())
+                attributes += list(_get_class_annotations(cls).keys())
             attributes_dict = {
                 attribute: getattr(self, attribute) for attribute in attributes
             }

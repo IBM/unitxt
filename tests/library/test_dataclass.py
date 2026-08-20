@@ -1,3 +1,5 @@
+import sys
+import unittest
 from dataclasses import field
 from typing import Callable
 
@@ -5,6 +7,7 @@ from unitxt.dataclass import (
     AbstractField,
     AbstractFieldError,
     Dataclass,
+    DataclassMeta,
     FinalField,
     FinalFieldError,
     MissingDefaultError,
@@ -25,6 +28,37 @@ from tests.utils import UnitxtTestCase
 
 
 class TestDataclass(UnitxtTestCase):
+    @unittest.skipUnless(sys.version_info >= (3, 14), "requires deferred annotations")
+    def test_self_referencing_annotation(self):
+        class SelfReferencingDataclass(Dataclass):
+            child: SelfReferencingDataclass | None = None  # noqa: F821
+
+        instance = SelfReferencingDataclass()
+
+        self.assertIsNone(instance.child)
+        self.assertListEqual(fields_names(SelfReferencingDataclass), ["child"])
+
+    def test_annotations_not_stored_in_class_namespace(self):
+        class DeferredAnnotationsMeta(DataclassMeta):
+            def __init__(self, name, bases, attrs):
+                attrs.pop("__annotations__", None)
+                super().__init__(name, bases, attrs)
+
+        class DeferredAnnotationsDataclass(
+            Dataclass, metaclass=DeferredAnnotationsMeta
+        ):
+            pass
+
+        class Dummy(DeferredAnnotationsDataclass):
+            name: str
+            count: int = 0
+
+        dummy = Dummy(name="example")
+
+        self.assertEqual(dummy.name, "example")
+        self.assertEqual(dummy.count, 0)
+        self.assertListEqual(fields_names(Dummy), ["name", "count"])
+
     def test_dataclass(self):
         class GrandParent(Dataclass):
             a: int
