@@ -16,6 +16,8 @@ concurrency:
 
 jobs:
   inference:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

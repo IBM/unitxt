@@ -228,6 +228,58 @@ def setup_logging(verbosity: str) -> None:
     logger.setLevel(verbosity)
 
 
+def _normalize_directory(path: str) -> str:
+    """Resolves a user-supplied directory path to a normalized absolute path.
+
+    Security: normalizing the path before it reaches a filesystem call removes any
+    ``..`` traversal segments and symlink indirection (CWE-22, path injection). The
+    resolved location is intentionally *not* restricted to the current working
+    directory -- writing results to an arbitrary directory is the documented purpose
+    of ``--output_path``.
+
+    Args:
+        path (str): The user-supplied directory path.
+
+    Returns:
+        str: The normalized, absolute directory path.
+    """
+    return os.path.realpath(os.path.expanduser(path))
+
+
+def _validate_filename_component(component: str, arg_name: str) -> str:
+    """Validates that a user-supplied string is a bare filename component.
+
+    Security: a filename prefix has no legitimate reason to contain a path
+    separator, so rejecting separators here prevents a value such as
+    ``../../../etc/cron.d/x`` from escaping the output directory (CWE-22).
+
+    Args:
+        component (str): The user-supplied filename component.
+        arg_name (str): Name of the CLI argument, used in the error message.
+
+    Returns:
+        str: The validated component, unchanged.
+
+    Raises:
+        ValueError: If the component is empty or is not a bare filename.
+    """
+    if not component:
+        raise ValueError(f"{arg_name} must not be empty.")
+
+    separators = [sep for sep in (os.sep, os.altsep, "/", "\\") if sep]
+    for sep in separators:
+        if sep in component:
+            raise ValueError(
+                f"{arg_name} must be a plain filename without path separators, "
+                f"but got: {component!r}"
+            )
+
+    if component in (os.curdir, os.pardir):
+        raise ValueError(f"{arg_name} must be a plain filename, but got: {component!r}")
+
+    return component
+
+
 def prepare_output_paths(output_path: str, prefix: str) -> Tuple[str, str]:
     """Creates output directory and defines file paths.
 
@@ -238,7 +290,15 @@ def prepare_output_paths(output_path: str, prefix: str) -> Tuple[str, str]:
     Returns:
         Tuple[str, str]: A tuple containing the path for the results summary file
                          and the path for the detailed samples file.
+
+    Raises:
+        ValueError: If the prefix is not a plain filename (path injection guard).
     """
+    # Security: validate the untrusted prefix and normalize the directory before
+    # either reaches a filesystem call, so neither can escape the output directory.
+    prefix = _validate_filename_component(prefix, "--output_file_prefix")
+    output_path = _normalize_directory(output_path)
+
     os.makedirs(output_path, exist_ok=True)
     results_file_path = os.path.join(output_path, f"{prefix}.json")
     samples_file_path = os.path.join(output_path, f"{prefix}_samples.json")
@@ -841,9 +901,17 @@ def extract_scores(directory):  # pragma: no cover
 
     data = []
 
+    # Security: normalize the untrusted directory once, then confirm every path built
+    # from its listing stays inside it, so a crafted entry cannot be read from
+    # elsewhere on disk (CWE-22, path injection).
+    directory = _normalize_directory(directory)
+
     for filename in sorted(os.listdir(directory)):
         if filename.endswith("evaluation_results.json"):
-            file_path = os.path.join(directory, filename)
+            file_path = os.path.realpath(os.path.join(directory, filename))
+            if os.path.dirname(file_path) != directory:
+                logger.warning(f"Skipping {filename!r}: resolves outside {directory}.")
+                continue
             try:
                 with open(file_path, encoding="utf-8") as f:
                     content = json.load(f)

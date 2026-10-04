@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 from unitxt.text_utils import (
     camel_to_snake_case,
@@ -62,6 +64,28 @@ class TestTextUtils(UnitxtTestCase):
         ):
             with self.subTest(i=i):
                 self.assertEqual(is_camel_case(input_string), expected_output)
+
+    def test_is_camel_case_is_not_vulnerable_to_redos(self):
+        """is_camel_case must run in linear time on adversarial input (CWE-1333).
+
+        The previous pattern "^[A-Z]+([a-z0-9]*[A-Z]*[a-z0-9]*)*$" backtracks
+        catastrophically on these inputs: a 14-character string already failed to
+        complete within two minutes. This test fails by timing out if that form
+        is ever reintroduced.
+        """
+        for length in [16, 24, 32, 64, 128]:
+            with self.subTest(length=length):
+                # Trailing "!" forces the match to fail, triggering the backtracking.
+                adversarial = "A" + "a" * length + "!"
+                start = time.monotonic()
+                self.assertFalse(is_camel_case(adversarial))
+                elapsed = time.monotonic() - start
+                self.assertLess(
+                    elapsed,
+                    1.0,
+                    f"is_camel_case took {elapsed:.3f}s on a {len(adversarial)}-char "
+                    "input, which indicates catastrophic backtracking.",
+                )
 
     def test_is_snake_case(self):
         is_snake_case_test_cases = [
