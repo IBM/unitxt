@@ -48,9 +48,15 @@ jobs:
         ssh-private-key: ${{ secrets.LLMEVALKIT_SSH_KEY }}
 
     - name: Hugging Face Login
+      env:
+        HF_TOKEN_FOR_TESTS: ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
       run: |
+        if [ -z "$HF_TOKEN_FOR_TESTS" ]; then
+          echo "::notice title=Hugging Face login skipped::No token available (fork or Dependabot run); continuing unauthenticated, which may hit Hub rate limits."
+          exit 0
+        fi
         for i in {1..5}; do
-          huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} && break || sleep $((2 ** i));
+          huggingface-cli login --token "$HF_TOKEN_FOR_TESTS" && break || sleep $((2 ** i));
         done
 
     - name: Run Tests
