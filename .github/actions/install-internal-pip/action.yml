@@ -2,8 +2,10 @@ name: Install internal repo via pip (SSH)
 description: pip install git+ssh from GHES
 inputs:
   ssh-private-key:
-    required: true
-    description: OpenSSH private key (with BEGIN/END)
+    required: false
+    description: >-
+      OpenSSH private key (with BEGIN/END). Empty on runs that cannot read repo
+      secrets (forks, Dependabot), in which case the install is skipped.
   host:
     required: false
     default: github.ibm.com
@@ -20,9 +22,15 @@ runs:
   using: composite
   steps:
     - shell: bash
+      env:
+        SSH_PRIVATE_KEY: ${{ inputs.ssh-private-key }}
       run: |
+        if [ -z "$SSH_PRIVATE_KEY" ]; then
+          echo "::notice title=Internal install skipped::No SSH key available (fork or Dependabot run); skipping ${{ inputs.repo }}. Metrics requiring it will raise a clear install error if used."
+          exit 0
+        fi
         mkdir -p ~/.ssh
-        echo "${{ inputs.ssh-private-key }}" > ~/.ssh/id_ed25519
+        printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
         ssh-keyscan "${{ inputs.host }}" >> ~/.ssh/known_hosts
         if [ -n "${{ inputs.ref }}" ]; then
@@ -33,5 +41,4 @@ runs:
         echo "Installing from URL: $URL"
         pip install --no-cache-dir --force-reinstall "$URL" ${{ inputs.pip-extra-args }}
         echo "Downgrading pydantic as required LLM eval kit library"
-        pip install pydantic==2.11.3 
-
+        pip install pydantic==2.11.3
