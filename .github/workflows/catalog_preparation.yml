@@ -30,6 +30,10 @@ jobs:
       HF_TOKEN: ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
 
     strategy:
+      # Each shard tests a disjoint set of preparation files, so one shard failing
+      # tells us nothing about the others. Without this, a single flaky dataset
+      # cancels the remaining shards and hides their real pass/fail state.
+      fail-fast: false
       matrix:
         modulo: [0,1,2,3,4,5,6,7,8,9]
 

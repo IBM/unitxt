@@ -3,9 +3,11 @@ import os
 import time
 import traceback
 import tracemalloc
+import urllib.error
 
 import psutil
 from huggingface_hub.errors import GatedRepoError, HfHubHTTPError
+from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import ReadTimeout
 from unitxt.loaders import MissingKaggleCredentialsError
 from unitxt.logging_utils import get_logger
@@ -18,6 +20,10 @@ from tests.utils import CatalogPreparationTestCase
 logger = get_logger()
 constants = get_constants()
 setting = get_settings()
+
+# Upstream HTTP statuses that indicate a transient dataset-host problem rather
+# than a regression in this repository: too many requests, and the 5xx family.
+IGNORED_HTTP_STATUSES = frozenset({429, *range(500, 600)})
 
 project_dir = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -77,10 +83,22 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                             current_exception,
                             (
                                 ReadTimeout,
+                                RequestsConnectionError,
                                 HfHubHTTPError,
                                 MissingKaggleCredentialsError,
+                                urllib.error.URLError,
                             ),
                         ):
+                            # Transient upstream problems (rate limiting, outages)
+                            # are not regressions in this repo, so they must not
+                            # fail the build. A hard client error such as 404 or
+                            # 410 still fails, so a dataset that has really gone
+                            # away is not silently ignored.
+                            if (
+                                isinstance(current_exception, urllib.error.HTTPError)
+                                and current_exception.code not in IGNORED_HTTP_STATUSES
+                            ):
+                                break
                             passed = True
                             break
                         current_exception = (

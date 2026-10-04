@@ -30,6 +30,11 @@ jobs:
       - run: uv pip install --upgrade --system "diskcache"
       - run: uv pip install --upgrade --system "crfm-helm[unitxt]>=0.5.3"
       - run: uv pip install --system "scikit-learn==1.5.2"
+      # datasets 5.0.0 removed the verification_mode argument of
+      # DatasetBuilder.as_dataset(), which HELM's bundled unitxt scenario still
+      # passes, so helm-run dies with a TypeError. Keep HELM on the 4.x line
+      # until it stops passing that argument.
+      - run: uv pip install --system "datasets<5"
 
       - name: Test Helm
         run: utils/run_helm.sh

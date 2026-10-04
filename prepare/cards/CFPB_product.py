@@ -14,6 +14,12 @@ subset_and_urls = {
     "watsonx": "https://raw.githubusercontent.com/IBM/watson-machine-learning-samples/master/cloud/data/cfpb_complaints/cfpb_compliants.csv",
     "2023": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_max=2023-01-04&date_received_min=2022-01-04&field=all&format=csv&has_narrative=true&lens=product&no_aggs=true&size=340390&sub_lens=sub_product&trend_depth=5&trend_interval=month",
 }
+# The CFPB API retired its CSV export: the "2023" URL above now answers HTTP 400
+# for every "size", including size=1, while the same request without
+# "format=csv" still answers 200. The card stays in the catalog because
+# recipes.bluebench.product_help.cfpb_product_2023 refers to it, but its data
+# can no longer be fetched, so loading it is not exercised here.
+UNFETCHABLE_SUBSETS = {"2023"}
 field_to_field = {
     "watsonx": {"narrative": "text", "product": "label"},
     "2023": {"Consumer complaint narrative": "text", "Product": "label"},
@@ -61,5 +67,6 @@ for subset, url in subset_and_urls.items():
         task="tasks.classification.multi_class.topic_classification",
         templates="templates.classification.multi_class.all",
     )
-    test_card(card, debug=False)
+    if subset not in UNFETCHABLE_SUBSETS:
+        test_card(card, debug=False)
     add_to_catalog(card, f"cards.{dataset_name}.product.{subset}", overwrite=True)
