@@ -1,3 +1,4 @@
+import inspect
 import os
 from typing import Dict, Optional, Union
 
@@ -127,14 +128,25 @@ class Dataset(datasets.GeneratorBasedBuilder):
         self,
         split: Optional[datasets.Split] = None,
         in_memory=False,
+        **kwargs,
     ) -> Union[datasets.Dataset, datasets.DatasetDict]:
         """Return a Dataset for the specified split.
+
+        ``**kwargs`` absorbs arguments that only some versions of the
+        ``datasets`` library pass down to this override. ``datasets`` before
+        4.8.5 calls ``as_dataset(..., verification_mode=...)``, while 4.8.5
+        removed that parameter from the base class; forwarding only what the
+        installed base class actually accepts keeps both generations working.
+        HELM, for instance, resolves an older ``datasets`` than unitxt does.
 
         Args:
             split (`datasets.Split`):
                 Which subset of the data to return.
             in_memory (`bool`, defaults to `False`):
                 Whether to copy the data in-memory.
+            **kwargs:
+                Version-specific arguments forwarded to the base class when it
+                accepts them, and dropped when it does not.
 
         Returns:
             datasets.Dataset
@@ -154,8 +166,10 @@ class Dataset(datasets.GeneratorBasedBuilder):
             #     num_rows: 8530
             # })
         """
+        supported = inspect.signature(super().as_dataset).parameters
+        forwarded = {name: value for name, value in kwargs.items() if name in supported}
         return (
             super()
-            .as_dataset(split=split, in_memory=in_memory)
+            .as_dataset(split=split, in_memory=in_memory, **forwarded)
             .with_transform(loads_batch)
         )
