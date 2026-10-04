@@ -7,6 +7,8 @@ on:
 jobs:
   push-to-hf-hub:
     name: Release new version to HuggingFace Hub
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
 

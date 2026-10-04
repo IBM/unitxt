@@ -38,7 +38,11 @@ def is_camel_case(s):
     Returns:
         bool: True if the string is in camelCase, False otherwise.
     """
-    return re.match(r"^[A-Z]+([a-z0-9]*[A-Z]*[a-z0-9]*)*$", s) is not None
+    # Security: this pattern is deliberately kept backtracking-free (CWE-1333, ReDoS).
+    # The nested quantifier form "^[A-Z]+([a-z0-9]*[A-Z]*[a-z0-9]*)*$" accepts exactly the
+    # same strings, but its inner group matches the empty string with overlapping
+    # alternatives, so a non-matching input causes catastrophic backtracking.
+    return re.match(r"^[A-Z]+[a-zA-Z0-9]*$", s) is not None
 
 
 def is_snake_case(s):
