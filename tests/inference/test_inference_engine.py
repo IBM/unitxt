@@ -336,8 +336,10 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
     def test_watsonx_inference_with_images(self):
         dataset = get_image_dataset(format="formats.chat_api")
 
+        # llama-3-2-11b-vision-instruct was removed from watsonx.ai; this is the
+        # multimodal model the service currently offers in its place.
         inference_engine = WMLInferenceEngineChat(
-            model_name="meta-llama/llama-3-2-11b-vision-instruct",
+            model_name="meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
             max_tokens=128,
         )
 
@@ -361,7 +363,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_lite_llm_inference_engine_without_task_data_not_failing(self):
         LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-2-11b-vision-instruct",
+            model="watsonx/meta-llama/llama-3-3-70b-instruct",
             max_tokens=2,
             temperature=0,
             top_p=1,

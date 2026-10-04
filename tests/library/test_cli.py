@@ -139,17 +139,57 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         results_path, samples_path = cli.prepare_output_paths(
             "/tmp/output", "my_results"
         )
-        mock_makedirs.assert_called_once_with("/tmp/output", exist_ok=True)
+        # The directory is normalized (realpath) before use, which resolves
+        # symlinks such as macOS's /tmp -> /private/tmp.
+        expected_dir = os.path.realpath("/tmp/output")
+        mock_makedirs.assert_called_once_with(expected_dir, exist_ok=True)
         self.assertEqual(
             results_path,
-            "/tmp/output/my_results.json",
+            os.path.join(expected_dir, "my_results.json"),
             "Results path should be correctly formed.",
         )
         self.assertEqual(
             samples_path,
-            "/tmp/output/my_results_samples.json",
+            os.path.join(expected_dir, "my_results_samples.json"),
             "Samples path should be correctly formed.",
         )
+
+    @patch("os.makedirs")
+    def test_prepare_output_paths_rejects_path_traversal_in_prefix(self, mock_makedirs):
+        """A file prefix containing path separators must be rejected (CWE-22).
+
+        --output_file_prefix is used to build a filename, so a value such as
+        '../../../etc/cron.d/x' would otherwise escape the output directory.
+        """
+        malicious_prefixes = [
+            "../../../etc/passwd",
+            "../evil",
+            "sub/dir",
+            "/absolute/evil",
+            "..\\windows\\evil",
+            "..",
+            ".",
+            "",
+        ]
+        for prefix in malicious_prefixes:
+            with self.subTest(prefix=prefix):
+                with self.assertRaises(ValueError):
+                    cli.prepare_output_paths("/tmp/output", prefix)
+        mock_makedirs.assert_not_called()
+
+    @patch("os.makedirs")
+    def test_prepare_output_paths_normalizes_traversal_in_directory(
+        self, mock_makedirs
+    ):
+        """--output_path is normalized, so no '..' segment reaches the filesystem."""
+        results_path, samples_path = cli.prepare_output_paths(
+            "/tmp/output/../output", "my_results"
+        )
+        for path in (results_path, samples_path):
+            self.assertNotIn("..", path)
+        self.assertEqual(os.path.dirname(results_path), os.path.realpath("/tmp/output"))
+        args, _ = mock_makedirs.call_args
+        self.assertNotIn("..", args[0])
 
     @patch.object(cli, "settings")
     @patch("os.environ", {})  # Mock os.environ for isolation
