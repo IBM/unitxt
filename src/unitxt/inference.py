@@ -64,6 +64,44 @@ def batched(lst, n):
         yield batch
 
 
+def get_or_create_event_loop() -> asyncio.AbstractEventLoop:
+    """Return the event loop of the current thread, creating and setting one if needed.
+
+    ``asyncio.get_event_loop()`` raises when the thread has no current event loop, which
+    happens in worker threads, after ``asyncio.run()`` has returned, and on Python 3.14+
+    whenever no loop was set explicitly.
+    """
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = None
+    if loop is None or loop.is_closed():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop
+
+
+def run_coroutine_synchronously(coroutine):
+    """Run a coroutine to completion from synchronous code and return its result.
+
+    The current thread's event loop is reused across calls, so asyncio primitives
+    (e.g. semaphores) created by an inference engine stay bound to the same loop.
+    """
+    loop = get_or_create_event_loop()
+    # nest_asyncio marks the loops it patches to allow re-entrant run_until_complete
+    if loop.is_running() and not getattr(loop, "_nest_patched", False):
+        coroutine.close()
+        raise UnitxtError(
+            "Synchronous inference cannot run inside an already running asyncio event loop "
+            "(e.g. in a Jupyter notebook or in an async framework such as FastAPI). "
+            "Either run the inference in a separate thread, "
+            "e.g. 'await asyncio.to_thread(engine.infer, dataset)', "
+            "or allow nested event loops by installing nest_asyncio ('pip install nest_asyncio') "
+            "and calling 'import nest_asyncio; nest_asyncio.apply()' before running the inference."
+        )
+    return loop.run_until_complete(coroutine)
+
+
 class StandardAPIParamsMixin(Artifact):
     model: str
     frequency_penalty: Optional[float] = None
@@ -2739,11 +2777,10 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             batch_results = await asyncio.gather(*coroutines)
             return list(batch_results)
 
-        loop = asyncio.get_event_loop()
         results = []
 
         for batch_idx in range(0, len(data), self.concurrency_limit):
-            batch_results = loop.run_until_complete(
+            batch_results = run_coroutine_synchronously(
                 handle_async_requests(
                     batch_idx, min(batch_idx + self.concurrency_limit, len(data))
                 )
@@ -3164,17 +3201,24 @@ class LiteLLMInferenceEngine(
     def prepare_engine(self):
         if self.credentials is None:
             self.credentials = {}
+        self.inference_type = "litellm"
+        from litellm import acompletion
+
+        self._completion = acompletion
+        self._prepare_async_primitives(loop_id=None)
+
+    def _prepare_async_primitives(self, loop_id: Optional[int]):
+        # asyncio primitives get bound to the event loop they are first awaited in, so
+        # they are recreated whenever inference runs in a different loop. Comparing loop
+        # ids is safe: a primitive bound to a loop keeps that loop (and its id) alive.
         # Initialize the token bucket rate limiter
         self._rate_limiter = AsyncTokenBucket(
             rate=self.max_requests_per_second,
             capacity=self.max_requests_per_second,
         )
-        self.inference_type = "litellm"
-        from litellm import acompletion
-
-        self._completion = acompletion
         # Initialize a semaphore to limit concurrency
         self._semaphore = asyncio.Semaphore(round(self.max_requests_per_second))
+        self._async_primitives_loop_id = loop_id
 
     async def _infer_instance(
         self, index: int, instance: Dict[str, Any]
@@ -3228,6 +3272,9 @@ class LiteLLMInferenceEngine(
         self, dataset: List[Dict[str, Any]]
     ) -> List[TextGenerationInferenceOutput]:
         """Process multiple inference requests concurrently with a progress bar."""
+        loop_id = id(asyncio.get_running_loop())
+        if loop_id != self._async_primitives_loop_id:
+            self._prepare_async_primitives(loop_id)
         tasks = (
             self._infer_instance(i, instance) for i, instance in enumerate(dataset)
         )
@@ -3242,8 +3289,7 @@ class LiteLLMInferenceEngine(
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         """Main inference entry point."""
-        loop = asyncio.get_event_loop()
-        responses = loop.run_until_complete(self._infer_async(dataset))
+        responses = run_coroutine_synchronously(self._infer_async(dataset))
         return self.get_return_object(responses, return_meta_data)
 
     def get_return_object(self, responses, return_meta_data):
