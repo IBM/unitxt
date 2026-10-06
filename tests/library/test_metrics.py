@@ -1,4 +1,6 @@
 import random
+import unittest
+from importlib.util import find_spec
 from math import isnan
 from typing import Dict, List
 
@@ -88,6 +90,13 @@ from unitxt.types import Dialog, Tool, ToolCall
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()
+
+# ReflectionToolCallingMetric and ReflectionToolCallingMetricSyntactic require llmevalkit,
+# an internal package that CI installs only when repository secrets are available
+# (not for pull requests from forks or from Dependabot).
+requires_llmevalkit = unittest.skipUnless(
+    find_spec("llmevalkit") is not None, "requires llmevalkit, which is not installed"
+)
 
 # values of inputs that are common to grouped_mean type InstanceMetric
 GROUPED_INSTANCE_PREDICTIONS = [
@@ -1654,6 +1663,7 @@ class TestMetrics(UnitxtTestCase):
             outputs[0]["score"]["global"]["argument_schema_validation"], 0.0
         )
 
+    @requires_llmevalkit
     def test_reflection_tool_calling_metric(self):
         unitxt.settings.mock_inference_mode = True
         metric = ReflectionToolCallingMetric()
@@ -1730,6 +1740,7 @@ class TestMetrics(UnitxtTestCase):
             ]
         )
 
+    @requires_llmevalkit
     def test_partial_value_precision_enum_violations_real_static_only(self):
         """Test partial value precision when some parameters have invalid enum values."""
         metric = ReflectionToolCallingMetricSyntactic()
@@ -1790,6 +1801,7 @@ class TestMetrics(UnitxtTestCase):
             result["metrics"]["missing_required_parameter"]["valid"], True
         )
 
+    @requires_llmevalkit
     def test_reflection_tool_calling_metric_reduce(self):
         # Instance 1: valid call
         instance1 = {
@@ -1942,6 +1954,7 @@ class TestMetrics(UnitxtTestCase):
             reduced["semantic_agentic_constraints_satisfaction"], acs_expected
         )
 
+    @requires_llmevalkit
     def test_reflection_tool_calling_metric_syntactic_reduce(self):
         from unitxt.metrics import ReflectionToolCallingMetricSyntactic
 
@@ -2031,6 +2044,7 @@ class TestMetrics(UnitxtTestCase):
         reduced_shuffled = metric.reduce(shuffled)
         self.assertEqual(reduced, reduced_shuffled)
 
+    @requires_llmevalkit
     def test_tool_calling_metric_syntactic_reflector(self):
         metric = ReflectionToolCallingMetricSyntactic()
         tools_data = {
@@ -2201,6 +2215,7 @@ class TestMetrics(UnitxtTestCase):
         # schema validation can still pass even if there are type errors
         self.assertTrue(outputs["metrics"]["json_schema_violation"]["valid"])
 
+    @requires_llmevalkit
     def test_overall_valid_success_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
         # Create sample inputs
@@ -2248,6 +2263,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertTrue(result["metrics"]["non_existent_function"]["valid"])
         self.assertTrue(result["metrics"]["missing_required_parameter"]["valid"])
 
+    @requires_llmevalkit
     def test_non_existent_function_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
         # Create sample inputs with wrong function name
@@ -2282,6 +2298,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertFalse(result["metrics"]["non_existent_function"]["valid"])
         self.assertTrue(result["metrics"]["missing_required_parameter"]["valid"])
 
+    @requires_llmevalkit
     def test_missing_required_parameter_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
         # Create sample inputs with missing required parameter
@@ -2322,6 +2339,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertFalse(result["metrics"]["missing_required_parameter"]["valid"])
         self.assertTrue(result["metrics"]["allowed_values_violation"]["valid"])
 
+    @requires_llmevalkit
     def test_non_existent_parameter_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
         # Create sample inputs with extra undefined parameter
@@ -2355,6 +2373,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertFalse(result["overall_valid"], False)
         self.assertFalse(result["metrics"]["non_existent_parameter"]["valid"])
 
+    @requires_llmevalkit
     def test_allowed_values_violation(self):
         metric = ReflectionToolCallingMetricSyntactic()
         # Create sample inputs with invalid enum value
@@ -2401,6 +2420,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertFalse(result["metrics"]["allowed_values_violation"]["valid"])
         self.assertTrue(result["metrics"]["incorrect_parameter_type"]["valid"])
 
+    @requires_llmevalkit
     def test_json_schema_violation_specific_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
         # Create sample inputs
@@ -2441,6 +2461,7 @@ class TestMetrics(UnitxtTestCase):
         # json_schema_violation specifically should be 1.0 because it's marked valid
         self.assertTrue(result["metrics"]["json_schema_violation"]["valid"])
 
+    @requires_llmevalkit
     def test_partial_recall_missing_parameters_real_map(self):
         metric = ReflectionToolCallingMetricSyntactic()
         """Test partial recall score when some but not all required parameters are missing."""
@@ -2479,6 +2500,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertFalse(result["overall_valid"])
         self.assertFalse(result["metrics"]["missing_required_parameter"]["valid"])
 
+    @requires_llmevalkit
     def test_partial_precision_non_existent_parameters_real_map(self):
         """Test partial precision score when some parameters don't exist in the schema."""
         metric = ReflectionToolCallingMetricSyntactic()
@@ -2524,6 +2546,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertFalse(result["metrics"]["non_existent_parameter"]["valid"])
         self.assertFalse(result["overall_valid"])
 
+    @requires_llmevalkit
     def test_partial_value_precision_type_errors_real_map(self):
         """Test partial value precision when some parameters have incorrect types."""
         metric = ReflectionToolCallingMetricSyntactic()
@@ -2572,6 +2595,7 @@ class TestMetrics(UnitxtTestCase):
             result["metrics"]["incorrect_parameter_type"]["valid"], False
         )
 
+    @requires_llmevalkit
     def test_partial_value_precision_enum_violations_real_map(self):
         """Test partial value precision when some parameters have invalid enum values."""
         metric = ReflectionToolCallingMetricSyntactic()

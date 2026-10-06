@@ -3,6 +3,7 @@ from datetime import datetime
 from unitxt.api import load_dataset
 from unitxt.card import TaskCard
 from unitxt.collections_operators import Wrap
+from unitxt.error_utils import UnitxtError
 from unitxt.formats import (
     ChatAPIFormat,
     GraniteDocumentsFormat,
@@ -328,6 +329,49 @@ class TestFormats(UnitxtTestCase):
                 "input_fields": {},
                 "source": "<|system|>\nYou are a smart assistant.\nsolve the math exercises</s>\n<|user|>\n1+2</s>\n<|assistant|>\nThe answer is 3</s>\n<|user|>\n4-2</s>\n<|assistant|>\nThe answer is 2</s>\n<|user|>\n3+2</s>\n<|assistant|>\nThe answer is ",
                 "demos": demo_instances,
+            },
+        ]
+
+        check_operator(
+            operator=system_format,
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_hf_system_format_without_chat_template(self):
+        # The gpt2 tokenizer does not define a chat template
+        with self.assertRaises(UnitxtError) as cm:
+            HFSystemFormat(model_name="openai-community/gpt2")
+        self.assertIn("does not define a chat template", str(cm.exception))
+        self.assertIn("chat_kwargs_dict", str(cm.exception))
+
+        # A chat template can be passed explicitly instead
+        system_format = HFSystemFormat(
+            model_name="openai-community/gpt2",
+            chat_kwargs_dict={
+                "chat_template": "{% for message in messages %}<|{{ message['role'] }}|>\n{{ message['content'] }}\n{% endfor %}"
+                "{% if add_generation_prompt %}<|assistant|>\n{% endif %}"
+            },
+        )
+
+        inputs = [
+            {
+                "source": "1+1",
+                "target": "2",
+                "instruction": "solve the math exercises",
+                "demos": [],
+                "input_fields": {},
+                "target_prefix": "The answer is ",
+                "system_prompt": "You are a smart assistant.",
+            },
+        ]
+        targets = [
+            {
+                "target": "2",
+                "input_fields": {},
+                "source": "<|system|>\nYou are a smart assistant.\nsolve the math exercises\n<|user|>\n1+1\n<|assistant|>\nThe answer is ",
+                "demos": [],
             },
         ]
 

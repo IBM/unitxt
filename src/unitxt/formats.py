@@ -528,6 +528,9 @@ class HFSystemFormat(ChatAPIFormat):
 
         See more details in https://huggingface.co/docs/transformers/main/en/chat_templating
 
+        If the tokenizer of the model does not define a chat template, a Jinja chat template can be passed explicitly:
+        ``HFSystemFormat(model_name=..., chat_kwargs_dict={"chat_template": "<template>"})``
+
     """
 
     model_name: str
@@ -540,6 +543,17 @@ class HFSystemFormat(ChatAPIFormat):
         from transformers import AutoTokenizer
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        if (
+            getattr(self.tokenizer, "chat_template", None) is None
+            and "chat_template" not in self.chat_kwargs_dict
+        ):
+            raise UnitxtError(
+                f"HFSystemFormat cannot be used with model '{self.model_name}' because its tokenizer "
+                "does not define a chat template (no 'chat_template' in its tokenizer_config.json). "
+                "Either use a model whose tokenizer has a chat template, pass a Jinja chat template "
+                "explicitly with chat_kwargs_dict={'chat_template': '<template>'}, "
+                "or use a format that does not depend on the tokenizer, such as SystemFormat."
+            )
 
     def _format_instance_to_source(
         self,
