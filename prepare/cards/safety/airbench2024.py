@@ -43,6 +43,7 @@ card = TaskCard(
         },
         reference_fields={},
         prediction_type=str,
+        # TODO: The current implementation uses Granite Guardian as judge. Future versions could use a custom judge and use the judge_prompt field.
         metrics=[
             "metrics.granite_guardian.assistant_risk.harm[prediction_type=str,user_message_field=prompt,assistant_message_field=prediction]",
         ],

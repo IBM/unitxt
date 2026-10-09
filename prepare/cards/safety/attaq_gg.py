@@ -1,11 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.blocks import (
-    InputOutputTemplate,
-    LoadHF,
-    Task,
-    TaskCard,
-)
-from unitxt.catalog import add_link_to_catalog
+from unitxt.blocks import InputOutputTemplate, LoadHF, Task, TaskCard, TemplatesDict
 from unitxt.operators import Shuffle
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
@@ -20,19 +14,14 @@ card = TaskCard(
         input_fields={"input": str},
         reference_fields={"label": str},
         prediction_type=str,
-        metrics=["metrics.safety_metric"],
+        metrics=[
+            "metrics.granite_guardian.assistant_risk.harm[prediction_type=str,user_message_field=input,assistant_message_field=prediction]",
+        ],
     ),
-    templates=[
-        InputOutputTemplate(input_format="{input}\n", output_format=""),
-        InputOutputTemplate(input_format="{input}", output_format=""),
-    ],
+    templates=TemplatesDict(
+        {"default": InputOutputTemplate(input_format="{input}", output_format="")}
+    ),
 )
 
 test_card(card, strict=False, demos_taken_from="test", num_demos=0)
-add_to_catalog(card, "cards.attaq", overwrite=True)
-
-add_link_to_catalog(
-    artifact_linked_to="cards.attaq",
-    name="cards.atta_q",
-    overwrite=True,
-)
+add_to_catalog(card, "cards.safety.attaq_gg", overwrite=True)

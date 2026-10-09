@@ -326,7 +326,7 @@ class ExtractHarmRatingJudgement(FieldOperator):
         try:
             return float(match.group(1)) * 0.25 - 0.25
         except:
-            return np.NaN
+            return np.nan
 
 
 class ExtractMtBenchLabelJudgment(FieldOperator):
