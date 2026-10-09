@@ -1,9 +1,10 @@
-import difflib
+import importlib
 import inspect
 import json
 import os
 import pkgutil
 import re
+import subprocess
 import warnings
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, final
@@ -22,7 +23,7 @@ from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
 )
 from .settings_utils import get_constants, get_settings
-from .text_utils import camel_to_snake_case, is_camel_case
+from .text_utils import camel_to_snake_case, is_camel_case, snake_to_camel_case
 from .type_utils import isoftype, issubtype
 from .utils import (
     artifacts_json_cache,
@@ -34,6 +35,43 @@ from .utils import (
 logger = get_logger()
 settings = get_settings()
 constants = get_constants()
+
+
+def import_module_from_file(file_path):
+    # Get the module name (file name without extension)
+    module_name = os.path.splitext(os.path.basename(file_path))[0]
+    # Create a module specification
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    # Create a new module based on the specification
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+# snake_case_class_name is read from a catelog entry, the value of a key "__type__"
+# this method replaces the Artifact._class_register lookup, for all unitxt classes defined
+# top level in any of the src/unitxt/*.py modules, which are all the classes that were registered
+# by register_all_artifacts
+def get_class_from_artifact_type(snake_case_class_name: str):
+    if snake_case_class_name in Artifact._class_register:
+        return Artifact._class_register[snake_case_class_name]
+
+    module_path, class_name = find_unitxt_module_and_class_by_classname(
+        snake_to_camel_case(snake_case_class_name)
+    )
+
+    module = importlib.import_module(module_path)
+
+    if hasattr(module, class_name) and inspect.isclass(getattr(module, class_name)):
+        klass = getattr(module, class_name)
+        Artifact._class_register[
+            snake_case_class_name
+        ] = klass  # use _class_register as a cache
+        return klass
+
+    raise ValueError(
+        f"Could not find the definition of class whose name, snake-cased is {snake_case_class_name}"
+    )
 
 
 def is_name_legal_for_catalog(name):
@@ -133,21 +171,10 @@ def maybe_recover_artifacts_structure(obj):
     return obj
 
 
-def get_closest_artifact_type(type):
-    artifact_type_options = list(Artifact._class_register.keys())
-    matches = difflib.get_close_matches(type, artifact_type_options)
-    if matches:
-        return matches[0]  # Return the closest match
-    return None
-
-
 class UnrecognizedArtifactTypeError(ValueError):
     def __init__(self, type) -> None:
         maybe_class = "".join(word.capitalize() for word in type.split("_"))
         message = f"'{type}' is not a recognized artifact 'type'. Make sure a the class defined this type (Probably called '{maybe_class}' or similar) is defined and/or imported anywhere in the code executed."
-        closest_artifact_type = get_closest_artifact_type(type)
-        if closest_artifact_type is not None:
-            message += f"\n\nDid you mean '{closest_artifact_type}'?"
         super().__init__(message)
 
 
@@ -200,8 +227,6 @@ class Artifact(Dataclass):
             )
         if "__type__" not in d:
             raise MissingArtifactTypeError(d)
-        if not cls.is_registered_type(d["__type__"]):
-            raise UnrecognizedArtifactTypeError(d["__type__"])
 
     @classmethod
     def get_artifact_type(cls):
@@ -217,13 +242,6 @@ class Artifact(Dataclass):
         ), f"Artifact class name must be legal camel case, got '{artifact_class.__name__}'"
 
         snake_case_key = camel_to_snake_case(artifact_class.__name__)
-
-        if cls.is_registered_type(snake_case_key):
-            assert (
-                str(cls._class_register[snake_case_key]) == str(artifact_class)
-            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for {cls._class_register[snake_case_key]}. Cannot be overridden by {artifact_class}."
-
-            return snake_case_key
 
         cls._class_register[snake_case_key] = artifact_class
 
@@ -242,19 +260,6 @@ class Artifact(Dataclass):
         return cls.is_artifact_dict(d)
 
     @classmethod
-    def is_registered_type(cls, type: str):
-        return type in cls._class_register
-
-    @classmethod
-    def is_registered_class_name(cls, class_name: str):
-        snake_case_key = camel_to_snake_case(class_name)
-        return cls.is_registered_type(snake_case_key)
-
-    @classmethod
-    def is_registered_class(cls, clz: object):
-        return clz in set(cls._class_register.values())
-
-    @classmethod
     def _recursive_load(cls, obj):
         if isinstance(obj, dict):
             new_d = {}
@@ -267,7 +272,7 @@ class Artifact(Dataclass):
             pass
         if cls.is_artifact_dict(obj):
             cls.verify_artifact_dict(obj)
-            artifact_class = cls._class_register[obj.pop("__type__")]
+            artifact_class = get_class_from_artifact_type(obj.pop("__type__"))
             obj = artifact_class.process_data_after_load(obj)
             return artifact_class(**obj)
 
@@ -684,3 +689,29 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
         return None
 
     return data_classification.get(artifact)
+
+
+def find_unitxt_module_and_class_by_classname(camel_case_class_name: str):
+    """Find a module, a member of src/unitxt, that contains the definition of the class."""
+    dir = os.path.dirname(__file__)  # dir  src/unitxt
+    try:
+        result = subprocess.run(
+            ["grep", "-irwE", "^class +" + camel_case_class_name, dir],
+            capture_output=True,
+        ).stdout.decode("ascii")
+        results = result.split("\n")
+        assert len(results) == 2, f"returned: {results}"
+        assert results[-1] == "", f"last result is {results[-1]} rather than ''"
+        to_return_module = (
+            results[0].split(":")[0][:-3].replace("/", ".")
+        )  # trim the .py and replace
+        to_return_class_name = results[0].split(":")[1][
+            6 : 6 + len(camel_case_class_name)
+        ]
+        return to_return_module[
+            to_return_module.rfind("unitxt.") :
+        ], to_return_class_name
+    except Exception as e:
+        raise ValueError(
+            f"Could not find the unitxt module, under unitxt/src/unitxt, in which class {camel_case_class_name} is defined"
+        ) from e

@@ -1,9 +1,7 @@
-import importlib
-import inspect
 import os
 from pathlib import Path
 
-from .artifact import Artifact, Catalogs
+from .artifact import Catalogs
 from .catalog import EnvironmentLocalCatalog, GithubCatalog, LocalCatalog
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .settings_utils import get_constants, get_settings
@@ -89,28 +87,6 @@ def _reset_env_local_catalogs():
             _register_catalog(EnvironmentLocalCatalog(location=path))
 
 
-def _register_all_artifacts():
-    dir = os.path.dirname(__file__)
-    file_name = os.path.basename(__file__)
-
-    for file in os.listdir(dir):
-        if (
-            file.endswith(".py")
-            and file not in constants.non_registered_files
-            and file != file_name
-        ):
-            module_name = file.replace(".py", "")
-
-            module = importlib.import_module("." + module_name, __package__)
-
-            for _name, obj in inspect.getmembers(module):
-                # Make sure the object is a class
-                if inspect.isclass(obj):
-                    # Make sure the class is a subclass of Artifact (but not Artifact itself)
-                    if issubclass(obj, Artifact) and obj is not Artifact:
-                        Artifact.register_class(obj)
-
-
 class ProjectArtifactRegisterer(metaclass=Singleton):
     def __init__(self):
         if not hasattr(self, "_registered"):
@@ -118,7 +94,6 @@ class ProjectArtifactRegisterer(metaclass=Singleton):
 
         if not self._registered:
             _register_all_catalogs()
-            _register_all_artifacts()
             self._registered = True
 
 

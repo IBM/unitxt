@@ -11,10 +11,10 @@ from .api import (
 )
 from .catalog import add_to_catalog, get_from_catalog
 from .logging_utils import get_logger
-from .register import register_all_artifacts, register_local_catalog
+from .register import ProjectArtifactRegisterer, register_local_catalog
 from .settings_utils import get_constants, get_settings
 
-register_all_artifacts()
+ProjectArtifactRegisterer()
 random.seed(0)
 
 constants = get_constants()
