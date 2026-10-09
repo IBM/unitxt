@@ -3,6 +3,28 @@
 Operators: Building Blocks of Unitxt Processing Pipelines
 ==============================================================
 
+.. tip::
+
+    If you cannot find operators fit to your needs simply use instance function operator:
+
+    .. code-block:: python
+
+        def my_function(instance, stream_name=None):
+            instance["x"] += 42
+            return instance
+
+    Or stream function operator:
+
+    .. code-block:: python
+
+        def my_other_function(stream, stream_name=None):
+            for instance in stream:
+                instance["x"] += 42
+                yield instance
+
+    Both functions can be plugged in every place in unitxt requires operators, e.g pre-processing pipeline.
+
+
 Within the Unitxt framework, operators serve as the foundational elements used to assemble processing pipelines.
 Each operator is designed to perform specific manipulations on dictionary structures within a stream.
 These operators are callable entities that receive a MultiStream as input.
@@ -39,6 +61,7 @@ General Operators List:
 ------------------------
 """
 
+import inspect
 import operator
 import re
 import uuid
@@ -2714,3 +2737,40 @@ class FixJsonSchemaOfParameterTypes(InstanceOperator):
         ), f"field '{self.main_field}' must reside in instance in order to verify its jsonschema correctness. got {instance}"
         self.recursive_trace_for_type_fields(instance[self.main_field])
         return instance
+
+
+class FunctionOperator(StreamOperator):
+    function: Callable
+
+    def verify(self):
+        super().verify()
+
+        if not callable(self.function):
+            raise ValueError("Function must be callable.")
+        sig = inspect.signature(self.function)
+        param_names = set(sig.parameters)
+
+        if "stream_name" not in param_names:
+            raise TypeError(
+                "The provided function must have a 'stream_name' parameter."
+            )
+
+        if "stream" not in param_names and "instance" not in param_names:
+            raise TypeError(
+                "The provided function must have a 'stream' parameter or 'instance' parameter."
+            )
+
+        if len(param_names) != 2:
+            raise TypeError("The provided function must have only 2 parameters")
+
+        if "stream" in param_names:
+            self._mode = "stream"
+        if "instance" in param_names:
+            self._mode = "instance"
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None):
+        if self._mode == "stream":
+            yield from self.function(stream, stream_name)
+        if self._mode == "instance":
+            for instance in stream:
+                yield self.function(instance, stream_name)

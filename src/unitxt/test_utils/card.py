@@ -4,6 +4,7 @@ import os.path
 import tempfile
 
 from .. import add_to_catalog, register_local_catalog
+from ..api import _artifact_string_repr
 from ..artifact import fetch_artifact
 from ..collections import Collection
 from ..logging_utils import get_logger
@@ -41,8 +42,8 @@ def test_loading_from_catalog(card):
         )
         register_local_catalog(tmp_dir)
         card_, _ = fetch_artifact(TEMP_NAME)
-        assert json.dumps(card_.to_dict(), sort_keys=True) == json.dumps(
-            card.to_dict(), sort_keys=True
+        assert _artifact_string_repr(card_) == _artifact_string_repr(
+            card
         ), "Card loaded is not equal to card stored"
 
 

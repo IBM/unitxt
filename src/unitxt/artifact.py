@@ -4,6 +4,7 @@ import json
 import os
 import pkgutil
 import re
+import types
 import warnings
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, final
@@ -27,6 +28,8 @@ from .type_utils import isoftype, issubtype
 from .utils import (
     artifacts_json_cache,
     json_dump,
+    json_load,
+    load_json,
     save_to_file,
     shallow_copy,
 )
@@ -119,16 +122,32 @@ class Catalogs:
         self.catalogs = []
 
 
+def maybe_recover_function_operator(func):
+    sig = inspect.signature(func)
+    param_names = tuple(sorted(sig.parameters))
+    if param_names == ("stream", "stream_name") or param_names == (
+        "instance",
+        "stream_name",
+    ):
+        from .operators import FunctionOperator
+
+        return FunctionOperator(function=func)
+    return func
+
+
 def maybe_recover_artifacts_structure(obj):
+    if isinstance(obj, types.FunctionType):
+        obj = maybe_recover_function_operator(obj)
+
     if Artifact.is_possible_identifier(obj):
         return verbosed_fetch_artifact(obj)
     if isinstance(obj, dict):
         for key, value in obj.items():
-            obj[key] = maybe_recover_artifact(value)
+            obj[key] = maybe_recover_artifacts_structure(value)
         return obj
     if isinstance(obj, list):
         for i in range(len(obj)):
-            obj[i] = maybe_recover_artifact(obj[i])
+            obj[i] = maybe_recover_artifacts_structure(obj[i])
         return obj
     return obj
 
@@ -237,8 +256,7 @@ class Artifact(Dataclass):
     def is_artifact_file(cls, path):
         if not os.path.exists(path) or not os.path.isfile(path):
             return False
-        with open(path) as f:
-            d = json.load(f)
+        d = load_json(path)
         return cls.is_artifact_dict(d)
 
     @classmethod
@@ -384,14 +402,15 @@ class Artifact(Dataclass):
         return self.to_json()
 
     def save(self, path):
-        original_args = Artifact.from_dict(self.to_dict()).get_repr_dict()
+        data = self.to_dict()
+        original_args = Artifact.from_dict(data).get_repr_dict()
         current_args = self.get_repr_dict()
         diffs = dict_diff_string(original_args, current_args)
         if diffs:
             raise UnitxtError(
                 f"Cannot save catalog artifacts that have changed since initialization. Detected differences in the following fields:\n{diffs}"
             )
-        save_to_file(path, self.to_json())
+        save_to_file(path, json_dump(data))
 
     def verify_instance(
         self, instance: Dict[str, Any], name: Optional[str] = None
@@ -581,7 +600,7 @@ def fetch_artifact(
 
     # If Json string, first load into dictionary
     if isinstance(artifact_rep, str):
-        artifact_rep = json.loads(artifact_rep)
+        artifact_rep = json_load(artifact_rep)
     # Load from dictionary (fails if not valid dictionary)
     return Artifact.from_dict(artifact_rep), None
 
@@ -657,7 +676,7 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
     )
 
     try:
-        data_classification = json.loads(data_classification)
+        data_classification = json_load(data_classification)
     except json.decoder.JSONDecodeError as e:
         raise RuntimeError(error_msg) from e
 

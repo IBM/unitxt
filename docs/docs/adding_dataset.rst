@@ -5,7 +5,7 @@
    To use this tutorial, you need to :ref:`install Unitxt <install_unitxt>`.
 
 =================
-Datasets 
+Datasets
 =================
 
 This guide will assist you in adding or using your new dataset in Unitxt.
@@ -104,6 +104,27 @@ For more built-in operators, read :class:`operators <unitxt.operators>`.
 Most data can be normalized to the task schema using built-in operators, ensuring your data is processed with verified high-standard streaming code.
 
 For custom operators, refer to the :ref:`Operators Tutorial <adding_operator>`.
+
+.. tip::
+
+    If you cannot find operators fit to your needs simply use instance function operator:
+
+    .. code-block:: python
+
+        def my_function(instance, stream_name=None):
+            instance["x"] += 42
+            return instance
+
+    Or stream function operator:
+
+    .. code-block:: python
+
+        def my_other_function(stream, stream_name=None):
+            for instance in stream:
+                instance["x"] += 42
+                yield instance
+
+    Both functions can be plugged in every place in unitxt requires operators, e.g pre-processing pipeline.
 
 The Template
 ----------------

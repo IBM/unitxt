@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import types
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
@@ -110,6 +111,7 @@ def all_subtypes_of_artifact(artifact):
         or isinstance(artifact, bool)
         or isinstance(artifact, int)
         or isinstance(artifact, float)
+        or isinstance(artifact, types.FunctionType)
     ):
         return []
     if isinstance(artifact, list):

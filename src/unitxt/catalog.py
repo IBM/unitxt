@@ -18,6 +18,7 @@ from .artifact import (
 from .logging_utils import get_logger
 from .settings_utils import get_constants
 from .text_utils import print_dict
+from .utils import json_load
 from .version import version
 
 logger = get_logger()
@@ -228,7 +229,7 @@ def _get_tags_from_file(file_path):
     result = Counter()
 
     with open(file_path) as f:
-        data = json.load(f)
+        data = json_load(f)
         if "__tags__" in data and isinstance(data["__tags__"], dict):
             tags = data["__tags__"]
             for key, value in tags.items():
