@@ -4408,6 +4408,8 @@ class TokenOverlap(InstanceMetric):
             self._compute_single_ref(str(reference), str(prediction))
             for reference in references
         ]
+        if not results:
+            return {"precision": 0, "recall": 0, "f1": 0}
         return {
             measure: max(r[i] for r in results)
             for i, measure in enumerate(["precision", "recall", "f1"])
