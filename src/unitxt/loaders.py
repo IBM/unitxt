@@ -457,8 +457,8 @@ class LoadWithPandas(LazyLoader):
                     except ValueError:
                         import fsspec
 
-                        with fsspec.open(file, mode="rt") as file:
-                            dataframe = self.read_dataframe(file)
+                        with fsspec.open(file, mode="rt") as f:
+                            dataframe = self.read_dataframe(f)
                         break
                 except Exception as e:
                     logger.warning(f"Attempt  load {attempt + 1} failed: {e}")
@@ -539,8 +539,7 @@ class LoadCSV(LoadWithPandas):
             if self.column_names is not None:
                 args["names"] = self.column_names
                 args["header"] = None  # Don't use first row as header
-            if self.indirect_read:
-                # Open the URL with urllib first to mitigate HTTP errors that sometime happen with the internal pandas implementation
+            if self.indirect_read and isinstance(file, str):
                 from urllib import request
 
                 with request.urlopen(file) as response:
