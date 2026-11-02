@@ -11,7 +11,11 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import HTTPException
 from starlette.responses import JSONResponse
 
-from ...artifact import Artifact
+from ...artifact import (
+    Artifact,
+    is_name_legal_for_catalog,
+    separate_inside_and_outside_square_brackets,
+)
 from ...operator import MultiStreamOperator
 from ...operators import ArtifactFetcherMixin
 from ...stream import MultiStream
@@ -65,6 +69,20 @@ def compute(
     metric_name: str, request: dict, token: dict = Depends(verify_token)
 ) -> dict:
     t0 = time.perf_counter()
+    # Security: metric_name arrives from the request URL, and the artifact loader
+    # it is passed to also accepts filesystem paths -- so without this check a
+    # caller could name any file on the server and have it opened, with its
+    # contents surfacing in the error message (CWE-22, path injection).
+    # Only catalog names are a legitimate value here, so require one: the
+    # validator permits [\w.] plus optional [...] overrides, and therefore no
+    # path separators, "..", drive letters or absolute paths.
+    requested_name, _ = separate_inside_and_outside_square_brackets(metric_name)
+    if not is_name_legal_for_catalog(requested_name):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid metric name. A metric must be referenced by its "
+            "catalog name (alphanumeric, '.' for nesting), not by a file path.",
+        )
     try:
         logging.info(f"Request from [{token['sub']}]")
         logging.info(f"Computing metric '{metric_name}'.")

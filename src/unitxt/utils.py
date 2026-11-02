@@ -223,11 +223,13 @@ def load_json(path):
         try:
             return json.load(f)
         except json.decoder.JSONDecodeError as e:
-            with open(path) as f:
-                file_content = "\n".join(f.readlines())
-            raise RuntimeError(
-                f"Failed to decode json file at '{path}' with file content:\n{file_content}"
-            ) from e
+            # Security: the file contents are deliberately NOT included here.
+            # This function is reachable with a caller-supplied path, so echoing
+            # the body of whatever was opened turns a malformed-file error into
+            # an information disclosure primitive (CWE-209). The decoder's own
+            # message still reports the line and column that failed, which is
+            # what is actually needed to fix a broken catalog file.
+            raise RuntimeError(f"Failed to decode json file at '{path}': {e}") from e
 
 
 def save_to_file(path, data):
