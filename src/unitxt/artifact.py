@@ -46,6 +46,72 @@ def verify_legal_catalog_name(name):
     ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
+class IllegalCatalogNameError(ValueError):
+    """Raised when an artifact reference is not a legal catalog name.
+
+    Used by :func:`sanitize_catalog_identifier` so callers that accept an
+    artifact reference from an untrusted source can tell "this is not a catalog
+    name" apart from any other failure, and answer accordingly.
+    """
+
+    def __init__(self, name):
+        self.name = name
+        super().__init__(
+            f'Artifact reference ("{name}") is not a legal catalog name. A catalog '
+            'name is alphanumeric, uses "'
+            + constants.catalog_hierarchy_sep
+            + '" for nesting (e.g. metrics.accuracy), and may carry overrides in '
+            "square brackets (e.g. metrics.f1_macro[average=macro]). File paths "
+            "are not accepted."
+        )
+
+
+def sanitize_catalog_identifier(
+    identifier: str,
+) -> Tuple[str, Optional[Dict[str, Any]]]:
+    """Validates an artifact reference as a catalog name, returning its parts.
+
+    Intended for references that arrive from an untrusted source (a request URL,
+    for example). :func:`fetch_artifact` deliberately accepts filesystem paths as
+    well as catalog names, which is right for library callers but not for a value
+    an outside caller controls -- there, a path would let that caller name any
+    file on the host (CWE-22).
+
+    Returning the validated name rather than the original string is what makes
+    this safe to rely on: the caller passes on the value that was actually
+    checked, so no unvalidated substring can reach a loader, and the
+    sanitization is visible to static analysis rather than only to a reader.
+    The bracketed overrides are returned already parsed, to be applied as
+    keyword overrides instead of being re-serialized into the name.
+
+    :param identifier: the artifact reference to validate.
+    :return: a tuple ``(name, overrides)``, where ``name`` is the validated
+        catalog name and ``overrides`` is the parsed contents of the square
+        brackets, or ``None`` if there were none.
+    :raises IllegalCatalogNameError: if ``identifier`` is not a legal catalog name.
+    """
+    if not isinstance(identifier, str):
+        raise IllegalCatalogNameError(identifier)
+
+    try:
+        name, args = separate_inside_and_outside_square_brackets(identifier)
+    except ValueError as e:
+        # Malformed brackets. Reported as an illegal name so the caller can
+        # answer with a client error instead of an unhandled failure.
+        raise IllegalCatalogNameError(identifier) from e
+
+    if not is_name_legal_for_catalog(name):
+        raise IllegalCatalogNameError(identifier)
+
+    # Rebuilt from the validated segments, so the returned name is derived from
+    # what the check above accepted and shares nothing with the raw input.
+    segments = name.split(constants.catalog_hierarchy_sep)
+    if not all(is_name_legal_for_catalog(segment) for segment in segments):
+        raise IllegalCatalogNameError(identifier)
+
+    return constants.catalog_hierarchy_sep.join(segments), args
+
+
 def dict_diff_string(dict1, dict2, max_diff=200):
     keys_in_both = dict1.keys() & dict2.keys()
     added = {k: dict2[k] for k in dict2.keys() - dict1.keys()}

@@ -13,8 +13,8 @@ from starlette.responses import JSONResponse
 
 from ...artifact import (
     Artifact,
-    is_name_legal_for_catalog,
-    separate_inside_and_outside_square_brackets,
+    IllegalCatalogNameError,
+    sanitize_catalog_identifier,
 )
 from ...operator import MultiStreamOperator
 from ...operators import ArtifactFetcherMixin
@@ -71,21 +71,27 @@ def compute(
     t0 = time.perf_counter()
     # Security: metric_name arrives from the request URL, and the artifact loader
     # it is passed to also accepts filesystem paths -- so without this check a
-    # caller could name any file on the server and have it opened, with its
-    # contents surfacing in the error message (CWE-22, path injection).
-    # Only catalog names are a legitimate value here, so require one: the
-    # validator permits [\w.] plus optional [...] overrides, and therefore no
+    # caller could name any file on the server and have it opened (CWE-22, path
+    # injection). Only catalog names are a legitimate value here, so require one:
+    # the validator permits [\w.] plus optional [...] overrides, and therefore no
     # path separators, "..", drive letters or absolute paths.
-    requested_name, _ = separate_inside_and_outside_square_brackets(metric_name)
-    if not is_name_legal_for_catalog(requested_name):
+    #
+    # Everything below uses safe_metric_name, the name returned by the sanitizer,
+    # and never metric_name itself. Passing on the value that was actually
+    # validated is what makes the check load-bearing: a check on one variable
+    # does not make a different variable safe. The raw value is kept out of the
+    # log lines too, so it cannot be used to forge log entries.
+    try:
+        safe_metric_name, metric_overrides = sanitize_catalog_identifier(metric_name)
+    except IllegalCatalogNameError as e:
         raise HTTPException(
             status_code=400,
             detail="Invalid metric name. A metric must be referenced by its "
             "catalog name (alphanumeric, '.' for nesting), not by a file path.",
-        )
+        ) from e
     try:
         logging.info(f"Request from [{token['sub']}]")
-        logging.info(f"Computing metric '{metric_name}'.")
+        logging.info(f"Computing metric '{safe_metric_name}'.")
         logging.info(
             f"MetricRequest contains {len(request['instance_inputs'])} input instances"
         )
@@ -97,7 +103,9 @@ def compute(
             logging.info("Acquired compute_lock, starting computation .. ")
             start_infer_time = datetime.datetime.now()
             # obtain the metric to compute
-            metric: Artifact = ArtifactFetcherMixin.get_artifact(metric_name)
+            metric: Artifact = ArtifactFetcherMixin.get_artifact(
+                safe_metric_name, overwrite_kwargs=metric_overrides
+            )
             metric: MultiStreamOperator = cast(MultiStreamOperator, metric)
             # Confidence interval is currently always off for remote metrics.
             # metric.
@@ -113,7 +121,7 @@ def compute(
         infer_time = datetime.datetime.now() - start_infer_time
         wait_time = start_infer_time - start_time
         logging.info(
-            f"Computed {len(metric_results)} metric '{metric_name}' results, "
+            f"Computed {len(metric_results)} metric '{safe_metric_name}' results, "
             f"took: {infer_time!s}, waited: {wait_time!s}')"
         )
 
@@ -126,7 +134,7 @@ def compute(
     finally:
         t1 = time.perf_counter()
         logging.info(
-            f"Request for metric '{metric_name}' handled in [{t1 - t0:.2f}] secs."
+            f"Request for metric '{safe_metric_name}' handled in [{t1 - t0:.2f}] secs."
         )
 
 
