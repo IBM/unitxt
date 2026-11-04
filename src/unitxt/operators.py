@@ -91,6 +91,7 @@ from .utils import (
     LRUCache,
     deep_copy,
     flatten_dict,
+    json_dump,
     recursive_copy,
     recursive_shallow_copy,
     shallow_copy,
@@ -1187,11 +1188,31 @@ class ArtifactFetcherMixin:
     _artifacts_cache = LRUCache(max_size=1000)
 
     @classmethod
-    def get_artifact(cls, artifact_identifier: str) -> Artifact:
-        if str(artifact_identifier) not in cls._artifacts_cache:
-            artifact, catalog = fetch_artifact(artifact_identifier)
-            cls._artifacts_cache[str(artifact_identifier)] = artifact
-        return shallow_copy(cls._artifacts_cache[str(artifact_identifier)])
+    def get_artifact(
+        cls,
+        artifact_identifier: str,
+        overwrite_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> Artifact:
+        """Fetches an artifact, caching it by identifier.
+
+        :param artifact_identifier: an Artifact, a catalog name, or a path --
+            whatever :func:`fetch_artifact` accepts.
+        :param overwrite_kwargs: arguments to override on the fetched artifact.
+            Lets a caller that has already parsed ``name[key=value]`` overrides
+            pass them separately, instead of re-serializing them into the
+            identifier.
+        """
+        cache_key = str(artifact_identifier)
+        if overwrite_kwargs:
+            # Keep overridden artifacts from colliding with the plain one, or
+            # with each other, in the cache.
+            cache_key += f"[{json_dump(overwrite_kwargs)}]"
+        if cache_key not in cls._artifacts_cache:
+            artifact, _catalog = fetch_artifact(
+                artifact_identifier, overwrite_kwargs=overwrite_kwargs
+            )
+            cls._artifacts_cache[cache_key] = artifact
+        return shallow_copy(cls._artifacts_cache[cache_key])
 
 
 class ApplyOperatorsField(InstanceOperator):

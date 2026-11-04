@@ -1,16 +1,23 @@
-"""Regression tests for CodeQL py/path-injection alerts cs-12 .. cs-16 (#1991).
+"""Regression tests for CodeQL py/path-injection alerts cs-12..cs-18 (#1991, #1994).
 
-CodeQL traced one taint flow for all five alerts: the ``metric_name`` URL path
-parameter of the metrics service (``src/unitxt/service/metrics/main.py``) reaching
-``open()`` in ``Artifact.is_artifact_file`` and ``utils.load_json``, because the
-artifact loader accepts filesystem paths as well as catalog names.
+CodeQL traced one taint flow for every alert: the ``metric_name`` URL path
+parameter of the metrics service (``src/unitxt/service/metrics/main.py``)
+reaching ``open()`` in ``Artifact.is_artifact_file`` and ``utils.load_json``,
+because the artifact loader accepts filesystem paths as well as catalog names.
 
-The remediation has two halves, tested here:
+A first fix (#1993) added a validity check to the endpoint, but kept passing the
+original ``metric_name`` to the loader. The check was effective at runtime, yet
+the value that was validated and the value that was used were different
+variables, so the alerts stayed open -- rightly, since that shape only stays
+correct as long as nobody edits the two lines apart.
 
-1. The service rejects anything that is not a catalog name, so the untrusted
-   value never reaches the loader.
-2. ``load_json`` no longer echoes file contents into its error, so a path that
-   does reach it cannot be used to read a file (CWE-209).
+The remediation tested here:
+
+1. ``sanitize_catalog_identifier`` validates a reference and returns the name it
+   validated, so callers pass on the checked value rather than the raw one.
+2. The service uses only that returned name, and answers 400 otherwise.
+3. ``load_json`` does not echo file contents into its error, so a path that does
+   reach it cannot be used to read a file (CWE-209).
 
 The library's own support for loading an artifact from a file path is a
 documented feature and is deliberately left working.
@@ -23,42 +30,52 @@ import unittest
 
 from unitxt.artifact import (
     Artifact,
+    IllegalCatalogNameError,
     fetch_artifact,
-    is_name_legal_for_catalog,
-    separate_inside_and_outside_square_brackets,
+    sanitize_catalog_identifier,
 )
+from unitxt.operators import ArtifactFetcherMixin
 from unitxt.utils import load_json
 
+# Shapes that must never be accepted from an untrusted caller. Each would
+# otherwise be opened as a filesystem path by the artifact loader.
+UNSAFE_REFERENCES = [
+    "/etc/passwd",
+    "/tmp/secret.txt",
+    "/var/run/secrets/token",
+    "../../etc/passwd",
+    "../catalog/thing.json",
+    "metrics.accuracy/../../etc/passwd",
+    r"C:\windows\win.ini",
+    r"..\..\secret.txt",
+    "~/.ssh/id_rsa",
+    "./relative.json",
+    "/",
+    "",
+    "metrics\x00.accuracy",
+    "http://evil.example/x.json",
+]
 
-def _service_guard_accepts(metric_name):
-    """Mirrors the check performed by the service's ``compute`` endpoint.
 
-    The endpoint itself needs fastapi, which is an optional dependency, so the
-    guard logic is exercised directly here.
-    """
-    requested_name, _ = separate_inside_and_outside_square_brackets(metric_name)
-    return bool(is_name_legal_for_catalog(requested_name))
-
-
-class TestServiceMetricNameGuard(unittest.TestCase):
-    def test_rejects_absolute_paths(self):
-        for name in ("/etc/passwd", "/tmp/secret.txt", "/var/run/secrets/token"):
+class TestSanitizeCatalogIdentifierRejectsPaths(unittest.TestCase):
+    def test_rejects_unsafe_references(self):
+        for name in UNSAFE_REFERENCES:
             with self.subTest(name=name):
-                self.assertFalse(_service_guard_accepts(name))
+                with self.assertRaises(IllegalCatalogNameError):
+                    sanitize_catalog_identifier(name)
 
-    def test_rejects_traversal(self):
-        for name in (
-            "../../etc/passwd",
-            "../catalog/thing.json",
-            "metrics.accuracy/../../etc/passwd",
-        ):
+    def test_rejects_malformed_brackets(self):
+        """Must be a clean rejection, not an unhandled ValueError from the parser."""
+        for name in ("metrics.accuracy[unclosed", "a]b[c", "metrics.x]"):
             with self.subTest(name=name):
-                self.assertFalse(_service_guard_accepts(name))
+                with self.assertRaises(IllegalCatalogNameError):
+                    sanitize_catalog_identifier(name)
 
-    def test_rejects_windows_style_paths(self):
-        for name in (r"C:\windows\win.ini", r"..\..\secret.txt"):
-            with self.subTest(name=name):
-                self.assertFalse(_service_guard_accepts(name))
+    def test_rejects_non_strings(self):
+        for value in (None, 123, ["metrics.accuracy"], {"a": 1}):
+            with self.subTest(value=value):
+                with self.assertRaises(IllegalCatalogNameError):
+                    sanitize_catalog_identifier(value)
 
     def test_rejects_a_real_artifact_file_path(self):
         """Even a genuine artifact file must not be loadable by path remotely."""
@@ -71,27 +88,58 @@ class TestServiceMetricNameGuard(unittest.TestCase):
                 Artifact.is_artifact_file(path),
                 "sanity: the file is a loadable artifact, so only the guard stops it",
             )
-            self.assertFalse(_service_guard_accepts(path))
+            with self.assertRaises(IllegalCatalogNameError):
+                sanitize_catalog_identifier(path)
 
+    def test_error_names_the_offending_value(self):
+        with self.assertRaises(IllegalCatalogNameError) as ctx:
+            sanitize_catalog_identifier("/etc/passwd")
+        self.assertEqual(ctx.exception.name, "/etc/passwd")
+
+    def test_is_a_value_error(self):
+        """Callers catching ValueError must keep working."""
+        self.assertTrue(issubclass(IllegalCatalogNameError, ValueError))
+
+
+class TestSanitizeCatalogIdentifierAcceptsNames(unittest.TestCase):
     def test_accepts_plain_catalog_names(self):
         for name in ("metrics.accuracy", "accuracy", "metrics.rouge"):
             with self.subTest(name=name):
-                self.assertTrue(_service_guard_accepts(name))
+                self.assertEqual(sanitize_catalog_identifier(name), (name, None))
 
     def test_accepts_catalog_names_with_overrides(self):
-        """Bracketed overrides must keep working; only the name part is checked."""
-        self.assertTrue(_service_guard_accepts("metrics.f1_macro[average=macro]"))
+        """Bracketed overrides must keep working; only the name part is a path risk."""
+        name, overrides = sanitize_catalog_identifier(
+            "metrics.f1_macro[ignore_case=False]"
+        )
+        self.assertEqual(name, "metrics.f1_macro")
+        self.assertEqual(overrides, {"ignore_case": False})
+
+    def test_returns_the_validated_name_not_the_input(self):
+        """The point of the fix: what comes back is derived from what was checked.
+
+        If this ever returns the caller's string unchanged, the returned value is
+        no safer than the input and the sanitizer is decorative.
+        """
+        returned, overrides = sanitize_catalog_identifier(
+            "metrics.f1_macro[ignore_case=False]"
+        )
+        self.assertNotIn("[", returned)
+        self.assertEqual(returned, "metrics.f1_macro")
+        self.assertEqual(overrides, {"ignore_case": False})
 
 
-class TestServiceEndpointAppliesTheGuard(unittest.TestCase):
-    """The guard above is only meaningful if ``compute`` actually performs it.
+class TestSanitizedNameIsWhatTheServiceUses(unittest.TestCase):
+    """The sanitizer only helps if ``compute`` passes on its result.
 
     The endpoint needs fastapi (an optional dependency), so rather than calling
-    it, assert that its source wires the validator in before the artifact
-    loader. This fails if the check is removed or moved after get_artifact.
+    it, assert its source uses the sanitized name and never the raw parameter.
+    This fails if the two are edited apart again, which is what kept the alerts
+    open after the first fix.
     """
 
-    def _compute_source(self):
+    @staticmethod
+    def _compute_source():
         service_main = os.path.join(
             os.path.dirname(
                 os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -107,18 +155,70 @@ class TestServiceEndpointAppliesTheGuard(unittest.TestCase):
         start = source.index("def compute(")
         return source[start : source.index("\n@app.", start)]
 
-    def test_compute_validates_the_name_before_loading_the_artifact(self):
+    def test_compute_sanitizes_before_loading_the_artifact(self):
         body = self._compute_source()
-        self.assertIn("is_name_legal_for_catalog", body)
-        self.assertIn("HTTPException", body)
+        self.assertIn("sanitize_catalog_identifier", body)
         self.assertLess(
-            body.index("is_name_legal_for_catalog"),
+            body.index("sanitize_catalog_identifier"),
             body.index("get_artifact"),
-            "the name must be validated before it reaches the artifact loader",
+            "the name must be sanitized before it reaches the artifact loader",
         )
 
     def test_compute_rejects_with_a_client_error(self):
-        self.assertIn("status_code=400", self._compute_source())
+        body = self._compute_source()
+        self.assertIn("IllegalCatalogNameError", body)
+        self.assertIn("status_code=400", body)
+
+    def test_compute_never_passes_the_raw_parameter_onward(self):
+        """``metric_name`` must be consumed by the sanitizer and nothing else."""
+        body = self._compute_source()
+        uses = [
+            line.strip()
+            for line in body.splitlines()
+            if "metric_name" in line
+            and "safe_metric_name" not in line
+            and not line.strip().startswith("#")
+        ]
+        # Only the signature and the sanitizer call may mention the raw value.
+        for line in uses:
+            with self.subTest(line=line):
+                self.assertTrue(
+                    "metric_name: str" in line
+                    or "sanitize_catalog_identifier(metric_name)" in line,
+                    f"raw metric_name must not be used here: {line}",
+                )
+
+
+class TestGetArtifactOverrides(unittest.TestCase):
+    """Overrides now travel beside the name, so they must still apply."""
+
+    def test_overrides_are_applied(self):
+        name, overrides = sanitize_catalog_identifier(
+            "metrics.f1_macro[ignore_case=False]"
+        )
+        artifact = ArtifactFetcherMixin.get_artifact(name, overwrite_kwargs=overrides)
+        self.assertFalse(artifact.ignore_case)
+
+    def test_overrides_do_not_poison_the_cache_for_the_plain_artifact(self):
+        plain_before = ArtifactFetcherMixin.get_artifact("metrics.f1_macro")
+        self.assertTrue(plain_before.ignore_case, "sanity: default is True")
+
+        name, overrides = sanitize_catalog_identifier(
+            "metrics.f1_macro[ignore_case=False]"
+        )
+        overridden = ArtifactFetcherMixin.get_artifact(name, overwrite_kwargs=overrides)
+        self.assertFalse(overridden.ignore_case)
+
+        plain_after = ArtifactFetcherMixin.get_artifact("metrics.f1_macro")
+        self.assertTrue(
+            plain_after.ignore_case,
+            "an overridden fetch must not be served from, or written to, "
+            "the cache entry of the plain artifact",
+        )
+
+    def test_without_overrides_behaves_as_before(self):
+        artifact = ArtifactFetcherMixin.get_artifact("metrics.accuracy")
+        self.assertIsNotNone(artifact)
 
 
 class TestLoadJsonDoesNotLeakFileContents(unittest.TestCase):
