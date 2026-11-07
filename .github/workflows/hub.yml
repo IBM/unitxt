@@ -9,7 +9,9 @@ jobs:
     name: Release new version to HuggingFace Hub
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    # Pinned, not ubuntu-latest: the 26.04 image has no Python 3.8/3.9 and its
+    # toolchain fails to build pytrec-eval. See .github/workflows/README.md.
+    runs-on: ubuntu-24.04
     steps:
 
     - uses: actions/checkout@v4
