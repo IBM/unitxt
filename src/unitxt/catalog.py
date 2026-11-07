@@ -12,6 +12,7 @@ from .artifact import (
     ArtifactLink,
     Catalogs,
     get_catalog_name_and_args,
+    invalidate_catalog_name_index,
     reset_artifacts_json_cache,
     verify_legal_catalog_name,
 )
@@ -135,6 +136,9 @@ def add_to_catalog(
         catalog = LocalCatalog(location=catalog_path)
     verify_legal_catalog_name(name)
     catalog.save_artifact(artifact, name, overwrite=overwrite, verbose=verbose)
+    # The name index is built by walking the catalogs, so a newly saved
+    # artifact must invalidate it to stay resolvable in this process.
+    invalidate_catalog_name_index()
 
 
 def add_link_to_catalog(

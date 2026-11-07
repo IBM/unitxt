@@ -5,16 +5,22 @@ parameter of the metrics service (``src/unitxt/service/metrics/main.py``)
 reaching ``open()`` in ``Artifact.is_artifact_file`` and ``utils.load_json``,
 because the artifact loader accepts filesystem paths as well as catalog names.
 
-A first fix (#1993) added a validity check to the endpoint, but kept passing the
-original ``metric_name`` to the loader. The check was effective at runtime, yet
-the value that was validated and the value that was used were different
-variables, so the alerts stayed open -- rightly, since that shape only stays
-correct as long as nobody edits the two lines apart.
+Two earlier attempts did not clear the alerts, and both were wrong for the same
+underlying reason -- the value handed to the loader was still derived from the
+request:
 
-The remediation tested here:
+- #1993 validated a derived value and then passed the original ``metric_name``
+  on, so the check said nothing about what actually reached the loader.
+- #1995 returned a name rebuilt from the validated parts. That reads safer, but
+  ``split``/``join`` still derive the result from the input, so it was no safer
+  than the checks applied to it and the taint path survived intact.
 
-1. ``sanitize_catalog_identifier`` validates a reference and returns the name it
-   validated, so callers pass on the checked value rather than the raw one.
+The remediation tested here resolves the request against the catalog and returns
+the catalog's own string, so the value passed on originates in trusted data
+rather than in the request:
+
+1. ``sanitize_catalog_identifier`` looks the name up and returns the catalog's
+   copy of it, rejecting anything the catalogs do not publish.
 2. The service uses only that returned name, and answers 400 otherwise.
 3. ``load_json`` does not echo file contents into its error, so a path that does
    reach it cannot be used to read a file (CWE-209).
@@ -28,9 +34,11 @@ import os
 import tempfile
 import unittest
 
+from unitxt import artifact as artifact_module
 from unitxt.artifact import (
     Artifact,
     IllegalCatalogNameError,
+    _catalog_name_index,
     fetch_artifact,
     sanitize_catalog_identifier,
 )
@@ -103,7 +111,9 @@ class TestSanitizeCatalogIdentifierRejectsPaths(unittest.TestCase):
 
 class TestSanitizeCatalogIdentifierAcceptsNames(unittest.TestCase):
     def test_accepts_plain_catalog_names(self):
-        for name in ("metrics.accuracy", "accuracy", "metrics.rouge"):
+        # Must be names the catalogs actually publish; a bare "accuracy" is not
+        # one (it does not resolve on an unmodified tree either).
+        for name in ("metrics.accuracy", "metrics.rouge", "metrics.f1_macro"):
             with self.subTest(name=name):
                 self.assertEqual(sanitize_catalog_identifier(name), (name, None))
 
@@ -115,18 +125,65 @@ class TestSanitizeCatalogIdentifierAcceptsNames(unittest.TestCase):
         self.assertEqual(name, "metrics.f1_macro")
         self.assertEqual(overrides, {"ignore_case": False})
 
-    def test_returns_the_validated_name_not_the_input(self):
-        """The point of the fix: what comes back is derived from what was checked.
+    def test_returns_the_catalogs_own_string_not_the_callers(self):
+        """The point of the fix: the returned value comes from the catalog.
 
-        If this ever returns the caller's string unchanged, the returned value is
-        no safer than the input and the sanitizer is decorative.
+        Rebuilding the name from the caller's input (an earlier attempt) left a
+        value still derived from the request. Resolving it against the catalog
+        replaces it with a string that originates in the catalog listing, which
+        is what lets callers pass it on without re-validating. Asserting
+        identity, not equality, is what distinguishes the two.
         """
+        requested = "".join(["metrics", ".", "accuracy"])
+        returned, _ = sanitize_catalog_identifier(requested)
+
+        self.assertEqual(returned, requested)
+        self.assertIsNot(
+            returned,
+            requested,
+            "the returned name must not be the caller's own string object",
+        )
+        index = _catalog_name_index(artifact_module._catalog_name_generation)
+        self.assertIs(
+            returned,
+            index["metrics.accuracy"],
+            "the returned name must be the catalog's own string object",
+        )
+
+    def test_strips_overrides_from_the_returned_name(self):
         returned, overrides = sanitize_catalog_identifier(
             "metrics.f1_macro[ignore_case=False]"
         )
         self.assertNotIn("[", returned)
         self.assertEqual(returned, "metrics.f1_macro")
         self.assertEqual(overrides, {"ignore_case": False})
+
+    def test_only_local_catalog_names_are_indexed(self):
+        """Documents a deliberate limitation, so a change here is a decision.
+
+        The index is built by walking local catalogs, so a name published only
+        by a remote catalog is not resolvable and the service rejects it. See
+        the note on ``_catalog_name_index``.
+        """
+        index = _catalog_name_index(artifact_module._catalog_name_generation)
+        from unitxt.catalog import get_local_catalogs_paths, ls
+
+        self.assertEqual(
+            set(index), set(ls(to_file=os.devnull)), "index must match the local walk"
+        )
+        self.assertTrue(
+            get_local_catalogs_paths(), "sanity: there is at least one local catalog"
+        )
+
+    def test_rejects_names_the_catalogs_do_not_publish(self):
+        """A syntactically legal name that does not exist must not reach a loader."""
+        for name in (
+            "metrics.no_such_metric_zzz",
+            "not_a_real_namespace.thing",
+        ):
+            with self.subTest(name=name):
+                with self.assertRaises(IllegalCatalogNameError):
+                    sanitize_catalog_identifier(name)
 
 
 class TestSanitizedNameIsWhatTheServiceUses(unittest.TestCase):

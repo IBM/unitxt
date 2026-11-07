@@ -27,6 +27,7 @@ from .type_utils import isoftype, issubtype
 from .utils import (
     artifacts_json_cache,
     json_dump,
+    lru_cache_decorator,
     save_to_file,
     shallow_copy,
 )
@@ -47,23 +48,69 @@ def verify_legal_catalog_name(name):
 
 
 class IllegalCatalogNameError(ValueError):
-    """Raised when an artifact reference is not a legal catalog name.
+    """Raised when an artifact reference is not an available catalog entry.
 
     Used by :func:`sanitize_catalog_identifier` so callers that accept an
-    artifact reference from an untrusted source can tell "this is not a catalog
-    name" apart from any other failure, and answer accordingly.
+    artifact reference from an untrusted source can tell "this is not a usable
+    catalog name" apart from any other failure, and answer accordingly. Covers
+    both a malformed name and a well-formed one the catalogs do not publish;
+    the two are deliberately not distinguished, so the error cannot be used to
+    probe which names exist.
     """
 
     def __init__(self, name):
         self.name = name
         super().__init__(
-            f'Artifact reference ("{name}") is not a legal catalog name. A catalog '
-            'name is alphanumeric, uses "'
+            f'Artifact reference ("{name}") is not an available catalog entry. A '
+            'catalog name is alphanumeric, uses "'
             + constants.catalog_hierarchy_sep
-            + '" for nesting (e.g. metrics.accuracy), and may carry overrides in '
-            "square brackets (e.g. metrics.f1_macro[average=macro]). File paths "
-            "are not accepted."
+            + '" for nesting (e.g. metrics.accuracy), may carry overrides in '
+            "square brackets (e.g. metrics.f1_macro[average=macro]), and must "
+            "name an entry the catalogs publish. File paths are not accepted."
         )
+
+
+@lru_cache_decorator(max_size=1)
+def _catalog_name_index(generation: int) -> Dict[str, str]:
+    """Maps each catalog name to the catalog's own copy of that string.
+
+    Keyed on a generation counter so that registering a new artifact
+    invalidates it; see :func:`invalidate_catalog_name_index`. Values are the
+    strings produced by walking the catalogs, so a lookup hands back catalog
+    data instead of anything derived from a caller's input.
+
+    Only *local* catalogs are indexed, because ``ls`` walks the filesystem. A
+    name published solely by a remote catalog is therefore not resolvable here,
+    and a caller that only accepts indexed names (the metrics service) will
+    reject it. That is deliberate: consulting a remote catalog would mean an
+    HTTP request per lookup, and the name it vouched for would once again be
+    one rebuilt from the request rather than catalog data. The remote catalog
+    mirrors this repository at the release tag, so the practical gap is a name
+    newer than the installed release, or one in an operator's own remote
+    catalog.
+    """
+    from .catalog import ls
+
+    return {name: name for name in ls(to_file=os.devnull)}
+
+
+_catalog_name_generation = 0
+
+
+def invalidate_catalog_name_index():
+    """Forces the catalog name index to be rebuilt on next use.
+
+    Called when an artifact is added to a catalog at runtime, so a name saved
+    during the process's lifetime is still resolvable.
+    """
+    global _catalog_name_generation
+    _catalog_name_generation += 1
+
+
+def _lookup_catalog_name(name: str) -> Optional[str]:
+    """Returns the catalog's own string for ``name``, or None if unknown."""
+    index = _catalog_name_index(_catalog_name_generation)
+    return index.get(name)
 
 
 def sanitize_catalog_identifier(
@@ -77,18 +124,22 @@ def sanitize_catalog_identifier(
     an outside caller controls -- there, a path would let that caller name any
     file on the host (CWE-22).
 
-    Returning the validated name rather than the original string is what makes
-    this safe to rely on: the caller passes on the value that was actually
-    checked, so no unvalidated substring can reach a loader, and the
-    sanitization is visible to static analysis rather than only to a reader.
+    The name is resolved against the names the catalogs publish, and what comes
+    back is the catalog's own string, not a value built from the caller's. That
+    distinction is the whole point: a name rebuilt from its validated parts is
+    still derived from the request, so it is only ever as good as the checks
+    applied to it. Returning catalog data instead means a caller can pass the
+    result to a loader without re-validating it.
+
     The bracketed overrides are returned already parsed, to be applied as
     keyword overrides instead of being re-serialized into the name.
 
     :param identifier: the artifact reference to validate.
-    :return: a tuple ``(name, overrides)``, where ``name`` is the validated
-        catalog name and ``overrides`` is the parsed contents of the square
-        brackets, or ``None`` if there were none.
-    :raises IllegalCatalogNameError: if ``identifier`` is not a legal catalog name.
+    :return: a tuple ``(name, overrides)``, where ``name`` is the catalog's own
+        copy of the resolved name and ``overrides`` is the parsed contents of
+        the square brackets, or ``None`` if there were none.
+    :raises IllegalCatalogNameError: if ``identifier`` is not a legal catalog
+        name, or names nothing the catalogs publish.
     """
     if not isinstance(identifier, str):
         raise IllegalCatalogNameError(identifier)
@@ -103,13 +154,19 @@ def sanitize_catalog_identifier(
     if not is_name_legal_for_catalog(name):
         raise IllegalCatalogNameError(identifier)
 
-    # Rebuilt from the validated segments, so the returned name is derived from
-    # what the check above accepted and shares nothing with the raw input.
-    segments = name.split(constants.catalog_hierarchy_sep)
-    if not all(is_name_legal_for_catalog(segment) for segment in segments):
+    # Resolve the request against the names the catalogs actually publish, and
+    # return the catalog's own string rather than anything built from the
+    # caller's. Rebuilding the name from its validated parts is not enough: the
+    # result is still a value derived from the request, so it cannot be any
+    # safer than the checks applied to it, and both static analysis and a
+    # reviewer are right to treat it as untrusted. Looking the name up replaces
+    # it with a string that originates in the catalog listing, which is what
+    # lets everything downstream open it without re-validating.
+    canonical = _lookup_catalog_name(name)
+    if canonical is None:
         raise IllegalCatalogNameError(identifier)
 
-    return constants.catalog_hierarchy_sep.join(segments), args
+    return canonical, args
 
 
 def dict_diff_string(dict1, dict2, max_diff=200):
