@@ -46,18 +46,18 @@ runs:
         printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
 
-        # Validate the key material locally. This touches only the private key
-        # already on disk, and prints nothing derived from it: on success just
-        # the type and fingerprint, which are not secret and identify which key
-        # is deployed. Catches a truncated or wrongly-wrapped secret, which
-        # otherwise surfaces much later as an opaque "Permission denied".
-        if ! key_info=$(ssh-keygen -y -f ~/.ssh/id_ed25519 2>&1 >/dev/null; \
-                        ssh-keygen -l -f ~/.ssh/id_ed25519 2>&1); then
+        # Validate the key material locally, so a truncated or wrongly-wrapped
+        # secret is named here rather than surfacing later as an opaque
+        # "Permission denied". Nothing derived from the key is printed: not the
+        # key, not its fingerprint, not its comment. A fingerprint hashes only
+        # the public half and so is not itself a credential, but this is a
+        # public repository and its logs are public, so the key stays entirely
+        # out of them; `ssh-keygen` output is discarded for the same reason.
+        if ! ssh-keygen -y -f ~/.ssh/id_ed25519 >/dev/null 2>&1; then
           echo "::error title=Malformed SSH key::The ssh-private-key input could not be loaded by ssh-keygen. Re-set the LLMEVALKIT_SSH_KEY secret -- it must hold the whole OpenSSH key, including the BEGIN and END lines plus a trailing newline."
-          [ -n "$key_info" ] && echo "ssh-keygen said: ${key_info}"
           exit 1
         fi
-        echo "Deploy key loaded: ${key_info}"
+        echo "Deploy key loaded and well-formed."
 
         # Record the host key. A failure here is almost always reachability, not
         # SSH: GHES behind a VPN or firewall is simply not routable from a
