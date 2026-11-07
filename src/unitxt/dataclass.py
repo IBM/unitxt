@@ -2,6 +2,7 @@ import copy
 import dataclasses
 import functools
 import inspect
+import sys
 from abc import ABCMeta
 from inspect import Parameter, Signature
 from typing import Any, Dict, List, Optional, final
@@ -152,6 +153,38 @@ def is_possible_field(field_name, field_value):
     return True
 
 
+def _namespace_annotations(attrs):
+    """Return the annotations defined in a class namespace.
+
+    From Python 3.14 (PEP 649/749) the namespace holds an ``__annotate__``
+    function instead of ``__annotations__``.
+    """
+    if "__annotations__" in attrs:
+        return dict(attrs["__annotations__"])
+    if sys.version_info >= (3, 14):
+        import annotationlib
+
+        annotate = annotationlib.get_annotate_from_class_namespace(attrs)
+        if annotate is not None:
+            return dict(
+                annotationlib.call_annotate_function(
+                    annotate, annotationlib.Format.FORWARDREF
+                )
+            )
+    return {}
+
+
+def _own_annotations(cls):
+    """Return the annotations a class (or the class of an instance) defines itself.
+
+    From Python 3.14 an instance no longer exposes its class' ``__annotations__``.
+    """
+    owner = cls if isinstance(cls, type) else type(cls)
+    if sys.version_info >= (3, 10):
+        return inspect.get_annotations(owner)
+    return owner.__dict__.get("__annotations__", {})
+
+
 def get_fields(cls, attrs):
     """Get the fields for a class based on its attributes.
 
@@ -165,7 +198,7 @@ def get_fields(cls, attrs):
     fields = {}
     for base in cls.__bases__:
         fields = {**getattr(base, _FIELDS, {}), **fields}
-    annotations = {**attrs.get("__annotations__", {})}
+    annotations = _namespace_annotations(attrs)
 
     for attr_name, attr_value in attrs.items():
         if attr_name not in annotations and is_possible_field(attr_name, attr_value):
@@ -381,7 +414,7 @@ class DataclassMeta(ABCMeta):
                 else:
                     default_value = Parameter.empty
 
-                if isinstance(default_value, dataclasses._MISSING_TYPE):
+                if default_value is dataclasses.MISSING:
                     default_value = Parameter.empty
                 param = Parameter(
                     name,
@@ -593,7 +626,7 @@ class Dataclass(metaclass=DataclassMeta):
         else:
             attributes = []
             for cls in classes:
-                attributes += list(cls.__annotations__.keys())
+                attributes += list(_own_annotations(cls).keys())
             attributes_dict = {
                 attribute: getattr(self, attribute) for attribute in attributes
             }
