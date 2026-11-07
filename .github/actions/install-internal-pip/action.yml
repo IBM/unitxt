@@ -24,21 +24,86 @@ runs:
     - shell: bash
       env:
         SSH_PRIVATE_KEY: ${{ inputs.ssh-private-key }}
+        HOST: ${{ inputs.host }}
+        REPO: ${{ inputs.repo }}
+        REF: ${{ inputs.ref }}
+        PIP_EXTRA_ARGS: ${{ inputs.pip-extra-args }}
       run: |
+        # No `set -e`: each stage below reports its own failure before exiting,
+        # so an abort never leaves the log without an explanation. Under `-e` a
+        # failing command here exits with no output at all, because GitHub masks
+        # this step's stderr (it carries a secret), which makes every distinct
+        # cause -- absent key, malformed key, unreachable host, rejected
+        # credential, build error -- look like a bare "exit code 1".
+        set -o pipefail
+
         if [ -z "$SSH_PRIVATE_KEY" ]; then
-          echo "::notice title=Internal install skipped::No SSH key available (fork or Dependabot run); skipping ${{ inputs.repo }}. Metrics requiring it will raise a clear install error if used."
+          echo "::notice title=Internal install skipped::No SSH key available (fork or Dependabot run); skipping ${REPO}. Metrics requiring it will raise a clear install error if used."
           exit 0
         fi
+
         mkdir -p ~/.ssh
         printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan "${{ inputs.host }}" >> ~/.ssh/known_hosts
-        if [ -n "${{ inputs.ref }}" ]; then
-          URL="git+ssh://git@${{ inputs.host }}/${{ inputs.repo }}.git@${{ inputs.ref }}"
-        else
-          URL="git+ssh://git@${{ inputs.host }}/${{ inputs.repo }}.git"
+
+        # Validate the key material locally. This touches only the private key
+        # already on disk, and prints nothing derived from it: on success just
+        # the type and fingerprint, which are not secret and identify which key
+        # is deployed. Catches a truncated or wrongly-wrapped secret, which
+        # otherwise surfaces much later as an opaque "Permission denied".
+        if ! key_info=$(ssh-keygen -y -f ~/.ssh/id_ed25519 2>&1 >/dev/null; \
+                        ssh-keygen -l -f ~/.ssh/id_ed25519 2>&1); then
+          echo "::error title=Malformed SSH key::The ssh-private-key input could not be loaded by ssh-keygen. Re-set the LLMEVALKIT_SSH_KEY secret -- it must hold the whole OpenSSH key, including the BEGIN and END lines plus a trailing newline."
+          [ -n "$key_info" ] && echo "ssh-keygen said: ${key_info}"
+          exit 1
         fi
+        echo "Deploy key loaded: ${key_info}"
+
+        # Record the host key. A failure here is almost always reachability, not
+        # SSH: GHES behind a VPN or firewall is simply not routable from a
+        # GitHub-hosted runner. Bounded so it fails fast with a clear reason
+        # rather than hanging until the job timeout.
+        if ! keyscan_err=$(ssh-keyscan -T 15 "$HOST" 2>&1 >> ~/.ssh/known_hosts); then
+          echo "::error title=GHES unreachable::ssh-keyscan could not reach ${HOST}:22 within 15s, so ${REPO} cannot be installed. This is a network/availability problem on the ${HOST} side, not a problem with the code under test -- GitHub-hosted runners can only reach ${HOST} if it permits that egress."
+          [ -n "$keyscan_err" ] && echo "ssh-keyscan said: ${keyscan_err}"
+          exit 1
+        fi
+        if ! grep -q "$HOST" ~/.ssh/known_hosts 2>/dev/null; then
+          echo "::error title=GHES unreachable::ssh-keyscan ${HOST} exited cleanly but returned no host key, so ${HOST}:22 is not answering as an SSH server. Check whether ${HOST} is reachable from GitHub-hosted runners."
+          exit 1
+        fi
+
+        # Distinguish a rejected credential from an unreachable host. GitHub
+        # replies to a successful `ssh -T git@...` with a non-zero exit and a
+        # greeting, so match the message rather than the status.
+        # -i/IdentitiesOnly pins the probe to the key just written, so it
+        # cannot be answered by some other key an agent happens to offer.
+        auth_out=$(ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes \
+                       -o BatchMode=yes -o StrictHostKeyChecking=yes \
+                       -o ConnectTimeout=15 -T "git@${HOST}" 2>&1)
+        if printf '%s' "$auth_out" | grep -qiE 'permission denied|publickey|authentication failed'; then
+          echo "::error title=SSH key rejected::${HOST} refused the deploy key, so ${REPO} cannot be cloned. The LLMEVALKIT_SSH_KEY secret is likely expired, revoked, or no longer authorised for ${REPO}."
+          [ -n "$auth_out" ] && echo "ssh said: ${auth_out}"
+          exit 1
+        fi
+        [ -n "$auth_out" ] && echo "SSH auth to ${HOST} accepted: ${auth_out}"
+        true  # keep the step status clean when the greeting was empty
+
+        if [ -n "$REF" ]; then
+          URL="git+ssh://git@${HOST}/${REPO}.git@${REF}"
+        else
+          URL="git+ssh://git@${HOST}/${REPO}.git"
+        fi
+
         echo "Installing from URL: $URL"
-        pip install --no-cache-dir --force-reinstall "$URL" ${{ inputs.pip-extra-args }}
+        # shellcheck disable=SC2086  # pip-extra-args is intentionally word-split
+        if ! pip install --no-cache-dir --force-reinstall "$URL" $PIP_EXTRA_ARGS; then
+          echo "::error title=Internal install failed::pip could not install ${REPO} from ${HOST}. Host and credential checks above passed, so this is a packaging or dependency failure in ${REPO} itself -- see the pip output above for the failing requirement."
+          exit 1
+        fi
+
         echo "Downgrading pydantic as required LLM eval kit library"
-        pip install pydantic==2.11.3
+        if ! pip install pydantic==2.11.3; then
+          echo "::error title=pydantic pin failed::${REPO} installed, but pinning pydantic==2.11.3 failed. ${REPO} needs this version; another installed package may now require a different one."
+          exit 1
+        fi

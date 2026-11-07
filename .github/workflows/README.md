@@ -47,3 +47,37 @@ Before moving to a newer image, check that:
 
 - the image ships every Python version these workflows pin, and
 - `pytrec-eval` builds on it (or the dependency has been updated or dropped).
+
+## Diagnosing the internal `LLMEvalKit` install
+
+`unittests`, `eager`, `preparation` and `examples` install the internal
+`MLT/LLMEvalKit` package from IBM GHES over SSH, via
+`.github/actions/install-internal-pip`. That step depends on three things
+outside this repository: the `LLMEVALKIT_SSH_KEY` secret, network reachability
+of `github.ibm.com:22` from a GitHub-hosted runner, and the health of
+`LLMEvalKit` itself.
+
+GitHub masks the step's output because it carries a secret, so a failure used to
+surface as nothing but `Process completed with exit code 1`, with every cause
+looking alike. The action now checks each precondition separately and emits a
+distinct `::error` annotation, so the cause is visible in the job summary
+without reading the log:
+
+| Annotation | Meaning | Where to look |
+| --- | --- | --- |
+| `Internal install skipped` (notice, step passes) | No secret available — a fork or Dependabot run | Expected; metrics needing the package raise a clear error if used |
+| `Malformed SSH key` | The secret is not a usable OpenSSH private key | Re-set `LLMEVALKIT_SSH_KEY`, including the `BEGIN`/`END` lines |
+| `GHES unreachable` | `github.ibm.com:22` did not answer within 15s | GHES availability or runner egress — **not** the code under test |
+| `SSH key rejected` | The host refused the deploy key | Key expired, revoked, or no longer authorised for the repo |
+| `Internal install failed` | Host and credential are fine; pip failed | A packaging/dependency problem inside `LLMEvalKit` |
+| `pydantic pin failed` | Package installed, but `pydantic==2.11.3` would not | A conflicting requirement pulled in by another package |
+
+A `GHES unreachable` or `SSH key rejected` failure is infrastructure, not the
+pull request. Those two block every job that needs the package, so a PR can show
+a wall of unrelated red; check whether `main` is failing the same way before
+investigating the diff.
+
+Note that a successful `ssh -T git@<host>` exits non-zero and prints a greeting,
+so the auth check matches that message rather than the exit status, and pins
+itself to the deploy key with `-i`/`IdentitiesOnly=yes` so no other key can
+answer for it.
