@@ -61,16 +61,28 @@ runs:
 
         # Record the host key. A failure here is almost always reachability, not
         # SSH: GHES behind a VPN or firewall is simply not routable from a
-        # GitHub-hosted runner. Bounded so it fails fast with a clear reason
-        # rather than hanging until the job timeout.
+        # GitHub-hosted runner. Bounded so it fails fast rather than hanging
+        # until the job timeout.
+        #
+        # An unreachable host is handled like a missing secret -- warn and skip,
+        # rather than fail. It is an outage in someone else's
+        # infrastructure, and failing here blocks every pull request in the repo
+        # on something no pull request can fix. The tests that need the package
+        # already skip themselves when it is missing, via `requires_llmevalkit`
+        # in tests/library/test_metrics.py, so the suite stays green and simply
+        # covers less. A malformed or rejected key still fails, because those
+        # are misconfigurations in this repository, not outages.
+        keyscan_ok=yes
         if ! keyscan_err=$(ssh-keyscan -T 15 "$HOST" 2>&1 >> ~/.ssh/known_hosts); then
-          echo "::error title=GHES unreachable::ssh-keyscan could not reach ${HOST}:22 within 15s, so ${REPO} cannot be installed. This is a network/availability problem on the ${HOST} side, not a problem with the code under test -- GitHub-hosted runners can only reach ${HOST} if it permits that egress."
-          [ -n "$keyscan_err" ] && echo "ssh-keyscan said: ${keyscan_err}"
-          exit 1
+          keyscan_ok=no
+        elif ! grep -q "$HOST" ~/.ssh/known_hosts 2>/dev/null; then
+          keyscan_ok=no
+          keyscan_err="ssh-keyscan exited cleanly but returned no host key, so ${HOST}:22 is not answering as an SSH server."
         fi
-        if ! grep -q "$HOST" ~/.ssh/known_hosts 2>/dev/null; then
-          echo "::error title=GHES unreachable::ssh-keyscan ${HOST} exited cleanly but returned no host key, so ${HOST}:22 is not answering as an SSH server. Check whether ${HOST} is reachable from GitHub-hosted runners."
-          exit 1
+        if [ "$keyscan_ok" = no ]; then
+          echo "::warning title=GHES unreachable, install skipped::Could not reach ${HOST}:22 within 15s, so ${REPO} was not installed and the tests that need it will skip. This is a network/availability problem on the ${HOST} side, not a problem with the code under test -- GitHub-hosted runners can only reach ${HOST} if it permits that egress."
+          [ -n "$keyscan_err" ] && echo "ssh-keyscan said: ${keyscan_err}"
+          exit 0
         fi
 
         # Distinguish a rejected credential from an unreachable host. GitHub
