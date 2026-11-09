@@ -1,16 +1,34 @@
 import os
+import pickle
 import sqlite3
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
+import diskcache_community
 import requests
 from unitxt.text2sql_utils import (
     InMemoryDatabaseConnector,
     LocalSQLiteConnector,
     RemoteDatabaseConnector,
+    generate_cache_key,
+    get_cache,
 )
 from unitxt.types import SQLDatabase
+
+
+def write_marker(path):
+    with open(path, "w") as f:
+        f.write("ran")
+    return {"rows": []}, None
+
+
+class PlantedResult:
+    def __init__(self, path):
+        self.path = path
+
+    def __reduce__(self):
+        return (write_marker, (self.path,))
 
 
 class TestRemoteDatabaseConnector(unittest.TestCase):
@@ -69,6 +87,31 @@ class TestRemoteDatabaseConnector(unittest.TestCase):
         result, _ = connector.execute_query("SELECT * FROM table1")
 
         self.assertIsNone(result)
+
+    @patch("requests.post")
+    def test_execute_query_does_not_unpickle_cached_result(self, mock_post):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            cache_location = os.path.join(tmp_dir, "cache")
+            connector = RemoteDatabaseConnector(self.db_config)
+            key = generate_cache_key(
+                "sql_request", connector.api_url, connector.database_id, "SELECT 1"
+            )
+
+            marker = os.path.join(tmp_dir, "marker")
+            with diskcache_community.Cache(
+                cache_location, disk=diskcache_community.Disk
+            ) as other_writer:
+                other_writer[key] = PlantedResult(marker)
+
+            with patch("unitxt.text2sql_utils.CACHE_LOCATION", cache_location), patch(
+                "unitxt.text2sql_utils._cache_instance", None
+            ):
+                with self.assertRaises(pickle.UnpicklingError):
+                    connector.execute_query("SELECT 1")
+                get_cache().cache.close()
+
+            self.assertFalse(os.path.exists(marker))
+            mock_post.assert_not_called()
 
 
 class TestLocalSQLiteConnector(unittest.TestCase):

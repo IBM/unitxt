@@ -196,12 +196,15 @@ class InferenceEngine(Artifact):
             ):
                 self.prepare_engine()
             if self.use_cache:
-                from diskcache import Cache
+                from diskcache_community import Cache, SafeDisk
 
                 self._cache = Cache(
                     os.path.join(
                         settings.inference_engine_cache_path, self.__class__.__name__
-                    )
+                    ),
+                    disk=SafeDisk.with_types(
+                        TextGenerationInferenceOutput
+                    ).with_options(on_error="miss"),
                 )
 
     def __call__(
@@ -3156,7 +3159,7 @@ class LiteLLMInferenceEngine(
     max_requests_per_second: float = 6
     max_retries: int = 5  # Set to 0 to prevent internal retries
 
-    _requirements_list: list = ["litellm", "tenacity", "tqdm", "diskcache"]
+    _requirements_list: list = ["litellm", "tenacity", "tqdm", "diskcache-community"]
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model, self.label)

@@ -20,7 +20,7 @@ dependencies = [
     "datasets>=2.16.0",
     "evaluate",
     "scipy>=1.10.1",
-    "diskcache"
+    "diskcache-community>=5.8.4"
 ]
 
 [project.urls]
@@ -106,7 +106,7 @@ tests = [
     "Wikipedia-API",
     "sqlglot",
     "sqlparse",
-    "diskcache",
+    "diskcache-community>=5.8.4",
     "pydantic",
     "jsonschema_rs"
 ]
@@ -126,7 +126,7 @@ watsonx = [
 inference-tests = [
   "litellm>=1.52.9",
   "tenacity",
-  "diskcache",
+  "diskcache-community>=5.8.4",
   "numpy==1.26.4",
   "ollama"
 ]
@@ -138,7 +138,7 @@ assistant = [
 remote_inference = [
     "litellm>=1.52.9",
     "tenacity",
-    "diskcache"
+    "diskcache-community>=5.8.4"
 ]
 local_inference = [
     "transformers",

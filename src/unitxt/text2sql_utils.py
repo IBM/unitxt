@@ -252,18 +252,22 @@ class Cache:
         """
         if CACHE_LOCATION:
             try:
-                import diskcache
+                import diskcache_community
 
                 # Ensure the cache directory exists
                 os.makedirs(CACHE_LOCATION, exist_ok=True)
 
                 # Create a global diskcache Cache instance
-                self.cache = diskcache.Cache(CACHE_LOCATION, size_limit=MAX_CACHE_SIZE)
+                self.cache = diskcache_community.Cache(
+                    CACHE_LOCATION,
+                    size_limit=MAX_CACHE_SIZE,
+                    disk=diskcache_community.SafeDisk,
+                )
                 logger.info(f"Caching enabled at {CACHE_LOCATION}")
             except ImportError as e:
                 raise ImportError(
-                    "UNITXT_CACHE_LOCATION is set, but diskcache is not installed.\n"
-                    "Please install diskcache `pip install diskcache` "
+                    "UNITXT_CACHE_LOCATION is set, but diskcache-community is not installed.\n"
+                    "Please install diskcache-community `pip install diskcache-community` "
                     "or unset UNITXT_CACHE_LOCATION."
                 ) from e
         else:
