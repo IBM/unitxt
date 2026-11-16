@@ -404,3 +404,15 @@ class TestDataclass(UnitxtTestCase):
         # self.assertTrue(is_class_method(MyClass.my_instance_method))
         # self.assertFalse(is_class_method(MyClass.my_lambda))
         # self.assertFalse(is_class_method(MyClass.my_func))
+
+    def test_fields_from_annotations(self):
+        class Base(Dataclass):
+            a: int
+            b: str = "b"
+
+        class Child(Base):
+            c: float = 1.0
+
+        self.assertEqual(fields_names(Child), ["a", "b", "c"])
+        child = Child(a=1)
+        self.assertEqual((child.a, child.b, child.c), (1, "b", 1.0))

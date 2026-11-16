@@ -3,6 +3,7 @@ from typing import Literal, NewType, Type, TypedDict
 
 from unitxt.type_utils import (
     UnsupportedTypeError,
+    eval_forward_ref,
     format_type_string,
     infer_type,
     infer_type_string,
@@ -613,3 +614,11 @@ class TestToTypeString(UnitxtTestCase):
 
         self.assertTrue(isoftype([1, 2], CustomValidation))
         self.assertFalse(isoftype([1], CustomValidation))
+
+    def test_eval_forward_ref(self):
+        self.assertEqual(
+            eval_forward_ref(typing.ForwardRef("List[int]")), typing.List[int]
+        )
+        self.assertEqual(
+            eval_forward_ref(typing.ForwardRef("Custom"), {"Custom": int}), int
+        )

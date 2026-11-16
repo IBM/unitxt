@@ -3,6 +3,7 @@ import collections.abc
 import io
 import itertools
 import re
+import sys
 import typing
 from functools import lru_cache
 from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict, Union
@@ -804,6 +805,9 @@ def eval_forward_ref(ref, forward_refs=None):
 
     if hasattr(typing, "_eval_type"):  # python3.8 & python 3.9
         _eval_type = typing._eval_type
+        if sys.version_info >= (3, 13):
+            # type_params was added in 3.13 and is required from 3.15
+            return _eval_type(ref, globals(), localns, type_params=())
         return _eval_type(ref, globals(), localns)
 
     if hasattr(ref, "_eval_type"):  # python3.6
