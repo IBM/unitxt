@@ -332,7 +332,7 @@ Custom Types and Serializers
 
 This example show how to define new data types as well as the way these data type should be handled when processed to text.
 
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/custom_types.py>`__
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/custom_type.py>`__
 
 Related documentation: :ref:`Types and Serializers Guide <types_and_serializers>`, :ref:`Inference Engines <inference>`.
 
